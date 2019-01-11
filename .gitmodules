@@ -2,3 +2,7 @@
 	path = meta-wifx
 	url = https://git.wifx.net/wifx/next/meta-wifx.git
 	branch = sumo
+[submodule "meta-wifx-lorix"]
+	path = meta-wifx-lorix
+	url = https://git.wifx.net/wifx/next/meta-wifx-lorix.git
+	branch = sumo
