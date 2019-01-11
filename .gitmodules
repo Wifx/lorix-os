@@ -10,3 +10,7 @@
 	path = meta-wifx-mender
 	url = https://git.wifx.net/wifx/next/meta-wifx-mender.git
 	branch = sumo
+[submodule "meta-openembedded"]
+	path = meta-openembedded
+	url = git://git.openembedded.org/meta-openembedded
+	branch = sumo
