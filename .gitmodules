@@ -1,0 +1,3 @@
+[submodule "meta-wifx"]
+	path = meta-wifx
+	url = https://git.wifx.net/wifx/next/meta-wifx.git
