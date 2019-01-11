@@ -6,3 +6,7 @@
 	path = meta-wifx-lorix
 	url = https://git.wifx.net/wifx/next/meta-wifx-lorix.git
 	branch = sumo
+[submodule "meta-wifx-mender"]
+	path = meta-wifx-mender
+	url = https://git.wifx.net/wifx/next/meta-wifx-mender.git
+	branch = sumo
