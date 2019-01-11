@@ -14,3 +14,7 @@
 	path = meta-openembedded
 	url = git://git.openembedded.org/meta-openembedded
 	branch = sumo
+[submodule "poky"]
+	path = poky
+	url = git://git.yoctoproject.org/poky
+	branch = sumo
