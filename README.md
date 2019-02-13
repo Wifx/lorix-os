@@ -118,7 +118,21 @@ $ git config --global status.submoduleSummary true
    ```
    The ```--rm``` argument is used to make the container as temporary and to delete it when we quit. The ```-it``` stands for interactive (i) and tty (t) to open a terminal directly connecting the host therminal to the container's internal terminal.
    > **Note:** This command will be used each time you will need to launch the Yocto building Docker container.
-7. **Create the initial Yocto build directory**<br />
+7. Once inside the container, enter the poky directory to configure the build system
+   ```shell
+   build@dfe8e4eeb96f:~$ cd poky
+   ```
+8. Initialize the build directory
+   ```shell
+   build@dfe8e4eeb96f:~$ source oe-init-build-env
+   ```
+   This will create the build directory in which all the work will be done. You can also have alternative build directories with different configurations or different machines.
+   To do so, you can create another build directory with a different name as follow:
+   ```shell
+   build@dfe8e4eeb96f:~$ source oe-init-build-env build-alt-name
+   ```
+   > **Note:** For example, you could have the directories build (standard configuration) and build-sd (used to build the SD card image version).
+9. The previous step has created the build directory in which we define the build configuration parameters. The following configuration steps are common between docker and native build system since we edit mostlikely the configuration file from inside the host system.
 
 ## Configure the build system using your native host system
 
@@ -147,22 +161,20 @@ $ git config --global status.submoduleSummary true
    $ source oe-init-build-env
    ```
    This will create the build directory in which all the work will be done. You can also have alternative build directories with different configurations or different machines.
-   To do so, you can create the build directory with a different name as follow:
+   To do so, you can create another build directory with a different name as follow:
    ```shell
    $ source oe-init-build-env build-alt-name
    ```
    > **Note:** For example, you could have the directories build (standard configuration) and build-sd (used to build the SD card image version).
-4. 
-
-4. **Create the initial Yocto build directory**<br />
-
 
 ## LORIX One's Yocto OS distribution configuration
 
-The following setup has to be done only once and can be passed for the next build however, some of the configuration parameters described in this section can be changed following your need. For example, the machine could be changed from lorix-one to lorix-one-512 or to the atomic mender update subsystem could be enabled. 
+The following setup has to be done only once and can be passed for the next build however, some of the configuration parameters described in this section can be changed following your needs. For example, the machine could be changed from lorix-one to lorix-one-512 or the atomic mender update subsystem could be enabled. 
 
-> **Note:** The descriptions here are **for both native and docker build OS**. It will be described of each version when needed. 
-> In addition, since the Docker container is only used to compile the Yocto image, we will mostly working in the native system (linked to the Docker container) when we need to edit or configure the Yocto system.
+> **Note:** The descriptions here are **for both native and docker build system**. It will be described of each version when needed but assumed by default to be done from the native host system.<br/> 
+> In addition, since the Docker container is only used to compile the Yocto image, we will mostly working in the native system (linked to the Docker container) when we need to edit or configure a file.
+
+
 
 
 
