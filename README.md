@@ -5,36 +5,36 @@
 
 ## Sources
 
-* wifx-yocto-lorix-workspace</br>
-  URI: [https://git.wifx.net/wifx/next/wifx-yocto-lorix-workspace.git](https://git.wifx.net/wifx/next/wifx-yocto-lorix-workspace.git)</br>
+* wifx-yocto-lorix-workspace<br />
+  URI: [https://git.wifx.net/wifx/next/wifx-yocto-lorix-workspace.git](https://git.wifx.net/wifx/next/wifx-yocto-lorix-workspace.git)<br />
   Branch: sumo
 
 ## Dependencies
 This build workspace depends on:
 
-* **meta-wifx**</br>
-  URI: [https://git.wifx.net/wifx/next/meta-wifx.git](https://git.wifx.net/wifx/next/meta-wifx.git)</br>
-  Branch: sumo</br>
+* **meta-wifx**<br />
+  URI: [https://git.wifx.net/wifx/next/meta-wifx.git](https://git.wifx.net/wifx/next/meta-wifx.git)<br />
+  Branch: sumo<br />
   Status: Important work in progress, not stable and highly subject to huge modification
 
-* **meta-wifx-lorix**</br>
-  URI: [https://git.wifx.net/wifx/next/meta-wifx-lorix.git](https://git.wifx.net/wifx/next/meta-wifx-lorix.git)</br>
-  Branch: sumo</br>
+* **meta-wifx-lorix**<br />
+  URI: [https://git.wifx.net/wifx/next/meta-wifx-lorix.git](https://git.wifx.net/wifx/next/meta-wifx-lorix.git)<br />
+  Branch: sumo<br />
   Status: Important work in progress, not stable and highly subject to huge modification
 
-* **meta-wifx-mender**</br>
-  URI: [https://git.wifx.net/wifx/next/meta-wifx-mender.git](https://git.wifx.net/wifx/next/meta-wifx-mender.git)</br>
-  Branch: sumo</br>
+* **meta-wifx-mender**<br />
+  URI: [https://git.wifx.net/wifx/next/meta-wifx-mender.git](https://git.wifx.net/wifx/next/meta-wifx-mender.git)<br />
+  Branch: sumo<br />
   Status: Important work in progress, not stable and highly subject to huge modification
 
-* **meta-openembedded**</br>
-  URI: [git://git.openembedded.org/meta-openembedded](git://git.openembedded.org/meta-openembedded)</br>
-  Branch: sumo</br>
+* **meta-openembedded**<br />
+  URI: [git://git.openembedded.org/meta-openembedded](git://git.openembedded.org/meta-openembedded)<br />
+  Branch: sumo<br />
   Status: Stable
 
-* **poky**</br>
-  URI: [git://git.yoctoproject.org/poky](git://git.yoctoproject.org/poky)</br>
-  Branch: sumo</br>
+* **poky**<br />
+  URI: [git://git.yoctoproject.org/poky](git://git.yoctoproject.org/poky)<br />
+  Branch: sumo<br />
   Status: Stable
 
 ## Requirement
@@ -44,7 +44,7 @@ This workspace is known to work on Ubuntu 18.04LTS however, to garantee a stable
 
 The following setup has to be done only once and can be passed for the next build.
 
-Download the workspace using git</br>
+Download the workspace using git<br />
 ```shell
 $ cd work_directory
 $ git clone --recursive -j8 https://git.wifx.net/wifx/next/wifx-yocto-lorix-workspace.git
@@ -66,7 +66,7 @@ $ git config --global status.submoduleSummary true
    1. [Ubuntu](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
    2. [Debian](https://docs.docker.com/install/linux/docker-ce/debian/)
    3. [Fedora](https://docs.docker.com/install/linux/docker-ce/fedora/)
-2. Go inside the right Docker file directory in the workspace repository:</br>
+2. Go inside the right Docker file directory in the workspace repository:<br />
    ```shell
    $ cd work_directory/wifx-yocto-lorix-workspace/tools/docker/yocto-ubuntu-18.04
    ```
@@ -98,13 +98,13 @@ $ git config --global status.submoduleSummary true
      * That the container contains all the packages you need to make Bitbake build system and Yocto working well
    
    In addition, this container can be easily shared among customers or colleagues.
-6. **Start the Docker container** and understand the directories mapping</br>
+6. **Start the Docker container** and understand the directories mapping<br />
    We usually edit and modify the Yocto's configuration files (or package recipes) from the build host OS and keep the Docker container to only build the final image. 
 
    To make the nexts explaination more easy to understand, we will define some values:
-   *  **\<host dir\>**</br>
+   *  **\<host dir\>**<br />
       The directory ```wifx-yocto-lorix-workspace``` containing your workspace on your host system. This directory is variable and depends really on your own configuration, for example ```/home/you/devel/wifx-yocto-lorix-workspace```
-   *  **\<docker dir\>**</br>
+   *  **\<docker dir\>**<br />
       The directory in the Docker container where should be binded the **\<host directory\>**. This directory is fixed and should ideally ```/home/build```. This is where you are located when you start the Docker container.
 
    That being said, we need to start the yocto:ubuntu-18.04 Docker container:
@@ -118,19 +118,19 @@ $ git config --global status.submoduleSummary true
    ```
    The ```--rm``` argument is used to make the container as temporary and to delete it when we quit. The ```-it``` stands for interactive (i) and tty (t) to open a terminal directly connecting the host therminal to the container's internal terminal.
    > **Note:** This command will be used each time you will need to launch the Yocto building Docker container.
-7. **Create the initial Yocto build directory**</br>
+7. **Create the initial Yocto build directory**<br />
 
 ## Configure the build system using your native host system
 
 1. Install the required packages to use Yocto as described on the [Yocto required packages page](https://www.yoctoproject.org/docs/2.5/ref-manual/ref-manual.html#required-packages-for-the-host-development-system).
 
-   * Ubuntu and Debian</br>
+   * Ubuntu and Debian<br />
       ```shell
       sudo apt-get install gawk wget git-core diffstat unzip texinfo gcc-multilib \
       build-essential chrpath socat cpio python python3 python3-pip python3-pexpect \
       xz-utils debianutils iputils-ping
       ```
-   * Fedora</br>
+   * Fedora<br />
       ```shell
       sudo dnf install gawk make wget tar bzip2 gzip python3 unzip perl patch \
       diffutils diffstat git cpp gcc gcc-c++ glibc-devel texinfo chrpath \
@@ -154,7 +154,7 @@ $ git config --global status.submoduleSummary true
    > **Note:** For example, you could have the directories build (standard configuration) and build-sd (used to build the SD card image version).
 4. 
 
-4. **Create the initial Yocto build directory**</br>
+4. **Create the initial Yocto build directory**<br />
 
 
 ## LORIX One's Yocto OS distribution configuration
