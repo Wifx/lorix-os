@@ -122,7 +122,7 @@ $ git config --global status.submoduleSummary true
    ```shell
    build@dfe8e4eeb96f:~$ cd poky
    ```
-8. Initialize the build directory
+8. **Initialize the build directory**
    ```shell
    build@dfe8e4eeb96f:~$ source oe-init-build-env
    ```
@@ -136,7 +136,7 @@ $ git config --global status.submoduleSummary true
 
 ## Configure the build system using your native host system
 
-1. Install the required packages to use Yocto as described on the [Yocto required packages page](https://www.yoctoproject.org/docs/2.5/ref-manual/ref-manual.html#required-packages-for-the-host-development-system).
+1. **Install the required packages** to use Yocto as described on the [Yocto required packages page](https://www.yoctoproject.org/docs/2.5/ref-manual/ref-manual.html#required-packages-for-the-host-development-system).
 
    * Ubuntu and Debian<br />
       ```shell
@@ -156,7 +156,7 @@ $ git config --global status.submoduleSummary true
    $ cd wifx-yocto-lorix-workspace # if not already there
    $ cd poky
    ```
-3. Initialize the build directory
+3. **Initialize the build directory**
    ```shell
    $ source oe-init-build-env
    ```
@@ -174,6 +174,86 @@ The following setup has to be done only once and can be passed for the next buil
 > **Note:** The descriptions here are **for both native and docker build system**. It will be described of each version when needed but assumed by default to be done from the native host system.<br/> 
 > In addition, since the Docker container is only used to compile the Yocto image, we will mostly working in the native system (linked to the Docker container) when we need to edit or configure a file.
 
+1. **Configure the Yocto global layers** by editing the file bblayers.conf inside the directory ```poky/conf```:
+   ```shell
+      $ cd wifx-yocto-lorix-workspace/poky   # if not already there
+      $ nano conf/bblayers.conf
+      ```
+   With the following content:
+
+   **Without mender support**
+   ```
+   # POKY_BBLAYERS_CONF_VERSION is increased each time build/conf/bblayers.conf
+   # changes incompatibly
+   POKY_BBLAYERS_CONF_VERSION = "2"
+
+   BBPATH = "${TOPDIR}"
+   BBFILES ?= ""
+
+   BSPDIR := "${@os.path.abspath(os.path.dirname(d.getVar('FILE', True)) + '/../../..')}"
+
+   BBLAYERS ?= " \
+   ${BSPDIR}/poky/meta \
+   ${BSPDIR}/poky/meta-poky \
+   ${BSPDIR}/poky/meta-yocto-bsp \
+   ${BSPDIR}/meta-openembedded/meta-oe \
+   ${BSPDIR}/meta-openembedded/meta-networking \
+   ${BSPDIR}/meta-openembedded/meta-python \
+   ${BSPDIR}/meta-openembedded/meta-multimedia \
+   ${BSPDIR}/meta-wifx \
+   ${BSPDIR}/meta-wifx-lorix \
+   "
+
+   #${BSPDIR}/meta-wifx-mender
+   #/home/build/shared/sumo-next/poky/build/workspace
+
+   BBLAYERS_NON_REMOVABLE ?= " \
+   ${BSPDIR}/poky/meta \
+   ${BSPDIR}/poky/meta-poky \
+   "
+   ```
+   **With mender support**<br />
+   <span style="color:red">Under development, not stable yet</span>
+   ```
+   # POKY_BBLAYERS_CONF_VERSION is increased each time build/conf/bblayers.conf
+   # changes incompatibly
+   POKY_BBLAYERS_CONF_VERSION = "2"
+
+   BBPATH = "${TOPDIR}"
+   BBFILES ?= ""
+
+   BSPDIR := "${@os.path.abspath(os.path.dirname(d.getVar('FILE', True)) + '/../../..')}"
+
+   BBLAYERS ?= " \
+   ${BSPDIR}/poky/meta \
+   ${BSPDIR}/poky/meta-poky \
+   ${BSPDIR}/poky/meta-yocto-bsp \
+   ${BSPDIR}/meta-openembedded/meta-oe \
+   ${BSPDIR}/meta-openembedded/meta-networking \
+   ${BSPDIR}/meta-openembedded/meta-python \
+   ${BSPDIR}/meta-openembedded/meta-multimedia \
+   ${BSPDIR}/meta-wifx \
+   ${BSPDIR}/meta-wifx-lorix \
+   ${BSPDIR}/meta-wifx-mender \
+   "
+
+   #${BSPDIR}/meta-wifx-mender
+   #/home/build/shared/sumo-next/poky/build/workspace
+
+   BBLAYERS_NON_REMOVABLE ?= " \
+   ${BSPDIR}/poky/meta \
+   ${BSPDIR}/poky/meta-poky \
+   "
+   ```
+2. **Speficy the machine, location of source archived** by editiing the file local.conf inside the directory ```poky/conf```:
+   ```shell
+   $ cd wifx-yocto-lorix-workspace/poky   # if not already there
+   $ nano conf/local.conf
+   ```
+   With the following content:
+   ```
+   $ TODO
+   ```
 
 
 
