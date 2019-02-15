@@ -9,6 +9,25 @@
   URI: [https://git.wifx.net/wifx/next/wifx-yocto-lorix-workspace.git](https://git.wifx.net/wifx/next/wifx-yocto-lorix-workspace.git)<br />
   Branch: sumo
 
+## Actual status
+
+| Memory version | Overlayfs | Atomic update |
+| -------------- | ------------- | ----- |
+| 256MB          | <span style="color:green">Done</span> | <span style="color:orange">In progress</span> |
+| 512MB          | <span style="color:orange">On going</span> | <span style="color:orange">In progress</span> |
+
+Details:
+* **Overlayfs:** Dual partition design with data partition mounted as overlayfs over a single rootfs
+* **Atomic update:** Triple partition design with data partition mounted as overlayfs over one of the two rootfs. Update of the "sleeping" rootfs using Mender.
+
+
+## TODO
+
+* Support of standard overlayfs design on 512MB memory version (on going)
+* Create doc: Map the Docker directory at a higher level to have a shared Yocto download directory between multiple Docker instance or between Docker and native Yocto
+* Complete the Mender support + doc
+* Validate completely the memory mapping including raw NAND and UBI volumes amongs all the concerned recipes
+
 ## Dependencies
 This build workspace depends on:
 
@@ -118,6 +137,9 @@ $ git config --global status.submoduleSummary true
    ```
    The ```--rm``` argument is used to make the container as temporary and to delete it when we quit. The ```-it``` stands for interactive (i) and tty (t) to open a terminal directly connecting the host therminal to the container's internal terminal.
    > **Note:** This command will be used each time you will need to launch the Yocto building Docker container.
+
+   > **Note 2:** You can also use the argument ```--hostname=<hostname>``` when you start the container to give it a constant hostname instead of the random generator one.
+
 7. Once inside the container, enter the poky directory to configure the build system
    ```shell
    build@dfe8e4eeb96f:~$ cd poky
@@ -245,18 +267,94 @@ The following setup has to be done only once and can be passed for the next buil
    ${BSPDIR}/poky/meta-poky \
    "
    ```
-2. **Speficy the machine, location of source archived** by editiing the file local.conf inside the directory ```poky/conf```:
+2. **Speficy the machine, location of source archived** by editing the file local.conf inside the directory ```poky/conf```:
    ```shell
    $ cd wifx-yocto-lorix-workspace/poky   # if not already there
    $ nano conf/local.conf
    ```
    With the following content:
    ```
-   $ TODO
+   [...]
+   # LORIX One NAND memory based (256MB NAND version)
+   MACHINE ??= "lorix-one"
+   or
+   # LORIX One NAND memory based (512MB NAND version)
+   MACHINE ??= "lorix-one-512"
+   or
+   # LORIX One SD-Card memory based (256MB NAND version)
+   MACHINE ??= "lorix-one-sd"
+   or
+   # LORIX One SD-Card memory based (512MB NAND version)
+   MACHINE ??= "lorix-one-512-sd"
+   [...]
+   # Docker users
+   # Download dir must be outsite of the Docker container otherwise it will be deleted each time the container is deleted
+   # At the moment, the most simple is to let this value by default
+   DL_DIR ?= "your_download_directory_path"
+   [...]
+   # Not definitive, to be validated, just create a smaller image
+   GLIBC_GENERATE_LOCALES = "en_US.UTF-8"
+   IMAGE_LINGUAS ?= "en-us"
+   [...]
+   PACKAGE_CLASSES ?= "package_ipk"
+   [...]
+   # Standard image
+   EXTRA_IMAGE_FEATURES ?= ""
+   # Developpement image, with root user and without password
+   EXTRA_IMAGE_FEATURES ?= "debug-tweaks"
+   [...]
+   USER_CLASSES ?= "buildstats image-mklibs image-prelink"
+   [...]
+   ```
+   > **Note:** Machine names have changed and have been simplified. The whole recipes match (or should) for this new OS release.
+
+   Useful to create depencies graph and more details about packages size however is longer to compile and takes more space.
+   ```
+   INHERIT += "buildhistory"
+   BUILDHISTORY_COMMIT = "1"
+   ```
+   To remove work files after the build system has finished and reduce the overall system size, activate the option with this line in end of file:
+   ```
+   INHERIT += "rm_work"
    ```
 
+   And addionnal Mender related content:<br/>
+   <span style="color:red">Under development, not stable yet</span>
+   ```
+   INHERIT += "wifx-full"
+   #INHERIT += "mender-full-ubi"
+   #INHERIT += "mender-standalone"
 
+   MENDER_ARTIFACT_NAME = "wifx-20181102A"
+   ```
 
+3. Build the Wifx standard image
+   ```shell
+   $ bitbake wifx-image-minimal
+   ```
+   Typical bitbake output:
+   ```
+   Build Configuration:
+   BB_VERSION           = "1.38.0"
+   BUILD_SYS            = "x86_64-linux"
+   NATIVELSBSTRING      = "universal"
+   TARGET_SYS           = "arm-poky-linux-gnueabi"
+   MACHINE              = "lorix-one"
+   DISTRO               = "poky-wifx"
+   DISTRO_VERSION       = "2.5.2"
+   TUNE_FEATURES        = "arm armv7a vfp thumb neon callconvention-hard cortexa5"
+   TARGET_FPU           = "hard"
+   meta
+   meta-poky
+   meta-yocto-bsp       = "sumo:623b77885051174d0e05198843e739110977bd18"
+   meta-oe
+   meta-networking
+   meta-python
+   meta-multimedia      = "sumo:8760facba1bceb299b3613b8955621ddaa3d4c3f"
+   meta-wifx            = "sumo:c4af72a63bfefd4e3a58ff79a82e3c1964a0d544"
+   meta-wifx-lorix      = "sumo:e3675bb48f1bbeaf21cf3b89b7434f3c398ea076"
+   ```
+   Maintainers: Yannick Lanz <yannick.lanz@wifx.net>
 
 
 
