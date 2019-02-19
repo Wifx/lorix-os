@@ -44,6 +44,7 @@ This build workspace depends on:
   Status: Important work in progress, not stable and highly subject to huge modification
 
 * **meta-wifx-mender**<br />
+  <span style="color:red">Not released</span><br />
   URI: [https://git.wifx.net/wifx/next/meta-wifx-mender.git](https://git.wifx.net/wifx/next/meta-wifx-mender.git)<br />
   Branch: sumo<br />
   Status: Important work in progress, not stable and highly subject to huge modification
