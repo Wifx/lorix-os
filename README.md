@@ -13,8 +13,10 @@
 
 | Memory version | Overlayfs | Atomic update |
 | -------------- | ------------- | ----- |
-| 256MB          | <span style="color:green">Done</span> | <span style="color:orange">In progress</span> |
-| 512MB          | <span style="color:orange">On going</span> | <span style="color:orange">In progress</span> |
+| 256MB NAND     | <span style="color:green">Done</span> | <span style="color:orange">In progress</span> |
+| 256MB SDCard   | <span style="color:red">Not started</span> | <span style="color:red">Not started</span> |
+| 512MB NAND     | <span style="color:orange">On going</span> | <span style="color:orange">In progress</span> |
+| 512MB SDCard   | <span style="color:red">Not started</span> | <span style="color:red">Not started</span> |
 
 Details:
 * **Overlayfs:** Dual partition design with data partition mounted as overlayfs over a single rootfs
@@ -306,6 +308,12 @@ The following setup has to be done only once and can be passed for the next buil
    USER_CLASSES ?= "buildstats image-mklibs image-prelink"
    [...]
    ```
+   And addionnal Wifx image creation related content:<br/>
+   <span style="color:red">Under development, required at the moment but could change</span>
+   ```
+   INHERIT += "wifx-full"
+   ```
+
    > **Note:** Machine names have changed and have been simplified. The whole recipes match (or should) for this new OS release.
 
    Useful to create depencies graph and more details about packages size however is longer to compile and takes more space.
@@ -321,7 +329,6 @@ The following setup has to be done only once and can be passed for the next buil
    And addionnal Mender related content:<br/>
    <span style="color:red">Under development, not stable yet</span>
    ```
-   INHERIT += "wifx-full"
    #INHERIT += "mender-full-ubi"
    #INHERIT += "mender-standalone"
 
