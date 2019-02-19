@@ -15,13 +15,12 @@
 | -------------- | ------------- | ----- |
 | 256MB NAND     | <span style="color:green">Done</span> | <span style="color:orange">In progress</span> |
 | 256MB SDCard   | <span style="color:red">Not started</span> | <span style="color:red">Not started</span> |
-| 512MB NAND     | <span style="color:orange">On going</span> | <span style="color:orange">In progress</span> |
+| 512MB NAND     | <span style="color:green">Done</span> | <span style="color:orange">In progress</span> |
 | 512MB SDCard   | <span style="color:red">Not started</span> | <span style="color:red">Not started</span> |
 
 Details:
 * **Overlayfs:** Dual partition design with data partition mounted as overlayfs over a single rootfs
 * **Atomic update:** Triple partition design with data partition mounted as overlayfs over one of the two rootfs. Update of the "sleeping" rootfs using Mender.
-
 
 ## TODO
 
@@ -363,8 +362,3 @@ The following setup has to be done only once and can be passed for the next buil
    meta-wifx-lorix      = "sumo:e3675bb48f1bbeaf21cf3b89b7434f3c398ea076"
    ```
    Maintainers: Yannick Lanz <yannick.lanz@wifx.net>
-
-
-
-
-
