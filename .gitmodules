@@ -1,7 +1,7 @@
 [submodule "meta-wifx"]
 	path = meta-wifx
 	url = https://git.wifx.net/wifx/next/meta-wifx.git
-	branch = sumo
+	branch = sumo-openrc
 [submodule "meta-wifx-lorix"]
 	path = meta-wifx-lorix
 	url = https://git.wifx.net/wifx/next/meta-wifx-lorix.git
@@ -17,4 +17,12 @@
 [submodule "poky"]
 	path = poky
 	url = git://git.yoctoproject.org/poky
+	branch = sumo
+[submodule "meta-openrc"]
+	path = meta-openrc
+	url = https://git.wifx.net/wifx/next/meta-openrc.git
+	branch = sumo
+[submodule "meta-wifx-openrc"]
+	path = meta-wifx-openrc
+	url = https://git.wifx.net/wifx/next/meta-wifx-openrc.git
 	branch = sumo
