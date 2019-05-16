@@ -18,10 +18,6 @@
 	path = poky
 	url = git://git.yoctoproject.org/poky
 	branch = sumo
-[submodule "meta-openrc"]
-	path = meta-openrc
-	url = https://git.wifx.net/wifx/next/meta-openrc.git
-	branch = sumo
 [submodule "meta-wifx-openrc"]
 	path = meta-wifx-openrc
 	url = https://git.wifx.net/wifx/next/meta-wifx-openrc.git
