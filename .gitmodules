@@ -1,15 +1,15 @@
 [submodule "meta-wifx"]
 	path = meta-wifx
-	url = https://git.wifx.net/wifx/next/meta-wifx.git
-	branch = sumo-openrc
+	url = ../meta-wifx.git
+	branch = sumo
 [submodule "meta-wifx-lorix"]
 	path = meta-wifx-lorix
-	url = https://git.wifx.net/wifx/next/meta-wifx-lorix.git
+	url = ../meta-wifx-lorix.git
 	branch = sumo
 [submodule "meta-wifx-mender"]
 	path = meta-wifx-mender
-	url = https://git.wifx.net/wifx/next/meta-wifx-mender.git
-	branch = sumo-openrc
+	url = ../meta-wifx-mender.git
+	branch = sumo
 [submodule "meta-openembedded"]
 	path = meta-openembedded
 	url = git://git.openembedded.org/meta-openembedded
@@ -20,5 +20,5 @@
 	branch = sumo
 [submodule "meta-wifx-openrc"]
 	path = meta-wifx-openrc
-	url = https://git.wifx.net/wifx/next/meta-wifx-openrc.git
+	url = ../meta-wifx-openrc.git
 	branch = sumo
