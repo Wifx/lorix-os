@@ -1,50 +1,62 @@
-# This workspace provides all the material needed to build a Yocto distribution for the LORIX One Wifx's gateway
+# Wifx's LORIX family LOROS distro OS
+This workspace provides all the material needed to build a LOROS distribution for the LORIX One Wifx's gateway
 
 ## Supported machine
 * LORIX One products (256 and 512MB versions)
 
 ## Sources
 
-* wifx-yocto-lorix-workspace<br />
-  URI: [https://git.wifx.net/wifx/next/wifx-yocto-lorix-workspace.git](https://git.wifx.net/wifx/next/wifx-yocto-lorix-workspace.git)<br />
+* loros<br />
+  URI: [https://git.wifx.net/yocto/loros.git](https://git.wifx.net/yocto/loros.git)<br />
   Branch: sumo
 
 ## Actual status
 
-| Memory version | Overlayfs | Atomic update |
-| -------------- | ------------- | ----- |
-| 256MB NAND     | <span style="color:green">Done</span> | <span style="color:orange">In progress</span> |
-| 256MB SDCard   | <span style="color:red">Not started</span> | <span style="color:red">Not started</span> |
-| 512MB NAND     | <span style="color:green">Done</span> | <span style="color:orange">In progress</span> |
-| 512MB SDCard   | <span style="color:red">Not started</span> | <span style="color:red">Not started</span> |
+### Hardware support
+| Memory version  | Overlayfs | Atomic update | Watchdog |
+| --------------- | --------- | ------------- | -------- |
+| 256MB NAND      | <span style="color:green">Done</span> | <span style="color:green">Done</span> | <span style="color:green">Done</span> |
+| 256MB SD-Card   | <span style="color:red">Not started</span> | <span style="color:red">Not started</span> | <span style="color:red">Not started</span> |
+| 512MB NAND      | <span style="color:green">Done</span> | <span style="color:green">Done</span> | <span style="color:green">Done</span> |
+| 512MB SD-Card   | <span style="color:red">Not started</span> | <span style="color:red">Not started</span> | <span style="color:red">Not started</span> |
 
 Details:
 * **Overlayfs:** Dual partition design with data partition mounted as overlayfs over a single rootfs
 * **Atomic update:** Triple partition design with data partition mounted as overlayfs over one of the two rootfs. Update of the "sleeping" rootfs using Mender.
 
+### Software support
+| Software parts  | Description | Status |
+| --------------- | ----------- | ------ |
+| pvisor          | Light process supervisor, to be used<br/> for each process managed by the pmonitord | <span style="color:orange">Stabilization</span> |
+| pmonitord       | Process monitor daemon, handles managed<br/> processes lifecycle from birth to death | <span style="color:red">Active devel</span> |
+| manager         | LORIX unified manager, brings a global<br/>abstraction to manage the system, through<br/>web interface or command line interface | <span style="color:red">Active devel</span> |
+| WPF             | Wifx Packet Forwarder, brings the bridge<br/>between the SX1301 LoRa concentrator<br/>hardware and the LoRa server | <span style="color:orange">Stabilization</span> |
+
 ## TODO
 
-* Support of standard overlayfs design on 512MB memory version (on going)
 * Create doc: Map the Docker directory at a higher level to have a shared Yocto download directory between multiple Docker instance or between Docker and native Yocto
 * Complete the Mender support + doc
-* Validate completely the memory mapping including raw NAND and UBI volumes amongs all the concerned recipes
 
 ## Dependencies
 This build workspace depends on:
 
 * **meta-wifx**<br />
-  URI: [https://git.wifx.net/wifx/next/meta-wifx.git](https://git.wifx.net/wifx/next/meta-wifx.git)<br />
+  URI: [https://git.wifx.net/yocto/meta-wifx.git](https://git.wifx.net/yocto/meta-wifx.git)<br />
   Branch: sumo<br />
   Status: Important work in progress, not stable and highly subject to huge modification
 
 * **meta-wifx-lorix**<br />
-  URI: [https://git.wifx.net/wifx/next/meta-wifx-lorix.git](https://git.wifx.net/wifx/next/meta-wifx-lorix.git)<br />
+  URI: [https://git.wifx.net/yocto/meta-wifx-lorix.git](https://git.wifx.net/yocto/meta-wifx-lorix.git)<br />
   Branch: sumo<br />
   Status: Important work in progress, not stable and highly subject to huge modification
 
 * **meta-wifx-mender**<br />
-  <span style="color:red">Not released</span><br />
-  URI: [https://git.wifx.net/wifx/next/meta-wifx-mender.git](https://git.wifx.net/wifx/next/meta-wifx-mender.git)<br />
+  URI: [https://git.wifx.net/yocto/meta-wifx-mender.git](https://git.wifx.net/yocto/meta-wifx-mender.git)<br />
+  Branch: sumo<br />
+  Status: Important work in progress, not stable and highly subject to huge modification
+
+* **meta-wifx-openrc**<br />
+  URI: [https://git.wifx.net/yocto/meta-wifx-openrc.git](https://git.wifx.net/yocto/meta-wifx-openrc.git)<br />
   Branch: sumo<br />
   Status: Important work in progress, not stable and highly subject to huge modification
 
@@ -68,10 +80,9 @@ The following setup has to be done only once and can be passed for the next buil
 Download the workspace using git<br />
 ```shell
 $ cd work_directory
-$ git clone --recursive -j8 https://git.wifx.net/wifx/next/wifx-yocto-lorix-workspace.git
-$ cd wifx-yocto-lorix-workspace
-$ git submodule update --init
-$ git submodule foreach -q --recursive 'git checkout $(git config -f $toplevel/.gitmodules submodule.$name.branch || echo master)'
+$ git clone --recursive -j8 https://git.wifx.net/yocto/loros.git
+$ cd loros
+$ git submodule update
 ```
 > **Note:** The repositories are subject to change when they will be made publicly available.
 
@@ -87,23 +98,11 @@ $ git config --global status.submoduleSummary true
    1. [Ubuntu](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
    2. [Debian](https://docs.docker.com/install/linux/docker-ce/debian/)
    3. [Fedora](https://docs.docker.com/install/linux/docker-ce/fedora/)
-2. Go inside the right Docker file directory in the workspace repository:<br />
+2. **Go inside the right Docker file directory** in the workspace repository:<br />
    ```shell
-   $ cd work_directory/wifx-yocto-lorix-workspace/tools/docker/yocto-ubuntu-18.04
+   $ cd work_directory/loros/tools/docker/yocto-ubuntu-18.04
    ```
-3. Retrieve your current Linux user ID:
-   ```shell
-   $ id -u
-   1000
-   ```
-   This ID is 1000 by default for the first user however, it can't be different sometime. It's important to not just let 1000 at the next step.
-4. **Modify the user ID in the file Dockerfile** of the current directory at the user creation line:
-   ```docker
-   # Create a non-root user that will perform the actual build
-   RUN id build 2>/dev/null || useradd --uid [previous step found UID] --create-home build  
-   ```
-   > **Note:** Since the files are shared between your native host and the Docker container in read and write mode, **it is important to keep the same user ID between both systems**. It would be however more difficult to use the same Docker container for multiple native system user account (which will not be discussed here).
-5. **Create the Docker image** by building this Dockerfile from its directory:
+3. **Create the Docker image** by building this Dockerfile from its directory:
    ```shell
    $ sudo docker build -t yocto:ubuntu-18.04 .
    Sending build context to Docker daemon  3.584kB
@@ -117,24 +116,56 @@ $ git config --global status.submoduleSummary true
    This Docker image is now available on your system and allows to create easily a container supporting the build of the Yocto system. Based on this system, you are always sure:
      * That the container is clean when you use it since we will use temporary container (deleted when you exit from it)
      * That the container contains all the packages you need to make Bitbake build system and Yocto working well
-   
-   In addition, this container can be easily shared among customers or colleagues.
+4. **Create a user** with rights in host and container:
+
+   The Yocto build process will be done inside the Docker container and thus, files generated inside and shared through a volume should also be readable from outside. An easy solution is to create a user with the same ID inside the container and outside (inside the Docker host).
+
+   The current Docker image create a user namely `build` with the user ID (uid) 5000. You then need to create a user in your host system with the same uid (user name doesn't matter). In our case, we create this user the with name `yocto` and assign a new password:
+   ```shell
+   $ sudo useradd -u 5000 yocto
+   $ sudo passwd yocto
+   New password:
+   Retype new password:
+   passwd: all authentication tokens updated successfully.
+   ```
+   Can you become this user temporary using the `su` command:
+   ```shell
+   user1@host $ su yocto
+   Password:
+   yocto@host $ (you are now yocto)
+   yocto@host $ exit
+   user1@host $ (you are not anymore yocto)
+   ```
+5. **Create a volume for the Docker container**
+
+   Since Yocto generate a lot of files and especially a cache which permits to build "incrementaly" very quickly, it's really convenient to keep this cache outside of the container in order to reuse it even if the container is closed or destroyed. It's also very convenient to share the download directory of Yocto among multiple container (in team for example).
+
+   This volume must be owned by the yocto user in order to be writable from inside the container.
+   ```shell
+   $ sudo mkdir -p /shared/yocto
+   $ sudo chown yocto:yocto /shared/yocto
+   ```
+
 6. **Start the Docker container** and understand the directories mapping<br />
-   We usually edit and modify the Yocto's configuration files (or package recipes) from the build host OS and keep the Docker container to only build the final image. 
+   We usually edit and modify the Yocto's configuration files (or package recipes) from the build host OS and keep the Docker container to only build the final image.
 
    To make the nexts explaination more easy to understand, we will define some values:
    *  **\<host dir\>**<br />
-      The directory ```wifx-yocto-lorix-workspace``` containing your workspace on your host system. This directory is variable and depends really on your own configuration, for example ```/home/you/devel/wifx-yocto-lorix-workspace```
+      The directory ```loros``` containing your workspace on your host system. This directory is variable and depends really on your own configuration, for example ```/home/you/devel/loros```
    *  **\<docker dir\>**<br />
       The directory in the Docker container where should be binded the **\<host directory\>**. This directory is fixed and should ideally ```/home/build```. This is where you are located when you start the Docker container.
+   *  **\<vol host dir\>**<br />
+      The directory used as volume mounting point on the host system which contains the shared state and download material (previously create as `/shared/yocto`)
+   *  **\<vol docker dir\>**<br />
+      The directory used as volume mounting point on the docker system (internaly mounted under `/yocto`)
 
    That being said, we need to start the yocto:ubuntu-18.04 Docker container:
    ```shell
-   $ sudo docker run --rm -it -v <host dir>:<docker dir> yocto:ubuntu-18.04
+   $ sudo docker run --rm -it -v <host dir>:<docker dir> -v <vol host dir>:<vol docker dir> yocto:ubuntu-18.04
    ```
    or
    ```shell
-   $ sudo docker run --rm -it -v <host dir>:/home/build yocto:ubuntu-18.04
+   $ sudo docker run --rm -it -v /home/you/devel/loros:/home/build -v /shared/yocto:/yocto yocto:ubuntu-18.04
    build@dfe8e4eeb96f:~$ # you are now inside the container
    ```
    The ```--rm``` argument is used to make the container as temporary and to delete it when we quit. The ```-it``` stands for interactive (i) and tty (t) to open a terminal directly connecting the host therminal to the container's internal terminal.
@@ -146,16 +177,17 @@ $ git config --global status.submoduleSummary true
    ```shell
    build@dfe8e4eeb96f:~$ cd poky
    ```
-8. **Initialize the build directory**
-   ```shell
-   build@dfe8e4eeb96f:~$ source oe-init-build-env
-   ```
-   This will create the build directory in which all the work will be done. You can also have alternative build directories with different configurations or different machines.
-   To do so, you can create another build directory with a different name as follow:
-   ```shell
-   build@dfe8e4eeb96f:~$ source oe-init-build-env build-alt-name
-   ```
-   > **Note:** For example, you could have the directories build (standard configuration) and build-sd (used to build the SD card image version).
+8.  **Initialize the build directory**
+    ```shell
+    build@dfe8e4eeb96f:~$ source oe-init-build-env
+    ```
+    This will create the build directory in which all the work will be done. You can also have alternative build directories with different configurations  or different machines.
+    To do so, you can create another build directory with a different name as follow:
+    ```shell
+    build@dfe8e4eeb96f:~$ source oe-init-build-env build-alt-name
+    ```
+    > **Note:** For example, you could have the directories build (standard configuration) and build-sd (used to build the SD card image version).
+
 9. The previous step has created the build directory in which we define the build configuration parameters. The following configuration steps are common between docker and native build system since we edit mostlikely the configuration file from inside the host system.
 
 ## Configure the build system using your native host system
@@ -177,7 +209,7 @@ $ git config --global status.submoduleSummary true
       ```
 2. Enter the poky directory to configure the build system
    ```shell
-   $ cd wifx-yocto-lorix-workspace # if not already there
+   $ cd loros # if not already there
    $ cd poky
    ```
 3. **Initialize the build directory**
@@ -193,128 +225,100 @@ $ git config --global status.submoduleSummary true
 
 ## LORIX One's Yocto OS distribution configuration
 
-The following setup has to be done only once and can be passed for the next build however, some of the configuration parameters described in this section can be changed following your needs. For example, the machine could be changed from lorix-one to lorix-one-512 or the atomic mender update subsystem could be enabled. 
+The following setup has to be done only once and can be passed for the next build however, some of the configuration parameters described in this section can be changed following your needs. For example, the machine could be changed from lorix-one to lorix-one-512 or the atomic mender update subsystem could be enabled.
 
-> **Note:** The descriptions here are **for both native and docker build system**. It will be described of each version when needed but assumed by default to be done from the native host system.<br/> 
+> **Note:** The descriptions here are **for both native and docker build system**. It will be described of each version when needed but assumed by default to be done from the native host system.<br/>
 > In addition, since the Docker container is only used to compile the Yocto image, we will mostly working in the native system (linked to the Docker container) when we need to edit or configure a file.
 
-1. **Configure the Yocto global layers** by editing the file bblayers.conf inside the directory ```poky/conf```:
+1. **Copy default configuration files** from the loros/tools directory:
    ```shell
-      $ cd wifx-yocto-lorix-workspace/poky   # if not already there
-      $ nano conf/bblayers.conf
-      ```
-   With the following content:
-
-   **Without mender support**
+      $ cd loros
+      $ cp tools/configs/local.conf poky/build/conf
+      $ cp tools/configs/bblayers.conf poky/build/conf
    ```
-   # POKY_BBLAYERS_CONF_VERSION is increased each time build/conf/bblayers.conf
-   # changes incompatibly
-   POKY_BBLAYERS_CONF_VERSION = "2"
 
-   BBPATH = "${TOPDIR}"
-   BBFILES ?= ""
+2. **Customize default configuration** of the local.conf file:
 
-   BSPDIR := "${@os.path.abspath(os.path.dirname(d.getVar('FILE', True)) + '/../../..')}"
+   The default local.conf contains the following configuration:
+   ```python
+   # Standard LOROS inheritances
+   INHERIT += "wifx-full"
+   INHERIT += "mender-full-ubi"
+   INHERIT += "mender-standalone"
 
-   BBLAYERS ?= " \
-   ${BSPDIR}/poky/meta \
-   ${BSPDIR}/poky/meta-poky \
-   ${BSPDIR}/poky/meta-yocto-bsp \
-   ${BSPDIR}/meta-openembedded/meta-oe \
-   ${BSPDIR}/meta-openembedded/meta-networking \
-   ${BSPDIR}/meta-openembedded/meta-python \
-   ${BSPDIR}/meta-openembedded/meta-multimedia \
-   ${BSPDIR}/meta-wifx \
-   ${BSPDIR}/meta-wifx-lorix \
-   "
+   # LOROS distribution
+   DISTRO = "wifx-loros"
 
-   #${BSPDIR}/meta-wifx-mender
-   #/home/build/shared/sumo-next/poky/build/workspace
+   # Default machine
+   MACHINE ?= "lorix-one-256"
+   #MACHINE ?= "lorix-one-512"
 
-   BBLAYERS_NON_REMOVABLE ?= " \
-   ${BSPDIR}/poky/meta \
-   ${BSPDIR}/poky/meta-poky \
-   "
-   ```
-   **With mender support**<br />
-   <span style="color:red">Under development, not stable yet</span>
-   ```
-   # POKY_BBLAYERS_CONF_VERSION is increased each time build/conf/bblayers.conf
-   # changes incompatibly
-   POKY_BBLAYERS_CONF_VERSION = "2"
+   # Download and sstate directory (ajusted with yocto:ubuntu-18.04 docker image)
+   DL_DIR ?= "/yocto/downloads"
+   SSTATE_DIR ?= "/yocto/sstate-${MACHINE}"
 
-   BBPATH = "${TOPDIR}"
-   BBFILES ?= ""
+   # ENABLE_BINARY_LOCALE_GENERATION controls the generation of binary locale
+   # packages at build time using qemu-native. Disabling it (by setting it to 0)
+   # will save some build time at the expense of breaking i18n on devices with
+   # less than 128MB RAM.
+   ENABLE_BINARY_LOCALE_GENERATION = "1"
 
-   BSPDIR := "${@os.path.abspath(os.path.dirname(d.getVar('FILE', True)) + '/../../..')}"
-
-   BBLAYERS ?= " \
-   ${BSPDIR}/poky/meta \
-   ${BSPDIR}/poky/meta-poky \
-   ${BSPDIR}/poky/meta-yocto-bsp \
-   ${BSPDIR}/meta-openembedded/meta-oe \
-   ${BSPDIR}/meta-openembedded/meta-networking \
-   ${BSPDIR}/meta-openembedded/meta-python \
-   ${BSPDIR}/meta-openembedded/meta-multimedia \
-   ${BSPDIR}/meta-wifx \
-   ${BSPDIR}/meta-wifx-lorix \
-   ${BSPDIR}/meta-wifx-mender \
-   "
-
-   #${BSPDIR}/meta-wifx-mender
-   #/home/build/shared/sumo-next/poky/build/workspace
-
-   BBLAYERS_NON_REMOVABLE ?= " \
-   ${BSPDIR}/poky/meta \
-   ${BSPDIR}/poky/meta-poky \
-   "
-   ```
-2. **Speficy the machine, location of source archived** by editing the file local.conf inside the directory ```poky/conf```:
-   ```shell
-   $ cd wifx-yocto-lorix-workspace/poky   # if not already there
-   $ nano conf/local.conf
-   ```
-   With the following content:
-   ```
-   [...]
-   # LORIX One NAND memory based (256MB NAND version)
-   MACHINE ??= "lorix-one"
-   or
-   # LORIX One NAND memory based (512MB NAND version)
-   MACHINE ??= "lorix-one-512"
-   or
-   # LORIX One SD-Card memory based (256MB NAND version)
-   MACHINE ??= "lorix-one-sd"
-   or
-   # LORIX One SD-Card memory based (512MB NAND version)
-   MACHINE ??= "lorix-one-512-sd"
-   [...]
-   # Docker users
-   # Download dir must be outsite of the Docker container otherwise it will be deleted each time the container is deleted
-   # At the moment, the most simple is to let this value by default
-   DL_DIR ?= "your_download_directory_path"
-   [...]
-   # Not definitive, to be validated, just create a smaller image
+   # Set GLIBC_GENERATE_LOCALES to the locales you wish to generate should you not
+   # wish to perform the time-consuming step of generating all LIBC locales.
+   # NOTE: If removing en_US.UTF-8 you will also need to uncomment, and set
+   # appropriate value for IMAGE_LINGUAS.
+   # WARNING: this may break localisation!
    GLIBC_GENERATE_LOCALES = "en_US.UTF-8"
    IMAGE_LINGUAS ?= "en-us"
-   [...]
+
    PACKAGE_CLASSES ?= "package_ipk"
-   [...]
-   # Standard image
-   EXTRA_IMAGE_FEATURES ?= ""
-   # Developpement image, with root user and without password
+
    EXTRA_IMAGE_FEATURES ?= "debug-tweaks"
-   [...]
    USER_CLASSES ?= "buildstats image-mklibs image-prelink"
-   [...]
-   ```
-   And addionnal Wifx image creation related content:<br/>
-   <span style="color:red">Under development, required at the moment but could change</span>
-   ```
-   INHERIT += "wifx-full"
+   # By default disable interactive patch resolution (tasks will just fail instead):
+   PATCHRESOLVE = "noop"
+
+   #
+   # Disk Space Monitoring during the build
+   #
+   # Monitor the disk space during the build. If there is less that 1GB of space or less
+   # than 100K inodes in any key build location (TMPDIR, DL_DIR, SSTATE_DIR), gracefully
+   # shutdown the build. If there is less that 100MB or 1K inodes, perform a hard abort
+   # of the build. The reason for this is that running completely out of space can corrupt
+   # files and damages the build in ways which may not be easily recoverable.
+   # It's necesary to monitor /tmp, if there is no space left the build will fail
+   # with very exotic errors.
+   BB_DISKMON_DIRS ??= "\
+      STOPTASKS,${TMPDIR},1G,100K \
+      STOPTASKS,${DL_DIR},1G,100K \
+      STOPTASKS,${SSTATE_DIR},1G,100K \
+      STOPTASKS,/tmp,100M,100K \
+      ABORT,${TMPDIR},100M,1K \
+      ABORT,${DL_DIR},100M,1K \
+      ABORT,${SSTATE_DIR},100M,1K \
+      ABORT,/tmp,10M,1K"
+
+   # CONF_VERSION is increased each time build/conf/ changes incompatibly and is used to
+   # track the version of this file when it was generated. This can safely be ignored if
+   # this doesn't mean anything to you.
+   CONF_VERSION = "1"
+
+   INHERIT += "buildhistory"
+   BUILDHISTORY_COMMIT = "1"
    ```
 
+   **The practical parameters to change are:**
+
+   * The machine the image is built for
+      - lorix-one-256
+      - lorix-one-512
+   * The download directory (DL_DIR) and defined by default as /yocto/downloads to match the docker container previously configured
+   * The sstate cache directory (SSTATE_DIR) defined by default as /yocto/sstate-<machine> (for example /yocto/sstate-lorix-one-256)
+
+
    > **Note:** Machine names have changed and have been simplified. The whole recipes match (or should) for this new OS release.
+
+   > **Note:** The directory should not be accessed by multiple running instance of Yocto at the same time and thus can not be really shared for multiple user. The advantage is really for incremental work and some modification inside the loros recipes could need a almost conplete system generation. If you work on two very different flavour of LOROS, it's better to have two different sstate directory.
 
    Useful to create depencies graph and more details about packages size however is longer to compile and takes more space.
    ```
@@ -324,15 +328,6 @@ The following setup has to be done only once and can be passed for the next buil
    To remove work files after the build system has finished and reduce the overall system size, activate the option with this line in end of file:
    ```
    INHERIT += "rm_work"
-   ```
-
-   And addionnal Mender related content:<br/>
-   <span style="color:red">Under development, not stable yet</span>
-   ```
-   #INHERIT += "mender-full-ubi"
-   #INHERIT += "mender-standalone"
-
-   MENDER_ARTIFACT_NAME = "wifx-20181102A"
    ```
 
 3. Build the Wifx standard image
@@ -345,20 +340,33 @@ The following setup has to be done only once and can be passed for the next buil
    BB_VERSION           = "1.38.0"
    BUILD_SYS            = "x86_64-linux"
    NATIVELSBSTRING      = "universal"
-   TARGET_SYS           = "arm-poky-linux-gnueabi"
-   MACHINE              = "lorix-one"
-   DISTRO               = "poky-wifx"
-   DISTRO_VERSION       = "2.5.2"
+   TARGET_SYS           = "arm-loros-linux-gnueabi"
+   MACHINE              = "lorix-one-512"
+   DISTRO               = "wifx-loros"
+   DISTRO_VERSION       = "0.0.1-beta.1"
    TUNE_FEATURES        = "arm armv7a vfp thumb neon callconvention-hard cortexa5"
    TARGET_FPU           = "hard"
    meta
    meta-poky
-   meta-yocto-bsp       = "sumo:623b77885051174d0e05198843e739110977bd18"
+   meta-yocto-bsp       = "sumo:7aae52eae2e3a8856cc645ff9f4344e30f3a201a"
    meta-oe
    meta-networking
    meta-python
    meta-multimedia      = "sumo:8760facba1bceb299b3613b8955621ddaa3d4c3f"
-   meta-wifx            = "sumo:c4af72a63bfefd4e3a58ff79a82e3c1964a0d544"
-   meta-wifx-lorix      = "sumo:e3675bb48f1bbeaf21cf3b89b7434f3c398ea076"
+   meta-wifx            = "sumo:9abcf8948916f2b45e62ea2ceeb74c7393a36a8d"
+   meta-wifx-lorix      = "sumo:a7134dc1cfc31f6ad8a2e5f79f044a4bfcd0f966"
+   meta-wifx-openrc     = "sumo:e5354f63e708d7711736f6244f2d16362e53c5b8"
+   meta-wifx-mender     = "sumo:47075a25c9a146e00139b7b5297e106b5dd26f5c"
    ```
-   Maintainers: Yannick Lanz <yannick.lanz@wifx.net>
+   Maintainers: Wifx's R&D team <red@wifx.net>
+
+4. **Exploit the build result** from the host system
+
+   Since we have a volume mounted for between the host and the docker container where the LOROS workspace directory is located, the build result can be found from inside the container but also from outside.
+
+   If you followed our directory volume convention:
+     * From inside the container<br/>
+       the result images will be found in `/home/build/poky/build/tmp/deploy/images/<machine>`
+     * From outside the container<br />
+       the result images will be found in `/home/you/devel/loros/poky/build/tmp/deploy/images/<machine>`
+
