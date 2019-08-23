@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for volatiles directories/symlinks/files on boot
 - cron daemon OpenRC support
 - NetworkManager DNS caching with dnsmasq
+- Integration of manager v0.0.3
 - Integration of manager-gui v0.0.1-beta.1
 ### Changed
 - Default user changed from root without password to admin/lorix4u
