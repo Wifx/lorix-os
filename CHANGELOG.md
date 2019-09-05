@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.0.3-alpha] - 2019-09-04
 ### Added
 - libpam
 - Dynamic motd generation (using modified libpam)
@@ -14,8 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - NetworkManager DNS caching with dnsmasq
 - Integration of manager v0.0.3
 - Integration of manager-gui v0.0.1-beta.1
+- Distro codename in os-release file
 ### Changed
 - Default user changed from root without password to admin/lorix4u
+- OpenRC init scripts timeout from 60 to 120 seconds
 
 ### Removed
 - nano dependency on file (the Linux tool) and file itself to reduce image size
