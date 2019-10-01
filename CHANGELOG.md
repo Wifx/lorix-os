@@ -4,7 +4,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-beta] - 2019-10-02
+
+### Added
+- Add legacy SPI device support
+- Added LORIOT packet forwarder
+- dnsmasq support
+- Added pmonitor v0.2.1
+- Added pvisor v0.1.2
+- Added pmcli v0.1.0
+
+### Changed
+- Update manager to v0.1.1
+- Update manager-ui to v0.1.1
+- No LoRa forwarder running by default
+
 ## [0.0.3-alpha] - 2019-09-04
+
 ### Added
 - libpam
 - Dynamic motd generation (using modified libpam)
@@ -15,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Integration of manager v0.0.3
 - Integration of manager-gui v0.0.1-beta.1
 - Distro codename in os-release file
+
 ### Changed
 - Default user changed from root without password to admin/lorix4u
 - OpenRC init scripts timeout from 60 to 120 seconds
@@ -27,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bad symlink for wpf to wifx-packet-forwarder binary
 
 ## [0.0.2-beta.1] - 2019-08-09
+
 ### Added
 - Status LED blinking to show first init work in progress status
 - Hardware watchdog support
@@ -43,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated motd with LOROS logo and with release information (build date, workspace hash)
 
 ## [0.0.1-beta.1] - 2019-07-10
+
 ### Added
 - nmtui configuration util to configure more easily the NetworkManager with CLI
 - LOROS unified manager including web interface (still needs work like certificate generation)<br/>
@@ -58,6 +77,7 @@ Including OpenRC boot script with supervisor management (respawn auto)
 - UBI missing PEBs for bad PEB handling
 
 ## [0.0.1-beta] - 2019-07-03
+
 ### Added
 - LOROS release information in file `<loros>/release.conf`
 - OPKG packages manager follows this release information
