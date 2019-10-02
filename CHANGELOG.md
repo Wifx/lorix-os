@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update manager to v0.1.1
 - Update manager-ui to v0.1.1
 - No LoRa forwarder running by default
+- The hostname is now 'lorix-one-xxxxxx' whre xxxxxx are the 6 last chars of the mac address
 
 ## [0.0.3-alpha] - 2019-09-04
 
