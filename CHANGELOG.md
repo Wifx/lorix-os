@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Add dynamic hostname generation on boot and based on the eth0 MAC address last 3 Bytes
+
+### Changed
+- LOROS text description in motd
+- Update manager to v0.1.2
+- Update manager-ui to v0.1.3
+- Update pmonitor to v0.2.2
+- Update Mender client to v2.1.0
+- Update Mender artifact generator to v3.1.0
+
 ## [0.1.0-beta] - 2019-10-02
 
 ### Added
