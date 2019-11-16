@@ -30,7 +30,7 @@ Details:
 | pvisor          | Light process supervisor, to be used<br/> for each process managed by the pmonitord | <span style="color:orange">Stabilization</span> |
 | pmonitord       | Process monitor daemon, handles managed<br/> processes lifecycle from birth to death | <span style="color:red">Active devel</span> |
 | manager         | LORIX unified manager, brings a global<br/>abstraction to manage the system, through<br/>web interface or command line interface | <span style="color:red">Active devel</span> |
-| WPF             | Wifx Packet Forwarder, brings the bridge<br/>between the SX1301 LoRa concentrator<br/>hardware and the LoRa server | <span style="color:orange">Stabilization</span> |
+| WPF             | Wifx Packet Forwarder, brings the bridge<br/>between the SX1301 LoRa concentrator<br/>hardware and the LoRa Network Server | <span style="color:orange">Stabilization</span> |
 
 ## TODO
 
