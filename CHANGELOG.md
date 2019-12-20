@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add dynamic hostname generation on boot and based on the eth0 MAC address last 3 Bytes
 
 ### Changed
-- LOROS text description in motd
+- LORIX OS text description in motd
 - Update manager to v0.1.2
 - Update manager-ui to v0.1.3
 - Update pmonitor to v0.2.2
@@ -72,17 +72,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Integration of lora-gateway-bridge v3.0.1
 
 ### Changed
-- Updated motd with LOROS logo and with release information (build date, workspace hash)
+- Updated motd with LORIX OS logo and with release information (build date, workspace hash)
 
 ## [0.0.1-beta.1] - 2019-07-10
 
 ### Added
 - nmtui configuration util to configure more easily the NetworkManager with CLI
-- LOROS unified manager including web interface (still needs work like certificate generation)<br/>
+- OS unified manager including web interface (still needs work like certificate generation)<br/>
 Including OpenRC boot script with supervisor management (respawn auto)
 - Optimized wimg release image size (almost divided by 2)
 - Created default NetworkManager connection configuration (DHCP by default with 192.168.8.8 static fallback)
-- LOROS workspace build datetime into os-release file
+- Distro workspace build datetime into os-release file
 
 ### Changed
 - Removed 1s u-boot boot time delay
@@ -93,5 +93,5 @@ Including OpenRC boot script with supervisor management (respawn auto)
 ## [0.0.1-beta] - 2019-07-03
 
 ### Added
-- LOROS release information in file `<loros>/release.conf`
+- OS release information in file `<distro>/release.conf`
 - OPKG packages manager follows this release information

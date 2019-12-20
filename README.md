@@ -1,5 +1,5 @@
-# Wifx's LORIX family LOROS distro OS
-This workspace provides all the material needed to build a LOROS distribution for the LORIX One Wifx's gateway
+# Wifx's LORIX family products distro OS
+This workspace provides all the material needed to build a LORIX OS distribution for the LORIX One Wifx's gateway
 
 ## Supported machine
 * LORIX One products (256 and 512MB versions)
