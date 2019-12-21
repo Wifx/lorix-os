@@ -27,10 +27,10 @@ Details:
 ### Software support
 | Software parts  | Description | Status |
 | --------------- | ----------- | ------ |
-| pvisor          | Light process supervisor, to be used<br/> for each process managed by the pmonitord | <span style="color:orange">Stabilization</span> |
-| pmonitord       | Process monitor daemon, handles managed<br/> processes lifecycle from birth to death | <span style="color:red">Active devel</span> |
+| pvisor          | Light process supervisor, to be used<br/> for each process managed by the pmonitord | <span style="color:green">Stable</span> |
+| pmonitord       | Process monitor daemon, handles managed<br/> processes lifecycle from birth to death | <span style="color:green">Stable</span> |
 | manager         | LORIX unified manager, brings a global<br/>abstraction to manage the system, through<br/>web interface or command line interface | <span style="color:red">Active devel</span> |
-| WPF             | Wifx Packet Forwarder, brings the bridge<br/>between the SX1301 LoRa concentrator<br/>hardware and the LoRa Network Server | <span style="color:orange">Stabilization</span> |
+| WPF             | Wifx Packet Forwarder, brings the bridge<br/>between the SX1301 LoRa concentrator<br/>hardware and the LoRa Network Server | <span style="color:green">Stable</span> |
 
 ## TODO
 
@@ -341,22 +341,22 @@ The following setup has to be done only once and can be passed for the next buil
    BUILD_SYS            = "x86_64-linux"
    NATIVELSBSTRING      = "universal"
    TARGET_SYS           = "arm-lorixos-linux-gnueabi"
-   MACHINE              = "lorix-one-512"
+   MACHINE              = "lorix-one-256"
    DISTRO               = "lorix-os"
-   DISTRO_VERSION       = "0.0.1-beta.1"
+   DISTRO_VERSION       = "0.3.0"
    TUNE_FEATURES        = "arm armv7a vfp thumb neon callconvention-hard cortexa5"
    TARGET_FPU           = "hard"
    meta
    meta-poky
-   meta-yocto-bsp       = "sumo:7aae52eae2e3a8856cc645ff9f4344e30f3a201a"
+   meta-yocto-bsp       = "sumo:cbb677e9a09d5dad34404a851f7c23aeb5122465"
    meta-oe
    meta-networking
    meta-python
    meta-multimedia      = "sumo:8760facba1bceb299b3613b8955621ddaa3d4c3f"
-   meta-wifx            = "sumo:9abcf8948916f2b45e62ea2ceeb74c7393a36a8d"
-   meta-wifx-lorix      = "sumo:a7134dc1cfc31f6ad8a2e5f79f044a4bfcd0f966"
-   meta-wifx-openrc     = "sumo:e5354f63e708d7711736f6244f2d16362e53c5b8"
-   meta-wifx-mender     = "sumo:47075a25c9a146e00139b7b5297e106b5dd26f5c"
+   meta-wifx            = "sumo:7b01151b5be4a58c78b63d4678fe662979d56354"
+   meta-wifx-lorix      = "sumo:a501c1fbb609e792adedc993863c7ca2d0ba52c9"
+   meta-wifx-openrc     = "sumo:02c566edb02669956529eab91ad5184780216201"
+   meta-wifx-mender     = "sumo:5e88cb66d98851c662554efceabd081fbe969eef"
    ```
    Maintainers: Wifx's R&D team <red@wifx.net>
 
