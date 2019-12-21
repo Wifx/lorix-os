@@ -242,12 +242,12 @@ The following setup has to be done only once and can be passed for the next buil
    The default local.conf contains the following configuration:
    ```python
    # Standard LOROS inheritances
-   INHERIT += "wifx-full"
+   INHERIT += "wifx-global"
    INHERIT += "mender-full-ubi"
    INHERIT += "mender-standalone"
 
    # LOROS distribution
-   DISTRO = "wifx-loros"
+   DISTRO = "lorix-os"
 
    # Default machine
    MACHINE ?= "lorix-one-256"
@@ -332,7 +332,7 @@ The following setup has to be done only once and can be passed for the next buil
 
 3. Build the Wifx standard image
    ```shell
-   $ bitbake wifx-image-minimal
+   $ bitbake wifx-image-os
    ```
    Typical bitbake output:
    ```
@@ -340,9 +340,9 @@ The following setup has to be done only once and can be passed for the next buil
    BB_VERSION           = "1.38.0"
    BUILD_SYS            = "x86_64-linux"
    NATIVELSBSTRING      = "universal"
-   TARGET_SYS           = "arm-loros-linux-gnueabi"
+   TARGET_SYS           = "arm-lorixos-linux-gnueabi"
    MACHINE              = "lorix-one-512"
-   DISTRO               = "wifx-loros"
+   DISTRO               = "lorix-os"
    DISTRO_VERSION       = "0.0.1-beta.1"
    TUNE_FEATURES        = "arm armv7a vfp thumb neon callconvention-hard cortexa5"
    TARGET_FPU           = "hard"
@@ -362,7 +362,7 @@ The following setup has to be done only once and can be passed for the next buil
 
 4. **Exploit the build result** from the host system
 
-   Since we have a volume mounted for between the host and the docker container where the LOROS workspace directory is located, the build result can be found from inside the container but also from outside.
+   Since we have a volume mounted for between the host and the docker container where the LORIX OS workspace directory is located, the build result can be found from inside the container but also from outside.
 
    If you followed our directory volume convention:
      * From inside the container<br/>
