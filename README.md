@@ -6,8 +6,8 @@ This workspace provides all the material needed to build a LORIX OS distribution
 
 ## Sources
 
-* loros<br />
-  URI: [https://git.wifx.net/yocto/loros.git](https://git.wifx.net/yocto/loros.git)<br />
+* lorix-os<br />
+  URI: [https://git.wifx.net/yocto/lorix-os.git](https://git.wifx.net/yocto/lorix-os.git)<br />
   Branch: sumo
 
 ## Actual status
@@ -80,8 +80,8 @@ The following setup has to be done only once and can be passed for the next buil
 Download the workspace using git<br />
 ```shell
 $ cd work_directory
-$ git clone --recursive -j8 https://git.wifx.net/yocto/loros.git
-$ cd loros
+$ git clone --recursive -j8 https://git.wifx.net/yocto/lorix-os.git
+$ cd lorix-os
 $ git submodule update
 ```
 > **Note:** The repositories are subject to change when they will be made publicly available.
@@ -100,7 +100,7 @@ $ git config --global status.submoduleSummary true
    3. [Fedora](https://docs.docker.com/install/linux/docker-ce/fedora/)
 2. **Go inside the right Docker file directory** in the workspace repository:<br />
    ```shell
-   $ cd work_directory/loros/tools/docker/yocto-ubuntu-18.04
+   $ cd work_directory/lorix-os/tools/docker/yocto-ubuntu-18.04
    ```
 3. **Create the Docker image** by building this Dockerfile from its directory:
    ```shell
@@ -151,7 +151,7 @@ $ git config --global status.submoduleSummary true
 
    To make the nexts explaination more easy to understand, we will define some values:
    *  **\<host dir\>**<br />
-      The directory ```loros``` containing your workspace on your host system. This directory is variable and depends really on your own configuration, for example ```/home/you/devel/loros```
+      The directory ```lorix-os``` containing your workspace on your host system. This directory is variable and depends really on your own configuration, for example ```/home/you/devel/lorix-os```
    *  **\<docker dir\>**<br />
       The directory in the Docker container where should be binded the **\<host directory\>**. This directory is fixed and should ideally ```/home/build```. This is where you are located when you start the Docker container.
    *  **\<vol host dir\>**<br />
@@ -165,7 +165,7 @@ $ git config --global status.submoduleSummary true
    ```
    or
    ```shell
-   $ sudo docker run --rm -it -v /home/you/devel/loros:/home/build -v /shared/yocto:/yocto yocto:ubuntu-18.04
+   $ sudo docker run --rm -it -v /home/you/devel/lorix-os:/home/build -v /shared/yocto:/yocto yocto:ubuntu-18.04
    build@dfe8e4eeb96f:~$ # you are now inside the container
    ```
    The ```--rm``` argument is used to make the container as temporary and to delete it when we quit. The ```-it``` stands for interactive (i) and tty (t) to open a terminal directly connecting the host therminal to the container's internal terminal.
@@ -209,7 +209,7 @@ $ git config --global status.submoduleSummary true
       ```
 2. Enter the poky directory to configure the build system
    ```shell
-   $ cd loros # if not already there
+   $ cd lorix-os # if not already there
    $ cd poky
    ```
 3. **Initialize the build directory**
@@ -230,9 +230,9 @@ The following setup has to be done only once and can be passed for the next buil
 > **Note:** The descriptions here are **for both native and docker build system**. It will be described of each version when needed but assumed by default to be done from the native host system.<br/>
 > In addition, since the Docker container is only used to compile the Yocto image, we will mostly working in the native system (linked to the Docker container) when we need to edit or configure a file.
 
-1. **Copy default configuration files** from the loros/tools directory:
+1. **Copy default configuration files** from the lorix-os/tools directory:
    ```shell
-      $ cd loros
+      $ cd lorix-os
       $ cp tools/configs/local.conf poky/build/conf
       $ cp tools/configs/bblayers.conf poky/build/conf
    ```
@@ -241,12 +241,12 @@ The following setup has to be done only once and can be passed for the next buil
 
    The default local.conf contains the following configuration:
    ```python
-   # Standard LOROS inheritances
+   # Standard LORIX OS inheritances
    INHERIT += "wifx-global"
    INHERIT += "mender-full-ubi"
    INHERIT += "mender-standalone"
 
-   # LOROS distribution
+   # LORIX OS distribution
    DISTRO = "lorix-os"
 
    # Default machine
@@ -318,7 +318,7 @@ The following setup has to be done only once and can be passed for the next buil
 
    > **Note:** Machine names have changed and have been simplified. The whole recipes match (or should) for this new OS release.
 
-   > **Note:** The directory should not be accessed by multiple running instance of Yocto at the same time and thus can not be really shared for multiple user. The advantage is really for incremental work and some modification inside the loros recipes could need a almost conplete system generation. If you work on two very different flavour of LOROS, it's better to have two different sstate directory.
+   > **Note:** The directory should not be accessed by multiple running instance of Yocto at the same time and thus can not be really shared for multiple user. The advantage is really for incremental work and some modification inside the LORIX OS recipes could need a almost conplete system generation. If you work on two very different flavour of LORIX OS, it's better to have two different sstate directory.
 
    Useful to create depencies graph and more details about packages size however is longer to compile and takes more space.
    ```
@@ -368,5 +368,5 @@ The following setup has to be done only once and can be passed for the next buil
      * From inside the container<br/>
        the result images will be found in `/home/build/poky/build/tmp/deploy/images/<machine>`
      * From outside the container<br />
-       the result images will be found in `/home/you/devel/loros/poky/build/tmp/deploy/images/<machine>`
+       the result images will be found in `/home/you/devel/lorix-os/poky/build/tmp/deploy/images/<machine>`
 
