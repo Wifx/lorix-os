@@ -5,9 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- [LOR-277] - Enable hardware crypto acceleration support (used by OpenSSL and OpenSSH)
+
 ## [0.4.0-rc.2] - 2019-12-24
 
-### Changed 
+### Changed
 
 - [LOR-257] - Manager v0.4.2
 
@@ -85,7 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [LOR-174] - Generate releases metadata files
-- [LOR-178] - Add tree command in mainline image 
+- [LOR-178] - Add tree command in mainline image
 - [LOR-93] - Add lora-gateway-bridge pmonitor support
 - [LOR-97] - lora-gateway-bridge yocto recipe (from sources)
 - [LOR-162] - Update a file for dynamic motd from the manager for update notification
