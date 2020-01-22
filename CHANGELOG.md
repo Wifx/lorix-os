@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [LOR-277] - Enable hardware crypto acceleration support (used by OpenSSL and OpenSSH)
+- [LOR-265] - Add 2dBi antenna gain support for AU/US regions
+
+### Changed
+
+- Outdoor / indor antenna profiles are now 2dBi / 4dBi profiles
 
 ## [0.4.0-rc.2] - 2019-12-24
 
