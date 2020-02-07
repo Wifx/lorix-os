@@ -9,9 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- [LOR-277] - Enable hardware crypto acceleration support (used by OpenSSL and OpenSSH)
-- [LOR-265] - Add 2dBi antenna gain support for AU/US regions
-- Basic Station support
+- [LOR-277] Enable hardware crypto acceleration support (used by OpenSSL and OpenSSH)
+- [LOR-265] Add 2dBi antenna gain support for AU/US regions
+- [LOR-71] Basic Station support
+- [LOR-212] Add WPF autoquit_threshold
+- [LOR-256] Add 2dBi antenna files for AU/US 
 
 ### Changed
 
