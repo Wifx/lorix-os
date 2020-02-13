@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.5.0-rc.1] - 2019-02-13
 
 ### Added
 
@@ -13,12 +13,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-265] Add 2dBi antenna gain support for AU/US regions
 - [LOR-71] Basic Station support
 - [LOR-212] Add WPF autoquit_threshold
-- [LOR-256] Add 2dBi antenna files for AU/US 
+- [LOR-256] Add 2dBi antenna files for AU/US
 
 ### Changed
 
 - Outdoor / indor antenna profiles are now 2dBi / 4dBi profiles
 - ChirpStack Gateway Bridge updated to version 3.7.0
+- Use hardware profiles related forwarder configuration files
+- Manager v0.5.0
+- pmonitor v0.4.2
+- pmcli v0.4.0
+- pvisor v0.2.0
 
 ## [0.4.0-rc.2] - 2019-12-24
 
