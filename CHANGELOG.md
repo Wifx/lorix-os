@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 23-04-2020
+
+### Added
+
+- [LOR-286] - iptables modules
+- [LOR-297] - NetworkManager dispatcher for NTP (chrony)
+- [LOR-287] - NetworkManager NTP server option (42) for DHCP
+
+Upgrade
+
+- [LOR-301] - The upgrade process is now compatible with hosted mender
+- [LOR-285] - Add upgrade condition to the release file
+- [LOR-290] - Check if there is enough free space before migrating
+- [LOR-291] - Delete old user /etc after commit (or new after rollback)
+- [LOR-293] - Update condition check
+
+### Changed
+
+Upgrade
+
+- [LOR-303] - Use signed update artifacts
+
+System 
+
+- [LOR-302] - Update manager to v0.6
+
+### Fixed
+
+- [LOR-275] - Version ID not computed correctly in /etc/os-release
+- [LOR-298] - Manager debug log output on serial login
+- [LOR-322] - WPF channel config default setup not done
+- [LOR-323] - traceroute6 returns "sendto: Invalid argument"
+- [LOR-326] - ping and traceroute need root privileges to run
+- [LOR-329] - opkg overlay_root is wrong regarding the overlay
+- [LOR-330] - current version of chrony doesn't support cmd onoffline needed by nm-dispatcher script
+- [LOR-331] - nm-disptacher script return always 1
+- [LOR-334] - chrony daemon displayed as crashed from rc-status but is ok
+
 ## [0.5.0-rc.2] - 2019-02-13
 
 ### Fixed
