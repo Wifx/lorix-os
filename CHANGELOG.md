@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - [LOR-347] - The DHCP should ALWAYS try to connect
+- [LOR-223] - Use pool.ntp.org as default NTP pool
 
 ## [0.6.0] - 23-04-2020
 
