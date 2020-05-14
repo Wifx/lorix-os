@@ -25,12 +25,12 @@ Details:
 * **Atomic update:** Triple partition design with data partition mounted as overlayfs over one of the two rootfs. Update of the "sleeping" rootfs using Mender.
 
 ### Software support
-| Software parts  | Description | Status |
-| --------------- | ----------- | ------ |
-| pvisor          | Light process supervisor, to be used<br/> for each process managed by the pmonitord | <span style="color:green">Stable</span> |
-| pmonitord       | Process monitor daemon, handles managed<br/> processes lifecycle from birth to death | <span style="color:green">Stable</span> |
-| manager         | LORIX unified manager, brings a global<br/>abstraction to manage the system, through<br/>web interface or command line interface | <span style="color:red">Active devel</span> |
-| WPF             | Wifx Packet Forwarder, brings the bridge<br/>between the SX1301 LoRa concentrator<br/>hardware and the LoRa Network Server | <span style="color:green">Stable</span> |
+| Software parts       | Description | Status |
+| -------------------- | ----------- | ------ |
+| pvisor               | Light process supervisor, to be used<br/> for each process managed by the pmonitord | <span style="color:green">Stable</span> |
+| pmonitord            | Process monitor daemon, handles managed<br/> processes lifecycle from birth to death | <span style="color:green">Stable</span> |
+| manager              | LORIX unified manager, brings a global<br/>abstraction to manage the system, through<br/>web interface or command line interface | <span style="color:red">Stable</span> |
+| udp-packet-forwarder | UDP Packet Forwarder, brings the bridge<br/>between the SX1301 LoRa concentrator<br/>hardware and the LoRa Network Server | <span style="color:green">Stable</span> |
 
 ## TODO
 
