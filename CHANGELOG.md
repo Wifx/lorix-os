@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-347] - The DHCP should ALWAYS try to connect
 - [LOR-223] - Use pool.ntp.org as default NTP pool
 - [LOR-360] - Rename the Wifx packet forwader to UDP Packet Forwarder
+- Remove insane skip and improve OpenRC class
 
 ## [0.6.0] - 23-04-2020
 
@@ -35,7 +36,7 @@ Upgrade
 
 - [LOR-303] - Use signed update artifacts
 
-System 
+System
 
 - [LOR-302] - Update manager to v0.6
 
