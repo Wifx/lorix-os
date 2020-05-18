@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-223] - Use pool.ntp.org as default NTP pool
 - [LOR-360] - Rename the Wifx packet forwader to UDP Packet Forwarder
 - Remove insane skip and improve OpenRC class
+- [LOR-365] - Update NetworkManager to 1.22.10, NetworkManager-OpenVPN to 1.8.12
+- [LOR-366] - NetworkManager: use internal DHCP client and remove rdep on dhclient
+- [LOR-367] - NetworkManager: change con params to have IPv4 DHCP client always running
 
 ## [0.6.0] - 23-04-2020
 
