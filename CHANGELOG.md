@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-365] - Update NetworkManager to 1.22.10, NetworkManager-OpenVPN to 1.8.12
 - [LOR-366] - NetworkManager: use internal DHCP client and remove rdep on dhclient
 - [LOR-367] - NetworkManager: change con params to have IPv4 DHCP client always running
+- [LOR-363] - Add net-snmp-server on std image, disabled on 256MB version. OpenRC init script not enabled by default.
 
 ## [0.6.0] - 23-04-2020
 
