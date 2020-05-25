@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-370] - Upgrade ChirpStack to v3.8.0
 - Manager 0.7.0
 - pmonitor 0.5.0
+- pvisor 0.2.1 - Crash bug fix and great stability/performance improvement
 
 ## [0.6.0] - 23-04-2020
 
