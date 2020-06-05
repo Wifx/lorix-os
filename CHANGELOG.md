@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - pmonitor 0.5.0
 - [PMON-72] [PMON-93] - pvisor 0.2.1 - Crash bug fix and great stability/performance improvement
 - [PMON-100] - pvisor 0.2.2 - Stdout/stderr are not treated in real time
+- [LOR-382] - Update Basic Station to 2.0.4-9-g3d5c686
 
 ## [0.6.0] - 23-04-2020
 
