@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.6.1] - Unreleased
+## [1.0.0-rc.1] - 2020-06-07
 
 ### Added
 
@@ -22,8 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-366] - NetworkManager: use internal DHCP client and remove rdep on dhclient
 - [LOR-367] - NetworkManager: change con params to have IPv4 DHCP client always running
 - [LOR-370] - Upgrade ChirpStack to v3.8.0
-- Manager 0.7.0
-- pmonitor 0.5.0
+- Manager 0.8.0
+- pmonitor / pmcli 0.6.0
 - [PMON-72] [PMON-93] - pvisor 0.2.1 - Crash bug fix and great stability/performance improvement
 - [PMON-100] - pvisor 0.2.2 - Stdout/stderr are not treated in real time
 - [LOR-382] - Update Basic Station to 2.0.4-9-g3d5c686
