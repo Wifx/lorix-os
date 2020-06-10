@@ -358,7 +358,7 @@ The following setup has to be done only once and can be passed for the next buil
    meta-wifx-openrc     = "sumo:02c566edb02669956529eab91ad5184780216201"
    meta-wifx-mender     = "sumo:5e88cb66d98851c662554efceabd081fbe969eef"
    ```
-   Maintainers: Wifx's R&D team <red@wifx.net>
+   Maintainers: Wifx's R&D team <support@iot.wifx.net>
 
 4. **Exploit the build result** from the host system
 
