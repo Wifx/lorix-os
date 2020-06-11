@@ -13,6 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0-rc.2] - 2020-06-10
 
+### Changed
+
+  - [LOR-384] - Update support mail address to support@iot.wifx.net
+  - [LOR-392] - Upgrade manager to 0.8.1
+
+### Fixed
+
+  - [LOR-390] - The Basic Station has no valid conf after upgrade from 0.4.0 to 1.0.0
+
 ## [1.0.0-rc.1] - 2020-06-07
 
 ### Added
