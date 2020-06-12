@@ -1,27 +1,27 @@
 [submodule "meta-wifx"]
 	path = meta-wifx
 	url = ../meta-wifx.git
-	branch = sumo
+	branch = zeus
 [submodule "meta-wifx-lorix"]
 	path = meta-wifx-lorix
 	url = ../meta-wifx-lorix.git
-	branch = sumo
+	branch = zeus
 [submodule "meta-wifx-mender"]
 	path = meta-wifx-mender
 	url = ../meta-wifx-mender.git
-	branch = sumo
+	branch = zeus
 [submodule "meta-openembedded"]
 	path = meta-openembedded
 	url = git://git.openembedded.org/meta-openembedded
-	branch = sumo
+	branch = zeus
 [submodule "poky"]
 	path = poky
 	url = git://git.yoctoproject.org/poky
-	branch = sumo
+	branch = zeus
 [submodule "meta-wifx-openrc"]
 	path = meta-wifx-openrc
 	url = ../meta-wifx-openrc.git
-	branch = sumo
+	branch = zeus
 [submodule "meta-rust-bin"]
 	path = meta-rust-bin
 	url = https://github.com/rust-embedded/meta-rust-bin.git
