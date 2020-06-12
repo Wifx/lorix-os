@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changed
 
 - [LOR-394] - BasicStation config migration : skip instead of abort in case of error
+- [LOR-393] - Upgrade manager GUI to 0.8.2
 
 ## [1.0.0-rc.2] - 2020-06-10
 
