@@ -1,0 +1,104 @@
+From dc0874ea96a146a1c8202fbf46c208a9ff525284 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Wed, 17 Apr 2019 10:18:51 +0200
+Subject: [PATCH 2/2] fix alternative conf and init dir support
+
+Previously, INITDIR and CONFDIR could be set from the command line.
+However, they only affected where things were installed and didn't
+update the runtime search paths.
+
+Update to allow the directory names to be specified and restricted to
+SYSCONFDIR.
+
+RC_PKG_ and RC_LOCAL_ are left with the standard names as presumably
+there wouldn't be conflicts in non-system paths.
+---
+ mk/scripts.mk       | 2 ++
+ mk/sys.mk           | 6 ++++--
+ sh/gendepends.sh.in | 3 ++-
+ src/librc/Makefile  | 2 ++
+ src/librc/rc.h.in   | 4 ++--
+ 5 files changed, 12 insertions(+), 5 deletions(-)
+
+diff --git a/mk/scripts.mk b/mk/scripts.mk
+index 81cb1e73..75b5d047 100644
+--- a/mk/scripts.mk
++++ b/mk/scripts.mk
+@@ -22,6 +22,8 @@ _LCL_SED:=		$(shell ${_LCL_SED_SH})
+ SED_REPLACE=	-e 's:@SHELL@:${SH}:'
+ SED_REPLACE+=	-e 's:@LIB@:${LIBNAME}:g'
+ SED_REPLACE+=	-e 's:@SYSCONFDIR@:${SYSCONFDIR}:g'
++SED_REPLACE+=	-e 's:@INITDIRNAME@:${INITDIRNAME}:g'
++SED_REPLACE+=	-e 's:@CONFDIRNAME@:${CONFDIRNAME}:g'
+ SED_REPLACE+=	-e 's:@LIBEXECDIR@:${LIBEXECDIR}:g'
+ SED_REPLACE+=	-e 's:@PREFIX@:${PREFIX}:g'
+ SED_REPLACE+=	-e 's:@BINDIR@:${BINDIR}:g'
+diff --git a/mk/sys.mk b/mk/sys.mk
+index 92bb55ea..7604755e 100644
+--- a/mk/sys.mk
++++ b/mk/sys.mk
+@@ -32,8 +32,10 @@ LOCAL_PREFIX=		$(UPREFIX)/local
+ PICFLAG?=		-fPIC
+ 
+ SYSCONFDIR?=		${PREFIX}/etc
+-INITDIR?=		${SYSCONFDIR}/init.d
+-CONFDIR?=		${SYSCONFDIR}/conf.d
++INITDIRNAME?=		init.d
++CONFDIRNAME?=		conf.d
++INITDIR=		${SYSCONFDIR}/${INITDIRNAME}
++CONFDIR=		${SYSCONFDIR}/${CONFDIRNAME}
+ CONFMODE?=		0644
+ LOCALDIR?=		${SYSCONFDIR}/local.d
+ SYSCTLDIR?=		${SYSCONFDIR}/sysctl.d
+diff --git a/sh/gendepends.sh.in b/sh/gendepends.sh.in
+index 45147e6a..1941e295 100644
+--- a/sh/gendepends.sh.in
++++ b/sh/gendepends.sh.in
+@@ -5,6 +5,7 @@
+ # See the Authors file at the top-level directory of this distribution and
+ # https://github.com/OpenRC/openrc/blob/master/AUTHORS
+ #
++#
+ # This file is part of OpenRC. It is subject to the license terms in
+ # the LICENSE file found in the top-level directory of this
+ # distribution and at https://github.com/OpenRC/openrc/blob/master/LICENSE
+@@ -55,7 +56,7 @@ depend() {
+ 
+ _done_dirs=
+ for _dir in \
+-@SYSCONFDIR@/init.d \
++@SYSCONFDIR@/@INITDIRNAME@ \
+ @PKG_PREFIX@/etc/init.d \
+ @LOCAL_PREFIX@/etc/init.d
+ do
+diff --git a/src/librc/Makefile b/src/librc/Makefile
+index 08c599ef..2771947f 100644
+--- a/src/librc/Makefile
++++ b/src/librc/Makefile
+@@ -17,6 +17,8 @@ include ${MK}/cc.mk
+ SED_CMD=	-e 's:@PREFIX@:${PREFIX}:g'
+ SED_CMD+=	-e 's:@LIB@:${LIBNAME}:g'
+ SED_CMD+=	-e 's:@SYSCONFDIR@:${SYSCONFDIR}:g'
++SED_CMD+=	-e 's:@INITDIRNAME@:${INITDIRNAME}:g'
++SED_CMD+=	-e 's:@CONFDIRNAME@:${CONFDIRNAME}:g'
+ SED_CMD+=	-e 's:@LIBEXECDIR@:${LIBEXECDIR}:g'
+ SED_CMD+=	-e 's:@BINDIR@:${BINDIR}:g'
+ SED_CMD+=	-e 's:@SBINDIR@:${SBINDIR}:g'
+diff --git a/src/librc/rc.h.in b/src/librc/rc.h.in
+index d2e51dc6..febfc8a7 100644
+--- a/src/librc/rc.h.in
++++ b/src/librc/rc.h.in
+@@ -35,8 +35,8 @@ extern "C" {
+ #define RC_SVCDIR               RC_LIBEXECDIR "/init.d"
+ #endif
+ #define RC_RUNLEVELDIR          RC_SYSCONFDIR "/runlevels"
+-#define RC_INITDIR              RC_SYSCONFDIR "/init.d"
+-#define RC_CONFDIR              RC_SYSCONFDIR "/conf.d"
++#define RC_INITDIR              RC_SYSCONFDIR "/@INITDIRNAME@"
++#define RC_CONFDIR              RC_SYSCONFDIR "/@CONFDIRNAME@"
+ #define RC_PLUGINDIR            RC_LIBDIR "/plugins"
+ 
+ #define RC_INIT_FIFO RC_SVCDIR"/init.ctl"
+-- 
+2.17.1
+

@@ -1,0 +1,15 @@
+#!/bin/sh
+# Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
+# All rights reserved.
+
+LED="status"
+
+machine_set_led_heartbeat() {
+    echo "heartbeat" > /sys/class/leds/$LED/trigger
+}
+
+machine_set_led_blinking() {
+    echo "timer" > /sys/class/leds/$LED/trigger
+    echo "50" > /sys/class/leds/$LED/delay_on
+    echo "50" > /sys/class/leds/$LED/delay_off
+}

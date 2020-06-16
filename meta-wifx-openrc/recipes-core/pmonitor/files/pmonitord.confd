@@ -1,0 +1,19 @@
+# /etc/conf.d/pmonitord
+
+# Defines the delay before respawn of the processes monitoring daemon
+RESPAWN_DELAY=2
+
+# Default processes monitoring daemon path
+# DAEMON_PATH=/usr/sbin/pmonitord
+
+# Default processes monitoring daemon general config file
+# CONFIG_DIR=/etc/pmonitor
+# CONFIG_FILE=/etc/pmonitor/config.yml
+# SERVICE_AVAILABLE_DIR=/etc/pmonitor/services-available
+# SERVICE_ENABLED_DIR=/etc/pmonitor/services-enabled
+
+# pvisor Process supervisor binary path
+PVISOR_PATH=/usr/sbin/pvisor
+
+# pvisor Process supervisor communication sockets directory
+PVISOR_SOCKET_DIR=/dev/shm/pmonitor

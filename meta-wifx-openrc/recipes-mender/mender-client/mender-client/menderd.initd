@@ -1,0 +1,25 @@
+#!/sbin/openrc-run
+
+description="Device daemon of Mender - Open source over-the-air software updates for Linux devices"
+name="Mender OTA update service"
+
+# We want to monitor the Mender daemon in case it dies
+# In this case, we wait
+supervisor=supervise-daemon
+respawn_delay="${RESPAWN_DELAY:-2}"
+
+command_user="root"
+command="/usr/bin/mender"
+command_args="-daemon"
+command_background=true
+start_stop_daemon_args="--group root"
+
+pidfile="/var/run/${RC_SVCNAME}.pid"
+
+depend() {
+        use dns
+}
+
+start_pre() {
+        checkpath -d /data/mender -m 0755
+}

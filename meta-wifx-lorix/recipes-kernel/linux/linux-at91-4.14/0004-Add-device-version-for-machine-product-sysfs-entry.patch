@@ -1,0 +1,44 @@
+From ffdc18a458832f647fbcd25da353454fa1977ea0 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Fri, 20 Dec 2019 00:13:49 +0100
+Subject: [PATCH 4/4] Add device version for machine product sysfs entry
+
+---
+ drivers/mfd/pmic-lorix.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drivers/mfd/pmic-lorix.c b/drivers/mfd/pmic-lorix.c
+index f913fffa86cd..98cd56c0c72c 100644
+--- a/drivers/mfd/pmic-lorix.c
++++ b/drivers/mfd/pmic-lorix.c
+@@ -296,6 +296,12 @@ static int reg_feature2_get(struct attiny *attiny, reg_feature2_t *reg_feature2)
+     return ret;
+ }
+ 
++static ssize_t dev_version_show(struct device *dev,
++                struct device_attribute *attr, char *buf)
++{
++    return sprintf(buf, "%s\n", "1.0");
++}
++
+ static ssize_t boot_state_show(struct device *dev,
+                 struct device_attribute *attr, char *buf)
+ {
+@@ -348,12 +354,14 @@ static ssize_t product_type_show(struct device *dev,
+     return sprintf(buf, "%s\n", cache->type);
+ }
+ 
++static DEVICE_ATTR(dev_version, S_IRUGO, dev_version_show, NULL);
+ static DEVICE_ATTR(boot_state, (S_IWUSR|S_IRUSR|S_IWGRP|S_IRGRP|S_IROTH), boot_state_show, boot_state_store);
+ static DEVICE_ATTR(fw_version, S_IRUGO, fw_version_show, NULL);
+ static DEVICE_ATTR(hw_version, S_IRUGO, hw_version_show, NULL);
+ static DEVICE_ATTR(product_name, S_IRUGO, product_name_show, NULL);
+ static DEVICE_ATTR(product_type, S_IRUGO, product_type_show, NULL);
+ static const struct attribute *machine_attrs[] = {
++    &dev_attr_dev_version.attr,
+     &dev_attr_boot_state.attr,
+     &dev_attr_fw_version.attr,
+     &dev_attr_hw_version.attr,
+-- 
+2.17.1
+

@@ -1,0 +1,9 @@
+# /etc/conf.d/manager
+# Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
+# All rights reserved.
+
+# Defines the delay before respawn of the supervised Manager daemon
+RESPAWN_DELAY=2
+
+# Default unified manager daemon path
+# DAEMON_PATH=/usr/sbin/managerd

@@ -1,0 +1,24 @@
+#!/sbin/openrc-run
+# Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
+# All rights reserved.
+
+_remove_rc()
+{
+    if [ -n "`which rc-update`" ]; then
+        rc-update del ${RC_SVCNAME} ${RC_RUNLEVEL}
+    fi
+}
+
+start()
+{
+    ebegin "Executing first init validation script"
+
+    if [ -f /etc/os/functions ]; then
+        /etc/os/functions os_mark_first_init_completed
+    fi
+
+    # Removing rc script
+    _remove_rc
+
+    eend 0
+}

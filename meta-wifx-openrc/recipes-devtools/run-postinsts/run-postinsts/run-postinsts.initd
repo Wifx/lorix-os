@@ -1,0 +1,109 @@
+#!/sbin/openrc-run
+
+backend_list="rpm deb ipk"
+remove_pi_dir=1
+
+depend()
+{
+    after cgroups sysfs devfs
+}
+
+_check_installed()
+{
+    local pm_installed=0
+    for pm in $backend_list; do
+        pi_dir="#SYSCONFDIR#/$pm-postinsts"
+
+        if [ ! -d $pi_dir ]; then
+                continue
+        fi
+
+        # found the package manager, it has postinsts
+        case $pm in
+            "deb")
+                if [ -s "#LOCALSTATEDIR#/lib/dpkg/status" ]; then
+                    pm_installed=1
+                fi
+                ;;
+
+            "ipk")
+                if [ -s "#LOCALSTATEDIR#/lib/opkg/status" ]; then
+                    pm_installed=1
+                fi
+                ;;
+        esac
+        break
+    done
+    return $pm_installed
+}
+
+_exec_postinst_scriptlets()
+{
+    for i in `ls $pi_dir`; do
+        i=$pi_dir/$i
+        einfo "Running postinst $i..."
+        [ "${POSTINST_LOGGING}" = "1" ] && eval echo "Running postinst $i..." $append_log
+        if [ -x $i ]; then
+            eval sh -c $i $append_log
+            rm $i
+        else
+            eerror "ERROR: postinst $i failed."
+            [ "${POSTINST_LOGGING}" = "1" ] && eval echo "ERROR: postinst $i failed." $append_log
+            remove_pi_dir=0
+        fi
+    done
+}
+
+_remove_rc()
+{
+    if [ -n "`which rc-update`" ]; then
+        rc-update del run-postinsts sysinit
+    fi
+}
+
+start()
+{
+    if [ ! -d /etc/*-postinsts ]; then
+        # Removing rc script
+        _remove_rc
+        return 0
+    fi
+
+    ebegin "Executing OPKG post install script"
+    einfo "Configuring packages on first boot...."
+    einfo "This may take several minutes. Please do not power off the machine."
+
+    if [ -f /etc/os/functions-cmd ]; then
+        /etc/os/functions-cmd os_mark_first_init_started
+    fi
+
+    if yesno "${POSTINST_LOGGING}"; then
+        [ -n "${LOGFILE}" ] || LOGFILE="/var/log/postinsts.log"
+        rm -f ${LOGFILE}
+        append_log=">>${LOGFILE} 2>&1"
+    fi
+
+    if _check_installed; then
+        case $pm in
+            "ipk")
+                eval opkg configure $append_log
+                ;;
+
+            "deb")
+                eval dpkg --configure -a $append_log
+                ;;
+        esac
+    else
+        _exec_postinst_scriptlets
+    fi
+
+    # since all postinstalls executed successfully, remove the postinstalls
+	# directory and OpenRC init script
+    if yesno "$remove_pi_dir"; then
+        rm -rf $pi_dir
+        # Removing rc script
+        _remove_rc
+    fi
+
+    eend 0
+}

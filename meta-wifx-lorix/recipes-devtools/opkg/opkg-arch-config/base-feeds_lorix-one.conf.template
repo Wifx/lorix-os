@@ -1,0 +1,8 @@
+# non-arch dependent files (scripts, config etc)
+src/gz all @{DISTRO_PACKAGES_FEEDS_BASE_URL}/all
+
+# arch dependent files
+src/gz cortexa5hf-neon @{DISTRO_PACKAGES_FEEDS_BASE_URL}/cortexa5hf-neon
+
+# machine dependent files (kernel, modules)
+src/gz @{LORIX_MACHINE} @{DISTRO_PACKAGES_FEEDS_BASE_URL}/@{LORIX_MACHINE_URL}

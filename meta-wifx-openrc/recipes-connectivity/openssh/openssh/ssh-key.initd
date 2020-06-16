@@ -1,0 +1,12 @@
+#!/sbin/openrc-run
+
+description="SSH daemon key generation"
+
+depend() {
+    keyword -shutdown -stop
+}
+
+start() {
+    ssh-keygen -A
+    eend $?
+}

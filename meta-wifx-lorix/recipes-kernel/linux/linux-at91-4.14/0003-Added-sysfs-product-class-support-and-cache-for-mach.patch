@@ -1,0 +1,474 @@
+From 949ab293bb82261b2b0119bbcd51f0a4c2e361fb Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Tue, 30 Jul 2019 10:40:13 +0200
+Subject: [PATCH 3/4] Added sysfs product class support and cache for machine
+ data Closes LOR-85 and closes LOR-86
+
+---
+ drivers/mfd/pmic-lorix.c       | 251 +++++++++++++++------------------
+ include/linux/mfd/pmic-lorix.h |   6 +-
+ 2 files changed, 121 insertions(+), 136 deletions(-)
+
+diff --git a/drivers/mfd/pmic-lorix.c b/drivers/mfd/pmic-lorix.c
+index 917d51d96b8c..f913fffa86cd 100644
+--- a/drivers/mfd/pmic-lorix.c
++++ b/drivers/mfd/pmic-lorix.c
+@@ -47,7 +47,7 @@ typedef struct __attribute__((packed, aligned(1))){
+             uint8_t     FEAT_UNUSED : 1;
+         } bit;
+     };
+-} reg_features1_t;
++} reg_feature1_t;
+ 
+ typedef struct __attribute__((packed, aligned(1))){
+     union{
+@@ -56,10 +56,16 @@ typedef struct __attribute__((packed, aligned(1))){
+             uint8_t     FEAT_UNUSED : 8;
+         } bit;
+     };
+-} reg_features2_t;
++} reg_feature2_t;
+ 
+-static reg_features1_t reg_features1 = { .raw = 0x00 };
+-static reg_features2_t reg_features2 = { .raw = 0x00 };
++typedef struct {
++    reg_feature1_t      feature1;
++    reg_feature2_t      feature2;
++    char                fw_ver[16];
++    char                hw_ver[16];
++    char                name[16];
++    char                type[16];
++} attiny_cache_t;
+ 
+ static int __lorix_read(struct i2c_client *client,
+                 int reg, uint8_t *val)
+@@ -159,8 +165,8 @@ static int fw_version_get(struct attiny *attiny, char *str)
+     return (int)len;
+ 
+ out_err_read:
+-    dev_err(attiny->dev, "failed retrieving FW version\n");
+     mutex_unlock(&attiny->lock);
++    dev_err(attiny->dev, "failed retrieving FW version\n");
+     return -EIO;
+ }
+ 
+@@ -195,8 +201,8 @@ static int hw_version_get(struct attiny *attiny, char *str)
+     return (int)len;
+ 
+ out_err_read:
+-    dev_err(attiny->dev, "failed retrieving HW version\n");
+     mutex_unlock(&attiny->lock);
++    dev_err(attiny->dev, "failed retrieving HW version\n");
+     return -EIO;
+ }
+ 
+@@ -231,8 +237,8 @@ static int product_name_get(struct attiny *attiny, char *str)
+     return (int)len;
+ 
+ out_err_read:
+-    dev_err(attiny->dev, "failed retrieving product name\n");
+     mutex_unlock(&attiny->lock);
++    dev_err(attiny->dev, "failed retrieving product name\n");
+     return -EIO;
+ }
+ 
+@@ -267,12 +273,12 @@ static int product_type_get(struct attiny *attiny, char *str)
+     return (int)len;
+ 
+ out_err_read:
+-    dev_err(attiny->dev, "failed retrieving product type\n");
+     mutex_unlock(&attiny->lock);
++    dev_err(attiny->dev, "failed retrieving product type\n");
+     return -EIO;
+ }
+ 
+-static int reg_feature1_get(struct attiny *attiny, reg_features1_t *reg_feature1)
++static int reg_feature1_get(struct attiny *attiny, reg_feature1_t *reg_feature1)
+ {
+     int ret = pmic_lorix_read(attiny, REG_FEATURE1, &reg_feature1->raw);
+     if (ret < 0)
+@@ -281,7 +287,7 @@ static int reg_feature1_get(struct attiny *attiny, reg_features1_t *reg_feature1
+     return ret;
+ }
+ 
+-static int reg_feature2_get(struct attiny *attiny, reg_features2_t *reg_feature2)
++static int reg_feature2_get(struct attiny *attiny, reg_feature2_t *reg_feature2)
+ {
+     int ret = pmic_lorix_read(attiny, REG_FEATURE2, &reg_feature2->raw);
+     if (ret < 0)
+@@ -317,61 +323,29 @@ static ssize_t boot_state_store(struct device *dev,
+ static ssize_t fw_version_show(struct device *dev,
+                 struct device_attribute *attr, char *buf)
+ {
+-    struct attiny *attiny = dev_get_drvdata(dev);
+-    char fw_ver[10];
+-    int ret;
+-
+-    ret = fw_version_get(attiny, fw_ver);
+-    if (ret < 0) {
+-        return sprintf(buf, "unknown\n");
+-    } else {
+-        return sprintf(buf, "%s\n", fw_ver);
+-    }
++    attiny_cache_t *cache = ((struct attiny *)dev_get_drvdata(dev))->cache;
++    return sprintf(buf, "%s\n", cache->fw_ver);
+ }
+ 
+ static ssize_t hw_version_show(struct device *dev,
+                 struct device_attribute *attr, char *buf)
+ {
+-    struct attiny *attiny = dev_get_drvdata(dev);
+-    char hw_ver[10];
+-    int ret;
+-
+-    ret = hw_version_get(attiny, hw_ver);
+-    if (ret < 0) {
+-        return sprintf(buf, "unknown\n");
+-    } else {
+-        return sprintf(buf, "%s\n", hw_ver);
+-    }
++    attiny_cache_t *cache = ((struct attiny *)dev_get_drvdata(dev))->cache;
++    return sprintf(buf, "%s\n", cache->hw_ver);
+ }
+ 
+ static ssize_t product_name_show(struct device *dev,
+                 struct device_attribute *attr, char *buf)
+ {
+-    struct attiny *attiny = dev_get_drvdata(dev);
+-    char name[16];
+-    int ret;
+-
+-    ret = product_name_get(attiny, name);
+-    if (ret < 0) {
+-        return sprintf(buf, "unknown\n");
+-    } else {
+-        return sprintf(buf, "%s\n", name);
+-    }
++    attiny_cache_t *cache = ((struct attiny *)dev_get_drvdata(dev))->cache;
++    return sprintf(buf, "%s\n", cache->name);
+ }
+ 
+ static ssize_t product_type_show(struct device *dev,
+                 struct device_attribute *attr, char *buf)
+ {
+-    struct attiny *attiny = dev_get_drvdata(dev);
+-    char type[16];
+-    int ret;
+-
+-    ret = product_type_get(attiny, type);
+-    if (ret < 0) {
+-        return sprintf(buf, "unknown\n");
+-    } else {
+-        return sprintf(buf, "%s\n", type);
+-    }
++    attiny_cache_t *cache = ((struct attiny *)dev_get_drvdata(dev))->cache;
++    return sprintf(buf, "%s\n", cache->type);
+ }
+ 
+ static DEVICE_ATTR(boot_state, (S_IWUSR|S_IRUSR|S_IWGRP|S_IRGRP|S_IROTH), boot_state_show, boot_state_store);
+@@ -379,19 +353,28 @@ static DEVICE_ATTR(fw_version, S_IRUGO, fw_version_show, NULL);
+ static DEVICE_ATTR(hw_version, S_IRUGO, hw_version_show, NULL);
+ static DEVICE_ATTR(product_name, S_IRUGO, product_name_show, NULL);
+ static DEVICE_ATTR(product_type, S_IRUGO, product_type_show, NULL);
++static const struct attribute *machine_attrs[] = {
++    &dev_attr_boot_state.attr,
++    &dev_attr_fw_version.attr,
++    &dev_attr_hw_version.attr,
++    &dev_attr_product_name.attr,
++    &dev_attr_product_type.attr,
++    NULL,
++};
++static const struct attribute_group machine_attr_group = {
++    .attrs = (struct attribute **) machine_attrs,
++};
++static struct class *product_class;
+ 
+ static int pmic_lorix_probe(struct i2c_client *client,
+                             const struct i2c_device_id *id)
+ {
+-
+     struct attiny_platform_data *pdata = dev_get_platdata(&client->dev);
+-    //struct platform_device *pdev;
+     struct attiny *attiny;
++    attiny_cache_t *cache;
+     struct device *dev = &client->dev;
+     int ret;
+     uint8_t boot_state;
+-    char fw_ver[10], hw_ver[10], name[16], type[16];
+-    char *ptr;
+ 
+     if (!i2c_check_functionality(client->adapter,
+                     I2C_FUNC_SMBUS_BYTE_DATA)) {
+@@ -400,16 +383,24 @@ static int pmic_lorix_probe(struct i2c_client *client,
+     }
+ 
+     // creating the driver data
+-    attiny = devm_kzalloc(&client->dev, sizeof(*attiny), GFP_KERNEL);
++    attiny = devm_kzalloc(dev, sizeof(struct attiny), GFP_KERNEL);
+     if (!attiny) {
+-        dev_err(dev, "Memory allocation failed\n");
++        dev_err(dev, "Failed to allocate memory for driver data\n");
+         return -ENOMEM;
+     }
+ 
++    // creating the cache driver data
++    cache = devm_kzalloc(dev, sizeof(attiny_cache_t), GFP_KERNEL);
++    if (!cache) {
++        dev_err(dev, "Failed to allocate memory for driver cache data\n");
++        return -ENOMEM;
++    }
++    attiny->cache = cache;
++
+     // assign driver data to device
+-    dev_set_drvdata(&client->dev, attiny);
++    dev_set_drvdata(dev, attiny);
+     attiny->client = client;
+-    attiny->dev = &client->dev;
++    attiny->dev = dev;
+     attiny->id = id->driver_data;
+ 
+     // init the device lock
+@@ -422,148 +413,139 @@ static int pmic_lorix_probe(struct i2c_client *client,
+         pmic_lorix_devs[0].platform_data = NULL;
+         pmic_lorix_devs[0].pdata_size = 0;
+     }
+-    ret = mfd_add_devices(&client->dev, -1, (const struct mfd_cell *)&pmic_lorix_devs, 1, NULL, 0, NULL);
+-
++    ret = mfd_add_devices(dev, -1, (const struct mfd_cell *)&pmic_lorix_devs, 1, NULL, 0, NULL);
+     if (ret < 0) {
+-        dev_err(&client->dev, "add mfd devices failed: %d\n", ret);
++        dev_err(dev, "add mfd devices failed: %d\n", ret);
+         return ret;
+     }
+ 
+-    // create sysfs entry
+-    ret = device_create_file(&client->dev, &dev_attr_boot_state);
+-    if (ret < 0) {
+-        dev_err(&client->dev, "failed to add BOOT_STATE sysfs file\n");
+-        goto out_remove_device;
+-    }
+-    ret = device_create_file(&client->dev, &dev_attr_fw_version);
+-    if (ret < 0) {
+-        dev_err(&client->dev, "failed to add FW_VERSION sysfs file\n");
+-        goto out_remove_file_boot_state;
++    // create product class which will contains the pmic driver access
++    product_class = class_create(THIS_MODULE, "product");
++    if (IS_ERR(product_class)) {
++        dev_err(dev, "pmic-lorix cant create class %s\n", "product");
++        ret = -ENODEV;
++        goto out_remove_mfd;
+     }
+-    ret = device_create_file(&client->dev, &dev_attr_hw_version);
+-    if (ret < 0) {
+-        dev_err(&client->dev, "failed to add HW_VERSION sysfs file\n");
+-        goto out_remove_file_fw_version;
+-    }
+-    ret = device_create_file(&client->dev, &dev_attr_product_name);
+-    if (ret < 0) {
+-        dev_err(&client->dev, "failed to add NAME sysfs file\n");
+-        goto out_remove_file_hw_version;
++
++    // create pmic driver device
++    attiny->machine_dev = device_create(product_class, dev, 0, attiny, "machine");
++    if (IS_ERR(attiny->machine_dev)) {
++        dev_err(dev, "failed to create device '%s_%s'\n", "product", "machine");
++        ret = -ENODEV;
++        goto out_remove_class;
+     }
+-    ret = device_create_file(&client->dev, &dev_attr_product_type);
++
++    // create attribute group
++    ret = sysfs_create_group(&attiny->machine_dev->kobj, &machine_attr_group);
+     if (ret < 0) {
+-        dev_err(&client->dev, "failed to add TYPE sysfs file\n");
+-        goto out_remove_file_product_name;
++        dev_err(dev, "failed to create sysfs attributes group\n");
++        goto out_remove_device;
+     }
+ 
+     // FW version, HW version and boot state work in all cases since revision 1.0c
+ 
+     // read FW version
+-    ret = fw_version_get(attiny, fw_ver);
++    ret = fw_version_get(attiny, cache->fw_ver);
+     if (ret < 0) {
+-        dev_err(&client->dev, "failed to retrieve FW version from pmic-lorix\n");
++        dev_err(dev, "failed to retrieve FW version from pmic-lorix\n");
+         goto out_remove_all;
+     }
+ 
+-    // read bootstate
+-    ret = boot_state_get(attiny, &boot_state);
++    // read HW version
++    ret = hw_version_get(attiny, cache->hw_ver);
+     if (ret < 0) {
+-        dev_err(&client->dev, "failed to retrieve boot_state from pmic-lorix\n");
++        dev_err(dev, "failed to retrieve HW version from pmic-lorix\n");
+         goto out_remove_all;
+     }
+ 
+-    // read HW version
+-    ret = hw_version_get(attiny, hw_ver);
++    // read bootstate
++    ret = boot_state_get(attiny, &boot_state);
+     if (ret < 0) {
+-        dev_err(&client->dev, "failed to retrieve HW version from pmic-lorix\n");
++        dev_err(dev, "failed to retrieve boot_state from pmic-lorix\n");
+         goto out_remove_all;
+     }
+ 
+     // values by default
+-    ptr = strcpy(name, "LORIX One");
+-    ptr = strcpy(type, "EU868");
++    strcpy(cache->name, "LORIX One");
++    strcpy(cache->type, "EU868");
+ 
+     // test if features regs can be read
+-    ret = reg_feature1_get(attiny, &reg_features1);
+-    if (ret < 0 || reg_features1.bit.FEAT_LEGACY) {
+-        reg_features1.bit.FEAT_BOOT = 1;
+-        reg_features1.bit.FEAT_FW_VER = 1;
+-        reg_features1.bit.FEAT_HW_VER = 1;
+-        reg_features1.bit.FEAT_NAME = 0;
+-        reg_features1.bit.FEAT_TYPE = 0;
+-        reg_features1.bit.FEAT_PROG = 0;
++    ret = reg_feature1_get(attiny, &cache->feature1);
++    if (ret < 0 || cache->feature1.bit.FEAT_LEGACY) {
++        cache->feature1.bit.FEAT_BOOT = 1;
++        cache->feature1.bit.FEAT_FW_VER = 1;
++        cache->feature1.bit.FEAT_HW_VER = 1;
++        cache->feature1.bit.FEAT_NAME = 0;
++        cache->feature1.bit.FEAT_TYPE = 0;
++        cache->feature1.bit.FEAT_PROG = 0;
+     }
+ 
+     // unused actually
+-    ret = reg_feature2_get(attiny, &reg_features2);
++    ret = reg_feature2_get(attiny, &cache->feature2);
+ 
+     // read product name if possible
+-    if (reg_features1.bit.FEAT_NAME) {
+-        ret = product_name_get(attiny, name);
++    if (cache->feature1.bit.FEAT_NAME) {
++        ret = product_name_get(attiny, cache->name);
+         if (ret < 0) {
+-            dev_err(&client->dev, "failed to retrieve product name from pmic-lorix\n");
++            dev_err(dev, "failed to retrieve product name from pmic-lorix\n");
+             goto out_remove_all;
+         }
+     }
+ 
+     // read product type if possible
+-    if (reg_features1.bit.FEAT_TYPE) {
+-        ret = product_type_get(attiny, type);
++    if (cache->feature1.bit.FEAT_TYPE) {
++        ret = product_type_get(attiny, cache->type);
+         if (ret < 0) {
+-            dev_err(&client->dev, "failed to retrieve product type from pmic-lorix\n");
++            dev_err(dev, "failed to retrieve product type from pmic-lorix\n");
+             goto out_remove_all;
+         }
+     }
+ 
+-display_infos:
+-    dev_info(&client->dev, "Product %s detected\n", name);
+-    dev_info(&client->dev, "   Type: %s\n", type);
+-    dev_info(&client->dev, " HW ver: %s\n", hw_ver);
+-    dev_info(&client->dev, " FW ver: %s\n", fw_ver);
++    // display machine info
++    dev_info(dev, "Product %s detected\n", cache->name);
++    dev_info(dev, "   Type: %s\n", cache->type);
++    dev_info(dev, " HW ver: %s\n", cache->hw_ver);
++    dev_info(dev, " FW ver: %s\n", cache->fw_ver);
+ 
+     switch(boot_state){
+     case 0x00:
+-        dev_info(&client->dev, "   Boot: 0x00 (normal mode)\n");
++        dev_info(dev, "   Boot: 0x00 (normal mode)\n");
+         break;
+     case 0x01:
+-        dev_info(&client->dev, "   Boot: 0x01 (factory reset mode)\n");
++        dev_info(dev, "   Boot: 0x01 (factory reset mode)\n");
+         break;
+     default:
+-        dev_info(&client->dev, "   Boot: 0x%02X (unknown mode)\n", boot_state);
++        dev_info(dev, "   Boot: 0x%02X (unknown mode), clearing boot state\n", boot_state);
++        boot_state_clr(attiny);
+         break;
+     }
+ 
+     return 0;
+ 
+ out_remove_all:
+-out_remove_file_product_type:
+-    device_remove_file(&client->dev, &dev_attr_product_type);
+-
+-out_remove_file_product_name:
+-    device_remove_file(&client->dev, &dev_attr_product_name);
++    sysfs_remove_group(&attiny->machine_dev->kobj, &machine_attr_group);
+ 
+-out_remove_file_hw_version:
+-    device_remove_file(&client->dev, &dev_attr_hw_version);
++out_remove_device:
++    device_unregister(attiny->machine_dev);
+ 
+-out_remove_file_fw_version:
+-    device_remove_file(&client->dev, &dev_attr_fw_version);
++out_remove_class:
++    class_unregister(product_class);
++    class_destroy(product_class);
+ 
+-out_remove_file_boot_state:
+-    device_remove_file(&client->dev, &dev_attr_boot_state);
+-
+-out_remove_device:
+-    mfd_remove_devices(&client->dev);
++out_remove_mfd:
++    mfd_remove_devices(dev);
+ 
+     return ret;
+ }
+ 
+ static int pmic_lorix_remove(struct i2c_client *client)
+ {
+-    device_remove_file(&client->dev, &dev_attr_hw_version);
+-    device_remove_file(&client->dev, &dev_attr_fw_version);
+-    device_remove_file(&client->dev, &dev_attr_boot_state);
++    struct attiny *attiny = dev_get_drvdata(&client->dev);
++    sysfs_remove_group(&attiny->machine_dev->kobj, &machine_attr_group);
++    device_unregister(attiny->machine_dev);
++    class_unregister(product_class);
++    class_destroy(product_class);
+     mfd_remove_devices(&client->dev);
+-
+     return 0;
+ }
+ 
+@@ -590,7 +572,6 @@ static struct i2c_driver pmic_lorix_driver = {
+     },
+     .id_table     = pmic_lorix_id,
+ };
+-//module_i2c_driver(pmic_lorix_driver);
+ 
+ static int __init pmic_lorix_i2c_init(void)
+ {
+diff --git a/include/linux/mfd/pmic-lorix.h b/include/linux/mfd/pmic-lorix.h
+index 459f9d0729ad..d2aa81e3079e 100644
+--- a/include/linux/mfd/pmic-lorix.h
++++ b/include/linux/mfd/pmic-lorix.h
+@@ -12,7 +12,11 @@ struct attiny {
+     struct mutex lock;
+ 
+     unsigned long id;
+-    uint8_t mode;
++
++    // attiny cached values
++    void *cache;
++    // subdevice
++    struct device *machine_dev;
+ };
+ 
+ /*
+-- 
+2.17.1
+
