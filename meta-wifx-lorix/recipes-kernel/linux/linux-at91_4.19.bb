@@ -18,7 +18,8 @@ SRC_URI += " \
     file://kernel-features/netfilter/netfilter6.scc;type=kmeta;destsuffix=kernel-meta \
     file://kernel-features/nf_tables/nf_tables.scc;type=kmeta;destsuffix=kernel-meta \
     file://kernel-features/nf_tables/nf_tables6.scc;type=kmeta;destsuffix=kernel-meta \
-    file://0001-Reset-macb-RX-ring-and-DMA-on-BNA-error.patch \
+    file://0001-net-macb-Incomplete-received-frame-is-not-a-critical.patch \
+    file://0002-net-macb-Manage-BNA-Buffer-Not-Available-error-and-r.patch \
 "
 
 KERNEL_EXTRA_FEATURES ?= " \
