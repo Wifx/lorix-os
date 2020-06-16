@@ -1,0 +1,4 @@
+# The manager has a web GUI
+[gui]
+  # Path to the GUI resources served by the manager
+  resourcesPath = "/srv/manager/"

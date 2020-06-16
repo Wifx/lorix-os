@@ -1,0 +1,266 @@
+#!/bin/sh
+# Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
+# All rights reserved.
+
+alias printenv='/sbin/fw_printenv -l/mnt -n'
+alias setenv='/sbin/fw_setenv -l/mnt'
+
+fail() {
+    echo -e "$1"
+    # If sysfs not mounted, try to mount it
+    mountpoint /sys > /dev/null 2>&1
+    SYSFS_MOUNTED=$?
+    if [ $SYSFS_MOUNTED -ne 0 ]; then
+        mount -t sysfs sysfs /sys
+        # Try again
+        mountpoint /sys > /dev/null 2>&1
+        SYSFS_MOUNTED=$?
+    fi
+
+    if [ $SYSFS_MOUNTED -eq 0 ] && [ -d /sys/class/leds/status ]; then
+        # sysfs is mounted, try to signal failure using system status LED
+        echo "timer" > /sys/class/leds/status/trigger
+        echo "25" > /sys/class/leds/status/delay_on
+        echo "2500" > /sys/class/leds/status/delay_off
+    fi
+
+    # Fallback to bash (useless without debug connector)
+    /bin/bash
+}
+
+# Sources tools script
+if [ ! -f /etc/os/.functions ]; then
+    fail "OS tools script file not found\nPreinit work is impossible, abort"
+fi
+source /etc/os/.functions
+
+# Global variables
+BOOT_PART="0"
+BOOT_PART_NAME="rootfsA"
+UPGRADE_AVAILABLE="0"
+
+preinit_mender_read_info() {
+    # Detect current running partition
+    BOOT_PART=$(printenv mender_boot_part)
+    if [ $? -ne 0 ]; then
+        fail "Failed to read mender_boot_part from u-boot env"
+    fi
+    if [ $BOOT_PART -eq 0 ]; then
+        echo "Mounting overlay over ubi0_0 (rootfsA)"
+    else
+        echo "Mounting overlay over ubi0_1 (rootfsB)"
+        BOOT_PART_NAME="rootfsB"
+    fi
+
+    # Detect if update is pending
+    UPGRADE_AVAILABLE=$(printenv upgrade_available)
+    if [ $? -ne 0 ]; then
+        fail "Failed to read mender_boot_part from u-boot env"
+    fi
+    if [ $UPGRADE_AVAILABLE -eq 1 ]; then
+        echo "Upgrade is available"
+    fi
+}
+
+preinit_mender_rollback() {
+    BOOT_PART_INACTIVE="0"
+    if [ $BOOT_PART -eq 0 ]; then
+        BOOT_PART_INACTIVE="1"
+    fi
+    # Generate new env file to minimize write access
+    cd /mnt
+    cat > /mnt/env <<END
+mender_boot_part $BOOT_PART_INACTIVE
+mender_boot_part_hex $BOOT_PART_INACTIVE
+upgrade_available 0
+bootcount 0
+END
+    setenv --script /mnt/env
+    # Rollback is now planned, need a reboot
+    echo "Rollback completed, rebooting..."
+    /sbin/reboot -df
+}
+
+preinit_mount_base() {
+    mkdir -p /mnt/{data,rofs,old}
+    echo "Mounting data partition"
+    mount -t ubifs ubi0:data /mnt/data
+    if [ $? -ne 0 ]; then
+        echo "Error mounting data partition"
+        return 1
+    fi
+
+    # Real location
+    mkdir -p /mnt/data/overlay/user/{work,diff,merged}
+    mkdir -p /mnt/data/overlay/config/{work,rootfsA,rootfsB}
+
+    # Final representation
+    mkdir -p /mnt/rofs/data/layers/factory
+    mkdir -p /mnt/rofs/data/layers/user
+    mkdir -p /mnt/rofs/data/layers/config/{rootfsA,rootfsB}
+    return 0
+}
+
+preinit_mount_overlay(){
+    # Create main user overlay
+    cd /mnt/data/overlay/user
+    mount -t overlay "overlay:user" -olowerdir=/:/mnt/rofs/,upperdir=diff,workdir=work merged
+    if [ $? -ne 0 ]; then
+        echo "Error mounting overlay user"
+        return 1
+    fi
+
+    # Create user config overlay depending on main running partition
+    cd /mnt/data/overlay/config
+    if [ $BOOT_PART -eq 0 ]; then
+        mount -t overlay "overlay:config" -olowerdir=/etc,upperdir=rootfsA,workdir=work /mnt/data/overlay/user/merged/etc
+    else
+        mount -t overlay "overlay:config" -olowerdir=/etc,upperdir=rootfsB,workdir=work /mnt/data/overlay/user/merged/etc
+    fi
+    if [ $? -ne 0 ]; then
+        echo "Error mounting overlay config"
+        return 1
+    fi
+
+    # Prepare for pivot_root
+    cd /mnt/data/overlay/user/merged
+
+    # Mount base active partition
+    mount --bind / data/layers/factory
+
+    # Mount user diff overlay
+    mount --bind /mnt/data/overlay/user/diff data/layers/user
+
+    # Mount config diff overlay
+    mount --bind /mnt/data/overlay/config/rootfsA data/layers/config/rootfsA
+    mount --bind /mnt/data/overlay/config/rootfsB data/layers/config/rootfsB
+
+    mount --bind /dev dev
+
+    # Keep track of current rootfs
+    local OLD_ROOT=mnt/old
+    mount -t tmpfs none mnt
+    mkdir -p $OLD_ROOT
+
+    # Execute the pivot
+    pivot_root . $OLD_ROOT
+    return 0
+}
+
+preinit_manage_reset() {
+    reset_user=false
+
+    # Try to source machine detection
+    if [ ! -f /etc/os/.machine-detect ]; then
+        echo "Machine specific functions not found"
+        echo "Factory reset detection is impossible, abort"
+        return 1
+    fi
+    source /etc/os/.machine-detect
+
+    # Launch machine detection
+    machine_detect
+    if [ $? -ne 0 ]; then
+        echo "Error during machine detection, abort"
+        return 1
+    fi
+
+    # Test if we need to factory reset cause of reset button
+    machine_needs_factory_reset
+    if [ $? -eq 1 ]; then
+        echo "Factory reset required, triggered by user"
+        reset_user=true
+    else
+        # Test now first init flag presence
+        os_first_init_has_started "/mnt/data/overlay/user/diff/var/lib/os"
+        if [ $? -eq 1 ]; then
+            # Previous first init sequence has been done but not completed, need overlay cleaning
+            echo "Factory reset required, triggered by first init unconsistent state"
+        else
+            echo "Factory reset not required, pass"
+            return 0
+        fi
+    fi
+
+    # If we are here, there is a reset condition
+    # but if an upgrade is pending, we need to rollback to previous partition before clearing the system
+    if [ $UPGRADE_AVAILABLE -eq 1 ]; then
+        echo "Upgrade pending, need a rollback"
+        preinit_mender_rollback
+    fi
+
+    # Launch the factory-reset script in overlay root
+    echo "==== factory-reset ===="
+    echo "Removing existing overlay diff content"
+    rm -rf /mnt/data/overlay/user/diff/*
+    rm -rf /mnt/data/overlay/config/rootfsA/*
+    rm -rf /mnt/data/overlay/config/rootfsB/*
+    sync
+
+    if [ "$reset_user" = true ]; then
+        echo "Clearing factory reset state"
+        machine_clear_reset_state
+    fi
+    echo "======== done ========="
+
+    # No error
+    return 0
+}
+
+echo "Switching to preinit script"
+
+# Create a read/write mount point of the rootfs
+mount -t tmpfs none /mnt
+# Mount sysfs/procfs for machine detection and factory-reset
+mount -t sysfs sysfs /sys
+mount -t proc proc /proc
+
+# Reading bootloader info like active root partition
+preinit_mender_read_info
+
+# Mount the base directory
+preinit_mount_base
+if [ $? -ne 0 ]; then
+    fail "Fatal error during preinit initial steps"
+fi
+
+# Detect machine and clear overlay diff if needed (factory reset)
+# Also detect if first init process has been started and not cleanly
+# completed
+preinit_manage_reset
+if [ $? -ne 0 ]; then
+    fail "Fatal error during machine detection"
+fi
+
+# Clean useless mount points before the pivot
+umount /sys /proc
+
+# Mount the overlayfs
+preinit_mount_overlay
+if [ $? -ne 0 ]; then
+    fail "Fatal error during overlay mount"
+fi
+
+if [ -e /etc/runlevels/default/firstboot ]; then
+    # LED management (blinking if first init) needs the sysfs
+    mount -t sysfs sysfs /sys
+    os_mark_first_init_started
+    umount /sys
+fi
+
+# Start init process (and unmount useless mount points)
+exec chroot . sh -c "$(cat <<END
+echo "Unmounting temporary directories"
+umount /mnt/old/mnt/data
+umount /mnt/old/mnt
+umount /mnt/old/dev
+umount /mnt/old
+umount /mnt
+echo "Remounting overlay diff layers in read-only mode"
+mount -o remount,ro,bind /data/layers/user
+mount -o remount,ro,bind /data/layers/config/rootfsA
+mount -o remount,ro,bind /data/layers/config/rootfsB
+echo "Switching to init process"
+exec /sbin/init
+END
+)" <dev/console >dev/console 2>&1

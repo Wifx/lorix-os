@@ -1,7 +1,3 @@
-[submodule "meta-wifx"]
-	path = meta-wifx
-	url = ../meta-wifx.git
-	branch = sumo
 [submodule "meta-wifx-lorix"]
 	path = meta-wifx-lorix
 	url = ../meta-wifx-lorix.git

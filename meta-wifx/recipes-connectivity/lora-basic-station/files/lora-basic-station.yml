@@ -1,0 +1,14 @@
+description: LoRa Basic Station from Semtech
+autostart: true
+log: true
+jobs:
+    station:
+        description: The Basic Station
+        process:
+            run-mode: exec
+            program-path: /opt/lora-basic-station/lora-basic-station
+            execution-directory: /etc/opt/lora-basic-station
+            delays:
+                start: 7000
+                term: 2000
+                restart: 10000

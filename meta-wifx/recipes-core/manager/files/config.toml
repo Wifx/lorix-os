@@ -1,0 +1,74 @@
+# The configuration is read in the folder by alphabetically-ordered files. The latest files overrides the first files.
+# You can change the configuration in this file or add a new file with a partial configuration.
+# All configuration files must respect the TOML syntax.
+
+[plugins]
+
+  # When set to true, the manager will load the plugins
+  #enabled = true
+
+  # Path where the plugins are available
+  #path = "plugins"
+
+# Configure how the system is updated by the manager
+[update]
+
+  # Channel of the update feed that will be used : latest|stable|lts
+  #channel = "stable"
+
+  # URL of the update repository
+  #repository = "https://download.wifx.net/lorix-os/"
+
+  # When set to true, the manager will automatically check online if new updates are available. The user will be notified through the message of the day (after login) when a new update is available.
+  #onlineCheck = true
+
+  # Time between two checks for new updates
+  #onlineCheckPeriod = "24h"
+
+# The API allows remote access to the gateway for monitoring and control. Is is used by the Manager web GUI. Authentication is always needed.
+[api]
+  [api.http]
+    # When set to true, the manager will start a web server providing the API on the defined port
+    #enabled = true
+
+    # Interface the http web server listens to. All zeros means any interface. You can restrict access from a defined interface by settings it's IP. Default: 0.0.0.0
+    #interface = "0.0.0.0"
+
+    # Port the http web server listens to. You can change it if the default port is not accessible through your network. Default: 80
+    #port = 80
+
+  [api.https]
+    # When set to true, the manager will start a secondary https web server providing the API with TLS encryption on the defined port
+    #enabled = true
+
+    # Interface the https web server listens to. All zeros means any interface. You can restrict access from a defined interface by settings it's IP. Default: 0.0.0.0
+    #interface = "0.0.0.0"
+
+    # Port the https web server listens to. You can change it if the default port is not accessible through your network. Default: 443
+    #port = 443
+
+    # When using the secured interface, you must provide a certificate and a key that will be used for data encryption. Use a PEM encoded certificate and key.
+    #certificateFilePath = "/etc/manager/certs/default.crt"
+    #keyFilePath = "/etc/manager/keys/default.key"
+
+  # When a client (user) connects to the API, he will have to authenticate. These parameters configure how and how long he will be authenticated.
+  [api.authentication]
+    # The realm the authentication token is generated for, and therefore valid. You can put any string. Changing this setting will force any logged user to log in again. Default: manager
+    #realm = "manager"
+
+    # Key used for encryption of the authentication token. All devices with the same secret share access tokens.
+    #secretKey = "put-your-own-secret" # Randomly generated at startup if not defined. E.g. Esyt550bUJFjwAY9RMUoj4OPWvGBsq1b
+
+    # The expiration time of the authentication token. External applications accessing the API will have to refresh their token after expiration.
+    #tokenExpirationPeriod = "10m"
+
+    # The expiration time of the token refresh possibility. External applications accessing the API will have to log in again after expiration.
+    #tokenRefreshExpirationPeriod = "2h"
+
+# The manager has a web GUI
+[gui]
+  # When set to true, the manager will serve the GUI to incoming connections
+  #enabled = true
+
+  # Path to the GUI resources served by the manager
+  #resourcesPath = "/srv/manager/"

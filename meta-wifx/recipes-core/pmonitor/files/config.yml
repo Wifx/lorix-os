@@ -1,0 +1,11 @@
+services:
+  services-dir: /etc/pmonitor/services-enabled
+  defaults:
+    boot-order-policy: none
+    user: root
+    group: root
+    delays:
+      start: 100
+      terminate: 2000
+      restart: 2000
+    respawn: disabled  # respawn can be infinite, disabled or 0-3000

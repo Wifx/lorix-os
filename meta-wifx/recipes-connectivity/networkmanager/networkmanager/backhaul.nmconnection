@@ -1,0 +1,25 @@
+[connection]
+id=backhaul
+uuid=390e5c2b-7312-415e-80e6-7b94a5c24fc3
+type=ethernet
+interface-name=eth0
+autoconnect=true
+autoconnect-priority=1
+# Retry forever
+autoconnect-retries=0
+
+[ipv4]
+method=auto
+may-fail=true
+# Default DHCP timeout in seconds
+dhcp-timeout=45
+
+[ipv6]
+method=auto
+may-fail=true
+# Default DHCP timeout in seconds
+dhcp-timeout=45
+# Privacy is enabled, prefer temporary address
+ip6-privacy=2
+# Stateless address autoconfiguration is based on EUI64 MAC address
+addr-gen-mode=eui64

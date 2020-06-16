@@ -1,0 +1,14 @@
+description: LORIOT Packet Forwarder
+autostart: true
+log: true
+jobs:
+    forwarder:
+        description: The forwarder
+        process:
+            run-mode: exec
+            program-path: /opt/loriot/loriot-pkt-fwd
+            program-arguments: -f
+            delays:
+                start: 5000
+                term: 10000
+                restart: 5000

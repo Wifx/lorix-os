@@ -1,0 +1,5 @@
+#!/bin/sh
+
+cat /etc/update-motd.d/static/99-release-notes
+# Ensure background and foreground styles are set by default again
+echo "[0;39m[0;49m"

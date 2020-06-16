@@ -1,0 +1,6 @@
+# /etc/network/interfaces -- configuration file for ifup(8), ifdown(8)
+# modified for NetworkManager (all interfaces managed by nm except loopback)
+
+# The loopback interface
+auto lo
+iface lo inet loopback
