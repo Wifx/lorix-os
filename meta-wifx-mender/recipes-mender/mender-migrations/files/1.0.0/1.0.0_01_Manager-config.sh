@@ -56,7 +56,7 @@ if [[ ! -f "$NEW_CFG_API_SECRET_FILE_PATH" ]]; then
         
         log $PREFIX "API secret was found, migrating to new file /etc/$NEW_CFG_API_SECRET_FILE_PATH"
 
-        mkdir -p -m 644 "$NEW_CFG_DIR/00-default"
+        mkdir -p -m 755 "$NEW_CFG_DIR/00-default"
 
         echo "### This file is auto-generated during migration ###
 
