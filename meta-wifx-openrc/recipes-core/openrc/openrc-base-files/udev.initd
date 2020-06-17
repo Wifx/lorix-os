@@ -1,0 +1,54 @@
+#!/sbin/openrc-run
+
+depend() {
+	provide dev
+	need sysfs dev-mount
+	before checkfs fsck
+}
+
+command_args="--daemon"
+description="udev daemon"
+command=""
+
+start_pre() {
+	local p
+
+	if [ -e /proc/sys/kernel/hotplug ]; then
+		echo "" >/proc/sys/kernel/hotplug
+	fi
+
+	for	p in /lib/udev/udevd /lib/systemd/systemd-udevd /sbin/udevd; do
+		if [ -x ${p} ]; then
+			command=${p}
+		fi
+	done
+
+	if [ -z "${command}" ]; then
+		eerror "Failed to find udevd executable"
+		return 1
+	fi
+
+	return 0
+}
+
+start_post() {
+	ebegin "Populating /dev with existing devices through uevents"
+	udevadm trigger --type=subsystems --action=add
+	udevadm trigger --type=devices --action=add
+	eend $?
+
+	ebegin "Waiting for uevents to be processed"
+	udevadm settle --timeout=60
+	eend $?
+	return 0
+}
+
+stop() {
+	ebegin "Stopping ${RC_SVCNAME}"
+	udevadm control --exit
+	eend ${?} "Failed to stop ${RC_SVCNAME}"
+}
+
+# vim: noet ft=gentoo-init-d
+
+

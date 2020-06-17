@@ -1,0 +1,28 @@
+From cc4ee30c46c6eaea5d8ffbdc893777ae489568c5 Mon Sep 17 00:00:00 2001
+From: Balint Reczey <balint.reczey@canonical.com>
+Date: Wed, 4 Dec 2019 17:54:09 +0100
+Subject: [PATCH 4/6] pam_motd: Mention setting MOTD_SHOWN=pam in the man page
+
+---
+ modules/pam_motd/pam_motd.8.xml | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/modules/pam_motd/pam_motd.8.xml b/modules/pam_motd/pam_motd.8.xml
+index 76dbfc80..798b9aec 100644
+--- a/modules/pam_motd/pam_motd.8.xml
++++ b/modules/pam_motd/pam_motd.8.xml
+@@ -81,6 +81,11 @@
+       <filename>/etc/motd.d</filename>.  Specifying either option (or both)
+       will disable this default behavior.
+     </para>
++    <para>
++      The <emphasis remap='B'>MOTD_SHOWN=pam</emphasis> environment variable
++      is set after showing the motd files, even when all of them were silenced
++      using symbolic links.
++    </para>
+   </refsect1>
+ 
+   <refsect1 id="pam_motd-types">
+-- 
+2.17.1
+

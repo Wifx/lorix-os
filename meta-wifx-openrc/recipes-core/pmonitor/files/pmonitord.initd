@@ -1,0 +1,30 @@
+#!/sbin/openrc-run
+# Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
+# All rights reserved.
+
+description="Processes monitoring daemon"
+name="Process monitoring service"
+
+# We want to monitor the Mender daemon in case it dies
+# In this case, we wait
+supervisor=supervise-daemon
+respawn_delay="${RESPAWN_DELAY:-2}"
+
+command_user="root"
+command="${DAEMON_PATH:-/usr/sbin/pmonitord}"
+command_args="--config ${CONFIG_FILE:-/etc/pmonitor/config.yml} -p ${PVISOR_PATH} -s ${PVISOR_SOCKET_DIR}"
+command_args_foreground="-f"
+# pmonitor doesn't support yet config directory path, we need to start it diretly into the right directly.
+start_stop_daemon_args="--group root -d /etc/pmonitor"
+
+depend() {
+    need dbus
+    use logger
+}
+
+start_pre() {
+    checkpath --directory --owner root:root --mode 0755 ${PVISOR_SOCKET_DIR:-/dev/shm/pmonitor}
+    checkpath --directory --owner root:root --mode 0755 ${CONFIG_DIR:-/etc/pmonitor}
+    checkpath --directory --owner root:root --mode 0755 ${SERVICE_AVAILABLE_DIR:-/etc/pmonitor/services-available}
+    checkpath --directory --owner root:root --mode 0755 ${SERVICE_ENABLED_DIR:-/etc/pmonitor/services-enabled}
+}

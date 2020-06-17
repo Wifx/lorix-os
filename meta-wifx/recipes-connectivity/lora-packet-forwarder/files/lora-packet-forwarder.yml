@@ -1,0 +1,14 @@
+description: Official LoRa Packet Forwarder from Semtech
+autostart: false
+log: true
+jobs:
+    forwarder:
+        description: The forwarder
+        process:
+            run-mode: exec
+            program-path: /opt/lpf/lora-pkt-fwd
+            execution-directory: /etc/opt/lpf/
+            delays:
+                start: 5000
+                term: 10000
+                restart: 5000

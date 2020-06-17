@@ -1,0 +1,14 @@
+description: LoRa UDP Packet Forwarder
+autostart: true
+log: true
+jobs:
+    forwarder:
+        description: The packet forwarder
+        process:
+            run-mode: exec
+            program-path: /opt/udp-packet-forwarder/udp-packet-forwarder
+            program-arguments: -H /etc/opt/udp-packet-forwarder/hardware/hardware_conf.json -C /etc/opt/udp-packet-forwarder/channels/channels_conf.json -c /etc/opt/udp-packet-forwarder/gateway/generic
+            delays:
+                start: 5000
+                term: 10000
+                restart: 5000

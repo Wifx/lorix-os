@@ -1,0 +1,18 @@
+#!/sbin/openrc-run
+# Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
+# All rights reserved.
+
+description="Stop the status LED to ensure it doesn't stay powered ON on halt."
+
+depend()
+{
+    before mount-ro
+    after killprocs savecache
+}
+
+start()
+{
+    ebegin "Stopping status LED"
+    echo "none" > /sys/class/leds/status/trigger
+    eend $?
+}

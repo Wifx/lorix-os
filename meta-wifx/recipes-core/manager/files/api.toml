@@ -1,0 +1,5 @@
+  [api.https]
+
+    # When using the secured interface, you must provide a certificate and a key that will be used for data encryption. Use a PEM encoded certificate and key.
+    certificateFilePath = "/etc/manager/certs/default.crt"
+    keyFilePath = "/etc/manager/keys/default.key"

@@ -1,0 +1,82 @@
+From 734c75fc06e9a153400ffb5a52fe9132cf9c3671 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Mon, 11 May 2020 20:37:11 +0200
+Subject: [PATCH 5/5] Add mender support for lorix-one-256/512 machines
+
+---
+ include/configs/at91-sama5_common.h |  1 -
+ include/configs/lorix-one-256.h     | 12 ++++++++++++
+ include/configs/lorix-one-512.h     | 12 ++++++++++++
+ 3 files changed, 24 insertions(+), 1 deletion(-)
+
+diff --git a/include/configs/at91-sama5_common.h b/include/configs/at91-sama5_common.h
+index 9c295d0dc7..14ec2f3bd3 100644
+--- a/include/configs/at91-sama5_common.h
++++ b/include/configs/at91-sama5_common.h
+@@ -81,7 +81,6 @@
+ 					"bootz 0x22000000 - 0x21000000"
+ #endif
+ #endif
+-
+ #endif
+ 
+ /* Size of malloc() pool */
+diff --git a/include/configs/lorix-one-256.h b/include/configs/lorix-one-256.h
+index 72f2d4ec12..4980442d23 100644
+--- a/include/configs/lorix-one-256.h
++++ b/include/configs/lorix-one-256.h
+@@ -51,6 +51,14 @@
+ #define CONFIG_ATMEL_NAND_HW_PMECC
+ #endif
+ 
++#ifndef CONFIG_EXTRA_ENV_SETTINGS
++#define CONFIG_EXTRA_ENV_SETTINGS \
++	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" 		\
++	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" 	\
++	"kernel_addr_r=0x22000000\0" 				\
++	"fdt_addr_r=0x21000000\0"
++#endif
++
+ /* SPL */
+ #define CONFIG_SPL_TEXT_BASE		0x200000
+ #define CONFIG_SPL_MAX_SIZE			0x18000
+@@ -90,4 +98,8 @@
+ #define CONFIG_AT91SAM9_WATCHDOG
+ #define CONFIG_HW_WATCHDOG
+ 
++/* Mender integration */
++#define CONFIG_BOOTCOUNT_LIMIT
++#define CONFIG_BOOTCOUNT_ENV
++
+ #endif /* __CONFIG_H */
+diff --git a/include/configs/lorix-one-512.h b/include/configs/lorix-one-512.h
+index c267d40a94..50b600d4d8 100644
+--- a/include/configs/lorix-one-512.h
++++ b/include/configs/lorix-one-512.h
+@@ -51,6 +51,14 @@
+ #define CONFIG_ATMEL_NAND_HW_PMECC
+ #endif
+ 
++#ifndef CONFIG_EXTRA_ENV_SETTINGS
++#define CONFIG_EXTRA_ENV_SETTINGS \
++	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" 		\
++	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" 	\
++	"kernel_addr_r=0x22000000\0" 				\
++	"fdt_addr_r=0x21000000\0"
++#endif
++
+ /* SPL */
+ #define CONFIG_SPL_TEXT_BASE		0x200000
+ #define CONFIG_SPL_MAX_SIZE			0x18000
+@@ -90,4 +98,8 @@
+ #define CONFIG_AT91SAM9_WATCHDOG
+ #define CONFIG_HW_WATCHDOG
+ 
++/* Mender integration */
++#define CONFIG_BOOTCOUNT_LIMIT
++#define CONFIG_BOOTCOUNT_ENV
++
+ #endif /* __CONFIG_H */
+-- 
+2.17.1
+

@@ -1,0 +1,73 @@
+#!/bin/sh -e
+### BEGIN INIT INFO
+# Provides:          reset-lgw
+# Required-Start:    mountvirtfs $local_fs
+# Required-Stop:     $local_fs
+# Should-Start:
+# Should-Stop:
+# Default-Start:     S 01 2 3 4 5
+# Default-Stop:      81 0 1 6
+# Short-Description: Init the SX1301 reset pin
+### END INIT INFO
+
+# The reset pin of SX1301 is wired with GPIOA1
+SX1301_RST_PIN=1
+SX1301_RST_PIN_PATH=/sys/class/gpio/pioA1
+
+PATH="/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin"
+
+wait_gpio() {
+    sleep 0.1
+}
+
+iot_sk_init() {
+    # setup GPIOA1
+    echo $SX1301_RST_PIN > /sys/class/gpio/export; wait_gpio
+
+    # set GPIOA1 as output
+    echo "out" > $SX1301_RST_PIN_PATH/direction; wait_gpio
+
+    # write output for SX1301 reset
+    echo "1" > $SX1301_RST_PIN_PATH/value; wait_gpio
+    echo "0" > $SX1301_RST_PIN_PATH/value; wait_gpio
+}
+
+iot_sk_term() {
+    # cleanup GPIOA1
+    if [ -d $SX1301_RST_PIN_PATH ]; then
+        # set GPIOA1 as input (then do a reset with the external pull-up)
+        echo "in" > $SX1301_RST_PIN_PATH/direction; wait_gpio
+
+        # unexport GPIOA1
+        echo $SX1301_RST_PIN > /sys/class/gpio/unexport; wait_gpio
+    fi
+}
+
+case "$1" in
+start)
+	echo -n "Activating SX1301 LoRa concentrator chip... "
+	iot_sk_term
+	iot_sk_init
+	echo "done."
+	;;
+
+stop)
+	echo -n "Deactivating SX1301 LoRa concentrator chip... "
+	iot_sk_term
+	echo "done."
+	;;
+
+force-reload|restart)
+	echo -n "Resetting the SX1301 LoRa concentrator chip... "
+	iot_sk_term
+	iot_sk_init
+	echo "done."
+	;;
+
+*)
+	echo "Usage: /etc/init.d/reset-lgw {start|stop|restart}"
+	exit 1
+	;;
+esac
+
+exit 0

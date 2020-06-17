@@ -1,0 +1,4 @@
+#!/bin/sh
+
+cat /etc/update-motd.d/static/00-header
+echo ""

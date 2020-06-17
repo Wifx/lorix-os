@@ -1,0 +1,20 @@
+#!/bin/sh
+# Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
+# All rights reserved.
+
+PATH="/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin"
+
+source $(/usr/bin/dirname "$0")/.functions
+
+if [ -n "$1" ]; then
+    case "$1" in
+        "os_first_init_has_started") os_first_init_has_started;;
+        "os_mark_first_init_started") os_mark_first_init_started;;
+        "os_mark_first_init_completed") os_mark_first_init_completed;;
+        "os_clear_overlay") os_clear_overlay;;
+        *) exit 102;;
+    esac
+    exit $?
+fi
+
+exit 101

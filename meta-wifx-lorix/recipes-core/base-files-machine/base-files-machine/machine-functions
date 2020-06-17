@@ -1,0 +1,18 @@
+#!/bin/sh
+# Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
+# All rights reserved.
+
+PATH="/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin"
+
+source $(/usr/bin/dirname "$0")/.machine-functions
+
+if [ -n "$1" ]; then
+    case "$1" in
+        "set_led_heartbeat") machine_set_led_heartbeat;;
+        "set_led_blinking") machine_set_led_blinking;;
+        *) exit 102;;
+    esac
+    exit $?
+fi
+
+exit 101

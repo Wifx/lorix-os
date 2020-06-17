@@ -1,0 +1,26 @@
+From f1f3aafdc9c604385ad0c97accee63bff4c278ea Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Fri, 12 Jun 2020 10:12:41 +0200
+Subject: [PATCH 6/6] Added support for yocto (lsbsysinit arg is not supported
+ by run-parts of busybox)
+
+---
+ modules/pam_motd/pam_motd.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/modules/pam_motd/pam_motd.c b/modules/pam_motd/pam_motd.c
+index bbb25e62..0f7da51a 100644
+--- a/modules/pam_motd/pam_motd.c
++++ b/modules/pam_motd/pam_motd.c
+@@ -212,7 +212,7 @@ int pam_sm_open_session(pam_handle_t *pamh, int flags,
+         && S_ISDIR(st.st_mode))
+     {
+        mode_t old_mask = umask(0022);
+-       if (!system("/usr/bin/env -i PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin run-parts --lsbsysinit /etc/update-motd.d > /run/motd.dynamic.new"))
++       if (!system("/usr/bin/env -i PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin run-parts /etc/update-motd.d > /run/motd.dynamic.new"))
+            rename("/run/motd.dynamic.new", "/run/motd.dynamic");
+        umask(old_mask);
+     }
+-- 
+2.17.1
+

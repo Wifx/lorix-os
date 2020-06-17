@@ -1,0 +1,25 @@
+From ae684a9588cad23ada9417e9d735c03ebe6b1b11 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Tue, 3 Sep 2019 20:26:01 +0200
+Subject: [PATCH] Modified service timeout from 60 to 120 seconds
+
+---
+ src/rc/openrc-run.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/rc/openrc-run.c b/src/rc/openrc-run.c
+index 1958dbc8..4ec1f24b 100644
+--- a/src/rc/openrc-run.c
++++ b/src/rc/openrc-run.c
+@@ -58,7 +58,7 @@
+ #define PREFIX_LOCK	RC_SVCDIR "/prefix.lock"
+ 
+ #define WAIT_INTERVAL	20000000	/* usecs to poll the lock file */
+-#define WAIT_TIMEOUT	60		/* seconds until we timeout */
++#define WAIT_TIMEOUT	120		/* seconds until we timeout */
+ #define WARN_TIMEOUT	10		/* warn about this every N seconds */
+ 
+ const char *applet = NULL;
+-- 
+2.17.1
+

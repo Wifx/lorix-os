@@ -1,0 +1,80 @@
+From 2be9e923afa0bdc3a0af652563dcf4ce20ca9118 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Fri, 12 Jun 2020 10:08:43 +0200
+Subject: [PATCH 1/6] update-motd from Ubuntu libpam sources
+
+---
+ modules/pam_motd/pam_motd.8.xml | 11 +++++++++++
+ modules/pam_motd/pam_motd.c     | 18 ++++++++++++++++++
+ 2 files changed, 29 insertions(+)
+
+diff --git a/modules/pam_motd/pam_motd.8.xml b/modules/pam_motd/pam_motd.8.xml
+index 906c4ed0..76dbfc80 100644
+--- a/modules/pam_motd/pam_motd.8.xml
++++ b/modules/pam_motd/pam_motd.8.xml
+@@ -63,6 +63,17 @@
+           </para>
+         </listitem>
+       </varlistentry>
++      <varlistentry>
++        <term>
++          <option>noupdate</option>
++        </term>
++        <listitem>
++          <para>
++            Don't run the scripts in <filename>/etc/update-motd.d</filename>
++            to refresh the motd file.
++          </para>
++        </listitem>
++      </varlistentry>
+     </variablelist>
+     <para>
+       When no options are given, the default is to display both
+diff --git a/modules/pam_motd/pam_motd.c b/modules/pam_motd/pam_motd.c
+index cc828d7e..7b38fcb9 100644
+--- a/modules/pam_motd/pam_motd.c
++++ b/modules/pam_motd/pam_motd.c
+@@ -101,8 +101,10 @@ int pam_sm_open_session(pam_handle_t *pamh, int flags,
+ 			int argc, const char **argv)
+ {
+     int retval = PAM_IGNORE;
++    int do_update = 1;
+     const char *motd_path = NULL;
+     const char *motd_dir_path = NULL;
++    struct stat st;
+ 
+     if (flags & PAM_SILENT) {
+ 	return retval;
+@@ -131,6 +133,9 @@ int pam_sm_open_session(pam_handle_t *pamh, int flags,
+ 			   "motd_dir= specification missing argument - ignored");
+ 	    }
+ 	}
++	else if (!strcmp(*argv,"noupdate")) {
++		do_update = 0;
++	}
+ 	else
+ 	    pam_syslog(pamh, LOG_ERR, "unknown option: %s", *argv);
+     }
+@@ -140,6 +145,19 @@ int pam_sm_open_session(pam_handle_t *pamh, int flags,
+ 	motd_dir_path = default_motd_dir;
+     }
+ 
++    /* Run the update-motd dynamic motd scripts, outputting to /run/motd.dynamic.
++       This will be displayed only when calling pam_motd with
++       motd=/run/motd.dynamic; current /etc/pam.d/login and /etc/pam.d/sshd
++       display both this file and /etc/motd. */
++    if (do_update && (stat("/etc/update-motd.d", &st) == 0)
++        && S_ISDIR(st.st_mode))
++    {
++       mode_t old_mask = umask(0022);
++       if (!system("/usr/bin/env -i PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin run-parts --lsbsysinit /etc/update-motd.d > /run/motd.dynamic.new"))
++           rename("/run/motd.dynamic.new", "/run/motd.dynamic");
++       umask(old_mask);
++    }
++
+     if (motd_path != NULL) {
+ 	int fd = open(motd_path, O_RDONLY, 0);
+ 
+-- 
+2.17.1
+

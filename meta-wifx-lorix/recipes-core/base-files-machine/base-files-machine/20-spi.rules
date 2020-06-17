@@ -1,0 +1,2 @@
+# Add a symlink to keep compatibility with older SPI dev file (Linux 4.4.x and 4.9.x)
+KERNEL=="spidev0.0", SYMLINK+="spidev32766.0"

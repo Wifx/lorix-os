@@ -1,0 +1,4 @@
+# Rotate at 200KB
+# Keep 10 rotated logs
+# Drop duplicates
+SYSLOGD_OPTS="-s 200 -b 10 -D"

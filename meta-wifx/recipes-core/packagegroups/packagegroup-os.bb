@@ -1,0 +1,28 @@
+# Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
+# All rights reserved.
+
+SUMMARY = "OS package group"
+LICENSE = "Apache-2.0"
+
+PR = "r0"
+
+inherit packagegroup
+
+RDEPENDS_${PN} = " \
+    packagegroup-os-boot \
+    packagegroup-os-base \
+    packagegroup-os-machine \
+    packagegroup-os-full-cmdline \
+    packagegroup-os-connectivity \
+    packagegroup-os-extended \
+    os-release \
+    chrony \
+    chronyc \
+    opkg \
+    run-postinsts \
+    ${@bb.utils.contains("DISTRO_FEATURES", "openrc", "openrc", "", d)} \
+    ${@bb.utils.contains("DISTRO_FEATURES", "openrc", "openrc-base-files", "", d)} \
+    ${@bb.utils.contains("DISTRO_FEATURES", "pmonitor", "pmonitor", "", d)} \
+    manager \
+    virtual/updater \
+"

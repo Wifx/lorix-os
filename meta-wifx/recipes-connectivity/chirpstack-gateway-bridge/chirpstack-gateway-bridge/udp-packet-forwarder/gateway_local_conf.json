@@ -1,0 +1,20 @@
+{
+  /* Put there parameters that are different for each gateway (eg. pointing one gateway to a test server while the others stay in production) */
+  /* Settings defined in global_conf will be overwritten by those in local_conf */
+  "gateway_conf": {
+
+    /* You must pick a unique 64b number for each gateway (represented by an hex string) */
+    "gateway_ID": "AA555A0000000000",
+
+    /* ChirpStack Gateway Bridge configuration */
+    "server_address": "127.0.0.1",
+    "serv_port_up": 1700,
+    "serv_port_down": 1700,
+
+    /* Gateway GPS coordinates */
+    "fake_gps": true,       /* Only fake gps is supported, should stay to true */
+    "ref_latitude": -1,     /* Example for the Matterhorn: 45.976451 */
+    "ref_longitude": -1,    /* Example for the Matterhorn: 7.658492 */
+    "ref_altitude": -1      /* Example for the Matterhorn: 4478 */ 
+  }
+}

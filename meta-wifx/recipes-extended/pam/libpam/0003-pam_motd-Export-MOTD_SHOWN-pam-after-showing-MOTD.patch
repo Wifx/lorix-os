@@ -1,0 +1,30 @@
+From 28e0ccde14005f6c00abf6af69fd83fc0ef58552 Mon Sep 17 00:00:00 2001
+From: Balint Reczey <balint.reczey@canonical.com>
+Date: Wed, 4 Dec 2019 11:48:45 +0100
+Subject: [PATCH 3/6] pam_motd: Export MOTD_SHOWN=pam after showing MOTD
+
+This is a useful indication for update-motd profile.d snippet which can
+also try to show MOTD when it is not already shown.
+
+The use-case for that is showing MOTD in shells in containers without
+PAM being involved.
+---
+ modules/pam_motd/pam_motd.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/modules/pam_motd/pam_motd.c b/modules/pam_motd/pam_motd.c
+index 5f9526b2..546958f3 100644
+--- a/modules/pam_motd/pam_motd.c
++++ b/modules/pam_motd/pam_motd.c
+@@ -232,6 +232,8 @@ int pam_sm_open_session(pam_handle_t *pamh, int flags,
+     /* Display the legal disclaimer only if necessary */
+     retval = display_legal(pamh);
+ 
++    retval = pam_putenv(pamh, "MOTD_SHOWN=pam");
++
+     return retval;
+ }
+ 
+-- 
+2.17.1
+

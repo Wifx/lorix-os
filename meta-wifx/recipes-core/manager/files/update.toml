@@ -1,0 +1,5 @@
+# Configure how the system is updated by the manager
+[update]
+
+  # URL of the update repository
+  repository = "@{DISTRO_FEEDS_BASE_URL}"

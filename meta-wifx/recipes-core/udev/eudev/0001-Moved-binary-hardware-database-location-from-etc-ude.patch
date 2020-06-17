@@ -1,0 +1,44 @@
+From 15a9693d0489e00012d8714136ee5cb9d2e5f07e Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Fri, 22 Nov 2019 22:07:51 +0100
+Subject: [PATCH] Moved binary hardware database location from /etc/udev to
+ /lib/udev
+
+---
+ configure.ac | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/configure.ac b/configure.ac
+index bc3737c..a6645df 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -173,8 +173,17 @@ AC_SUBST([udevlibexecdir], [${rootlibexecdir}])
+ # sysconfdir paths
+ AC_SUBST([udevconfdir],[${sysconfdir}/udev])
+ AC_SUBST([udevconffile],[${udevconfdir}/udev.conf])
++AC_ARG_WITH(
++        [hwdbbindir],
++        [AS_HELP_STRING(
++                [--with-hwdbbindir=DIR],
++                [Configurable path for hwdb.bin file])],
++        [],
++        [with_hwdbbindir=${udevconfdir}]
++)
++AC_SUBST([udevhwdbbindir], [$with_hwdbbindir])
+ AC_SUBST([udevhwdbdir],[${udevconfdir}/hwdb.d])
+-AC_SUBST([udevhwdbbin],[${udevconfdir}/hwdb.bin])
++AC_SUBST([udevhwdbbin],[${udevhwdbbindir}/hwdb.bin])
+ 
+ # udevlibexecdir paths
+ AC_SUBST([udevkeymapdir],[${udevlibexecdir}/keymaps])
+@@ -373,6 +382,7 @@ AC_MSG_RESULT([
+         udevconfdir:             ${udevconfdir}
+         udevconffile:            ${udevconffile}
+         udevhwdbdir:             ${udevhwdbdir}
++        udevhwdbbindir:          ${udevhwdbbindir}
+         udevhwdbbin:             ${udevhwdbbin}
+         udevlibexecdir:          ${udevlibexecdir}
+         udevkeymapdir:           ${udevkeymapdir}
+-- 
+2.17.1
+

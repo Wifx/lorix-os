@@ -1,0 +1,149 @@
+#!/sbin/openrc-run
+# Copyright 1999-2018 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+extra_commands="check save help"
+extra_started_commands="reload"
+
+iptables_lock_wait_time=${IPTABLES_LOCK_WAIT_TIME:-"60"}
+iptables_lock_wait_interval=${IPTABLES_LOCK_WAIT_INTERVAL:-"100000"}
+
+iptables_name=${SVCNAME}
+case ${iptables_name} in
+	iptables|ip6tables) ;;
+	*) iptables_name="iptables" ;;
+esac
+
+iptables_bin="/usr/sbin/${iptables_name}"
+case ${iptables_name} in
+	iptables)  iptables_proc="/proc/net/ip_tables_names"
+	           iptables_save=${IPTABLES_SAVE};;
+	ip6tables) iptables_proc="/proc/net/ip6_tables_names"
+	           iptables_save=${IP6TABLES_SAVE};;
+esac
+
+depend() {
+	need localmount #434774
+	before net
+}
+
+set_table_policy() {
+	local has_errors=0 chains table=$1 policy=$2
+	case ${table} in
+		nat)    chains="PREROUTING POSTROUTING OUTPUT";;
+		mangle) chains="PREROUTING INPUT FORWARD OUTPUT POSTROUTING";;
+		filter) chains="INPUT FORWARD OUTPUT";;
+		*)      chains="";;
+	esac
+
+	local chain
+	for chain in ${chains} ; do
+		${iptables_bin} --wait ${iptables_lock_wait_time} --wait-interval ${iptables_lock_wait_interval} -t ${table} -P ${chain} ${policy}
+		[ $? -ne 0 ] && has_errors=1
+	done
+
+	return ${has_errors}
+}
+
+checkkernel() {
+	if [ ! -e ${iptables_proc} ] ; then
+		eerror "Your kernel lacks ${iptables_name} support, please load"
+		eerror "appropriate modules and try again."
+		return 1
+	fi
+	return 0
+}
+
+checkconfig() {
+	if [ -z "${iptables_save}" -o ! -f "${iptables_save}" ] ; then
+		eerror "Not starting ${iptables_name}.  First create some rules then run:"
+		eerror "/etc/openrc.d/${iptables_name} save"
+		return 1
+	fi
+	return 0
+}
+
+start_pre() {
+	checkconfig || return 1
+}
+
+start() {
+	ebegin "Loading ${iptables_name} state and starting firewall"
+	${iptables_bin}-restore --wait ${iptables_lock_wait_time} --wait-interval ${iptables_lock_wait_interval} ${SAVE_RESTORE_OPTIONS} < "${iptables_save}"
+	eend $?
+}
+
+stop_pre() {
+	checkkernel || return 1
+}
+
+stop() {
+	if [ "${SAVE_ON_STOP}" = "yes" ] ; then
+		save || return 1
+	fi
+
+	ebegin "Stopping firewall"
+	local has_errors=0 a
+	for a in $(cat ${iptables_proc}) ; do
+		set_table_policy $a ACCEPT
+		[ $? -ne 0 ] && has_errors=1
+
+		${iptables_bin} --wait ${iptables_lock_wait_time} --wait-interval ${iptables_lock_wait_interval} -F -t $a
+		[ $? -ne 0 ] && has_errors=1
+
+		${iptables_bin} --wait ${iptables_lock_wait_time} --wait-interval ${iptables_lock_wait_interval} -X -t $a
+		[ $? -ne 0 ] && has_errors=1
+	done
+	eend ${has_errors}
+}
+
+reload() {
+	checkkernel || return 1
+	checkrules || return 1
+	ebegin "Flushing firewall"
+	local has_errors=0 a
+	for a in $(cat ${iptables_proc}) ; do
+		${iptables_bin} --wait ${iptables_lock_wait_time} --wait-interval ${iptables_lock_wait_interval} -F -t $a
+		[ $? -ne 0 ] && has_errors=1
+
+		${iptables_bin} --wait ${iptables_lock_wait_time} --wait-interval ${iptables_lock_wait_interval} -X -t $a
+		[ $? -ne 0 ] && has_errors=1
+	done
+	eend ${has_errors}
+
+	start
+}
+
+checkrules() {
+	ebegin "Checking rules"
+	${iptables_bin}-restore --test ${SAVE_RESTORE_OPTIONS} < "${iptables_save}"
+	eend $?
+}
+
+check() {
+	# Short name for users of init.d script.
+	checkrules
+}
+
+save() {
+	ebegin "Saving ${iptables_name} state"
+	checkpath -q -d "$(dirname "${iptables_save}")"
+	checkpath -q -m 0600 -f "${iptables_save}"
+	${iptables_bin}-save ${SAVE_RESTORE_OPTIONS} > "${iptables_save}"
+	eend $?
+}
+
+help() {
+	echo "Usage: rc-service ${RC_SVCNAME} {start|stop|restart|check|save|help}"
+	echo ""
+	echo "start)      Start and load iptables with rules from ${iptables_save}"
+if [ "${SAVE_ON_STOP}" = "yes" ] ; then
+	echo "stop)       Stop iptables and save rules to ${iptables_save}"
+else
+	echo "stop)       Stop iptables without saving rules"
+fi
+	echo "restart)    Apply stop then start command"
+	echo "check)      Check rules from ${iptables_save}"
+	echo "save)       Explicitly save the rules to ${iptables_save}"
+	echo "help)       Display this menu"
+}

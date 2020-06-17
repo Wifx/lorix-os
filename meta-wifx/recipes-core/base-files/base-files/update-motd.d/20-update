@@ -1,0 +1,47 @@
+#!/bin/sh
+
+WHITE="\e[39m"
+GRAY="\e[90m"
+RED="\e[91m"
+GREEN="\e[92m"
+YELLOW="\e[93m"
+
+OS_UPDATE_FILE_PATH="/var/cache/os/upgrade-info"
+MANAGER_PATH="/usr/bin/manager"
+
+STATUS=$($MANAGER_PATH --output=standard system update status 2> /dev/null)
+
+if [ "$STATUS" == "pending" ]; then
+
+    echo -e $RED    "An update is currently pending ! Any configuration modification will be definitely lost !"    $WHITE
+    echo -e $WHITE  "Reboot the gateway to start the updated system"                                               $WHITE
+    echo -e $WHITE  "Run 'manager system update cancel' to keep this version"                                      $WHITE
+    echo ""
+
+elif [ "$STATUS" == "ephemeral" ]; then
+
+    echo -e $YELLOW "An ephemeral update has to be persisted. Run 'manager system update persist' or 'manager system update rollback'"     $WHITE
+    echo -e $RED    "The system will start into the precedent version on next reboot if it's not persisted"                                $WHITE
+    echo ""
+
+elif [ -e $OS_UPDATE_FILE_PATH ]; then
+
+    source $OS_UPDATE_FILE_PATH
+
+    if $AVAILABLE == "true"; then
+        echo -e $YELLOW "A system update is available!"                                 $WHITE
+        echo -e $WHITE  " Version $YELLOW$AVAILABLE_VERSION$WHITE ($AVAILABLE_NAME)"    $WHITE
+        echo -e $WHITE  " Released on $AVAILABLE_DATE"                                  $WHITE
+        if [ "$AVAILABLE_DESCRIPTION" != "" ]; then
+            echo -e $WHITE  " $AVAILABLE_DESCRIPTION"                                   $WHITE
+        fi
+        echo -e $GRAY   " Update with: manager system update start"                     $WHITE
+    else
+        echo -e $GREEN "You are running the latest version"                             $WHITE
+        echo -e $WHITE " Last checked the $LAST_CHECK"                                  $WHITE
+        echo -e $GRAY  " To check updates run: manager system update check -p"          $WHITE
+    fi
+
+    echo ""
+fi
+

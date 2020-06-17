@@ -1,0 +1,11 @@
+# make getty quiet
+#quiet="yes"
+
+# Set the baud rate of the terminal line
+baud="115200"
+
+# set the terminal type
+term_type="linux"
+
+# extra options to pass to getty for this port
+#getty_options=""

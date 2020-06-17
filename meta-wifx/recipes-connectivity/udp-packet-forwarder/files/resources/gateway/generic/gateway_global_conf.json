@@ -1,0 +1,24 @@
+{
+  "gateway_conf": {
+    "lorawan_public": true,
+    
+    /* Change with default server address/ports, or overwrite in local_conf.json */
+    "server_address": "localhost",
+    "serv_port_up": 1680,
+    "serv_port_down": 1680,
+
+    /* Timing parameters depending on your network */
+    "keepalive_interval": 10, /* keep-alive interval (in seconds) for downstream (default=5) */
+    "stat_interval": 30,      /* in seconds, default=30 */
+    "push_timeout_ms": 100,   /* default=100 */
+    "autoquit_threshold": 3,  /* Quit the forwarder if the connection is lost after X retries (server ACK based detection) (default=3) */
+
+    /* Invalid packets forwarding rules */
+    "forward_crc_valid": true,
+    "forward_crc_error": false,
+    "forward_crc_disabled": false,
+
+    /* GPS configuration */
+    "gps_tty_path": ""
+  }
+}

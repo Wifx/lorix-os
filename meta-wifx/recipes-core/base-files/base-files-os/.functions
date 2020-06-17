@@ -1,0 +1,169 @@
+#!/bin/sh
+# Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
+# All rights reserved.
+
+# Try to load machine specific functions
+if [ -f /etc/os/.machine-functions ]; then
+    source /etc/os/.machine-functions
+fi
+
+mark_file=".system-first-init-started"
+
+conf_param_exists() {
+    local result
+    local file="$1"
+    result=$(
+    awk '{
+        if (match($0,"('$2')=[\"]?([a-zA-Z0-9.,-_: ]*)[\"]?$", a)) {
+            found=1
+            exit;
+        }
+    } END {
+        if(found==1) { print "true"; } else { print "false" };
+    }' $file)
+    if [ "$result" = "true" ]; then
+        return 0
+    fi
+    return 1
+}
+
+conf_param_read() {
+    local exists
+    local param
+    local file="$1"
+
+    # test if the parameters exists
+    conf_param_exists $file "$2"
+    exists=$?
+    if [ $exists -ne 0 ]; then
+        return 1
+    fi
+
+    # print the found argument
+    awk '{
+        if (match($0,"'$2'=[\"]?([a-zA-Z0-9.,-_: ]*)[\"]?$", a)) {
+            print a[1];
+            exit;
+        }
+    }' $file
+
+    return 0
+}
+
+conf_param_replace() {
+    local param
+    local exists
+    local file="$1"
+
+    param=$(conf_param_read $file "$2")
+    exists=$?
+    if [ $exists -ne 0 ]; then
+        # param doesn't exist, return 2
+        return 2
+    fi
+
+    # compare old and new value
+    if [ "$3" = "$param" ]; then
+        # param not modified, return 0
+        return 0
+    fi
+
+    sed -i -E "s|^($2=).*|\1\"$3\"|g" $file
+    # param replaced, return 1
+    return 1
+}
+
+conf_param_update () {
+    local replace
+    local file="$1"
+
+    conf_param_replace $file "$2" "$3"
+    replace=$?
+
+    # param doesn't exist
+    if [ $replace -eq 2 ]; then
+        # add new line if doesn't exist
+        if [ -s "$file" ] && [ $(tail -c 1 "$file" | wc -l) -eq 0 ]; then
+            echo "" >> $file
+        fi
+
+        # create it and return 1
+        echo "$2=\""$3"\"" >> $file
+        return 1
+    fi
+
+    return $replace
+}
+
+conf_param_delete() {
+    local exists
+    local file="$1"
+
+    param=$(conf_param_read $file "$2")
+    exists=$?
+    if [ $exists -ne 0 ]; then
+        # param doesn't exist, return 1
+        return 1
+    fi
+
+    sed -i "/^$2=.*/d" $file
+    return 0
+}
+
+os_first_init_has_started() {
+    if [ -z $1 ]; then
+        path="/var/lib/os"
+    else
+        path="$1"
+    fi
+    if [ -f "$path/$mark_file" ]; then
+        return 1
+    fi
+    return 0
+}
+
+os_mark_first_init_started() {
+    if [ -z $1 ]; then
+        path="/var/lib/os"
+    else
+        path="$1"
+    fi
+    # Should be called after overlay mount
+    # Maybe can't really use /tmp since it will be mount during the init process
+    # In this case, it could become unconsistent between the start and end of
+    # this init process
+    os_first_init_has_started "$path"
+    if [ $? -eq 1 ]; then
+        echo "First init started flag file already exists, abort"
+        return 1
+    fi
+
+    # Modify the status LED (blinking mode)
+    type machine_set_led_blinking > /dev/null
+    if [ $? -eq 0 ]; then
+        machine_set_led_blinking
+    fi
+
+    # We create the flag file and sync the memory to be sure in case of failure,
+    # it's still there to be catched by preinit script
+    mkdir -p "$path"
+    touch "$path/$mark_file"
+    sync
+}
+
+os_mark_first_init_completed() {
+    if [ -z $1 ]; then
+        path="/var/lib/os"
+    else
+        path="$1"
+    fi
+    # Remove first init flag file
+    rm -f "$path/$mark_file"
+    sync
+
+    # Modify the status LED (standard mode, heartbeat)
+    type machine_set_led_heartbeat > /dev/null
+    if [ $? -eq 0 ]; then
+        machine_set_led_heartbeat
+    fi
+}

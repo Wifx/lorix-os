@@ -1,0 +1,62 @@
+#!/bin/sh
+# Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
+# All rights reserved.
+
+PATH="/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin"
+
+SYFS_MACHINE_PATH="/sys/class/product/machine/"
+MACHINE_BOOT_STATE_PATH=$SYFS_MACHINE_PATH"boot_state"
+MACHINE_NAME_PATH=$SYFS_MACHINE_PATH"product_name"
+MACHINE_TYPE_PATH=$SYFS_MACHINE_PATH"product_type"
+MACHINE_FW_VER_PATH=$SYFS_MACHINE_PATH"fw_version"
+MACHINE_HW_VER_PATH=$SYFS_MACHINE_PATH"hw_version"
+
+machine_detect() {
+    # Exit if PMIC of the LORIX does not exist
+    if [ ! -d $SYFS_MACHINE_PATH ]; then
+        return 1
+    fi
+
+    # Retrieve the various values
+    export MACHINE_BOOT_STATE=$(cat $MACHINE_BOOT_STATE_PATH)
+    export MACHINE_NAME=$(cat $MACHINE_NAME_PATH)
+    export MACHINE_TYPE=$(cat $MACHINE_TYPE_PATH)
+    export MACHINE_FW_VER=$(cat $MACHINE_FW_VER_PATH)
+    export MACHINE_HW_VER=$(cat $MACHINE_HW_VER_PATH)
+    export MACHINE_DETECTED="true"
+
+    echo "WIFX Machine detected"
+    echo "======================="
+    echo " Name: "$MACHINE_NAME
+    echo " Type: "$MACHINE_TYPE
+    echo "   Fw: "$MACHINE_FW_VER
+    echo "   Hw: "$MACHINE_HW_VER
+
+    return 0
+}
+
+machine_needs_factory_reset() {
+    if [ "$MACHINE_BOOT_STATE" == "1" ]; then
+        export MACHINE_HAD_FACTORY_RESET="true"
+        return 1
+    fi
+    export MACHINE_HAD_FACTORY_RESET="false"
+    return 0
+}
+
+machine_clear_reset_state() {
+    # Exit if PMIC of the LORIX does not exist
+    if [ ! -d $SYFS_MACHINE_PATH ]; then
+        return 1
+    fi
+
+    echo 1 > $MACHINE_BOOT_STATE_PATH
+    export MACHINE_BOOT_STATE=$(cat $MACHINE_BOOT_STATE_PATH)
+
+    if [ "$MACHINE_BOOT_STATE" != "0" ]; then
+        echo "Failed to clear factory reset state"
+        return 1
+    fi
+
+    return 0
+}

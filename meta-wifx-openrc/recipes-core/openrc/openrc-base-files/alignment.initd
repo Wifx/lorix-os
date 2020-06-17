@@ -1,0 +1,13 @@
+#!/sbin/openrc-run
+# Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
+# All rights reserved.
+
+start() {
+    ebegin "Setting CPU misalignment error handling strategy"
+    if [ -e /proc/cpu/alignment ]; then
+        echo "3" > /proc/cpu/alignment
+        eend $?
+    else
+        eend 1 "/proc/cpu/alignment not found"
+    fi
+}

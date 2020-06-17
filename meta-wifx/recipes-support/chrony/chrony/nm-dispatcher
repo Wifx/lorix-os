@@ -1,0 +1,43 @@
+#!/bin/sh
+
+# NetworkManager dispatcher script to update chrony's status and add NTP servers
+# obtained via DHCP.  Based on the AUR networkmanager-dispatcher-chrony script.
+
+INTERFACE=$1
+STATUS=$2
+
+# make sure we're always getting the standard response strings
+LANG='C'
+
+CHRONY=$(which chronyc)
+
+function chrony_status() {
+        TIMEOUT=$(which timeout)
+        if [ "$?" = "0" ]; then
+                $TIMEOUT -t 10 -s KILL $CHRONY $1
+        else
+                $CHRONY $1
+        fi
+}
+
+function chrony_servers() {
+        for i in $DHCP4_NTP_SERVERS $DHCP6_NTP_SERVERS; do
+                $CHRONY add server $i iburst
+        done
+}
+
+case "$STATUS" in
+up|vpn-up|dhcp4-change|connectivity-change)
+        chrony_servers
+        chrony_status onoffline
+        rc=$?
+        ;;
+down|vpn-down)
+        chrony_status onoffline
+        rc=$?
+        ;;
+*)
+        rc=0
+esac
+
+exit $rc
