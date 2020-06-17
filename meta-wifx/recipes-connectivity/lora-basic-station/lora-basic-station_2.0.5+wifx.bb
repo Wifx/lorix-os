@@ -1,12 +1,15 @@
+SUMMARY = "The Basic Station is a LoRaWAN packet forwarder"
 DESCRIPTION = "LoRa Basic Station"
 HOMEPAGE = "https://doc.sm.tc/station/"
-LICENSE = "BSD-3-Clause"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=8800e52406ffa1fc7eac718f37f653ee"
+AUTHOR = "Semtech LoRa Basics"
 
-#SRCTAG = "v${PV}"
-#SRC_URI = "git://github.com/Wifx/basicstation.git;protocol=git;tag=${SRCTAG}"
-SRCREV = "250b4e58aa1cd3cd15a3031a6c5924fa564b71fa"
-SRC_URI = "git://github.com/Wifx/basicstation.git;protocol=git"
+LICENSE = "BSD-3-Clause"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=5ffc1514bf7cad7ad7892ca90a7295cd"
+
+SRCTAG = "v${PV}"
+
+#SRC_URI = "git://github.com/lorabasics/basicstation.git;protocol=git;tag=${SRCTAG}"
+SRC_URI = "git://github.com/wifx/basicstation.git;protocol=git;tag=${SRCTAG}"
 
 SRC_URI += " \
     file://lora-basic-station.yml \
