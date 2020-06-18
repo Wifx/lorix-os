@@ -7,6 +7,7 @@ SRC_URI = " \
     file://0.6.1/0.6.1_01_UPF-rename-from-wpf.sh;subdir=${PN}-${PV} \
     file://1.0.0/1.0.0_01_Manager-config.sh;subdir=${PN}-${PV} \
     file://1.0.0/1.0.0_02_BasicStation-config.sh;subdir=${PN}-${PV} \
+    file://1.0.1/1.0.1_01_Manager-config-rights-fix.sh;subdir=${PN}-${PV} \
 "
 
 LICENSE = "Proprietary"
@@ -39,4 +40,6 @@ do_compile() {
 
     cp 1.0.0/1.0.0_01_Manager-config.sh ${TARGET}_Migration_1.0.0_01_Manager-config
     cp 1.0.0/1.0.0_02_BasicStation-config.sh ${TARGET}_Migration_1.0.0_02_BasicStation-config
+
+    cp 1.0.1/1.0.1_01_Manager-config-rights-fix.sh ${TARGET}_Migration_1.0.1_01_Manager-config-rights-fix
 }
