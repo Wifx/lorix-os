@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - [LOR-397] - Add libidn2 and update curl to 7.66
+- [LOR-400] - Manager v0.8.2
 
 ### Fixed
 
