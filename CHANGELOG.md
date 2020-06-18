@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- [LOR-399] Add migration to fix manager config dir migration bug
+
+### Changed
+
+- [LOR-397] - Add libidn2 and update curl to 7.66
+- [LOR-400] - Manager v0.8.2
+
+### Fixed
+
+- [LOR-383] - Netif freeze, apply final patch to Linux kernel 4.19
+- [LOR-398] - Manager config directory rights on migration
+
 ## [1.0.0] - 2020-06-12
 
 This release consolidates rc.3 as the stable release.
