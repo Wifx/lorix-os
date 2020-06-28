@@ -2,10 +2,18 @@
 # All rights reserved.
 
 def print_info(layer, rel, inc_dirty, d):
+    import subprocess
     rev_hash = get_rel_path_rev(layer, rel, inc_dirty, d)
     rev_date = get_rel_path_rev_date(layer, rel, d)
     bb.note("Workspace revision hash: " + rev_hash)
     bb.note("Workspace revision date: " + rev_date)
+    path = get_rel_path(layer, rel, d)
+    if get_rev_dirty(path):
+        cmd = 'git status '
+        status = subprocess.Popen('cd ' + path + ' ; ' + cmd, stdout=subprocess.PIPE, shell=True).communicate()[0]
+        if sys.version_info.major >= 3 :
+            status = status.decode()
+        bb.note("Workspace is dirty, status: " + status)
 
 def get_rev(path, inc_dirty):
     import subprocess
