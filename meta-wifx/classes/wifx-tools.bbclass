@@ -35,12 +35,13 @@ def get_rev_date(path):
 
 def get_rev_dirty(path):
     import subprocess
-    cmd = 'git diff-index --quiet HEAD -- '
-    rev = subprocess.Popen('cd ' + path + ' ; ' + cmd, stdout=subprocess.PIPE, shell=True)
-    rev.communicate()
+    cmd = 'git status --porcelain '
+    dirty = subprocess.Popen('cd ' + path + ' ; ' + cmd, stdout=subprocess.PIPE, shell=True).communicate()[0]
     if sys.version_info.major >= 3 :
-        rev = rev.returncode
-    return rev
+        dirty = dirty.decode()
+    if not dirty:
+        return False
+    return True
 
 def get_rel_path_rev(layer, rel, inc_dirty, d):
     targetrev = "unknown"
