@@ -1,12 +1,20 @@
 # Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
 # All rights reserved.
 
-def get_rev(path):
+def print_info(layer, rel, inc_dirty, d):
+    rev_hash = get_rel_path_rev(layer, rel, inc_dirty, d)
+    rev_date = get_rel_path_rev_date(layer, rel, d)
+    bb.note("Workspace revision hash: " + rev_hash)
+    bb.note("Workspace revision date: " + rev_date)
+
+def get_rev(path, inc_dirty):
     import subprocess
     cmd = 'git log -n1 --format=format:%h '
     rev = subprocess.Popen('cd ' + path + ' ; ' + cmd, stdout=subprocess.PIPE, shell=True).communicate()[0]
     if sys.version_info.major >= 3 :
         rev = rev.decode()
+    if inc_dirty == True and get_rev_dirty(path):
+        rev += ".dirty"
     return rev
 
 def get_rev_date(path):
@@ -29,9 +37,7 @@ def get_rev_dirty(path):
 def get_rel_path_rev(layer, rel, inc_dirty, d):
     targetrev = "unknown"
     targetpath = get_rel_path(layer, rel, d)
-    targetrev = get_rev(targetpath)
-    if inc_dirty == True and get_rel_path_rev_dirty(layer, rel, d):
-        targetrev += ".dirty"
+    targetrev = get_rev(targetpath, inc_dirty)
     return targetrev
 
 def get_rel_path_rev_date(layer, rel, d):
