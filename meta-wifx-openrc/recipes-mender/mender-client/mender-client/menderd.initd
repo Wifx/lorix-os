@@ -10,7 +10,7 @@ respawn_delay="${RESPAWN_DELAY:-2}"
 
 command_user="root"
 command="/usr/bin/mender"
-command_args="-daemon"
+command_args="daemon"
 command_background=true
 start_stop_daemon_args="--group root"
 
