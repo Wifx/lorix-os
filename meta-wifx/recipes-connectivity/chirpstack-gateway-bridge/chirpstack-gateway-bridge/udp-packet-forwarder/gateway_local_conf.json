@@ -12,7 +12,7 @@
     "serv_port_down": 1700,
 
     /* Gateway GPS coordinates */
-    "fake_gps": true,       /* Only fake gps is supported, should stay to true */
+    "fake_gps": false,      /* Enable if you want the below coordinates to be sent to the server */
     "ref_latitude": -1,     /* Example for the Matterhorn: 45.976451 */
     "ref_longitude": -1,    /* Example for the Matterhorn: 7.658492 */
     "ref_altitude": -1      /* Example for the Matterhorn: 4478 */ 
