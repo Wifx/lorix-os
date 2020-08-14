@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.0] - Unreleased
 
+### Added
+
+- [LOR-410] Add 3 and 5dBi antennas hardware files
+
 ### Changes
 
 - [LOR-408] - Update UDP Packer Forwarder to v5.0.3
