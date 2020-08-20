@@ -6,7 +6,7 @@ LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=42af54d0b96581c4b8085315e05da454"
 
 RDEPENDS_${PN} += "openssl-bin dbus glibc"
-RRECOMMENDS_${PN} += "manager-gui mender-client networkmanager"
+RRECOMMENDS_${PN} += "manager-gui mender-client networkmanager networkmanager-nmcli"
 
 INSANE_SKIP_${PN} += "ldflags textrel"
 
