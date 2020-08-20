@@ -11,7 +11,7 @@ DEPENDS = " \
     intltool-native \
     libxslt-native \
     libnl \
-    libgudev \
+    udev \
     util-linux \
     libndp \
     libnewt \
@@ -26,6 +26,7 @@ SRC_URI = " \
     file://${BPN}.initd \
     file://0001-Fixed-configure.ac-Fix-pkgconfig-sysroot-locations.patch \
     file://0002-Do-not-create-settings-settings-property-documentati.patch \
+    file://0001-install-firewalld-to-var-libdir-rather-than-hardcod-.patch \
 "
 SRC_URI_append_libc-musl = " \
     file://musl/0001-Fix-build-with-musl-systemd-specific.patch \
@@ -33,7 +34,7 @@ SRC_URI_append_libc-musl = " \
     file://musl/0003-Fix-build-with-musl-for-n-dhcp4.patch \
     file://musl/0004-Fix-build-with-musl-systemd-specific.patch \
 "
-SRC_URI[sha256sum] = "2b29ccc1531ba7ebba95a97f40c22b963838e8b6833745efe8e6fb71fd8fca77"
+SRC_URI[sha256sum] = "c6893971936a1ce252ba4fdff830c972d2ae93fec6751b57dcfd3ad9f0c949dd"
 
 S = "${WORKDIR}/NetworkManager-${PV}"
 
@@ -84,6 +85,7 @@ PACKAGECONFIG[qt4-x11-free] = "--enable-qt,--disable-qt,qt4-x11-free"
 PACKAGECONFIG[cloud-setup] = "--with-nm-cloud-setup=yes,--with-nm-cloud-setup=no"
 
 PACKAGES =+ " \
+  ${PN}-nmcli ${PN}-nmcli-doc \
   ${PN}-nmtui ${PN}-nmtui-doc \
   ${PN}-adsl ${PN}-cloud-setup \
 "
@@ -106,6 +108,7 @@ FILES_${PN} += " \
     ${libexecdir} \
     ${libdir}/NetworkManager/${PV}/*.so \
     ${libdir}/NetworkManager \
+    ${libdir}/firewalld/zones \
     ${nonarch_libdir}/NetworkManager/conf.d \
     ${nonarch_libdir}/NetworkManager/dispatcher.d \
     ${nonarch_libdir}/NetworkManager/dispatcher.d/pre-down.d \
@@ -130,6 +133,14 @@ FILES_${PN}-dev += " \
     ${libdir}/pppd/*/*.la \
     ${libdir}/NetworkManager/*.la \
     ${libdir}/NetworkManager/${PV}/*.la \
+"
+
+FILES_${PN}-nmcli = " \
+    ${bindir}/nmcli \
+"
+
+FILES_${PN}-nmcli-doc = " \
+    ${mandir}/man1/nmcli* \
 "
 
 FILES_${PN}-nmtui = " \

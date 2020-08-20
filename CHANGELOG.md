@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [LOR-408] - Update UDP Packer Forwarder to v5.0.3
 - [LOR-409] - Disable fake GPS report by default for UDP Packet Forwarder
+- Update NetworkManager to 1.22.14
 
 ## [1.0.1] - 2020-06-24
 
