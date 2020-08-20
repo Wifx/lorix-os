@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.0] - Unreleased
+## [1.1.0] - 2020-08-21
 
 ### Added
 
@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-408] - Update UDP Packer Forwarder to v5.0.3
 - [LOR-409] - Disable fake GPS report by default for UDP Packet Forwarder
 - Update NetworkManager to 1.22.14
+- Update Manager to v0.9
 
 ## [1.0.1] - 2020-06-24
 
