@@ -43,4 +43,6 @@ do_compile() {
     cp 1.0.0/02_BasicStation-config.sh ${TARGET}_Migration_1.0.0_02_BasicStation-config
 
     cp 1.0.1/01_Manager-config-rights-fix.sh ${TARGET}_Migration_1.0.1_01_Manager-config-rights-fix
+
+    cp 1.1.1/01_GPS-disable-if-no-coords.sh ${TARGET}_Migration_1.1.1_01_GPS-disable-if-no-coords
 }
