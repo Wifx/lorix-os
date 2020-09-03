@@ -15,7 +15,7 @@ PREFIX=TEMPLATE
 # VERSION_MIN="0.6.0" 
 
 # Defines what is the highest version (excluded) of the source system for the migration to be applied (semver).
-# This is generally set to the current version. If the user has this version (or higher), the migration is done and not usefull anymore.
+# This is generally set to the current version. If the user has this version (or higher), the migration is already done and not useful anymore.
 # Must not be empty. Can be left undefined.
 VERSION_MAX="1.0.0" 
 
