@@ -1,0 +1,5 @@
+{
+    "name": "Asia 923-925 MHz",
+    "description": "TTN Community Network frequency plan for Asian countries, using frequencies ≥ 923 MHz",
+    "countries": "bn, kh, hk, id, la, tw, th, vn"
+}

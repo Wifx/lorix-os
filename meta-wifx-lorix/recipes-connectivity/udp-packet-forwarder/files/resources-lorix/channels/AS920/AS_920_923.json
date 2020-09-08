@@ -1,4 +1,7 @@
 {
+  "name": "Asia 920-923 MHz",
+  "description": "TTN Community Network frequency plan for Asian countries, using frequencies ≤ 923 MHz",
+  "countries": "my,sg",
   "radio": {
     "radio_0": {
       "freq": 923600000

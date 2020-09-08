@@ -1,0 +1,5 @@
+{
+    "name": "Australia 915-928 MHz, FSB 6",
+    "description": "Frequency plan for Australia, using sub-band 6, which overlaps with Asia 923-925 MHz",
+    "countries": "br,cl,nz,ar,au"
+}

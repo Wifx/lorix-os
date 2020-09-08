@@ -1,0 +1,5 @@
+{
+  "name": "Europe 863-870 MHz (SF9 for RX2 - recommended)",
+  "description": "TTN Community Network frequency plan for Europe, using SF9 for RX2",
+  "countries": "al, ad, ao, at, bh, be, ba, bw, bg, cg, hr, cy, cz, dk, ee, sz, fi, fr, gr, hu, is, ie, it, lv, ls, li, lt, lu, mg, mw, mt, mu, md, me, mz, na, nl, mk, ph, pl, pt, ro, ru, sa, rs, sc, sk, si, za, es, se, ch, tz, tr, ae, gb, va, zm, zw"
+}

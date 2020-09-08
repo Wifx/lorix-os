@@ -1,0 +1,5 @@
+{
+    "name": "Australia 915-928 MHz, FSB 1",
+    "description": "Default frequency plan for Australia, using sub-band 1",
+    "countries": "br,cl,nz,ar,au"
+}
