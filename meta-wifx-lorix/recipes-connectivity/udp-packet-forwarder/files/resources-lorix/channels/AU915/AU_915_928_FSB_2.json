@@ -1,7 +1,7 @@
 {
   "name": "Australia 915-928 MHz, FSB 2 (used by TTN)",
   "description": "TTN Community Network frequency plan for Australia, using sub-band 2",
-  "countries": "br,cl,nz,ar,au",
+  "countries": "br, cl, nz, ar, au",
   "radio": {
     "radio_0": {
       "freq": 917200000
