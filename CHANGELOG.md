@@ -5,13 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2020-09-03
+
+### Changed
+
+- [LOR-416] Manager GUI v0.9.2
+
+### Fixed
+
+- [LOR-415] Migrate fake GPS default value
+
+## [1.1.0] - 2020-08-21
+
+### Added
+
+- [LOR-410] Add 3 and 5dBi antennas hardware files
+
+### Changes
+
+- [LOR-408] - Update UDP Packer Forwarder to v5.0.3
+- [LOR-409] - Disable fake GPS report by default for UDP Packet Forwarder
+- Update NetworkManager to 1.22.14
+- Update Manager to v0.9
+
+## [1.0.1] - 2020-06-24
+
+### Added
+
+- [LOR-399] Add migration to fix manager config dir migration bug
+
+### Changed
+
+- [LOR-397] - Add libidn2 and update curl to 7.66
+- [LOR-400] - Manager v0.8.2
+
+### Fixed
+
+- [LOR-383] - Netif freeze, apply final patch to Linux kernel 4.19
+- [LOR-398] - Manager config directory rights on migration
+
 ## [1.0.0] - 2020-06-12
 
 This release consolidates rc.3 as the stable release.
 
 ## [1.0.0-rc.3] - 2020-06-12
 
-## Changed
+### Changed
 
 - [LOR-394] - BasicStation config migration : skip instead of abort in case of error
 - [LOR-393] - Upgrade manager GUI to 0.8.2

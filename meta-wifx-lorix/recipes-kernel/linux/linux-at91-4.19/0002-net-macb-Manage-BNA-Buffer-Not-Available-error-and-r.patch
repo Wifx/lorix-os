@@ -1,4 +1,4 @@
-From d4c4772e9ac480b3478b9abeff01bca2297b4c01 Mon Sep 17 00:00:00 2001
+From 08ff89776ece6d89efa2b19f9e9f11b000d9cf87 Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
 Date: Thu, 11 Jun 2020 10:19:08 +0200
 Subject: [PATCH 2/2] net: macb: Manage BNA (Buffer Not Available) error and
@@ -11,7 +11,7 @@ Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
  1 file changed, 72 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/net/ethernet/cadence/macb_main.c b/drivers/net/ethernet/cadence/macb_main.c
-index 7ecc81677cc9..340d886ac286 100644
+index f468b009f5c5..326c088a6187 100644
 --- a/drivers/net/ethernet/cadence/macb_main.c
 +++ b/drivers/net/ethernet/cadence/macb_main.c
 @@ -1262,6 +1262,73 @@ static int macb_rx(struct macb_queue *queue, struct napi_struct *napi,

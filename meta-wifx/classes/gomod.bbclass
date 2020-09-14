@@ -82,7 +82,6 @@ gomod_do_compile() {
 			echo "Building shared libraries"
 			${GO} install -buildmode=shared ${GOBUILDFLAGS} std
 		fi
-
 		echo "Building" ${PN} "..."
 		#${GO} build ${GO_LINKSHARED} ${GOBUILDFLAGS} -o ${B}/${PN}
 		${GO} build ${GOBUILDFLAGS} -o ${B}/${PN}
