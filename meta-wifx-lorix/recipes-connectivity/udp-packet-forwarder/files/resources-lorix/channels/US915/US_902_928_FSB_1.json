@@ -1,75 +1,92 @@
 {
-    "name": "United States 902-928 MHz, FSB 1",
-    "description": "Default frequency plan for the United States and Canada, using sub-band 1",
-    "countries": "bo, ca, co, cr, do, ec, gy, mx, pa, py, pe, pr, sr, us, uy, ve",
-    "radio": {
-        "radio_0": {
-            "freq": 902700000
-        },
-        "radio_1": {
-            "freq": 903400000
-        }
+  "name": "United States 902-928 MHz, FSB 1",
+  "description": "Default frequency plan for the United States and Canada, using sub-band 1",
+  "countries": [
+    "bo",
+    "ca",
+    "co",
+    "cr",
+    "do",
+    "ec",
+    "gy",
+    "mx",
+    "pa",
+    "py",
+    "pe",
+    "pr",
+    "sr",
+    "us",
+    "uy",
+    "ve"
+  ],
+  "radio": {
+    "radio_0": {
+      "freq": 902700000
     },
-    "channels_conf": {
-        "chan_multiSF_0": {
-            "desc": "Lora MAC, 125kHz, all SF, 902.3 MHz",
-            "enable": true,
-            "radio": 0,
-            "if": -400000
-        },
-        "chan_multiSF_1": {
-            "desc": "Lora MAC, 125kHz, all SF, 902.5 MHz",
-            "enable": true,
-            "radio": 0,
-            "if": -200000
-        },
-        "chan_multiSF_2": {
-            "desc": "Lora MAC, 125kHz, all SF, 902.7 MHz",
-            "enable": true,
-            "radio": 0,
-            "if": 0
-        },
-        "chan_multiSF_3": {
-            "desc": "Lora MAC, 125kHz, all SF, 902.9 MHz",
-            "enable": true,
-            "radio": 0,
-            "if": 200000
-        },
-        "chan_multiSF_4": {
-            "desc": "Lora MAC, 125kHz, all SF, 903.1 MHz",
-            "enable": true,
-            "radio": 1,
-            "if": -300000
-        },
-        "chan_multiSF_5": {
-            "desc": "Lora MAC, 125kHz, all SF, 903.3 MHz",
-            "enable": true,
-            "radio": 1,
-            "if": -100000
-        },
-        "chan_multiSF_6": {
-            "desc": "Lora MAC, 125kHz, all SF, 903.5 MHz",
-            "enable": true,
-            "radio": 1,
-            "if": 100000
-        },
-        "chan_multiSF_7": {
-            "desc": "Lora MAC, 125kHz, all SF, 903.7 MHz",
-            "enable": true,
-            "radio": 1,
-            "if": 300000
-        },
-        "chan_Lora_std": {
-            "desc": "Lora MAC, 500kHz, SF8, 903.0 MHz",
-            "enable": true,
-            "radio": 0,
-            "if": 300000,
-            "bandwidth": 500000,
-            "spread_factor": 8
-        },
-        "chan_FSK": {
-            "desc": "disabled",
-            "enable": false
-        }
+    "radio_1": {
+      "freq": 903400000
     }
+  },
+  "channels_conf": {
+    "chan_multiSF_0": {
+      "desc": "Lora MAC, 125kHz, all SF, 902.3 MHz",
+      "enable": true,
+      "radio": 0,
+      "if": -400000
+    },
+    "chan_multiSF_1": {
+      "desc": "Lora MAC, 125kHz, all SF, 902.5 MHz",
+      "enable": true,
+      "radio": 0,
+      "if": -200000
+    },
+    "chan_multiSF_2": {
+      "desc": "Lora MAC, 125kHz, all SF, 902.7 MHz",
+      "enable": true,
+      "radio": 0,
+      "if": 0
+    },
+    "chan_multiSF_3": {
+      "desc": "Lora MAC, 125kHz, all SF, 902.9 MHz",
+      "enable": true,
+      "radio": 0,
+      "if": 200000
+    },
+    "chan_multiSF_4": {
+      "desc": "Lora MAC, 125kHz, all SF, 903.1 MHz",
+      "enable": true,
+      "radio": 1,
+      "if": -300000
+    },
+    "chan_multiSF_5": {
+      "desc": "Lora MAC, 125kHz, all SF, 903.3 MHz",
+      "enable": true,
+      "radio": 1,
+      "if": -100000
+    },
+    "chan_multiSF_6": {
+      "desc": "Lora MAC, 125kHz, all SF, 903.5 MHz",
+      "enable": true,
+      "radio": 1,
+      "if": 100000
+    },
+    "chan_multiSF_7": {
+      "desc": "Lora MAC, 125kHz, all SF, 903.7 MHz",
+      "enable": true,
+      "radio": 1,
+      "if": 300000
+    },
+    "chan_Lora_std": {
+      "desc": "Lora MAC, 500kHz, SF8, 903.0 MHz",
+      "enable": true,
+      "radio": 0,
+      "if": 300000,
+      "bandwidth": 500000,
+      "spread_factor": 8
+    },
+    "chan_FSK": {
+      "desc": "disabled",
+      "enable": false
+    }
+  }
 }
