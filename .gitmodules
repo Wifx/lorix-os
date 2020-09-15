@@ -9,3 +9,6 @@
 [submodule "meta-rust-bin"]
 	path = meta-rust-bin
 	url = https://github.com/rust-embedded/meta-rust-bin.git
+[submodule "meta-clang"]
+	path = meta-clang
+	url = https://github.com/kraj/meta-clang.git
