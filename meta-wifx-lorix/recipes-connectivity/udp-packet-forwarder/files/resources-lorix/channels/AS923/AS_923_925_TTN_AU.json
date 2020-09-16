@@ -1,4 +1,7 @@
 {
+  "name": "Asia 923-925 MHz (used by TTN Australia)",
+  "description": "TTN Community Network frequency plan for Asia 923-925 MHz in Australia",
+  "countries": ["au"],
   "radio": {
     "radio_0": {
       "freq": 923600000

@@ -1,0 +1,78 @@
+{
+  "name": "Asia 923-925 MHz",
+  "description": "TTN Community Network frequency plan for Asian countries, using frequencies ≥ 923 MHz",
+  "countries": [
+    "bn",
+    "kh",
+    "hk",
+    "id",
+    "la",
+    "tw",
+    "th",
+    "vn"
+  ],
+  "chan_multiSF_0": {
+    "desc": "923200000",
+    "enable": true,
+    "radio": 0,
+    "if": -400000
+  },
+  "chan_multiSF_1": {
+    "desc": "923400000",
+    "enable": true,
+    "radio": 0,
+    "if": -200000
+  },
+  "chan_multiSF_2": {
+    "desc": "923600000",
+    "enable": true,
+    "radio": 0,
+    "if": 0
+  },
+  "chan_multiSF_3": {
+    "desc": "923800000",
+    "enable": true,
+    "radio": 0,
+    "if": 200000
+  },
+  "chan_multiSF_4": {
+    "desc": "924000000",
+    "enable": true,
+    "radio": 0,
+    "if": 400000
+  },
+  "chan_multiSF_5": {
+    "desc": "924200000",
+    "enable": true,
+    "radio": 1,
+    "if": -400000
+  },
+  "chan_multiSF_6": {
+    "desc": "924400000",
+    "enable": true,
+    "radio": 1,
+    "if": -200000
+  },
+  "chan_multiSF_7": {
+    "desc": "924600000",
+    "enable": true,
+    "radio": 1,
+    "if": 0
+  },
+  "chan_Lora_std": {
+    "desc": "924500000",
+    "enable": true,
+    "radio": 1,
+    "if": -100000,
+    "bandwidth": 250000,
+    "spread_factor": 7
+  },
+  "chan_FSK": {
+    "desc": "924800000",
+    "enable": true,
+    "radio": 1,
+    "if": 200000,
+    "bandwidth": 125000,
+    "datarate": 50000
+  }
+}
