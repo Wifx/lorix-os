@@ -21,6 +21,14 @@ do_install() {
     for file in $(find . -type f -name '*.json'); do
         install -m 0644 -D "${WORKDIR}/resources-lorix/channels/$file" "${D}${sysconfoptdir}/udp-packet-forwarder/channels/$file"
     done
+
+    set_default "AS920" "AS_920_923"
+    set_default "AS923" "AS_923_925"
+    set_default "AU915" "AU_915_928_FSB_2"
+    set_default "EU868" "EU_863_870"
+    set_default "IN865" "IN_865_867"
+    set_default "RU864" "RU_864_870_TTN"
+    set_default "US915" "US_902_928_FSB_1"
 }
 
 do_install_lorix_one() {
@@ -50,6 +58,20 @@ pkg_postinst_ontarget_${PN} () {
             update-gwid "$file"
         done
     fi
+}
+
+set_default() {
+    REGION=$1
+    ID=$2
+
+    TARGET_PATH="${D}${sysconfoptdir}/udp-packet-forwarder/channels/$REGION/$ID.json"
+
+    if [ ! -f "$TARGET_PATH" ]; then
+        bberror "Default Frequency plan '$ID' defined for region '$REGION' does not exist: '$TARGET_PATH'"
+        exit 1
+    fi;
+
+    ln -snf "$REGION/$ID.json" "${D}${sysconfoptdir}/udp-packet-forwarder/channels/$REGION/default"
 }
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
