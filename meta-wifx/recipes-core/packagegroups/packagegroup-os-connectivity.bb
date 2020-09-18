@@ -42,7 +42,7 @@ CONNECTIVITY_PACKAGES = " \
 CONNECTIVITY_LORA_PACKAGES = " \
     udp-packet-forwarder \
     loriot-packet-forwarder \
-    chirpstack-gateway-bridge \
+    chirpstack-gateway-bridge-udp \
     lora-basic-station \
 "
 
