@@ -52,3 +52,5 @@ FILES_${PN}-utils-dbg = "/opt/libloragw-sx1301/gateway-utils/.debug"
 FILES_${PN}-dev = "${includedir}"
 
 INSANE_SKIP_${PN}-utils = "ldflags"
+
+PACKAGE_ARCH = "${MACHINE_ARCH}"

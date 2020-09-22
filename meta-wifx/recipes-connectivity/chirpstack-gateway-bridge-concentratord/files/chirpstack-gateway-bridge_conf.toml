@@ -18,7 +18,7 @@ type="concentratord"
   crc_check=true
 
   # Event API URL.
-  event_url="ipc:///tmp/concentratord_command"
+  event_url="ipc:///tmp/concentratord_event"
 
   # Command API URL.
   command_url="ipc:///tmp/concentratord_command"

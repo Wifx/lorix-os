@@ -7,7 +7,7 @@ jobs:
         process:
             run-mode: exec
             program-path: /opt/chirpstack-gateway-bridge/chirpstack-gateway-bridge
-            program-arguments: -c /etc/opt/chirpstack-gateway-bridge/chirpstack-gateway-bridge-udp.toml
+            program-arguments: -c /etc/opt/chirpstack-gateway-bridge/chirpstack-gateway-bridge.toml
             delays:
                 start: 2000
                 term: 5000

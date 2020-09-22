@@ -15,7 +15,7 @@ RDEPENDS_${PN} += " \
 SRC_URI = " \
     file://LICENSE \
     file://chirpstack-gateway-bridge_conf.toml \
-    file://chirpstack-gateway-bridge-udp.yml \
+    file://chirpstack-gateway-bridge.yml \
     file://gateway_global_conf.json \
     file://gateway_local_conf.json \
 "
@@ -35,7 +35,7 @@ UPF_CONF_DIR = "${sysconfoptdir}/udp-packet-forwarder/gateway/chirpstack-gateway
 do_install() {
     # Install ChirpStack Gateway Bridge configuration file (UDP packet forwarder)
     install -d ${D}${CONF_DIR}
-    install -m 0644 ${WORKDIR}/chirpstack-gateway-bridge_conf.toml ${D}${CONF_DIR}/chirpstack-gateway-bridge-udp.toml
+    install -m 0644 ${WORKDIR}/chirpstack-gateway-bridge_conf.toml ${D}${CONF_DIR}/chirpstack-gateway-bridge.toml
 
     # UDP packet forwarder configuration
     install -m 0755 -d ${D}${UPF_CONF_DIR}
@@ -43,11 +43,11 @@ do_install() {
     install -m 0644 -D "${WORKDIR}/gateway_local_conf.json" "${D}${UPF_CONF_DIR}/"
 
     # Pmonitor service configuration files
-    pmonitor_service_install ${WORKDIR}/chirpstack-gateway-bridge-udp.yml
+    pmonitor_service_install ${WORKDIR}/chirpstack-gateway-bridge.yml
 }
 
 CONFFILES_${PN} += " \
-    ${CONF_DIR}/chirpstack-gateway-bridge-udp.toml \
+    ${CONF_DIR}/chirpstack-gateway-bridge.toml \
     ${UPF_CONF_DIR}/gateway_global_conf.json \
     ${UPF_CONF_DIR}/gateway_local_conf.json \
     "
