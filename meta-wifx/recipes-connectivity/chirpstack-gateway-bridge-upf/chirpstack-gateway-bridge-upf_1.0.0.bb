@@ -15,7 +15,7 @@ RDEPENDS_${PN} += " \
 SRC_URI = " \
     file://LICENSE \
     file://chirpstack-gateway-bridge_conf.toml \
-    file://chirpstack-gateway-bridge.yml \
+    file://chirpstack-gateway-bridge-udp.yml \
     file://gateway_global_conf.json \
     file://gateway_local_conf.json \
 "
@@ -43,7 +43,7 @@ do_install() {
     install -m 0644 -D "${WORKDIR}/gateway_local_conf.json" "${D}${UPF_CONF_DIR}/"
 
     # Pmonitor service configuration files
-    pmonitor_service_install ${WORKDIR}/chirpstack-gateway-bridge.yml
+    pmonitor_service_install ${WORKDIR}/chirpstack-gateway-bridge-udp.yml
 }
 
 CONFFILES_${PN} += " \
