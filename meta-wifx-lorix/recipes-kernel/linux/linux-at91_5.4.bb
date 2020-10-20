@@ -10,8 +10,9 @@ PR = "r0"
 
 S = "${WORKDIR}/git"
 
-SRCREV = "4598c555c6afda4a9df920413667ba508368356b"
+SRCREV = "88ed8f08fe15108f28ba04ff135f93f0fa498416"
 KBRANCH = "linux-5.4-at91"
+
 
 SRC_URI += " \
     file://kernel-features/netfilter/netfilter.scc;type=kmeta;destsuffix=kernel-meta \
