@@ -21,13 +21,13 @@
   },
   "channels_conf": {
     "chan_multiSF_0": {
-      "desc": "LoRa MAC, 125kHz, all SF, 923.2 MHz MAC, 125kHz, all SF, 923.2 MHz",
+      "desc": "LoRa MAC, 125kHz, all SF, 923.2 MHz",
       "enable": true,
       "radio": 0,
       "if": -400000
     },
     "chan_multiSF_1": {
-      "desc": "LoRa MAC, 125kHz, all SF, 923.4 MHz MAC, 125kHz, all SF, 923.4 MHz",
+      "desc": "LoRa MAC, 125kHz, all SF, 923.4 MHz",
       "enable": true,
       "radio": 0,
       "if": -200000
