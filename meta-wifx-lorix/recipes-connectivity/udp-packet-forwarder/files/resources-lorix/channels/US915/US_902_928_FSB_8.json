@@ -1,72 +1,83 @@
 {
-  "name": "Australia 915-928 MHz, FSB 6",
-  "description": "Frequency plan for Australia, using sub-band 6, which overlaps with Asia 923-925 MHz",
+  "name": "United States 902-928 MHz, FSB 8",
+  "description": "Default frequency plan for the United States and Canada, using sub-band 8",
   "countries": [
-    "br",
-    "cl",
-    "nz",
-    "ar",
-    "au"
+    "bo",
+    "ca",
+    "co",
+    "cr",
+    "do",
+    "ec",
+    "gy",
+    "mx",
+    "pa",
+    "py",
+    "pe",
+    "pr",
+    "sr",
+    "us",
+    "uy",
+    "ve"
   ],
   "radio": {
     "radio_0": {
-      "freq": 923600000
+      "freq": 913900000
     },
     "radio_1": {
-      "freq": 924300000
+      "freq": 914600000
     }
   },
   "channels_conf": {
     "chan_multiSF_0": {
-      "desc": "Lora MAC, 125kHz, all SF, 923.2 MHz",
+      "desc": "LoRa MAC, 125kHz, all SF, 913.5 MHz",
       "enable": true,
       "radio": 0,
       "if": -400000
     },
     "chan_multiSF_1": {
-      "desc": "Lora MAC, 125kHz, all SF, 923.4 MHz",
+      "desc": "LoRa MAC, 125kHz, all SF, 913.7 MHz",
       "enable": true,
       "radio": 0,
       "if": -200000
     },
     "chan_multiSF_2": {
-      "desc": "Lora MAC, 125kHz, all SF, 923.6 MHz",
+      "desc": "LoRa MAC, 125kHz, all SF, 913.9 MHz",
       "enable": true,
       "radio": 0,
       "if": 0
     },
     "chan_multiSF_3": {
-      "desc": "Lora MAC, 125kHz, all SF, 923.8 MHz",
+      "desc": "LoRa MAC, 125kHz, all SF, 914.1 MHz",
       "enable": true,
       "radio": 0,
       "if": 200000
     },
     "chan_multiSF_4": {
-      "desc": "Lora MAC, 125kHz, all SF, 924.0 MHz",
+      "desc": "LoRa MAC, 125kHz, all SF, 914.3 MHz",
       "enable": true,
       "radio": 1,
       "if": -300000
     },
     "chan_multiSF_5": {
-      "desc": "Lora MAC, 125kHz, all SF, 924.2 MHz",
+      "desc": "LoRa MAC, 125kHz, all SF, 914.5 MHz",
       "enable": true,
       "radio": 1,
       "if": -100000
     },
     "chan_multiSF_6": {
-      "desc": "Lora MAC, 125kHz, all SF, 924.4 MHz",
+      "desc": "LoRa MAC, 125kHz, all SF, 914.7 MHz",
       "enable": true,
       "radio": 1,
       "if": 100000
     },
     "chan_multiSF_7": {
-      "desc": "Lora MAC, 125kHz, all SF, 924.6 MHz",
+      "desc": "LoRa MAC, 125kHz, all SF, 914.9 MHz",
       "enable": true,
       "radio": 1,
       "if": 300000
     },
     "chan_Lora_std": {
-      "desc": "Lora MAC, 500kHz, SF8, 923.9 MHz",
+      "desc": "LoRa MAC, 500kHz, SF8, 914.2 MHz",
       "enable": true,
       "radio": 0,
       "if": 300000,

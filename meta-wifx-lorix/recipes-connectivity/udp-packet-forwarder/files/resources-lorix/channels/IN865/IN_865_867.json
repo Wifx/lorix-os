@@ -12,60 +12,62 @@
       "freq": 866385000
     }
   },
-  "chan_multiSF_0": {
-    "desc": "Lora MAC, 125kHz, all SF, 865.0625 MHz",
-    "enable": true,
-    "radio": 0,
-    "if": -137500
-  },
-  "chan_multiSF_1": {
-    "desc": "Lora MAC, 125kHz, all SF, 865.4025 MHz",
-    "enable": true,
-    "radio": 0,
-    "if": 202500
-  },
-  "chan_multiSF_2": {
-    "desc": "Lora MAC, 125kHz, all SF, 865.9850 MHz",
-    "enable": true,
-    "radio": 1,
-    "if": -400000
-  },
-  "chan_multiSF_3": {
-    "desc": "Lora MAC, 125kHz, all SF, 865.2325 MHz",
-    "enable": true,
-    "radio": 0,
-    "if": 32500
-  },
-  "chan_multiSF_4": {
-    "desc": "Lora MAC, 125kHz, all SF, 866.1850 MHz",
-    "enable": true,
-    "radio": 1,
-    "if": -200000
-  },
-  "chan_multiSF_5": {
-    "desc": "Lora MAC, 125kHz, all SF, 866.3850 MHz",
-    "enable": true,
-    "radio": 1,
-    "if": 0
-  },
-  "chan_multiSF_6": {
-    "desc": "Lora MAC, 125kHz, all SF, 866.5850 MHz",
-    "enable": true,
-    "radio": 1,
-    "if": 200000
-  },
-  "chan_multiSF_7": {
-    "desc": "Lora MAC, 125kHz, all SF, 866.7850 MHz",
-    "enable": true,
-    "radio": 1,
-    "if": 400000
-  },
-  "chan_Lora_std": {
-    "desc": "LoRa standard disabled",
-    "enable": false
-  },
-  "chan_FSK": {
-    "desc": "FSK disabled",
-    "enable": false
+  "channels_conf": {
+    "chan_multiSF_0": {
+      "desc": "Lora MAC, 125kHz, all SF, 865.0625 MHz",
+      "enable": true,
+      "radio": 0,
+      "if": -137500
+    },
+    "chan_multiSF_1": {
+      "desc": "Lora MAC, 125kHz, all SF, 865.4025 MHz",
+      "enable": true,
+      "radio": 0,
+      "if": 202500
+    },
+    "chan_multiSF_2": {
+      "desc": "Lora MAC, 125kHz, all SF, 865.9850 MHz",
+      "enable": true,
+      "radio": 1,
+      "if": -400000
+    },
+    "chan_multiSF_3": {
+      "desc": "Lora MAC, 125kHz, all SF, 865.2325 MHz",
+      "enable": true,
+      "radio": 0,
+      "if": 32500
+    },
+    "chan_multiSF_4": {
+      "desc": "Lora MAC, 125kHz, all SF, 866.1850 MHz",
+      "enable": true,
+      "radio": 1,
+      "if": -200000
+    },
+    "chan_multiSF_5": {
+      "desc": "Lora MAC, 125kHz, all SF, 866.3850 MHz",
+      "enable": true,
+      "radio": 1,
+      "if": 0
+    },
+    "chan_multiSF_6": {
+      "desc": "Lora MAC, 125kHz, all SF, 866.5850 MHz",
+      "enable": true,
+      "radio": 1,
+      "if": 200000
+    },
+    "chan_multiSF_7": {
+      "desc": "Lora MAC, 125kHz, all SF, 866.7850 MHz",
+      "enable": true,
+      "radio": 1,
+      "if": 400000
+    },
+    "chan_Lora_std": {
+      "desc": "LoRa standard disabled",
+      "enable": false
+    },
+    "chan_FSK": {
+      "desc": "FSK disabled",
+      "enable": false
+    }
   }
 }

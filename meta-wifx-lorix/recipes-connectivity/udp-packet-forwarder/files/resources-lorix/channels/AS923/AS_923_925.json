@@ -11,68 +11,78 @@
     "th",
     "vn"
   ],
-  "chan_multiSF_0": {
-    "desc": "923200000",
-    "enable": true,
-    "radio": 0,
-    "if": -400000
+  "radio": {
+    "radio_0": {
+      "freq": 923600000
+    },
+    "radio_1": {
+      "freq": 924600000
+    }
   },
-  "chan_multiSF_1": {
-    "desc": "923400000",
-    "enable": true,
-    "radio": 0,
-    "if": -200000
-  },
-  "chan_multiSF_2": {
-    "desc": "923600000",
-    "enable": true,
-    "radio": 0,
-    "if": 0
-  },
-  "chan_multiSF_3": {
-    "desc": "923800000",
-    "enable": true,
-    "radio": 0,
-    "if": 200000
-  },
-  "chan_multiSF_4": {
-    "desc": "924000000",
-    "enable": true,
-    "radio": 0,
-    "if": 400000
-  },
-  "chan_multiSF_5": {
-    "desc": "924200000",
-    "enable": true,
-    "radio": 1,
-    "if": -400000
-  },
-  "chan_multiSF_6": {
-    "desc": "924400000",
-    "enable": true,
-    "radio": 1,
-    "if": -200000
-  },
-  "chan_multiSF_7": {
-    "desc": "924600000",
-    "enable": true,
-    "radio": 1,
-    "if": 0
-  },
-  "chan_Lora_std": {
-    "desc": "924500000",
-    "enable": true,
-    "radio": 1,
-    "if": -100000,
-    "bandwidth": 250000,
-    "spread_factor": 7
-  },
-  "chan_FSK": {
-    "desc": "924800000",
-    "enable": true,
-    "radio": 1,
-    "if": 200000,
-    "bandwidth": 125000,
-    "datarate": 50000
+  "channels_conf": {
+    "chan_multiSF_0": {
+      "desc": "LoRa MAC, 125kHz, all SF, 923.2 MHz MAC, 125kHz, all SF, 923.2 MHz",
+      "enable": true,
+      "radio": 0,
+      "if": -400000
+    },
+    "chan_multiSF_1": {
+      "desc": "LoRa MAC, 125kHz, all SF, 923.4 MHz MAC, 125kHz, all SF, 923.4 MHz",
+      "enable": true,
+      "radio": 0,
+      "if": -200000
+    },
+    "chan_multiSF_2": {
+      "desc": "LoRa MAC, 125kHz, all SF, 923.6 MHz",
+      "enable": true,
+      "radio": 0,
+      "if": 0
+    },
+    "chan_multiSF_3": {
+      "desc": "LoRa MAC, 125kHz, all SF, 923.8 MHz",
+      "enable": true,
+      "radio": 0,
+      "if": 200000
+    },
+    "chan_multiSF_4": {
+      "desc": "LoRa MAC, 125kHz, all SF, 924 MHz",
+      "enable": true,
+      "radio": 0,
+      "if": 400000
+    },
+    "chan_multiSF_5": {
+      "desc": "LoRa MAC, 125kHz, all SF, 924.2 MHz",
+      "enable": true,
+      "radio": 1,
+      "if": -400000
+    },
+    "chan_multiSF_6": {
+      "desc": "LoRa MAC, 125kHz, all SF, 924.4 MHz",
+      "enable": true,
+      "radio": 1,
+      "if": -200000
+    },
+    "chan_multiSF_7": {
+      "desc": "LoRa MAC, 125kHz, all SF, 924.6 MHz",
+      "enable": true,
+      "radio": 1,
+      "if": 0
+    },
+    "chan_Lora_std": {
+      "desc": "LoRa MAC, 250kHz, SF7, 924.5 MHz",
+      "enable": true,
+      "radio": 1,
+      "if": -100000,
+      "bandwidth": 250000,
+      "spread_factor": 7
+    },
+    "chan_FSK": {
+      "desc": "FSK 50kbps, 924.8 MHz",
+      "enable": true,
+      "radio": 1,
+      "if": 200000,
+      "bandwidth": 125000,
+      "datarate": 50000
+    }
   }
 }

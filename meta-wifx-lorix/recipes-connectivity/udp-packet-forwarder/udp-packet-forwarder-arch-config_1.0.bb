@@ -71,7 +71,7 @@ set_default() {
         exit 1
     fi;
 
-    ln -snf "$REGION/$ID.json" "${D}${sysconfoptdir}/udp-packet-forwarder/channels/$REGION/default"
+    ln -snf "$ID.json" "${D}${sysconfoptdir}/udp-packet-forwarder/channels/$REGION/default"
 }
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
