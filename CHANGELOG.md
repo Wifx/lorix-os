@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - [LOR-313] Update Yocto to version Zeus
+- [LOR-424] Manager v0.10.0
 
 ## [1.1.1] - 2020-09-03
 
