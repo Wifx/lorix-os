@@ -13,7 +13,7 @@ def cert_location_if_server_crt_in(src_uri, d):
             return "%s/mender/server.crt" % d.getVar('sysconfdir')
     return ""
 
-MENDER_SERVER_URL ?= "https://docker.mender.io"
+MENDER_SERVER_URL ?= "https://hosted.mender.io"
 MENDER_CERT_LOCATION ??= "${@cert_location_if_server_crt_in('${SRC_URI}', d)}"
 SYSTEMD_AUTO_ENABLE ?= "enable"
 MENDER_UPDATE_POLL_INTERVAL_SECONDS ?= "1800"
