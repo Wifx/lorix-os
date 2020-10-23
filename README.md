@@ -14,7 +14,7 @@ The LORIX OS documentation is available on https://iot.wifx.net/docs/lorix-os. T
 * Git
 * 50 Gbytes of free disk space
 * One of
-  * A Linux based operating system compatible with Docker CE
+  * A Linux based operating system compatible with Docker
   * Ubuntu 20.04
 
 ## Prepare your environment
@@ -23,28 +23,11 @@ The LORIX OS documentation is available on https://iot.wifx.net/docs/lorix-os. T
 
 Download the workspace using Git<br />
 ```shell
-$ git clone --recursive -j8 https://github.com/Wifx/lorix-os
-$ cd lorix-os
-$ git submodule update
+$ cd ~
+$ git clone --recursive https://github.com/Wifx/lorix-os.git
 ```
 
-Display all the submodule status when git status is invoked in this repo:
-```shell
-$ git config --global status.submoduleSummary true
-```
-> **Note:** This option will affect globally your git settings and the other git repo containing submodules
-
-### Install the dependencies
-
-To meet the dependencies needed for the build, you have two possibilities:
-  1. [**Docker**](docs/DOCKER-PREPARE.md): build into a Docker container containing all the dependencies
-  2. [**Native**](docs/NATIVE-PREPARE.md): install the dependencies on your system
-
-We recommend building into the Docker container as it will ensure a reproductible build without interfering with the host system.
-
-Follow the guides provided by those links. Once the dependency installed, you will have a compatible host system and can go on with building the images.
-
-## Add the initial configuration
+### Add the initial configuration
 
 Copy default configuration files from the lorix-os/tools directory:
 ```shell
@@ -56,6 +39,16 @@ $ cp tools/config/* poky/build/conf
 > **Note**: The default 'machine' is the LORIX One 512MB. If want want to build for another machine, edit the `poky/build/conf/local.conf` file.
 
 For other configuration changes, please check the [configuration documentation](docs/CONFIG.md).
+
+### Install the dependencies
+
+To meet the dependencies needed for the build, you have two possibilities:
+  1. [**Docker**](docs/DOCKER-PREPARE.md): build into a Docker container containing all the dependencies
+  2. [**Native**](docs/NATIVE-PREPARE.md): install the dependencies on your system
+
+We recommend building into the Docker container as it will ensure a reproductible build without interfering with the host system.
+
+Follow the guides provided by those links. Once the dependency installed, you will have a compatible host system and can go on with building the images.
 
 ## Build the images
 
@@ -71,7 +64,7 @@ From the workspace (`lorix-os` directory).
    $ source oe-init-build-env
    ```
 
-   This will create the `lorix-os/poky/build` directory in which all the work will be done. The `build` directory becomes the active directory.
+   This will setup the environment. The `build` directory becomes the active directory.
 
 3. Build the Wifx standard image
    ```shell

@@ -2,42 +2,51 @@
 
 Run the Docker image with a binding on the lorix-os directory:
 ```shell
-$ sudo docker run -it --name lorix-os-bs -v /home/username/lorix-os:/home/build wifx/yocto:ubuntu-20.04
-build@dfe8e4eeb96f:~$ # You are now inside the container, in the lorix-os folder on the host containing the LORIX OS sources
+$ docker run -it --name lorix-os-bs -v ~/lorix-os:/home/yocto wifx/yocto:ubuntu-20.04
+yocto@dfe8e4eeb96f:~$ # You are now inside the container, in the lorix-os folder on the host containing the LORIX OS sources
 ```
 
-When the container is started, the current directory is `/home/build`. This directory is bound to `/home/username/lorix-os`. This means that `build@dfe8e4eeb96f:~$` is actually the 'workspace' directory.
+When the container is started, the current directory is `/home/yocto`. This directory is bound to `~/lorix-os`. This means that `yocto@dfe8e4eeb96f:~$` is actually the 'workspace' directory.
 
 > **Important:** Outside the container (on the host), you are using your user. Inside the container, you are using the yocto user. **Always** edit the source files of `lorix-os` from the host system (outside the container). You should never edit the files built by yocto located at `lorix-os/poky/build`.
 
 > **Note:** The ```-it``` stands for interactive (i) and tty (t) to open a terminal directly connecting the host therminal to the container's internal terminal.
 
-> **Note:** If the container already exists, you will get an error. Attach to the existing container instead of running a new one.
+> **Note:** If the container is already running, you will get an error. Attach to the existing container instead of running a new one.
 
-The build cache is stored inside the container. When you exit the container, it still exists. If the container is deleted, the cache is lost.
+The build cache is stored inside the container. When you exit the container, it's stopped but it still exists.
 
-To attach to an existing container, run:
+To start an existing container, run:
 ```shell
-$ docker exec -it lorix-os-bs
+$ docker start -i lorix-os-bs
 ```
+
+To remove the container, run:
+```shell
+$ docker rm lorix-os-bs
+```
+
+> **Note:** If the container is deleted, the cache is lost.
 
 ## Persistant cache
 
 If you want to make the cache persistant when the container is removed or when you run a new container, bind the cache folder to a names volume:
 ```shell
-$ sudo docker run -it --name lorix-os-bs -v /home/username/lorix-os:/home/build -v lorix-os-yocto-cache:/yocto wifx/yocto:ubuntu-20.04
+$ docker run -it --name lorix-os-bs -v ~/lorix-os:/home/yocto -v lorix-os-yocto-cache:/yocto wifx/yocto:ubuntu-20.04
 ```
 
 > **Note:** The cache should not be accessed by multiple instances of Yocto at the same time.
 
-> **Note:** You can also bind the cache volume to a defined location on your filesystem instead of a named volume.
+> **Note:** The cache can be removed with `docker volume rm lorix-os-yocto-cache` (e.g. to free space).
+
+> **Note:** You can also bind the cache volume to a defined location on your filesystem instead of a named volume with e.g. `-v ~/lorix-os-cache:/yocto`.
 
 
 ## Automatically remove the container
 
 If you add the ```--rm``` argument, the container will be automatically deleted on exit:
 ```shell
-$ sudo docker run -it --name lorix-os-bs --rm -v /home/username/lorix-os:/home/build wifx/yocto:ubuntu-20.04
+$ docker run -it --name lorix-os-bs --rm -v ~/lorix-os:/home/yocto wifx/yocto:ubuntu-20.04
 ```
 
 > **Note:** When the container is deleted, the cache is deleted. Source files and build result are not deleted as they are provided through the volume and are therefore not stored inside the container.
