@@ -7,7 +7,7 @@
 
 2. **Create the Docker image** by building this Dockerfile from its directory:
    ```shell
-   $ sudo docker build -t wifx/yocto:ubuntu-20.04 .
+   $ docker build -t wifx/yocto:ubuntu-20.04 .
    Sending build context to Docker daemon  3.584kB
    Step 1/18 : FROM ubuntu:20.04
     ---> cd6d8154f1e1
