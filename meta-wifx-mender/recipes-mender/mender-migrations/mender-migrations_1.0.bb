@@ -9,6 +9,7 @@ SRC_URI = " \
     file://1.0.0/02_BasicStation-config.sh;subdir=${BPN}-${PV} \
     file://1.0.1/01_Manager-config-rights-fix.sh;subdir=${BPN}-${PV} \
     file://1.1.1/01_GPS-disable-if-no-coords.sh;subdir=${BPN}-${PV} \
+    file://1.2.0/01_UPF-channel-link.sh;subdir=${BPN}-${PV} \
 "
 
 LICENSE = "Proprietary"
@@ -45,4 +46,6 @@ do_compile() {
     cp 1.0.1/01_Manager-config-rights-fix.sh ${TARGET}_Migration_1.0.1_01_Manager-config-rights-fix
 
     cp 1.1.1/01_GPS-disable-if-no-coords.sh ${TARGET}_Migration_1.1.1_01_GPS-disable-if-no-coords
+
+    cp 1.2.0/01_UPF-channel-link.sh ${TARGET}_Migration_1.2.0_01_UPF-channel-link
 }
