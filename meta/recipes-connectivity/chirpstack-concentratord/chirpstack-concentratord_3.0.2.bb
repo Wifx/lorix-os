@@ -8,12 +8,13 @@ SRC_URI = "\
     file://chirpstack-concentratord.yml \
     file://config.toml \
 "
-DEPENDS = "\
-    libloragw-sx1301 \
-    libloragw-sx1302 \
+
+DEPENDS = " \
     clang-native \
 "
-RPROVIDES_${PN} += "virtual/lora-packet-forwarder"
+
+DEPENDS += "${@bb.utils.contains('MACHINE_FEATURES', 'sx1301', 'libloragw-sx1301', '', d)}"
+DEPENDS += "${@bb.utils.contains('MACHINE_FEATURES', 'sx1302', 'libloragw-sx1302', '', d)}"
 
 inherit cargo pmonitor
 
@@ -24,38 +25,56 @@ export BINDGEN_EXTRA_CLANG_ARGS="-I${STAGING_INCDIR}"
 
 do_install() {
 
-
     if [ "${CARGO_BUILD_TYPE}" = "--release" ]; then
         local cargo_bindir="${CARGO_RELEASE_DIR}"
     else
         local cargo_bindir="${CARGO_DEBUG_DIR}"
     fi
 
-    install -m 0755 -d ${D}${optdir}/chirpstack-concentratord
-    install -m 0755 -d ${D}${CONF_DIR}
 
     # gateway-id is only for the SX1302
     # TODO: manage its installation
     #install -m 0755 ${cargo_bindir}/gateway-id ${D}${optdir}/chirpstack-concentratord
 
+    install -m 0755 -d ${D}${CONF_DIR}
     install -m 0644 ${WORKDIR}/config.toml ${D}${CONF_DIR}/config.toml
 
     pmonitor_service_install ${WORKDIR}/chirpstack-concentratord.yml
-
 }
 
-do_install_lorix_one() {
-    install -m 0755 ${cargo_bindir}/chirpstack-concentratord-sx1301 ${D}${optdir}/chirpstack-concentratord/chirpstack-concentratord
+do_install_append() {
+    install -m 0755 -d ${D}${optdir}/chirpstack-concentratord
+
+    if [ "${@bb.utils.contains('MACHINE_FEATURES', 'sx1301', 'true', 'false', d)}" = "true" ]; then
+        concentrator="sx1301"
+    fi
+    
+    if [ "${@bb.utils.contains('MACHINE_FEATURES', 'sx1302', 'true', 'false', d)}" = "true" ]; then
+        if [ -z $concentrator ]; then
+            bbfatal "Cannot have both sx1301 and sx1302"
+        fi
+        concentrator="sx1302"
+    fi
+
+    case $concentrator in
+        "sx1301")
+            install -m 0755 ${cargo_bindir}/chirpstack-concentratord-sx1301 ${D}${optdir}/chirpstack-concentratord/chirpstack-concentratord
+            break
+            ;;
+
+        "sx1302")
+            install -m 0755 ${cargo_bindir}/chirpstack-concentratord-sx1302 ${D}${optdir}/chirpstack-concentratord/chirpstack-concentratord
+            break
+            ;;
+
+        *)
+            bbfatal "concentratord needs either sx1301 or sx1302"
+            ;;
+    esac
 }
 
-do_install_append_lorix-one-256() {
-    do_install_lorix_one
-}
-
-do_install_append_lorix-one-512() {
-    do_install_lorix_one
-}
-
-#FILES_${PN} += "${optdir}/chirpstack-concentratord/gateway-id"
-FILES_${PN} += "${optdir}/chirpstack-concentratord/chirpstack-concentratord"
+FILES_${PN} += " \
+    ${optdir}/chirpstack-concentratord/chirpstack-concentratord \
+    ${CONF_DIR}/config.toml \
+"
 PACKAGE_ARCH = "${MACHINE_ARCH}"

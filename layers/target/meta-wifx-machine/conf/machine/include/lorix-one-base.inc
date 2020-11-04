@@ -23,3 +23,5 @@ MACHINE_ESSENTIAL_EXTRA_RDEPENDS += "kernel-modules"
 
 # make sure that kernel and devicetree are installed
 IMAGE_INSTALL_append = " kernel-devicetree kernel-image-zimage"
+
+MACHINE_FEATURES += "sx1301"
