@@ -1,0 +1,24 @@
+description: ChirpStack Gateway Bridge with UDP packet forwarder
+autostart: true
+log: true
+jobs:
+    gateway-bridge:
+        description: Gateway Bridge receiveing the forwarder packets and sending them to the ChirpStack Network Server
+        process:
+            run-mode: exec
+            program-path: /opt/chirpstack-gateway-bridge/chirpstack-gateway-bridge
+            program-arguments: -c /etc/opt/chirpstack-gateway-bridge/chirpstack-gateway-bridge.toml
+            delays:
+                start: 2000
+                term: 5000
+                restart: 5000
+    udp-packet-forwarder:
+        description: The forwarder receiving data from the SPI (SX13XX) and forwarding to the Gateway Bridge
+        process:
+            run-mode: exec
+            program-path: /opt/udp-packet-forwarder/udp-packet-forwarder
+            program-arguments: -H /etc/opt/udp-packet-forwarder/hardware/hardware_conf.json -C /etc/opt/udp-packet-forwarder/channels/channels_conf.json -c /etc/opt/udp-packet-forwarder/gateway/chirpstack-gateway-bridge
+            delays:
+                start: 5000
+                term: 10000
+                restart: 5000
