@@ -1,0 +1,92 @@
+{
+  "name": "United States 902-928 MHz, FSB 3",
+  "description": "Default frequency plan for the United States and Canada, using sub-band 3",
+  "countries": [
+    "bo",
+    "ca",
+    "co",
+    "cr",
+    "do",
+    "ec",
+    "gy",
+    "mx",
+    "pa",
+    "py",
+    "pe",
+    "pr",
+    "sr",
+    "us",
+    "uy",
+    "ve"
+  ],
+  "radio": {
+    "radio_0": {
+      "freq": 905900000
+    },
+    "radio_1": {
+      "freq": 906600000
+    }
+  },
+  "channels_conf": {
+    "chan_multiSF_0": {
+      "desc": "LoRa MAC, 125kHz, all SF, 905.5 MHz",
+      "enable": true,
+      "radio": 0,
+      "if": -400000
+    },
+    "chan_multiSF_1": {
+      "desc": "LoRa MAC, 125kHz, all SF, 905.7 MHz",
+      "enable": true,
+      "radio": 0,
+      "if": -200000
+    },
+    "chan_multiSF_2": {
+      "desc": "LoRa MAC, 125kHz, all SF, 905.9 MHz",
+      "enable": true,
+      "radio": 0,
+      "if": 0
+    },
+    "chan_multiSF_3": {
+      "desc": "LoRa MAC, 125kHz, all SF, 906.1 MHz",
+      "enable": true,
+      "radio": 0,
+      "if": 200000
+    },
+    "chan_multiSF_4": {
+      "desc": "LoRa MAC, 125kHz, all SF, 906.3 MHz",
+      "enable": true,
+      "radio": 1,
+      "if": -300000
+    },
+    "chan_multiSF_5": {
+      "desc": "LoRa MAC, 125kHz, all SF, 906.5 MHz",
+      "enable": true,
+      "radio": 1,
+      "if": -100000
+    },
+    "chan_multiSF_6": {
+      "desc": "LoRa MAC, 125kHz, all SF, 906.7 MHz",
+      "enable": true,
+      "radio": 1,
+      "if": 100000
+    },
+    "chan_multiSF_7": {
+      "desc": "LoRa MAC, 125kHz, all SF, 906.9 MHz",
+      "enable": true,
+      "radio": 1,
+      "if": 300000
+    },
+    "chan_Lora_std": {
+      "desc": "LoRa MAC, 500kHz, SF8, 906.2 MHz",
+      "enable": true,
+      "radio": 0,
+      "if": 300000,
+      "bandwidth": 500000,
+      "spread_factor": 8
+    },
+    "chan_FSK": {
+      "desc": "FSK disabled",
+      "enable": false
+    }
+  }
+}
