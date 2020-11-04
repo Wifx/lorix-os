@@ -1,0 +1,26 @@
+description: ChirpStack Gateway Bridge with concentratord
+autostart: true
+log: true
+jobs:
+    concentratord:
+        description: The forwarder receiving data from the SPI (SX13XX) and forwarding to the Gateway Bridge
+        process:
+            run-mode: exec
+            program-path: /opt/chirpstack-concentratord/chirpstack-concentratord
+            program-arguments: -c /etc/opt/chirpstack-concentratord/config.toml
+            delays:
+                start: 3000
+                term: 1000
+                restart: 5000
+    gateway-bridge:
+        description: Gateway Bridge receiveing the forwarder packets and sending them to the ChirpStack Network Server
+        depends:
+            - concentratord
+        process:
+            run-mode: exec
+            program-path: /opt/chirpstack-gateway-bridge/chirpstack-gateway-bridge
+            program-arguments: -c /etc/opt/chirpstack-gateway-bridge/chirpstack-gateway-bridge-concentratord.toml
+            delays:
+                start: 1000
+                term: 1000
+                restart: 5000
