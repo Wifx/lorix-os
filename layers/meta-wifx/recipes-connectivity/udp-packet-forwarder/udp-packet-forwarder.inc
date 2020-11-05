@@ -5,12 +5,14 @@ AUTHOR = "Wifx Sàrl <support@iot.wifx.net>"
 LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=8aebde4f3f92d0e71e58871d97d7420f"
 
-RDEPENDS_${PN} += "libcrypto udp-packet-forwarder-arch-config"
+RDEPENDS_${PN} += "libcrypto udp-packet-forwarder-arch-config update-gwid"
 RPROVIDES_${PN} += "virtual/lora-packet-forwarder"
 
 SRC_URI = " \
     file://udp-packet-forwarder-generic.yml \
-    file://resources \
+    file://channels \
+    file://gateway \
+    file://LICENSE \
 "
 
 S = "${WORKDIR}/git"
@@ -34,17 +36,57 @@ do_install() {
     install -m 0755 -d ${CONF}/gateway
 
     install -m 0755 -d ${CONF}/gateway/generic
-    install -m 0644 -D "${WORKDIR}/resources/gateway/generic/gateway_global_conf.json" "${CONF}/gateway/generic/"
-    install -m 0644 -D "${WORKDIR}/resources/gateway/generic/gateway_local_conf.json" "${CONF}/gateway/generic/"
+    install -m 0644 -D "${WORKDIR}/gateway/generic/gateway_global_conf.json" "${CONF}/gateway/generic/"
+    install -m 0644 -D "${WORKDIR}/gateway/generic/gateway_local_conf.json" "${CONF}/gateway/generic/"
+
+    do_install_channels
 
     # Pmonitor service configuration files
     pmonitor_service_install ${WORKDIR}/udp-packet-forwarder-generic.yml
 }
 
+do_install_channels() {
+    # install channels conf files
+    install -m 0755 -d ${CONF}/channels
+    cd ${WORKDIR}/channels
+    for file in $(find . -type f -name '*.json'); do
+        install -m 0644 -D "${WORKDIR}/channels/$file" "${CONF}/channels/$file"
+    done
+
+    set_default "AS920" "AS_920_923"
+    set_default "AS923" "AS_923_925"
+    set_default "AU915" "AU_915_928_FSB_2"
+    set_default "EU868" "EU_863_870"
+    set_default "IN865" "IN_865_867"
+    set_default "RU864" "RU_864_870_TTN"
+    set_default "US915" "US_902_928_FSB_1"
+}
+
+set_default() {
+    REGION=$1
+    ID=$2
+
+    TARGET_PATH="${D}${sysconfoptdir}/udp-packet-forwarder/channels/$REGION/$ID.json"
+
+    if [ ! -f "$TARGET_PATH" ]; then
+        bberror "Default Frequency plan '$ID' defined for region '$REGION' does not exist: '$TARGET_PATH'"
+        exit 1
+    fi;
+
+    ln -snf "$ID.json" "${D}${sysconfoptdir}/udp-packet-forwarder/channels/$REGION/default"
+}
+
 pkg_postinst_ontarget_${PN} () {
     if [ -z "$1" ]; then
         # execute only on first boot
+        
+        # Update gateway ID in general config files
+        cd ${sysconfoptdir}/udp-packet-forwarder/gateway
+        for file in $(find . -type f -name '*.json' -o -name '*.json.sample'); do
+            update-gwid "$file"
+        done
 
+        # Set default channel
         PRODUCT_TYPE=$(cat /sys/class/product/machine/product_type)
         CHANNELS_CONFDIR=/etc/opt/udp-packet-forwarder/channels
 
@@ -53,16 +95,29 @@ pkg_postinst_ontarget_${PN} () {
             cd $CHANNELS_CONFDIR
             echo "Looking for UDP Packet Forwarder channels for '$PRODUCT_TYPE' in '$CHANNELS_CONFDIR'"
 
-            FILES="$PRODUCT_TYPE/*.json"
-            for FILE in $FILES; do
-                if [[ -f "$FILE" ]]; then
-                    ln -snf "$FILE" "channels_conf.json"
-                    echo "UDP Packet Forwarder channel has been set to '$FILE'"
-                    exit 0
-                fi
-            done
+            # If the region provides a default channel plan, set it
+            if [ -f "$PRODUCT_TYPE/default" ]; then
+                CHANNEL_FILE_NAME=$(readlink "$PRODUCT_TYPE/default")
+                CHANNEL_FILE_PATH="$PRODUCT_TYPE/$CHANNEL_FILE_NAME"
 
-            echo "Could not find any channel"
+            else
+                # Otherwise take the first in the list
+                FILES="$PRODUCT_TYPE/*.json"
+                for FILE in $FILES; do
+                    if [[ -f "$FILE" ]]; then
+                        CHANNEL_FILE_PATH=$FILE
+                        break
+                    fi
+                done
+            fi
+
+            if [ ! -z "$CHANNEL_FILE_PATH"]; then
+                ln -snf "$CHANNEL_FILE_PATH" "channels_conf.json"
+                echo "UDP Packet Forwarder channel has been set to '$CHANNEL_FILE_PATH'"
+            else
+                echo "Could not find any channel"
+            fi
+
         else
             echo "UDP Packet Forwarder channel already defined"
         fi
