@@ -52,5 +52,3 @@ FILES_${PN}-dev = "${includedir}"
 FILES_${PN}-utils = "/opt/libloragw-sx1302/gateway-utils"
 
 INSANE_SKIP_${PN}-utils = "ldflags"
-
-PACKAGE_ARCH = "${MACHINE_ARCH}"

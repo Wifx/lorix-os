@@ -1,0 +1,15 @@
+# LoRa gateway configuration of the concentratord
+#
+# You can update the gateway configuration for the concentratord here.
+# Do not add the following settings, they are configured in other files 
+# and will be overridden:
+# - antenna_gain
+# - model
+# - gateway_id
+#
+# Refer to https://www.chirpstack.io/concentratord/install/config/ for details
+
+[gateway]
+
+  # Public LoRaWAN network.
+  lorawan_public=true

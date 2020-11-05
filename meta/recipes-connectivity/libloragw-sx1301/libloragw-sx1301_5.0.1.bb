@@ -53,4 +53,3 @@ FILES_${PN}-dev = "${includedir}"
 
 INSANE_SKIP_${PN}-utils = "ldflags"
 
-PACKAGE_ARCH = "${MACHINE_ARCH}"

@@ -1,0 +1,7 @@
+# Gateway ID
+#
+# Unique identifier of this gateway. Base on the hardware MAC address.
+# The gateways are generally references into the LoRa Network Server under this ID.
+# This file has been generated automatically at first boot, do not edit.
+[gateway]
+  gateway_id=""
