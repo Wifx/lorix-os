@@ -11,11 +11,10 @@ IMAGE_FSTYPES += "ubimg wimg tar.bz2"
 
 # Preferred providers
 PREFERRED_PROVIDER_virtual/firststage_sama5d4-wifx = "at91bootstrap"
-PREFERRED_PROVIDER_virtual/bootloader_sama5 = "u-boot"
-#PREFERRED_VERSION_virtual/bootloader_sama5 = "2018.09"
-PREFERRED_PROVIDER_u-boot_sama5 = "u-boot"
+PREFERRED_PROVIDER_virtual/bootloader_sama5 = "u-boot-sama5d4-wifx"
+PREFERRED_PROVIDER_u-boot_sama5 = "u-boot-sama5d4-wifx"
 PREFERRED_PROVIDER_virtual/kernel_sama5d4-wifx = "linux-at91"
-PREFERRED_PROVIDER_u-boot-fw-utils_sama5d4-wifx = "u-boot-fw-utils-mender-auto-provided"
+PREFERRED_PROVIDER_u-boot-fw-utils_sama5d4-wifx = "u-boot-sama5d4-wifx-fw-utils"
 PREFERRED_PROVIDER_u-boot-mkenvimage-native = "u-boot-mkenvimage-native"
 PREFERRED_VERSION_linux-at91_sama5d4-wifx ?= "5.4%"
 
