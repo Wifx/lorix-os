@@ -15,6 +15,9 @@
 [submodule "layers/bsp/meta-atmel"]
 	path = layers/bsp/meta-atmel
 	url = https://github.com/linux4sam/meta-atmel.git
+[submodule "layers/meta-openrc"]
+	path = layers/meta-openrc
+	url = https://github.com/Wifx/meta-openrc.git
 [submodule "meta-clang"]
 	path = layers/meta-clang
 	url = https://github.com/kraj/meta-clang.git
