@@ -42,8 +42,8 @@ CONNECTIVITY_PACKAGES = " \
 CONNECTIVITY_LORA_PACKAGES = " \
     udp-packet-forwarder \
     loriot-packet-forwarder \
-    chirpstack-gateway-bridge-upf \
-    chirpstack-gateway-bridge-concentratord \
+    pmon-csgb-upf \
+    pmon-csgb-concentratord \
     lora-basic-station \
 "
 
