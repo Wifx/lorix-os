@@ -1,8 +1,0 @@
-#
-# Not directly sourced via a kernel type but via an external bb
-#
-
-define KFEATURE_DESCRIPTION "Enable netfilter + conn tracking for IPv6"
-define KFEATURE_COMPATIBILITY all
-
-kconf non-hardware netfilter6.cfg
