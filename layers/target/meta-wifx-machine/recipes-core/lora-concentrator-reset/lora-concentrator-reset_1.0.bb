@@ -8,7 +8,7 @@ LIC_FILES_CHKSUM = "file://${WORKDIR}/LICENSE;md5=83564c4ad755d0edeaa1ba4b3918b3
 
 SRC_URI += " \
     file://LICENSE \
-    file://init \
+    file://lora-concentrator-reset-sx1301 \
 "
 
 PR = "r0"
@@ -16,12 +16,12 @@ S = "${WORKDIR}"
 
 inherit update-rc.d
 
-INITSCRIPT_NAME = "reset-lgw"
+INITSCRIPT_NAME = "lora-concentrator"
 INITSCRIPT_PARAMS = "start 01 2 3 4 5 . stop 81 0 1 6 ."
 
 do_install () {
 	install -d ${D}${sysconfdir}/init.d
-	install -m 0755 ${WORKDIR}/init ${D}${sysconfdir}/init.d/${INITSCRIPT_NAME}
+	install -m 0755 ${WORKDIR}/lora-concentrator-reset-sx1301 ${D}${sysconfdir}/init.d/${INITSCRIPT_NAME}
 }
 
 FILES_${PN} =+ "${sysconfdir}/init.d/${INITSCRIPT_NAME}"
