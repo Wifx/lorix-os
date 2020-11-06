@@ -26,6 +26,7 @@ KERNEL_IMAGETYPE = "zImage"
 UBOOT_MACHINE ?= "${@'${MACHINE}'.replace('-', '_')}_nandflash_config"
 UBOOT_ENTRYPOINT = "0x20008000"
 UBOOT_LOADADDRESS = "0x20008000"
+UBOOT_ENV_SIZE = "0x20000"
 
 # Mender update system specific variables
 MENDER_MTDIDS = "nand0=atmel_nand"
