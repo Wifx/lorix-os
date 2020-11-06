@@ -1,7 +1,8 @@
-FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
+FILESEXTRAPATHS_prepend_sx1301 := "${THISDIR}/sx1301:"
+
 SRC_URI += " \
-    file://lora-concentrator-reset-sx1301.initd \
-    file://lora-concentrator-reset-sx1301.confd \
+    file://lora-concentrator-reset.confd \
+    file://lora-concentrator-reset.initd \
 "
 
 inherit openrc
@@ -11,16 +12,8 @@ OPENRC_RUNLEVEL_lora-concentrator = "sysinit"
 
 do_install_append() {
 
-    if [ "${@bb.utils.contains('MACHINE_FEATURES', 'sx1301', 'true', 'false', d)}" = "true" ]; then
-        CONCENTRATOR="sx1301"
-    fi
-
-    if [ -z "$CONCENTRATOR" ]; then
-        bbfatal "No LoRa concentrator (sx130X) available"
-    fi
-
-    cp ${WORKDIR}/lora-concentrator-reset-$CONCENTRATOR.initd ${WORKDIR}/lora-concentrator.initd
-    cp ${WORKDIR}/lora-concentrator-reset-$CONCENTRATOR.confd ${WORKDIR}/lora-concentrator.confd
+    cp ${WORKDIR}/lora-concentrator-reset.initd ${WORKDIR}/lora-concentrator.initd
+    cp ${WORKDIR}/lora-concentrator-reset.confd ${WORKDIR}/lora-concentrator.confd
 
     # Install OpenRC conf script
     openrc_install_config ${WORKDIR}/lora-concentrator.confd

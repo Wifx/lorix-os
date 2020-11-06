@@ -6,9 +6,11 @@ SECTION = "base"
 LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://${WORKDIR}/LICENSE;md5=83564c4ad755d0edeaa1ba4b3918b365"
 
+FILESEXTRAPATHS_prepend_sx1301 := "${THISDIR}/sx1301:"
+
 SRC_URI += " \
     file://LICENSE \
-    file://lora-concentrator-reset-sx1301 \
+    file://lora-concentrator-reset \
 "
 
 PR = "r0"
@@ -22,15 +24,7 @@ INITSCRIPT_PARAMS = "start 01 2 3 4 5 . stop 81 0 1 6 ."
 do_install () {
 	install -d ${D}${sysconfdir}/init.d
 
-    if [ "${@bb.utils.contains('MACHINE_FEATURES', 'sx1301', 'true', 'false', d)}" = "true" ]; then
-        CONCENTRATOR="sx1301"
-    fi
-
-    if [ -z "$CONCENTRATOR" ]; then
-        bbfatal "No LoRa concentrator (sx130X) available"
-    fi
-
-	install -m 0755 ${WORKDIR}/lora-concentrator-reset-$CONCENTRATOR ${D}${sysconfdir}/init.d/${INITSCRIPT_NAME}
+	install -m 0755 ${WORKDIR}/lora-concentrator-reset ${D}${sysconfdir}/init.d/${INITSCRIPT_NAME}
 }
 
 FILES_${PN} =+ "${sysconfdir}/init.d/${INITSCRIPT_NAME}"

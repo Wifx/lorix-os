@@ -7,4 +7,4 @@ require conf/machine/include/sama5d4-wifx.inc
 # the machine is more generally a Wifx LORIX One (mem size apart)
 MACHINEOVERRIDES =. "lorix-one:"
 
-MACHINE_FEATURES += "sx1301"
+MACHINE_FEATURES_OVERRIDES += "sx1301"
