@@ -20,8 +20,8 @@ DEPENDS = " \
 "
 
 # Build should be done only for the correct concentrator, so that depends can be done only on the corresponding library
-# DEPENDS += "${@bb.utils.contains('MACHINE_FEATURES', 'sx1301', 'libloragw-sx1301', '', d)}"
-# DEPENDS += "${@bb.utils.contains('MACHINE_FEATURES', 'sx1302', 'libloragw-sx1302', '', d)}"
+#DEPENDS_append_sx1301 = "libloragw-sx1301"
+#DEPENDS_append_sx1302 = "libloragw-sx1302"
 
 inherit cargo
 
@@ -76,36 +76,12 @@ install_channels() {
     ln -snf channels/EU868/EU_863_870.toml ${D}${CONF_DIR}/channels.toml
 }
 
-install_binary() {
+install_append_sx1301() {
+    install -m 0755 ${cargo_bindir}/chirpstack-concentratord-sx1301 ${D}${optdir}/chirpstack-concentratord/chirpstack-concentratord
+}
 
-    install -m 0755 -d ${D}${optdir}/chirpstack-concentratord
-
-    if [ "${@bb.utils.contains('MACHINE_FEATURES', 'sx1301', 'true', 'false', d)}" = "true" ]; then
-        concentrator="sx1301"
-    fi
-    
-    if [ "${@bb.utils.contains('MACHINE_FEATURES', 'sx1302', 'true', 'false', d)}" = "true" ]; then
-        if [ -z $concentrator ]; then
-            bbfatal "Cannot have both sx1301 and sx1302"
-        fi
-        concentrator="sx1302"
-    fi
-
-    case $concentrator in
-        "sx1301")
-            install -m 0755 ${cargo_bindir}/chirpstack-concentratord-sx1301 ${D}${optdir}/chirpstack-concentratord/chirpstack-concentratord
-            break
-            ;;
-
-        "sx1302")
-            install -m 0755 ${cargo_bindir}/chirpstack-concentratord-sx1302 ${D}${optdir}/chirpstack-concentratord/chirpstack-concentratord
-            break
-            ;;
-
-        *)
-            bbfatal "concentratord needs either sx1301 or sx1302"
-            ;;
-    esac
+install_append_sx1302() {
+    install -m 0755 ${cargo_bindir}/chirpstack-concentratord-sx1302 ${D}${optdir}/chirpstack-concentratord/chirpstack-concentratord
 }
 
 pkg_postinst_ontarget_${PN} () {
