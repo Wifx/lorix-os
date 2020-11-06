@@ -21,7 +21,16 @@ INITSCRIPT_PARAMS = "start 01 2 3 4 5 . stop 81 0 1 6 ."
 
 do_install () {
 	install -d ${D}${sysconfdir}/init.d
-	install -m 0755 ${WORKDIR}/lora-concentrator-reset-sx1301 ${D}${sysconfdir}/init.d/${INITSCRIPT_NAME}
+
+    if [ "${@bb.utils.contains('MACHINE_FEATURES', 'sx1301', 'true', 'false', d)}" = "true" ]; then
+        CONCENTRATOR="sx1301"
+    fi
+
+    if [ -z "$CONCENTRATOR" ]; then
+        bbfatal "No LoRa concentrator (sx130X) available"
+    fi
+
+	install -m 0755 ${WORKDIR}/lora-concentrator-reset-$CONCENTRATOR ${D}${sysconfdir}/init.d/${INITSCRIPT_NAME}
 }
 
 FILES_${PN} =+ "${sysconfdir}/init.d/${INITSCRIPT_NAME}"
