@@ -1,7 +1,7 @@
-# The machine needs reset-lgw to manage the SX1301 reset line
+# The machine needs lora-concentrator-reset to manage the LoRa concentrator reset line
 MACHINE_EXTRA_RDEPENDS += " \
     u-boot-fw-utils \
-    reset-lgw \
+    lora-concentrator-reset \
     mtd-utils \
     mtd-utils-ubifs \
 "

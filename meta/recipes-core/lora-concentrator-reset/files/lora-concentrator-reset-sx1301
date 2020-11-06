@@ -1,6 +1,6 @@
 #!/bin/sh -e
 ### BEGIN INIT INFO
-# Provides:          reset-lgw
+# Provides:          lora-concentrator-reset
 # Required-Start:    mountvirtfs $local_fs
 # Required-Stop:     $local_fs
 # Should-Start:
@@ -65,7 +65,7 @@ force-reload|restart)
 	;;
 
 *)
-	echo "Usage: /etc/init.d/reset-lgw {start|stop|restart}"
+	echo "Usage: /etc/init.d/lora-concentrator-reset {start|stop|restart}"
 	exit 1
 	;;
 esac
