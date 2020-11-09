@@ -1,0 +1,20 @@
+#!/sbin/openrc-run
+# Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
+# All rights reserved.
+
+PIN=${LORA_CORE_RST_PIN:-1}
+PIN_PATH=${LORA_CORE_RST_PIN_PATH:-/sys/class/gpio/pioA1}
+
+extra_commands="reset"
+
+depend() {
+    need sysfs
+}
+
+reset() {
+    ebegin "Resetting the LoRa concentrator"
+
+    /usr/sbin/lora-concentrator-reset
+
+    eend 0
+}

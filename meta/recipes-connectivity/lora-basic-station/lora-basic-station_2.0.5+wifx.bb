@@ -20,7 +20,7 @@ SRC_URI += " \
 
 inherit pmonitor
 
-RDEPENDS_${PN} += "lora-basic-station-arch-config"
+RDEPENDS_${PN} += "lora-basic-station-arch-config lora-concentrator"
 RPROVIDES_${PN} += "virtual/lora-packet-forwarder"
 
 S = "${WORKDIR}/git"

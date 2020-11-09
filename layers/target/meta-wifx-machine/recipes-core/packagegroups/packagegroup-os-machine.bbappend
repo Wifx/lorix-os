@@ -1,7 +1,7 @@
-# The machine needs lora-concentrator-reset to manage the LoRa concentrator reset line
+# The machine needs lora-concentrator to manage the LoRa concentrator reset line
 MACHINE_EXTRA_RDEPENDS += " \
     u-boot-fw-utils \
-    lora-concentrator-reset \
+    lora-concentrator \
     mtd-utils \
     mtd-utils-ubifs \
 "
