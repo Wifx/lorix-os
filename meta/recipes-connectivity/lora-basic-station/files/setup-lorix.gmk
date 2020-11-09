@@ -1,0 +1,3 @@
+CFG.lorix = linux lgw1 no_leds
+LIBS.lorix = -llgw -lmbedtls -lmbedx509 -lmbedcrypto -lpthread
+DEPS.lorix = mbedtls lgw
