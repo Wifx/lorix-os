@@ -15,13 +15,13 @@ SRC_URI = "\
 
 DEPENDS = " \
     clang-native \
-    chirpstack-libloragw-sx1301 \
-    chirpstack-libloragw-sx1302 \
+    libloragw-sx1301 \
+    libloragw-sx1302 \
 "
 
 # Build should be done only for the correct concentrator, so that depends can be done only on the corresponding library
-#DEPENDS_append_sx1301 = "chirpstack-libloragw-sx1301"
-#DEPENDS_append_sx1302 = "chirpstack-libloragw-sx1302"
+#DEPENDS_append_sx1301 = "libloragw-sx1301"
+#DEPENDS_append_sx1302 = "libloragw-sx1302"
 
 inherit cargo
 
