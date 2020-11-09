@@ -6,18 +6,18 @@
 	path = poky
 	url = https://github.com/Wifx/poky.git
 	branch = zeus
-[submodule "layers/meta-mender"]
+[submodule "meta-mender"]
 	path = layers/meta-mender
 	url = https://github.com/mendersoftware/meta-mender.git
-[submodule "layers/bsp/meta-atmel"]
+[submodule "meta-atmel"]
 	path = layers/bsp/meta-atmel
 	url = https://github.com/linux4sam/meta-atmel.git
-[submodule "layers/meta-openrc"]
+[submodule "meta-openrc"]
 	path = layers/meta-openrc
 	url = https://github.com/Wifx/meta-openrc.git
-[submodule "layers/meta-rust-bin"]
+[submodule "meta-rust-bin"]
 	path = layers/meta-rust-bin
 	url = https://github.com/rust-embedded/meta-rust-bin.git
-[submodule "layers/meta-clang"]
+[submodule "meta-clang"]
 	path = layers/meta-clang
 	url = https://github.com/kraj/meta-clang.git
