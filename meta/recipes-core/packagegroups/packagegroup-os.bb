@@ -15,6 +15,7 @@ RDEPENDS_${PN} = " \
     packagegroup-os-full-cmdline \
     packagegroup-os-connectivity \
     packagegroup-os-extended \
+    ${@bb.utils.contains("MACHINE_FEATURES", "lora", "packagegroup-os-lora", "", d)} \
     os-release \
     chrony \
     chronyc \

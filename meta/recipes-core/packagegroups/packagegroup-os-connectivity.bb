@@ -39,14 +39,6 @@ CONNECTIVITY_PACKAGES = " \
     openssh \
 "
 
-CONNECTIVITY_LORA_PACKAGES = " \
-    udp-packet-forwarder \
-    loriot-packet-forwarder \
-    lora-basic-station \
-	chirpstack-gateway-bridge \
-    pmon-csgb-upf \
-"
-
 RDEPENDS_${PN} = " \
     ${CONNECTIVITY_MODULES} \
     ${CONNECTIVITY_FIRMWARES} \
@@ -54,8 +46,5 @@ RDEPENDS_${PN} = " \
     ${@bb.utils.contains('MACHINE_FEATURES','wireless',' \
         ${CONNECTIVITY_WIRELESS_FIRMWARES} \
         ${CONNECTIVITY_WIRELESS_PACKAGES} \
-    ','',d)} \
-    ${@bb.utils.contains('MACHINE_FEATURES','lora',' \
-        ${CONNECTIVITY_LORA_PACKAGES} \
     ','',d)} \
 "
