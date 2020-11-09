@@ -45,8 +45,9 @@ do_install() {
     install_configs
 
     install_channels
-
-    install_binary
+    
+    # Bin directory
+    install -m 0755 -d ${D}${optdir}/chirpstack-concentratord
 }
 
 install_configs() {
@@ -76,11 +77,11 @@ install_channels() {
     ln -snf channels/EU868/EU_863_870.toml ${D}${CONF_DIR}/channels.toml
 }
 
-install_append_sx1301() {
+do_install_append_sx1301() {
     install -m 0755 ${cargo_bindir}/chirpstack-concentratord-sx1301 ${D}${optdir}/chirpstack-concentratord/chirpstack-concentratord
 }
 
-install_append_sx1302() {
+do_install_append_sx1302() {
     install -m 0755 ${cargo_bindir}/chirpstack-concentratord-sx1302 ${D}${optdir}/chirpstack-concentratord/chirpstack-concentratord
 }
 
