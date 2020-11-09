@@ -1,0 +1,3 @@
+[gateway]
+  # Antenna gain (dB).
+  antenna_gain=0

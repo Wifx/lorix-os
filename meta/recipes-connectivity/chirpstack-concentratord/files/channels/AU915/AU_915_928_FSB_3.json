@@ -1,0 +1,81 @@
+{
+  "name": "Australia 915-928 MHz, FSB 3",
+  "description": "Default frequency plan for Australia, using sub-band 3",
+  "countries": [
+    "br",
+    "cl",
+    "nz",
+    "ar",
+    "au"
+  ],
+  "radio": {
+    "radio_0": {
+      "freq": 918800000
+    },
+    "radio_1": {
+      "freq": 919500000
+    }
+  },
+  "channels_conf": {
+    "chan_multiSF_0": {
+      "desc": "LoRa MAC, 125kHz, all SF, 918.4 MHz",
+      "enable": true,
+      "radio": 0,
+      "if": -400000
+    },
+    "chan_multiSF_1": {
+      "desc": "LoRa MAC, 125kHz, all SF, 918.6 MHz",
+      "enable": true,
+      "radio": 0,
+      "if": -200000
+    },
+    "chan_multiSF_2": {
+      "desc": "LoRa MAC, 125kHz, all SF, 918.8 MHz",
+      "enable": true,
+      "radio": 0,
+      "if": 0
+    },
+    "chan_multiSF_3": {
+      "desc": "LoRa MAC, 125kHz, all SF, 919 MHz",
+      "enable": true,
+      "radio": 0,
+      "if": 200000
+    },
+    "chan_multiSF_4": {
+      "desc": "LoRa MAC, 125kHz, all SF, 919.2 MHz",
+      "enable": true,
+      "radio": 1,
+      "if": -300000
+    },
+    "chan_multiSF_5": {
+      "desc": "LoRa MAC, 125kHz, all SF, 919.4 MHz",
+      "enable": true,
+      "radio": 1,
+      "if": -100000
+    },
+    "chan_multiSF_6": {
+      "desc": "LoRa MAC, 125kHz, all SF, 919.6 MHz",
+      "enable": true,
+      "radio": 1,
+      "if": 100000
+    },
+    "chan_multiSF_7": {
+      "desc": "LoRa MAC, 125kHz, all SF, 919.8 MHz",
+      "enable": true,
+      "radio": 1,
+      "if": 300000
+    },
+    "chan_Lora_std": {
+      "desc": "LoRa MAC, 500kHz, SF8, 919.1 MHz",
+      "enable": true,
+      "radio": 0,
+      "if": 300000,
+      "bandwidth": 500000,
+      "spread_factor": 8
+    },
+    "chan_FSK": {
+      "desc": "FSK disabled",
+      "enable": false
+    }
+  }
+}

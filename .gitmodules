@@ -18,3 +18,6 @@
 [submodule "layers/meta-openrc"]
 	path = layers/meta-openrc
 	url = https://github.com/Wifx/meta-openrc.git
+[submodule "meta-clang"]
+	path = layers/meta-clang
+	url = https://github.com/kraj/meta-clang.git
