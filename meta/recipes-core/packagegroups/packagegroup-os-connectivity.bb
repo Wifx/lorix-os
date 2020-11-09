@@ -22,7 +22,7 @@ CONNECTIVITY_WIRELESS_FIRMWARES ?= " \
     linux-firmware-ath9k \
     linux-firmware-ralink \
     linux-firmware-rtl8192cu \
-    "
+"
 
 CONNECTIVITY_FIRMWARES ?= ""
 
@@ -30,7 +30,7 @@ CONNECTIVITY_WIRELESS_PACKAGES = " \
     usb-modeswitch \
     wireless-tools \
     crda \
-    "
+"
 
 CONNECTIVITY_PACKAGES = " \
     ${NETWORK_MANAGER_PACKAGES} \
@@ -44,9 +44,7 @@ CONNECTIVITY_LORA_PACKAGES = " \
     loriot-packet-forwarder \
     lora-basic-station \
 	chirpstack-gateway-bridge \
-	chirpstack-concentratord \
     pmon-csgb-upf \
-    pmon-csgb-concentratord \
 "
 
 RDEPENDS_${PN} = " \
@@ -60,4 +58,4 @@ RDEPENDS_${PN} = " \
     ${@bb.utils.contains('MACHINE_FEATURES','lora',' \
         ${CONNECTIVITY_LORA_PACKAGES} \
     ','',d)} \
-    "
+"

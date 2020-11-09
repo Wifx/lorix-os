@@ -10,6 +10,8 @@ inherit wifx-image-core wifx-image-base-users
 IMAGE_INSTALL += " \
     packagegroup-os-dev-utils \
     gdb \
+	chirpstack-concentratord \
+    pmon-csgb-concentratord \
 "
 
 # valgrind it too big for the LORIX One 256MB version
