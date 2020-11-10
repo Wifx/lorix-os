@@ -25,8 +25,6 @@ do_patch[noexec] = "1"
 do_configure[noexec] = "1"
 do_compile[noexec] = "1"
 
-RPROVIDES_${PN} += "virtual/lora-packet-forwarder"
-
 inherit pmonitor
 
 CONF_DIR = "${sysconfoptdir}/chirpstack-gateway-bridge"

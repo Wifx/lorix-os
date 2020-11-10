@@ -23,7 +23,6 @@ SRC_URI_append_lorix-one += "file://setup-lorix.gmk"
 inherit pmonitor
 
 RDEPENDS_${PN} += "lora-basic-station-arch-config lora-concentrator"
-RPROVIDES_${PN} += "virtual/lora-packet-forwarder"
 
 S = "${WORKDIR}/git"
 

@@ -10,8 +10,6 @@ SRC_URI += " \
     git://github.com/brocaar/chirpstack-gateway-bridge.git;protocol=git;tag=${SRCTAG} \
 "
 
-RDEPENDS_${PN} += "virtual/lora-packet-forwarder"
-
 inherit gomod
 
 S = "${WORKDIR}/git"

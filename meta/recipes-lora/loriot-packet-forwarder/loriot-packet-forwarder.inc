@@ -12,8 +12,6 @@ SRC_URI += " \
 
 S = "${WORKDIR}"
 
-RPROVIDES_${PN} += "virtual/lora-packet-forwarder"
-
 INSANE_SKIP_${PN} += "already-stripped"
 
 inherit pmonitor

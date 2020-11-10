@@ -12,8 +12,6 @@ RDEPENDS_${PN} += " \
     udp-packet-forwarder \
 "
 
-RPROVIDES_${PN} += "virtual/lora-packet-forwarder"
-
 SRC_URI = " \
     file://LICENSE \
     file://chirpstack-gateway-bridge_conf.toml \
