@@ -27,21 +27,26 @@ do_compile() {
 }
 
 do_install() {
-    install -d ${D}${libdir}/libloragw-sx1302
-    install -d ${D}${includedir}/libloragw-sx1302
+    install_lib
+}
 
-    install -m 0644 libtools/*.a ${D}${libdir}
-    install -m 0644 libtools/inc/* ${D}${includedir}
+install_lib() {
+    # library
+    install -m 0755 -d                          ${D}${libdir}/libloragw-sx1302
+    install -m 0644 ${S}/libloragw/libloragw.a  ${D}${libdir}/libloragw-sx1302.a
+    install -m 0644 ${S}/libloragw/library.cfg  ${D}${libdir}/libloragw-sx1302/library.cfg
+    
+    # header files
+    install -m 0755 -d                         ${D}${includedir}/libloragw-sx1302
+    install -m 0644 ${S}/libloragw/inc/*       ${D}${includedir}/libloragw-sx1302
+}
 
-    install -m 0644 libloragw/libloragw.a ${D}${libdir}/libloragw-sx1302.a
-    install -m 0644 libloragw/inc/* ${D}${includedir}/libloragw-sx1302
-
+install_utils() {
     install -d ${D}/opt/libloragw-sx1302/gateway-utils
     install -m 0755 util_chip_id/chip_id ${D}/opt/libloragw-sx1302/gateway-utils
     install -m 0755 util_net_downlink/net_downlink ${D}/opt/libloragw-sx1302/gateway-utils
 
     install -m 0755 packet_forwarder/lora_pkt_fwd ${D}/opt/libloragw-sx1302/gateway-utils
-    install -m 0755 tools/reset_lgw.sh ${D}/opt/libloragw-sx1302/gateway-utils
 }
 
 PACKAGES += "${PN}-utils"

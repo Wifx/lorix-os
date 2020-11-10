@@ -31,24 +31,18 @@ do_compile() {
 }
 
 do_install() {
-    install_static
+    install_lib
 }
 
-install_static() {
+install_lib() {
     # library
-    install -m 0755 -d ${D}${libdir}/libloragw
-    install -m 0644 ${S}/libloragw/libloragw.a  ${D}${libdir}/libloragw/libloragw.a
+    install -m 0755 -d                          ${D}${libdir}/libloragw-sx1301
+    install -m 0644 ${S}/libloragw/libloragw.a  ${D}${libdir}/libloragw-sx1301.a
+    install -m 0644 ${S}/libloragw/library.cfg  ${D}${libdir}/libloragw-sx1301/library.cfg
 
     # header files
-    install -m 0755 -d ${D}${includedir}/libloragw/inc/
-    install -m 0644 -D ${S}/libloragw/inc/*     ${D}${includedir}/libloragw
-
-    # header files (udp-packet-forwarder compatibility)
-    # TODO: edit upf recipe to search correct folder)
-    install -m 0755 -d ${D}${libdir}/libloragw/inc
-    install -m 0644 -D ${S}/libloragw/inc/*     ${D}${libdir}/libloragw/inc
-
-    install -m 0644 ${S}/libloragw/library.cfg  ${D}${libdir}/libloragw/library.cfg
+    install -m 0755 -d                          ${D}${includedir}/libloragw-sx1301
+    install -m 0644 ${S}/libloragw/inc/*        ${D}${includedir}/libloragw-sx1301
 }
 
 install_utils() {
@@ -64,7 +58,6 @@ install_utils() {
 
 PACKAGES += "${PN}-utils ${PN}-utils-dbg"
 
-FILES_${PN} = "${libdir}"
 FILES_${PN}-dev = "${includedir}"
 FILES_${PN}-staticdev = "${libdir}"
 
