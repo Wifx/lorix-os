@@ -43,6 +43,11 @@ install_lib() {
     # header files
     install -m 0755 -d                          ${D}${includedir}/libloragw-sx1301
     install -m 0644 ${S}/libloragw/inc/*        ${D}${includedir}/libloragw-sx1301
+    
+    # Support for udp-packet-forwarder
+    install -m 0644 ${S}/libloragw/libloragw.a  ${D}${libdir}/libloragw-sx1301/libloragw.a
+    install -m 0755 -d                          ${D}${libdir}/libloragw-sx1301/inc
+    install -m 0644 ${S}/libloragw/inc/*        ${D}${libdir}/libloragw-sx1301/inc
 }
 
 install_utils() {
