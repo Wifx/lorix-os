@@ -4,14 +4,18 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=99e425257f8a67b7efd81dc0009ed8ff"
 
 SRC_URI = "\
-    git://github.com/brocaar/chirpstack-concentratord.git;protocol=git;tag=v${PV} \
+    git://github.com/Wifx/chirpstack-concentratord.git;protocol=git;branch=lorix-one-conf \
+    file://channels/* \
     file://concentratord.toml \
     file://gateway.toml \
-    file://gateway-id.toml \
-    file://gateway-antenna.toml \
-    file://models/* \
-    file://channels/* \
 "
+
+# TODO: add support for splitted config in the concentratord
+#SRC_URI += "\
+#    file://gateway-id.toml \
+#    file://gateway-antenna.toml \
+#    file://models/* \
+#"
 
 DEPENDS = " \
     clang-native \
@@ -52,11 +56,11 @@ do_install() {
 
 install_configs() {
     install -m 0755 -d ${D}${CONF_DIR}
-    install_config concentratord.toml               00-concentratord.toml
-    install_config gateway.toml                     10-gateway.toml
-    install_config gateway-id.toml                  11-gateway-id.toml
-    install_config models/wifx_lorix_one_eu868.toml 12-gateway-model.toml
-    install_config gateway-antenna.toml             13-gateway-antenna.toml
+    install_config concentratord.toml                   00-concentratord.toml
+    install_config gateway.toml                         10-gateway.toml
+    #install_config gateway-id.toml                      11-gateway-id.toml
+    #install_config models/wifx_lorix_one_863_870.toml   12-gateway-model.toml
+    #install_config gateway-antenna.toml                 13-gateway-antenna.toml
 }
 
 install_config() {
@@ -72,9 +76,6 @@ install_channels() {
     
     install -m 0755 -d ${D}${CONF_DIR}/channels/EU868
     install -m 0644 ${WORKDIR}/channels/EU868/EU_863_870.toml ${D}${CONF_DIR}/channels/EU868/EU_863_870.toml
-
-    # Set active channel
-    ln -snf channels/EU868/EU_863_870.toml ${D}${CONF_DIR}/channels.toml
 }
 
 do_install_append_sx1301() {
@@ -89,7 +90,11 @@ pkg_postinst_ontarget_${PN} () {
     if [ -z "$1" ]; then
         # execute only on first boot
         
-        GW_ID_FILE_PATH="${CONF_DIR}/11-gateway-id.toml"
+        ### GATEWAY ID ###
+
+        # TODO: update single separate file
+        #GW_ID_FILE_PATH="${CONF_DIR}/11-gateway-id.toml"
+        GW_ID_FILE_PATH="${CONF_DIR}/10-gateway.toml"
 
         # get gateway ID from its MAC address to generate an EUI-64 address
         GWID_MIDFIX="FFFE"
@@ -102,6 +107,13 @@ pkg_postinst_ontarget_${PN} () {
         sed -i 's/gateway_id=""/gateway_id="'${GWID}'"/g' $GW_ID_FILE_PATH
 
         echo "Gateway ID set to "$GWID" in file "$GW_ID_FILE_PATH
+
+        ### FREQUENCY PLAN ###
+
+        # TODO: set the active channel regarding hardware
+        # Set active channel
+        ln -snf "channels/EU868/EU_863_870.toml" "${CONF_DIR}/channels.toml"
+        echo "Frequency plan set to 'EU_863_870'"
     fi
 }
 

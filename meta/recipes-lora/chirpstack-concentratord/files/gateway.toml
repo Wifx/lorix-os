@@ -13,3 +13,12 @@
 
   # Public LoRaWAN network.
   lorawan_public=true
+
+
+  # TODO: Temporary, split in multiple files when supported by concentratord
+  gateway_id=""
+
+  # Antenna gain (dB).
+  antenna_gain=0
+  
+  model="wifx_lorix_one_863_870"
