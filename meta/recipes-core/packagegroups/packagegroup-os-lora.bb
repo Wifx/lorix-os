@@ -13,7 +13,7 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 inherit packagegroup
 
-RDEPENDS_${PN}_lorix = " \
+RDEPENDS_${PN}_lorix-one = " \
     udp-packet-forwarder \
     loriot-packet-forwarder \
     lora-basic-station \
