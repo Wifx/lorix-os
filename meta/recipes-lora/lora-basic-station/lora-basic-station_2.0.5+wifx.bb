@@ -8,21 +8,23 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=5ffc1514bf7cad7ad7892ca90a7295cd"
 
 SRCTAG = "v${PV}"
 
-#SRC_URI = "git://github.com/lorabasics/basicstation.git;protocol=git;tag=${SRCTAG}"
 SRC_URI = "git://github.com/Wifx/basicstation.git;protocol=git;tag=${SRCTAG}"
 
 SRC_URI += " \
     file://lora-basic-station.yml \
 "
 
-SRC_URI_append_lorix-one += "file://setup-lorix.gmk"
+SRC_URI_append_lorix-one = " \
+    file://setup-lorix.gmk \
+    file://resources-lorix-one \
+"
 
 # At the moment, the library are compiled directly from package sources
 #DEPENDS += "libloragw mbedtls"
 
 inherit pmonitor
 
-RDEPENDS_${PN} += "lora-basic-station-arch-config lora-concentrator"
+RDEPENDS_${PN} += "lora-concentrator"
 
 S = "${WORKDIR}/git"
 
@@ -55,6 +57,13 @@ do_install() {
 
 do_install_append_lorix-one() {
     install -m 0744 ${S}/build-lorix-std/bin/station ${D}${optdir}/lora-basic-station/lora-basic-station
+
+    # configuration files
+    install -m 0755 -d ${D}${sysconfoptdir}/lora-basic-station/config
+    cd ${WORKDIR}/resources-lorix-one
+    for file in $(find . -type f -name '*.conf'); do
+        install -m 0644 -D "${WORKDIR}/resources-lorix-one/$file" "${D}${sysconfoptdir}/lora-basic-station/config/$file"
+    done
 }
 
 FILES_${PN} += "${optdir}"

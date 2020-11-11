@@ -5,14 +5,18 @@ AUTHOR = "Wifx Sàrl <support@iot.wifx.net>"
 LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=8aebde4f3f92d0e71e58871d97d7420f"
 
-RDEPENDS_${PN} += "libcrypto udp-packet-forwarder-arch-config update-gwid"
+RDEPENDS_${PN} += "libcrypto update-gwid"
 RPROVIDES_${PN} += "virtual/udp-packet-forwarder"
 
-SRC_URI = " \
+SRC_URI += " \
     file://udp-packet-forwarder-generic.yml \
     file://channels \
     file://gateway \
     file://LICENSE \
+"
+
+SRC_URI_append_lorix-one = " \
+    file://resources-lorix-one \
 "
 
 S = "${WORKDIR}/git"
@@ -39,13 +43,22 @@ do_install() {
     install -m 0644 -D "${WORKDIR}/gateway/generic/gateway_global_conf.json" "${CONF}/gateway/generic/"
     install -m 0644 -D "${WORKDIR}/gateway/generic/gateway_local_conf.json" "${CONF}/gateway/generic/"
 
-    do_install_channels
+    install_channels
 
     # Pmonitor service configuration files
     pmonitor_service_install ${WORKDIR}/udp-packet-forwarder-generic.yml
 }
 
-do_install_channels() {
+do_install_append_lorix-one() {
+    # configuration files
+    install -m 0755 -d ${CONF}/hardware
+    cd ${WORKDIR}/resources-lorix-one/hardware
+    for file in $(find . -type f -name '*.json' -o -name '*.json.sha256'); do
+        install -m 0644 -D "${WORKDIR}/resources-lorix-one/hardware/$file" "${CONF}/hardware/$file"
+    done
+}
+
+install_channels() {
     # install channels conf files
     install -m 0755 -d ${CONF}/channels
     cd ${WORKDIR}/channels
