@@ -5,7 +5,7 @@ AUTHOR = "Wifx Sàrl <support@iot.wifx.net>"
 LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=8aebde4f3f92d0e71e58871d97d7420f"
 
-RDEPENDS_${PN} += "libcrypto update-gwid"
+RDEPENDS_${PN} += "libcrypto"
 RPROVIDES_${PN} += "virtual/udp-packet-forwarder"
 
 SRC_URI += " \
