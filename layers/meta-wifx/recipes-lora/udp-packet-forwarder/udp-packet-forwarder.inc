@@ -94,9 +94,19 @@ pkg_postinst_ontarget_${PN} () {
         # execute only on first boot
         
         # Update gateway ID in general config files
+
+        # get gateway ID from its MAC address to generate an EUI-64 address
+        GWID_MIDFIX="FFFE"
+        MAC=$(ip link show eth0 | awk '/ether/ {print toupper($2)}')
+        GWID_BEGIN=$(echo $MAC | awk -F\: '{print $1$2$3}')
+        GWID_END=$(echo $MAC | awk -F\: '{print $4$5$6}')
+        GWID=${GWID_BEGIN}${GWID_MIDFIX}${GWID_END}
+
         cd ${sysconfoptdir}/udp-packet-forwarder/gateway
         for file in $(find . -type f -name '*.json' -o -name '*.json.sample'); do
-            update-gwid "$file"
+            # replace last 8 digits of default gateway ID by actual GWID, in given JSON configuration file
+            sed -i 's/\(^\s*"gateway_ID":\s*"\).\{16\}"\s*\(,\?\).*$/\1'${GWID}'"\2/' $file
+            echo "Gateway_ID set to "$GWID" in file "$file
         done
 
         # Set default channel
