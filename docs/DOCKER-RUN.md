@@ -4,7 +4,7 @@ Run the Docker image with a binding on the lorix-os directory:
 ```shell
 $ docker run -it --name lorix-os-bs -v ~/lorix-os:/home/yocto/lorix-os wifx/yocto:ubuntu-20.04
 yocto@dfe8e4eeb96f:~$ cd lorix-os
-yocto@dfe8e4eeb96f:~$ # You are now inside the container, in the lorix-os folder on the host containing the LORIX OS sources
+yocto@dfe8e4eeb96f:~/lorix-os$ # You are now inside the container, in the lorix-os folder on the host containing the LORIX OS sources
 ```
 
 When the container is started, the current directory is `/home/yocto`. `/home/yocto/lorix-os` is bound to `~/lorix-os`. This means that after `cd lorix-os` you are in the 'workspace' directory.
@@ -14,6 +14,14 @@ When the container is started, the current directory is `/home/yocto`. `/home/yo
 > **Note:** The ```-it``` stands for interactive (i) and tty (t) to open a terminal directly connecting the host therminal to the container's internal terminal.
 
 > **Note:** If the container is already running, you will get an error. Attach to the existing container instead of running a new one.
+> 
+> To attach a running container:
+> ```shell
+> $ docker exec -it lorix-os-bs bash
+> yocto@dfe8e4eeb96f:~$ cd lorix-os
+> yocto@dfe8e4eeb96f:~/lorix-os$
+> ```
+> If the container is not running, use the docker start command below.
 
 The build cache is stored inside the container. When you exit the container, it's stopped but it still exists.
 
