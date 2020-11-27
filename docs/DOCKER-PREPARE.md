@@ -12,8 +12,8 @@ Install the Docker Engine on your Linux based system as explained in the Docker'
 ## Get the build container Docker image
 
 You can get the image in two different ways:
-    1. Pull it from the Wifx Docker registry
-    2. Build it from the lorix-os repository you cloned
+   1. Pull it from the Wifx Docker registry
+   2. Build it from the lorix-os repository you cloned
 
 We recommand pulling the image from the Wifx Docker registry.
 
@@ -29,8 +29,6 @@ $ docker pull wifx/yocto:ubuntu-20.04
 Please refer to [the Docker image build page](DOCKER-BUILD.md).
 
 ## Test the image
-
-TODO: add the current user to the docker group
 
 You can test the image by running it with:
 ```
@@ -51,7 +49,7 @@ $ exit
 
 The Yocto build process will be done inside the Docker container and thus, files generated inside and shared through a volume should also be readable from outside. An easy solution is to create a user with the same ID inside the container and outside (inside the Docker host).
 
-The current Docker image create a user namely `yocto` with the user ID (uid) 5000. You then need to create a user in your host system with the same uid (user name doesn't matter). In our case, we create this user the with name `yocto` too and assign a new password:
+The current Docker image creates a user namely `yocto` with the user ID (uid) 5000. You then need to create a user in your host system with the same uid (user name doesn't matter). In our case, we create this user with the name `yocto` too and assign a new password:
 
 ```shell
 $ sudo useradd -u 5000 yocto
@@ -62,13 +60,13 @@ passwd: all authentication tokens updated successfully.
 ```
 
 The build directory will be written by the Docker container user, and therefore is must have the permission to write to it. We can give access to the `yocto` user with:
-```
+```shell
 $ sudo chown yocto:yocto poky/build/
 ```
 
 As the build output will be created by the `yocto` user, the active user will not have access to it. We'd like to be able to read this output, so let's add the current user to the `yocto` group:
-```
-$ TODO: add the current user to the yocto group
+```shell
+$ sudo usermod -a -G yocto $(whoami)
 ```
 
 ## Optional: Create a volume for the Yocto cache
