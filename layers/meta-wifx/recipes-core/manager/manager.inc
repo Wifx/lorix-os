@@ -3,12 +3,10 @@ DESCRIPTION = "Provides the LORIX Manager daemon and REST API"
 AUTHOR = "Wifx Sàrl"
 
 LICENSE = "Proprietary"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=42af54d0b96581c4b8085315e05da454"
+LIC_FILES_CHKSUM = "file://src/${GO_IMPORT}/LICENSE;md5=42af54d0b96581c4b8085315e05da454"
 
 RDEPENDS_${PN} += "openssl-bin dbus glibc"
 RRECOMMENDS_${PN} += "manager-gui mender-client networkmanager networkmanager-nmcli"
-
-INSANE_SKIP_${PN} += "ldflags textrel"
 
 SRC_URI += " \
     file://config.toml \
@@ -18,12 +16,13 @@ SRC_URI += " \
     file://bash_completion \
 "
 
+GO_IMPORT = "git.wifx.net/lorix/manager"
+
 S = "${WORKDIR}/git"
-B = "${WORKDIR}/build"
 
 inherit unpack-online-assets
 
-do_install_base() {
+do_install() {
     # Configuration files
     install -d ${D}${sysconfdir}/manager/conf.d
     install -m 0644 ${WORKDIR}/config.toml ${D}${sysconfdir}/manager/conf.d/00-manager.toml
@@ -41,7 +40,7 @@ do_install_base() {
 
     # Manager binary
     install -d ${D}${sbindir}
-    install -m 0755 ${B}/manager ${D}${sbindir}/managerd
+    install -m 0755 ${B}/bin/linux_arm/manager ${D}${sbindir}/managerd
 
     # Command Line Interface shortcuts
     install -d ${D}${bindir}
@@ -55,10 +54,6 @@ do_install_base() {
     # Add bash completion file
     install -d ${D}${sysconfdir}/profile.d
     install -m 0644 ${WORKDIR}/bash_completion ${D}${sysconfdir}/profile.d/manager.sh
-}
-
-do_install(){
-    do_install_base
 }
 
 pkg_postinst_ontarget_${PN} () {
