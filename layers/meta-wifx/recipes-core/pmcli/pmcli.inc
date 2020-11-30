@@ -17,7 +17,7 @@ S = "${WORKDIR}/git"
 
 inherit unpack-online-assets
 
-do_install(){
+do_install_base(){
     # Binary
     install -m 0755 -d ${D}${sbindir}
     install -m 0755 ${B}/bin/linux_arm/pmcli ${D}${sbindir}/pmcli
@@ -25,4 +25,8 @@ do_install(){
     # Add bash completion file
     install -d ${D}${sysconfdir}/profile.d
     install -m 0644 ${WORKDIR}/bash_completion ${D}${sysconfdir}/profile.d/pmcli.sh
+}
+
+do_install(){
+    do_install_base
 }

@@ -22,7 +22,7 @@ S = "${WORKDIR}/git"
 
 inherit unpack-online-assets
 
-do_install() {
+do_install_base() {
     # Configuration files
     install -d ${D}${sysconfdir}/manager/conf.d
     install -m 0644 ${WORKDIR}/config.toml ${D}${sysconfdir}/manager/conf.d/00-manager.toml
@@ -54,6 +54,10 @@ do_install() {
     # Add bash completion file
     install -d ${D}${sysconfdir}/profile.d
     install -m 0644 ${WORKDIR}/bash_completion ${D}${sysconfdir}/profile.d/manager.sh
+}
+
+do_install(){
+    do_install_base
 }
 
 pkg_postinst_ontarget_${PN} () {

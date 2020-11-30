@@ -9,7 +9,11 @@ S = "${WORKDIR}/git"
 
 inherit unpack-online-assets
 
-do_install() {
+do_install_base() {
     install -m 0755 -d ${D}${sbindir}
     install -m 0755 ${S}/work/bin/pvisor ${D}${sbindir}/pvisor
+}
+
+do_install(){
+    do_install_base
 }

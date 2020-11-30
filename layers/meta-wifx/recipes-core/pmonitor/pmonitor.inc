@@ -19,7 +19,7 @@ S = "${WORKDIR}/git"
 
 inherit unpack-online-assets useradd
 
-do_install(){
+do_install_base(){
     # Configuration file
     install -m 0755 -d ${D}${sysconfdir}/pmonitor
     install -m 0644 ${WORKDIR}/config.yml ${D}${sysconfdir}/pmonitor/config.yml
@@ -31,6 +31,10 @@ do_install(){
     # D-bus configuration
     install -m 0755 -d ${D}${sysconfdir}/dbus-1/system.d
     install -m 0644 ${WORKDIR}/net.wifx.pmonitor.conf ${D}${sysconfdir}/dbus-1/system.d/net.wifx.pmonitor.conf
+}
+
+do_install(){
+    do_install_base
 }
 
 # Add pmctl group
