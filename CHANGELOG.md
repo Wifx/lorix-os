@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - [LOR-431] SNMP init script is missing
+- [LOR-432] Temporarilly remove crypto hardware acceleration (fixes some OpenVPN connection failures)
 
 ## [1.2.0] - 2020-10-28
 
