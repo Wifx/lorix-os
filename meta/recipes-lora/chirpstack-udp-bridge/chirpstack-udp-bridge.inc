@@ -1,7 +1,7 @@
 HOMEPAGE = "https://www.chirpstack.io/"
 DESCRIPTION = "ChirpStack UDP Bridge"
 LICENSE = "MIT"
-LIC_FILES_CHKSUM = "file://../LICENSE;md5=99e425257f8a67b7efd81dc0009ed8ff"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=99e425257f8a67b7efd81dc0009ed8ff"
 
 SRC_URI += "\
     file://udp-bridge.toml \
@@ -17,9 +17,11 @@ inherit cargo
 ASSUME_PROVIDED_remove = "cmake-native"
 
 CONF_DIR = "${sysconfoptdir}/chirpstack-udp-bridge"
-S = "${WORKDIR}/git/chirpstack-udp-bridge"
+S = "${WORKDIR}/git"
 
 export BINDGEN_EXTRA_CLANG_ARGS="-I${STAGING_INCDIR}"
+
+CARGO_BUILD_FLAGS_append = " -p libconcentratord -p chirpstack-udp-bridge"
 
 do_install() {
 
