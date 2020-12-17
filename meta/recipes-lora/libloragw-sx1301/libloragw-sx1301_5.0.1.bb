@@ -22,6 +22,9 @@ TOOLCHAIN = "clang"
 
 CFLAGS += "-Iinc -I."
 
+DIR_UTILS = "/opt/${PN}/gateway-utils"
+DIR_TESTS = "/opt/${PN}/gateway-tests"
+
 do_configure_append() {
     cp ${WORKDIR}/library.cfg ${S}/libloragw/library.cfg
 }
@@ -31,10 +34,6 @@ do_compile() {
 }
 
 do_install() {
-    install_lib
-}
-
-install_lib() {
     # library
     install -m 0755 -d                          ${D}${libdir}/libloragw-sx1301
     install -m 0644 ${S}/libloragw/libloragw.a  ${D}${libdir}/libloragw-sx1301.a
@@ -48,22 +47,29 @@ install_lib() {
     install -m 0644 ${S}/libloragw/libloragw.a  ${D}${libdir}/libloragw-sx1301/libloragw.a
     install -m 0755 -d                          ${D}${libdir}/libloragw-sx1301/inc
     install -m 0644 ${S}/libloragw/inc/*        ${D}${libdir}/libloragw-sx1301/inc
+
+    # Install utils
+    install -d ${D}/${DIR_UTILS}
+    install -m 0755 util_pkt_logger/util_pkt_logger             ${D}/${DIR_UTILS}
+    install -m 0755 util_pkt_logger/*.json                      ${D}/${DIR_UTILS}
+    install -m 0755 util_spectral_scan/util_spectral_scan       ${D}/${DIR_UTILS}
+    install -m 0755 util_spi_stress/util_spi_stress             ${D}/${DIR_UTILS}
+    install -m 0755 util_tx_test/util_tx_test                   ${D}/${DIR_UTILS}
+    install -m 0755 util_tx_continuous/util_tx_continuous       ${D}/${DIR_UTILS}
+    install -m 0755 util_lbt_test/util_lbt_test                 ${D}/${DIR_UTILS}
+
+    # Install tests
+    install -d ${D}/${DIR_TESTS}
+    install -m 0755 libloragw/test_*                            ${D}/${DIR_TESTS}
 }
 
-install_utils() {
-    install -d ${D}/opt/libloragw-sx1301/gateway-utils
-    install -m 0755 libloragw/test_*                             ${D}/opt/libloragw-sx1301/gateway-utils/
-    install -m 0755 util_pkt_logger/util_pkt_logger             ${D}/opt/libloragw-sx1301/gateway-utils/
-    install -m 0755 util_spectral_scan/util_spectral_scan       ${D}/opt/libloragw-sx1301/gateway-utils/
-    install -m 0755 util_spi_stress/util_spi_stress             ${D}/opt/libloragw-sx1301/gateway-utils/
-    install -m 0755 util_tx_test/util_tx_test                   ${D}/opt/libloragw-sx1301/gateway-utils/
-    install -m 0755 util_tx_continuous/util_tx_continuous       ${D}/opt/libloragw-sx1301/gateway-utils/
-    install -m 0755 util_lbt_test/util_lbt_test                 ${D}/opt/libloragw-sx1301/gateway-utils/
-}
+PACKAGES += "${PN}-utils ${PN}-tests"
 
-PACKAGES += "${PN}-utils ${PN}-utils-dbg"
+FILES_${PN}-utils = "${DIR_UTILS}"
+FILES_${PN}-tests = "${DIR_TESTS}"
 
 FILES_${PN}-dev = "${includedir}"
 FILES_${PN}-staticdev = "${libdir}"
 
 INSANE_SKIP_${PN}-utils = "ldflags"
+INSANE_SKIP_${PN}-tests = "ldflags"
