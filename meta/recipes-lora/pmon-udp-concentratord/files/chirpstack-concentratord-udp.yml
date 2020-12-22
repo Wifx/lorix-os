@@ -1,0 +1,24 @@
+description: ChirpStack concentratord with an UDP Bridge
+autostart: true
+log: true
+jobs:
+    concentratord:
+        description: LoRa concentrator daemon
+        process:
+            run-mode: exec
+            program-path: /opt/chirpstack-concentratord/chirpstack-concentratord
+            program-arguments: -c /etc/opt/chirpstack-concentratord/00-concentratord.toml -c /etc/opt/chirpstack-concentratord/10-gateway.toml -c /etc/opt/chirpstack-concentratord/channels/EU868/EU_863_870.toml
+            delays:
+                start: 2000
+                term: 5000
+                restart: 5000
+    udp-bridge:
+        description: Bridge the concentratord to and UDP server
+        process:
+            run-mode: exec
+            program-path: /opt/chirpstack-udp-bridge/chirpstack-udp-bridge
+            program-arguments: -c /etc/opt/chirpstack-udp-bridge/udp-bridge.toml
+            delays:
+                start: 5000
+                term: 10000
+                restart: 5000

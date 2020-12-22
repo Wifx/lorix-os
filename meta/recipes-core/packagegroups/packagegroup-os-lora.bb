@@ -14,9 +14,9 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 inherit packagegroup
 
 RDEPENDS_${PN}_lorix-one = " \
-    udp-packet-forwarder \
     loriot-packet-forwarder \
     lora-basic-station \
-	chirpstack-gateway-bridge \
     pmon-csgb-upf \
+    pmon-csgb-concentratord \
+    pmon-udp-concentratord \
 "

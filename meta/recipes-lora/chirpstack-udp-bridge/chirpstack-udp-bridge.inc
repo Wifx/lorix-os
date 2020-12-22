@@ -31,7 +31,7 @@ do_install() {
     
     # Bin directory
     install -m 0755 -d ${D}${optdir}/chirpstack-udp-bridge
-    install -m 0644 ${cargo_bindir}/chirpstack-udp-bridge ${D}${optdir}/chirpstack-udp-bridge/chirpstack-udp-bridge
+    install -m 0755 ${cargo_bindir}/chirpstack-udp-bridge ${D}${optdir}/chirpstack-udp-bridge/chirpstack-udp-bridge
 }
 
 install_config() {
