@@ -14,6 +14,11 @@ IMAGE_INSTALL += " \
     pmon-csgb-concentratord \
 "
 
+IMAGE_INSTALL_append_lorix-one = " \
+    libloragw-sx1301-utils \
+    libloragw-sx1301-tests \
+"
+
 # valgrind it too big for the LORIX One 256MB version
 BAD_RECOMMENDATIONS_lorix-one-256 = "valgrind"
 

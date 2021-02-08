@@ -1,10 +1,13 @@
 # Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
 # All rights reserved.
 
+def get_bsp_dir(d):
+    return os.path.abspath(os.path.dirname(d.getVar('FILE', True)) + '/../../..')
+
 def print_info(layer, rel, inc_dirty, d):
     import subprocess
-    rev_hash = get_rel_path_rev(layer, rel, inc_dirty, d)
-    rev_date = get_rel_path_rev_date(layer, rel, d)
+    rev_hash = get_os_rev(inc_dirty, d)
+    rev_date = get_os_rev_date(d)
     bb.note("Workspace revision hash: " + rev_hash)
     bb.note("Workspace revision date: " + rev_date)
     path = get_rel_path(layer, rel, d)
@@ -67,6 +70,21 @@ def get_rel_path(layer, rel, d):
     if sys.version_info.major >= 3 :
          layerpath = list(layerpath)
     return os.path.join(layerpath[0], rel)
+
+def get_os_rev(inc_dirty, d):
+    targetrev = "unknown"
+    targetrev = get_rev(get_bsp_dir(d), inc_dirty)
+    return targetrev
+
+def get_os_rev_date(d):
+    targetrevdate = "unknown"
+    targetrevdate = get_rev_date(get_bsp_dir(d))
+    return targetrevdate
+
+def get_os_rev_dirty(d):
+    targetdirty = 0
+    targetdirty = get_rev_dirty(get_bsp_dir(d))
+    return targetdirty
 
 def source_shell_param_file(path, d):
     import re

@@ -20,6 +20,7 @@ RDEPENDS_${PN} = " \
     chrony \
     chronyc \
     opkg \
+    distro-feed-configs \
     run-postinsts \
     ${@bb.utils.contains("DISTRO_FEATURES", "openrc", "openrc", "", d)} \
     ${@bb.utils.contains("DISTRO_FEATURES", "openrc", "openrc-base-files", "", d)} \
