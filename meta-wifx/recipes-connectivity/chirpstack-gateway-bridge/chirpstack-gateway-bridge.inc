@@ -3,7 +3,7 @@ HOMEPAGE = "https://www.chirpstack.io/"
 PRIORITY = "optional"
 
 LICENSE = "MIT"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=99e425257f8a67b7efd81dc0009ed8ff"
+LIC_FILES_CHKSUM = "file://src/${GO_IMPORT}/LICENSE;md5=99e425257f8a67b7efd81dc0009ed8ff"
 
 SRCTAG = "v${PV}"
 SRC_URI += " \
@@ -14,13 +14,11 @@ SRC_URI += " \
     file://udp-packet-forwarder/gateway_local_conf.json \
 "
 
-RDEPENDS_${PN} += "udp-packet-forwarder pmcli"
-
-inherit gomod pmonitor
+inherit go-mod pmonitor
 
 S = "${WORKDIR}/git"
 
-GO_SRC = "${S}/cmd/chirpstack-gateway-bridge"
+GO_IMPORT = "github.com/brocaar/chirpstack-gateway-bridge"
 
 BIN_DIR = "${optdir}/chirpstack-gateway-bridge"
 CONF_DIR = "${sysconfoptdir}/chirpstack-gateway-bridge"
@@ -30,7 +28,7 @@ GO_EXTRA_LDFLAGS = "-X main.version=${PV}"
 
 do_install() {
     install -d ${D}${BIN_DIR}
-    install -m 0755 "${B}/chirpstack-gateway-bridge" ${D}${BIN_DIR}/
+    install -m 0755 "${B}/${GO_BUILD_BINDIR}/chirpstack-gateway-bridge" ${D}${BIN_DIR}/
 
     install -d ${D}${CONF_DIR}
     install -m 0644 ${WORKDIR}/conf.toml ${D}${CONF_DIR}/chirpstack-gateway-bridge.toml

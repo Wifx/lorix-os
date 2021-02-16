@@ -14,7 +14,7 @@ SRC_URI += " \
 
 RDEPENDS_${PN} += "udp-packet-forwarder pmcli"
 
-inherit gomod pmonitor
+inherit go-mod pmonitor
 
 S = "${WORKDIR}/git"
 
