@@ -33,11 +33,14 @@ python do_generate_base_feeds() {
         bb.fatal("MACHINE field is not defined, please add it in os-release")
     machine_url = machine.replace('-', '_')
 
+    pkg_arch = d.getVar('TUNE_PKGARCH')
+
     # Populate motd file with version, hash and date
     string = open(d.expand('${WORKDIR}/base-feeds_lorix-one.conf'),'r').read()
     string = string.replace('@{DISTRO_PACKAGES_FEEDS_BASE_URL}', url)
     string = string.replace('@{LORIX_MACHINE}', machine)
     string = string.replace('@{LORIX_MACHINE_URL}', machine_url)
+    string = string.replace('@{PKG_ARCH}', pkg_arch)
 
     f = open(d.expand('${WORKDIR}/base-feeds_lorix-one.conf'),'w')
     f.write(string)
