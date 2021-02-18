@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-438] Upgrade Go to 1.14
 - [LOR-435] Manager UI v0.10.1
 - [LOR-436] Pvisor 0.3.1
-- [LOR-437] Pmonitor v0.7.0
+- [LOR-437] Pmonitor v0.7.1
 
 ## [1.2.1] - 2020-12-08
 
