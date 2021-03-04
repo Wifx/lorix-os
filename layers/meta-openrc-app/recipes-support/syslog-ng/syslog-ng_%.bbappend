@@ -1,6 +1,3 @@
-# Note: Despite being built via './configure; make; make install',
-#       chrony does not use GNU Autotools.
-
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 SRC_URI += " \
     file://syslog-ng.initd \
@@ -10,7 +7,7 @@ SRC_URI += " \
 inherit openrc
 
 OPENRC_SERVICE_${PN} = "syslog-ng"
-OPENRC_RUNLEVEL_chronyd = "default"
+OPENRC_RUNLEVEL_syslog-ng = "default"
 
 do_install_append() {
     # Install OpenRC conf script
