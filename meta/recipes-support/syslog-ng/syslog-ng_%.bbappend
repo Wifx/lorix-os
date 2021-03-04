@@ -6,7 +6,7 @@ SRC_URI += " \
     file://rules/all.conf \
     file://rules/applicative.conf \
     file://rules/errors.conf \
-    file://rules/facilities.conf \
+    file://rules/system.conf \
     file://rules/manager.conf \
     file://rules/syslog.conf \
     file://syslog-ng.logrotate \
@@ -28,7 +28,7 @@ do_install_append() {
     install -m 755 ${WORKDIR}/rules/all.conf            ${D}/${sysconfdir}/${PN}/conf.d/all.conf
     install -m 755 ${WORKDIR}/rules/applicative.conf    ${D}/${sysconfdir}/${PN}/conf.d/applicative.conf
     install -m 755 ${WORKDIR}/rules/errors.conf         ${D}/${sysconfdir}/${PN}/conf.d/errors.conf
-    install -m 755 ${WORKDIR}/rules/facilities.conf     ${D}/${sysconfdir}/${PN}/conf.d/facilities.conf
+    install -m 755 ${WORKDIR}/rules/system.conf         ${D}/${sysconfdir}/${PN}/conf.d/system.conf
     install -m 755 ${WORKDIR}/rules/manager.conf        ${D}/${sysconfdir}/${PN}/conf.d/manager.conf
     install -m 755 ${WORKDIR}/rules/syslog.conf         ${D}/${sysconfdir}/${PN}/conf.d/syslog.conf
 
