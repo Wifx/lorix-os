@@ -1,5 +1,7 @@
 /var/log/*.log
 /var/log/system/*.log
+/var/log-persistant/*.log
+/var/log-persistant/system/*.log
 {
 	notifempty
 	nodateext

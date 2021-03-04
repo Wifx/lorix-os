@@ -8,7 +8,6 @@ SRC_URI += " \
     file://rules/errors.conf \
     file://rules/system.conf \
     file://rules/manager.conf \
-    file://rules/syslog.conf \
     file://syslog-ng.logrotate \
 "
 
