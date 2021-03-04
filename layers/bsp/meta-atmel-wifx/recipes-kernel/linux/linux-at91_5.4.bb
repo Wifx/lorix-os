@@ -19,6 +19,7 @@ SRC_URI += " \
     file://kernel-features/netfilter/netfilter6.scc;type=kmeta;destsuffix=kernel-meta \
     file://kernel-features/nf_tables/nf_tables.scc;type=kmeta;destsuffix=kernel-meta \
     file://kernel-features/nf_tables/nf_tables6.scc;type=kmeta;destsuffix=kernel-meta \
+    file://kernel-features/wireguard/wireguard.scc;type=kmeta;destsuffix=kernel-meta \
 "
 
 KERNEL_EXTRA_FEATURES ?= " \
@@ -26,4 +27,5 @@ KERNEL_EXTRA_FEATURES ?= " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'ipv6', 'kernel-features/netfilter/netfilter6.scc', '', d)} \
     kernel-features/nf_tables/nf_tables.scc \
     ${@bb.utils.contains('DISTRO_FEATURES', 'ipv6', 'kernel-features/nf_tables/nf_tables6.scc', '', d)} \
-    "
+    ${@bb.utils.contains('DISTRO_FEATURES', 'wireguard', 'kernel-features/wireguard/wireguard.scc', '', d)} \
+"
