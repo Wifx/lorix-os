@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.X.0] - Unreleased
+## [1.3.0] - Unreleased
 
 ### Added
 
@@ -14,6 +14,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changes
 
 - [LOR-389] Rename OpenRC service "reset-lgw" to "lora-concentrator"
+
+
+## [1.2.2] - 2021-02-18
+
+### Changed
+
+- [LOR-438] Upgrade Go to 1.14
+- [LOR-435] Manager UI v0.10.1
+- [LOR-436] Pvisor 0.3.1
+- [LOR-437] Pmonitor v0.7.1
+
+## [1.2.1] - 2020-12-08
+
+### Fixed
+
+- [LOR-431] SNMP init script is missing
+- [LOR-432] Temporarilly remove crypto hardware acceleration (fixes some OpenVPN connection failures)
 
 ## [1.2.0] - 2020-10-28
 
