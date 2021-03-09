@@ -3,6 +3,7 @@
 /var/log-persistant/*.log
 /var/log-persistant/system/*.log
 {
+	missingok
 	notifempty
 	nodateext
 	maxsize 100k
