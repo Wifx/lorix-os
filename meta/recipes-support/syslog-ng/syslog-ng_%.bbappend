@@ -11,6 +11,11 @@ SRC_URI += " \
     file://syslog-ng.logrotate \
 "
 
+PACKAGECONFIG = " \
+    ${@bb.utils.filter('DISTRO_FEATURES', 'ipv6', d)} \
+    http \
+"
+
 do_install_append() {
     install -d ${D}/${sysconfdir}/${PN}/
 
