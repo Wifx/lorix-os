@@ -7,7 +7,6 @@ LICENSE = "BSD-3-Clause"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=5ffc1514bf7cad7ad7892ca90a7295cd"
 
 SRCTAG = "v${PV}"
-
 SRC_URI = "git://github.com/Wifx/basicstation.git;protocol=git;tag=${SRCTAG}"
 
 SRC_URI += " \
