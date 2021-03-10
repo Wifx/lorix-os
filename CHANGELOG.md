@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changes
 
 - [LOR-389] Rename OpenRC service "reset-lgw" to "lora-concentrator"
-
+- [LOR-439] Reset lora-concentrator with libgpio tools
 
 ## [1.2.2] - 2021-02-18
 

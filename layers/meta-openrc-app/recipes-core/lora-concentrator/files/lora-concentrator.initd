@@ -2,8 +2,9 @@
 # Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
 # All rights reserved.
 
+CHIP=${LORA_CORE_RST_CHIP:-gpiochip0}
 PIN=${LORA_CORE_RST_PIN:-1}
-PIN_PATH=${LORA_CORE_RST_PIN_PATH:-/sys/class/gpio/pioA1}
+DELAY=${LORA_CORE_RST_DELAY_US:-100000}
 
 extra_commands="reset"
 
@@ -16,5 +17,15 @@ reset() {
 
     /usr/sbin/lora-concentrator-reset
 
+    eend 0
+}
+
+start() {
+    ebegin "Staring lora concentrator service"
+    reset
+}
+
+stop() { 
+    ebegin "Stopping lora concentrator service (no hardware operation is done)"
     eend 0
 }

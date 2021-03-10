@@ -3,5 +3,6 @@
 # All rights reserved.
 
 # Defines the LoRa concentrator reset pin mapping
-# LORA_CORE_RST_PIN=1
-# LORA_CORE_RST_PIN_PATH=/sys/class/gpio/pioA1
+LORA_CORE_RST_CHIP=gpiochip0
+LORA_CORE_RST_PIN=1
+LORA_CORE_RST_DELAY_US=100000
