@@ -16,6 +16,7 @@ RDEPENDS_${PN} = " \
     packagegroup-os-connectivity \
     packagegroup-os-extended \
     ${@bb.utils.contains("MACHINE_FEATURES", "lora", "packagegroup-os-lora", "", d)} \
+    libgpiod \
     os-release \
     chrony \
     chronyc \

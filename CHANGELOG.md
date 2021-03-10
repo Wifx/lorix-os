@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - The BasicStation now does a lora concentrator reset upon startup
+- [LOR-426] Update the GPIO control system (add libgpio tools)
 
 ### Changes
 
