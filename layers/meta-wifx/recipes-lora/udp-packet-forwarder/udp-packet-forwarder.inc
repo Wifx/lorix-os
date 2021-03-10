@@ -115,7 +115,7 @@ pkg_postinst_ontarget_${PN} () {
 
         if [ ! -f "$CHANNELS_CONFDIR/channels_conf.json" ]; then
 
-            cd $CHANNELS_CONFDIR
+            cd "$CHANNELS_CONFDIR"
             echo "Looking for UDP Packet Forwarder channels for '$PRODUCT_TYPE' in '$CHANNELS_CONFDIR'"
 
             # If the region provides a default channel plan, set it
