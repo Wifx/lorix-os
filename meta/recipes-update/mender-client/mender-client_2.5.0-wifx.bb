@@ -8,9 +8,10 @@ require mender-client.inc
 # - DEFAULT_PREFERENCE
 #-------------------------------------------------------------------------------
 
-SRC_URI = "git://github.com/Wifx/mender;protocol=https;branch=2.2.x-wifx"
+SRC_URI = "git://github.com/Wifx/mender;protocol=https;branch=2.5.x-wifx"
 
-SRCREV = "312ab8eeb1a19052b9159253c233be662850def4"
+# Tag: 2.5.0
+SRCREV = "00a2b4ea2f18bac503031305a67c75ede3316857"
 
 # Enable this in Betas, not in finals.
 # Downprioritize this recipe in version selections.
@@ -20,11 +21,8 @@ SRCREV = "312ab8eeb1a19052b9159253c233be662850def4"
 
 # DO NOT change the checksum here without make sure that ALL licenses (including
 # dependencies) are included in the LICENSE variable below.
-LIC_FILES_CHKSUM = "file://src/github.com/mendersoftware/mender/LIC_FILES_CHKSUM.sha256;md5=80ba3790b689991e47685da401fd3375"
+LIC_FILES_CHKSUM = "file://src/github.com/mendersoftware/mender/LIC_FILES_CHKSUM.sha256;md5=94f3ba4eba45eae14396f3499fcb5383"
 LICENSE = "Apache-2.0 & BSD-2-Clause & BSD-3-Clause & ISC & MIT & OLDAP-2.8"
 
-DEPENDS += "xz"
-RDEPENDS_${PN} += "liblzma"
-
-# MEN-2948: systemd service is still named mender.service in 2.2.x
-MENDER_CLIENT="mender"
+DEPENDS += "xz openssl"
+RDEPENDS_${PN} += "liblzma openssl"

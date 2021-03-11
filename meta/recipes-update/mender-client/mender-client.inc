@@ -1,11 +1,8 @@
 DESCRIPTION = "Mender tool for doing OTA software updates."
 HOMEPAGE = "https://mender.io"
 
-RDEPENDS_${PN}_append_mender-growfs-data_mender-systemd = " parted"
+RDEPENDS_${PN}_append_mender-growfs-data_mender-systemd = " parted util-linux-fdisk"
 RPROVIDES_${PN} += "virtual/updater"
-
-FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
-SRC_URI_append = " file://artifact-verify-key.pem"
 
 def cert_location_if_server_crt_in(src_uri, d):
     for src in src_uri.split():
@@ -13,8 +10,11 @@ def cert_location_if_server_crt_in(src_uri, d):
             return "%s/mender/server.crt" % d.getVar('sysconfdir')
     return ""
 
-MENDER_SERVER_URL ?= "https://hosted.mender.io"
+MENDER_CLIENT ?= "mender-client"
+MENDER_SERVER_URL ?= "https://docker.mender.io"
 MENDER_CERT_LOCATION ??= "${@cert_location_if_server_crt_in('${SRC_URI}', d)}"
+# Tenant token
+MENDER_TENANT_TOKEN ?= "dummy"
 SYSTEMD_AUTO_ENABLE ?= "enable"
 MENDER_UPDATE_POLL_INTERVAL_SECONDS ?= "1800"
 MENDER_INVENTORY_POLL_INTERVAL_SECONDS ?= "28800"
@@ -23,48 +23,72 @@ MENDER_RETRY_POLL_INTERVAL_SECONDS ?= "300"
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
 
-inherit go
-# Fix Go 1.12.6 cache support
-export GOCACHE = "${B}/.cache"
+localdatadir = "${prefix}/local/share"
 
+inherit go
+inherit go-ptest
+inherit pkgconfig
 inherit systemd
 
 SYSTEMD_SERVICE_${PN} = "${MENDER_CLIENT}.service"
-FILES_${PN} += "${systemd_unitdir}/system/${MENDER_CLIENT}.service \
-                ${sysconfdir}/mender.conf \
-                /data/mender/device_type \
-                /data/mender/mender.conf \
-                ${sysconfdir}/udev/mount.blacklist.d/mender \
-                /usr/share/mender/identity \
-                /usr/share/mender/inventory \
-                /usr/share/mender/identity/mender-device-identity \
-                /usr/share/mender/inventory/mender-inventory-hostinfo \
-                /usr/share/mender/inventory/mender-inventory-network \
-                /usr/share/mender/inventory/mender-inventory-os \
-                /usr/share/mender/inventory/mender-inventory-bootloader-integration \
-                /usr/share/mender/inventory/mender-inventory-rootfs-type \
-                /usr/share/mender/modules/v3/docker \
-                /usr/share/mender/modules/v3/directory \
-                /usr/share/mender/modules/v3/single-file \
-                /usr/share/mender/modules/v3/deb \
-                /usr/share/mender/modules/v3/rpm \
-                /usr/share/mender/modules/v3/script \
-               "
+FILES_${PN} += "\
+    ${datadir}/dbus-1/system.d/io.mender.AuthenticationManager.conf \
+    ${datadir}/mender/identity \
+    ${datadir}/mender/identity/mender-device-identity \
+    ${datadir}/mender/inventory \
+    ${datadir}/mender/inventory/mender-inventory-bootloader-integration \
+    ${datadir}/mender/inventory/mender-inventory-hostinfo \
+    ${datadir}/mender/inventory/mender-inventory-network \
+    ${datadir}/mender/inventory/mender-inventory-os \
+    ${datadir}/mender/inventory/mender-inventory-rootfs-type \
+    ${datadir}/mender/modules/v3/deb \
+    ${datadir}/mender/modules/v3/directory \
+    ${datadir}/mender/modules/v3/docker \
+    ${datadir}/mender/modules/v3/rpm \
+    ${datadir}/mender/modules/v3/script \
+    ${datadir}/mender/modules/v3/single-file \
+    ${sysconfdir}/udev/mount.blacklist.d/mender \
+    ${systemd_unitdir}/system/${MENDER_CLIENT}.service \
+    ${localdatadir}/ca-certificates/mender/server.crt \
+    /data/mender/device_type \
+    /data/mender/mender.conf \
+"
 
 SYSROOT_DIRS += "/data"
 
-SRC_URI_append_mender-image_mender-systemd = " file://mender-client-data-dir.service"
-                                               
-SRC_URI_append_mender-persist-systemd-machine-id = " file://mender-client-systemd-machine-id.service \
-                                                     file://mender-client-set-systemd-machine-id.sh"
-FILES_${PN}_append_mender-image_mender-systemd = " ${systemd_unitdir}/system/${MENDER_CLIENT}-data-dir.service \
-                                                   ${systemd_unitdir}/system/${MENDER_CLIENT}.service.wants/${MENDER_CLIENT}-data-dir.service"
-FILES_${PN}_append_mender-growfs-data_mender-systemd = " ${systemd_unitdir}/system/mender-grow-data.service \
-                                                         ${systemd_unitdir}/system/data.mount.wants/mender-grow-data.service"
+SRC_URI_append_mender-image_mender-systemd = " \
+    file://mender-client-data-dir.service \
+"
 
-FILES_${PN}_append_mender-persist-systemd-machine-id = " ${systemd_unitdir}/system/mender-systemd-machine-id.service \
-                                                         ${systemd_unitdir}/system/${MENDER_CLIENT}.service.wants/${MENDER_CLIENT}-systemd-machine-id.service \
-                                                         ${bindir}/${MENDER_CLIENT}-set-systemd-machine-id.sh"
+SRC_URI_append_mender-persist-systemd-machine-id = " \
+    file://mender-client-systemd-machine-id.service \
+    file://mender-client-set-systemd-machine-id.sh \
+"
+
+SRC_URI_append_mender-growfs-data_mender-systemd = " \
+    file://mender-client-resize-data-part.sh.in \
+    file://mender-grow-data.service \
+    file://mender-systemd-growfs-data.service \
+"
+
+FILES_${PN}_append_mender-image_mender-systemd = " \
+    ${systemd_unitdir}/system/${MENDER_CLIENT}-data-dir.service \
+    ${systemd_unitdir}/system/${MENDER_CLIENT}.service.wants/${MENDER_CLIENT}-data-dir.service \
+"
+
+FILES_${PN}_append_mender-growfs-data_mender-systemd = " \
+    ${bindir}/mender-client-resize-data-part \
+    ${systemd_unitdir}/system/mender-grow-data.service \
+    ${systemd_unitdir}/system/mender-systemd-growfs-data.service \
+    ${systemd_unitdir}/system/data.mount.wants/mender-grow-data.service \
+    ${systemd_unitdir}/system/data.mount.wants/mender-systemd-growfs-data.service \
+"
+
+FILES_${PN}_append_mender-persist-systemd-machine-id = " \
+    ${systemd_unitdir}/system/mender-client-systemd-machine-id.service \
+    ${systemd_unitdir}/system/${MENDER_CLIENT}.service.wants/mender-client-systemd-machine-id.service \
+    ${bindir}/mender-client-set-systemd-machine-id.sh \
+"
 
 # Go binaries produce unexpected effects that the Yocto QA mechanism doesn't
 # like. We disable those checks here.
@@ -84,11 +108,17 @@ PACKAGECONFIG[grub] = ",,,grub-editenv grub-mender-grubenv"
 # a very large requirement, which we will not mandate. Bash however, we require,
 # because otherwise the Yocto QA checks will complain.
 PACKAGECONFIG[modules] = ",,,bash"
+PACKAGECONFIG[dbus] = ",,glib-2.0,glib-2.0"
+PACKAGECONFIG[inventory-network-scripts] = ",,,"
 
 # NOTE: Splits the mender.conf file by default into a transient and a persistent config. Needs to be
 # explicitly disabled if this is not to apply.
 PACKAGECONFIG[split-mender-config] = ",,,"
 PACKAGECONFIG_append = " split-mender-config"
+
+_MENDER_TAGS = "${@bb.utils.contains('PACKAGECONFIG', 'dbus', '', 'nodbus', d)}"
+EXTRA_OEMAKE_append = " TAGS='${_MENDER_TAGS}'"
+GOPTESTBUILDFLAGS_append = " -tags '${_MENDER_TAGS}'"
 
 do_compile() {
     GOPATH="${B}:${S}"
@@ -151,14 +181,12 @@ python do_prepare_mender_conf() {
 
     # Add new variable -> config assignments here.
     if key_in_src_uri or key_in_var:
-        bb.debug(1, "Artifact verify key is available, adding to mender.conf")
         conf_maybe_add("ArtifactVerifyKey", "%s/mender/artifact-verify-key.pem" % d.getVar("sysconfdir"), getvar=False, integer=False)
     conf_maybe_add("InventoryPollIntervalSeconds", "MENDER_INVENTORY_POLL_INTERVAL_SECONDS", getvar=True, integer=True)
     # Mandatory variables - will always exist
     conf_maybe_add("RetryPollIntervalSeconds", "MENDER_RETRY_POLL_INTERVAL_SECONDS", getvar=True, integer=True)
     conf_maybe_add("RootfsPartA", "MENDER_ROOTFS_PART_A", getvar=True, integer=False)
     conf_maybe_add("RootfsPartB", "MENDER_ROOTFS_PART_B", getvar=True, integer=False)
-    conf_maybe_add("ServerCertificate", "MENDER_CERT_LOCATION", getvar=True, integer=False)
     conf_maybe_add("ServerURL", "MENDER_SERVER_URL", getvar=True, integer=False)
     conf_maybe_add("UpdatePollIntervalSeconds", "MENDER_UPDATE_POLL_INTERVAL_SECONDS", getvar=True, integer=True)
 
@@ -217,9 +245,38 @@ do_install() {
         systemd_unitdir=${systemd_unitdir} \
         install-bin \
         install-identity-scripts \
-        install-inventory-scripts \
         install-systemd \
         ${@bb.utils.contains('PACKAGECONFIG', 'modules', 'install-modules', '', d)}
+
+    # install inventory scripts
+    if grep -q install-inventory-local-scripts ${B}/src/${GO_IMPORT}/Makefile; then
+        oe_runmake \
+            -C ${B}/src/${GO_IMPORT} \
+            V=1 \
+            prefix=${D} \
+            datadir=${datadir} \
+            install-inventory-local-scripts \
+            ${@bb.utils.contains('PACKAGECONFIG', 'inventory-network-scripts', 'install-inventory-network-scripts', '', d)}
+    else
+        oe_runmake \
+            -C ${B}/src/${GO_IMPORT} \
+            V=1 \
+            prefix=${D} \
+            datadir=${datadir} \
+            install-inventory-scripts
+    fi
+
+    # install dbus files
+    if grep -q install-dbus ${B}/src/${GO_IMPORT}/Makefile; then
+        if ${@bb.utils.contains('PACKAGECONFIG', 'dbus', 'true', 'false', d)}; then
+            oe_runmake \
+                -C ${B}/src/${GO_IMPORT} \
+                V=1 \
+                prefix=${D} \
+                datadir=${datadir} \
+                install-dbus
+        fi
+    fi
 
     #install our prepared configuration
     install -d ${D}/${sysconfdir}/mender
@@ -235,6 +292,8 @@ do_install() {
     if [ -f ${WORKDIR}/server.crt ]; then
         install -m 0755 -d $(dirname ${D}${MENDER_CERT_LOCATION})
         install -m 0444 ${WORKDIR}/server.crt ${D}${MENDER_CERT_LOCATION}
+        install -m 0755 -d ${D}${localdatadir}/ca-certificates/mender
+        install -m 0444 ${WORKDIR}/server.crt ${D}${localdatadir}/ca-certificates/mender/server.crt
     fi
 
     install -d ${D}/${localstatedir}/lib/mender
@@ -271,30 +330,36 @@ do_install_append_mender-image_mender-systemd() {
 }
 
 do_install_append_mender-growfs-data_mender-systemd() {
-    cat <<-EOF > ${D}${systemd_unitdir}/system/mender-grow-data.service
-[Unit]
-Description=Mender service to grow data partition size
-DefaultDependencies=no
-Before=data.mount
-Before=systemd-growfs@data.service
+    sed -i "s#@MENDER_STORAGE_DEVICE@#${MENDER_STORAGE_DEVICE}#g" \
+        ${WORKDIR}/mender-client-resize-data-part.sh.in
 
-[Service]
-Type=oneshot
-User=root
-Group=root
-ExecStart=/usr/sbin/parted -s ${MENDER_STORAGE_DEVICE} resizepart ${MENDER_DATA_PART_NUMBER} 100%
+    sed -i "s#@MENDER_DATA_PART@#${MENDER_DATA_PART}#g" \
+        ${WORKDIR}/mender-client-resize-data-part.sh.in
 
-[Install]
-WantedBy=data.mount
-EOF
+    sed -i "s#@MENDER_DATA_PART_NUMBER@#${MENDER_DATA_PART_NUMBER}#g" \
+        ${WORKDIR}/mender-client-resize-data-part.sh.in
+
+    install -m 0755 ${WORKDIR}/mender-client-resize-data-part.sh.in \
+        ${D}/${bindir}/mender-client-resize-data-part
+
+    install -d ${D}/${systemd_unitdir}/system
+    install -m 644 ${WORKDIR}/mender-grow-data.service ${D}/${systemd_unitdir}/system/
+    install -m 644 ${WORKDIR}/mender-systemd-growfs-data.service ${D}/${systemd_unitdir}/system/
+
     install -d ${D}${systemd_unitdir}/system/data.mount.wants/
     ln -sf ../mender-grow-data.service ${D}${systemd_unitdir}/system/data.mount.wants/
+    ln -sf ../mender-systemd-growfs-data.service ${D}${systemd_unitdir}/system/data.mount.wants/
 }
 
 do_install_append_mender-persist-systemd-machine-id() {
-    install -m 644 ${WORKDIR}/mender-client-systemd-machine-id.service ${D}${systemd_unitdir}/system/${MENDER_CLIENT}-systemd-machine-id.service
+    install -m 644 ${WORKDIR}/mender-client-systemd-machine-id.service ${D}${systemd_unitdir}/system/
     install -d -m 755 ${D}${systemd_unitdir}/system/${MENDER_CLIENT}.service.wants
-    ln -sf ../${MENDER_CLIENT}-systemd-machine-id.service ${D}${systemd_unitdir}/system/${MENDER_CLIENT}.service.wants/
+    ln -sf ../mender-client-systemd-machine-id.service ${D}${systemd_unitdir}/system/${MENDER_CLIENT}.service.wants/
     install -d -m 755 ${D}${bindir}
-    install -m 755 ${WORKDIR}/mender-client-set-systemd-machine-id.sh ${D}${bindir}/${MENDER_CLIENT}-set-systemd-machine-id.sh
+    install -m 755 ${WORKDIR}/mender-client-set-systemd-machine-id.sh ${D}${bindir}/
+}
+
+# Required if a self-signed certificate was added, but harmless in any case, so run unconditionally
+pkg_postinst_${PN} () {
+    SYSROOT="$D" $D${sbindir}/update-ca-certificates
 }
