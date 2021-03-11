@@ -34,7 +34,6 @@ do_install_append() {
     install -m 755 ${WORKDIR}/rules/errors.conf         ${D}/${sysconfdir}/${PN}/conf.d/errors.conf
     install -m 755 ${WORKDIR}/rules/system.conf         ${D}/${sysconfdir}/${PN}/conf.d/system.conf
     install -m 755 ${WORKDIR}/rules/manager.conf        ${D}/${sysconfdir}/${PN}/conf.d/manager.conf
-    install -m 755 ${WORKDIR}/rules/syslog.conf         ${D}/${sysconfdir}/${PN}/conf.d/syslog.conf
 
     # logrotate
     install -d ${D}/${sysconfdir}/logrotate.d/
