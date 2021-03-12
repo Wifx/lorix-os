@@ -14,6 +14,7 @@ SRC_URI += " \
 PACKAGECONFIG = " \
     ${@bb.utils.filter('DISTRO_FEATURES', 'ipv6', d)} \
     http \
+    json \
 "
 
 do_install_append() {
