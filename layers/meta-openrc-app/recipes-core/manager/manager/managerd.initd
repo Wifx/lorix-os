@@ -13,6 +13,7 @@ respawn_delay="${RESPAWN_DELAY:-2}"
 command_user="root"
 command="${DAEMON_PATH:-/usr/sbin/managerd}"
 command_args_foreground="-f"
+
 start_stop_daemon_args="--group root"
 
 depend() {

@@ -14,8 +14,8 @@ command_user="root"
 command="${DAEMON_PATH:-/usr/sbin/pmonitord}"
 command_args="--config ${CONFIG_FILE:-/etc/pmonitor/config.yml} -p ${PVISOR_PATH} -s ${PVISOR_SOCKET_DIR}"
 command_args_foreground="-f"
-# pmonitor doesn't support yet config directory path, we need to start it diretly into the right directly.
-start_stop_daemon_args="--group root -d /etc/pmonitor"
+
+start_stop_daemon_args="--group root"
 
 depend() {
     need dbus
