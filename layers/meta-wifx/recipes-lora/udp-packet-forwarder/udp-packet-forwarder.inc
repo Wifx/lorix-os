@@ -135,7 +135,7 @@ pkg_postinst_ontarget_${PN} () {
                 done
             fi
 
-            if [ ! -z "$CHANNEL_FILE_PATH"]; then
+            if [ ! -z "$CHANNEL_FILE_PATH" ]; then
                 ln -snf "$CHANNEL_FILE_PATH" "channels_conf.json"
                 echo "UDP Packet Forwarder channel has been set to '$CHANNEL_FILE_PATH'"
             else
