@@ -120,11 +120,12 @@ pkg_postinst_ontarget_${PN} () {
 
             # If the region provides a default channel plan, set it
             if [ -f "$PRODUCT_TYPE/default" ]; then
+                echo "Using default channel"
                 CHANNEL_FILE_NAME=$(readlink "$PRODUCT_TYPE/default")
                 CHANNEL_FILE_PATH="$PRODUCT_TYPE/$CHANNEL_FILE_NAME"
-
             else
                 # Otherwise take the first in the list
+                echo "Using first available channel in '$PRODUCT_TYPE'"
                 FILES="$PRODUCT_TYPE/*.json"
                 for FILE in $FILES; do
                     if [[ -f "$FILE" ]]; then
