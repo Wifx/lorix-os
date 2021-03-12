@@ -3,7 +3,7 @@
 # If you are using an interface manager like wicd, dhcpcd in standalone
 # mode, networkmanager, etc to control your interfaces, set rc_need to
 # the name of that service.
-rc_need="NetworkManager"
+#rc_need="NetworkManager"
 
 # You may also want to uncomment the following if you are using network
 # logging.
