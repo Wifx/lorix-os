@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [LOR-389] Rename OpenRC service "reset-lgw" to "lora-concentrator"
 - [LOR-439] Reset lora-concentrator with libgpio tools
+- Enable standard cron directories (hourly, daily, weekly, monthly)
 
 ## [1.2.2] - 2021-02-18
 
