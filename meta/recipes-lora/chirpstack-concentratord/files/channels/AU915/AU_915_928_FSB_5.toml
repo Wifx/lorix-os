@@ -1,0 +1,27 @@
+# +++
+# name: Australia 915-928 MHz, FSB 5
+# description: Default frequency plan for Australia, using sub-band 5
+# countries: [br, cl, nz, ar, au]
+# +++
+
+
+# LoRa concentrator configuration.
+[gateway.concentrator]
+
+    # Multi spreading-factor channels (LoRa).
+    multi_sf_channels=[
+        921600000,
+        921800000,
+        922000000,
+        922200000,
+        922400000,
+        922600000,
+        922800000,
+        923000000,
+    ]
+
+    # LoRa std channel (single spreading-factor).
+    [gateway.concentrator.lora_std]
+        frequency=922300000
+        bandwidth=500000
+        spreading_factor=8

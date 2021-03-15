@@ -5,6 +5,13 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=99e425257f8a67b7efd81dc0009ed8ff"
 
 SRC_URI += "\
     file://channels/* \
+    file://channels/AS920/* \
+    file://channels/AS923/* \
+    file://channels/AU915/* \
+    file://channels/EU868/* \
+    file://channels/IN865/* \
+    file://channels/RU864/* \
+    file://channels/US915/* \
     file://concentratord.toml \
     file://gateway.toml \
 "
@@ -72,8 +79,41 @@ install_config() {
 install_channels() {
     install -m 0755 -d ${D}${CONF_DIR}/channels
     
+    install -m 0755 -d ${D}${CONF_DIR}/channels/AS920
+    install -m 0644 ${WORKDIR}/channels/AS920/AS_920_923.toml ${D}${CONF_DIR}/channels/AS920/AS_920_923.toml
+
+    install -m 0755 -d ${D}${CONF_DIR}/channels/AS923
+    install -m 0644 ${WORKDIR}/channels/AS923/AS_923_925.toml ${D}${CONF_DIR}/channels/AS923/AS_923_925.toml
+    install -m 0644 ${WORKDIR}/channels/AS923/AS_923_925_TTN_AU.toml ${D}${CONF_DIR}/channels/AS923/AS_923_925_TTN_AU.toml
+    
+    install -m 0755 -d ${D}${CONF_DIR}/channels/AU915
+    install -m 0644 ${WORKDIR}/channels/AU915/AU_915_928_FSB_1.toml ${D}${CONF_DIR}/channels/AU915/AU_915_928_FSB_1.toml
+    install -m 0644 ${WORKDIR}/channels/AU915/AU_915_928_FSB_2.toml ${D}${CONF_DIR}/channels/AU915/AU_915_928_FSB_2.toml
+    install -m 0644 ${WORKDIR}/channels/AU915/AU_915_928_FSB_3.toml ${D}${CONF_DIR}/channels/AU915/AU_915_928_FSB_3.toml
+    install -m 0644 ${WORKDIR}/channels/AU915/AU_915_928_FSB_4.toml ${D}${CONF_DIR}/channels/AU915/AU_915_928_FSB_4.toml
+    install -m 0644 ${WORKDIR}/channels/AU915/AU_915_928_FSB_5.toml ${D}${CONF_DIR}/channels/AU915/AU_915_928_FSB_5.toml
+    install -m 0644 ${WORKDIR}/channels/AU915/AU_915_928_FSB_6.toml ${D}${CONF_DIR}/channels/AU915/AU_915_928_FSB_6.toml
+    install -m 0644 ${WORKDIR}/channels/AU915/AU_915_928_FSB_7.toml ${D}${CONF_DIR}/channels/AU915/AU_915_928_FSB_7.toml
+    install -m 0644 ${WORKDIR}/channels/AU915/AU_915_928_FSB_8.toml ${D}${CONF_DIR}/channels/AU915/AU_915_928_FSB_8.toml
+    
     install -m 0755 -d ${D}${CONF_DIR}/channels/EU868
     install -m 0644 ${WORKDIR}/channels/EU868/EU_863_870.toml ${D}${CONF_DIR}/channels/EU868/EU_863_870.toml
+    
+    install -m 0755 -d ${D}${CONF_DIR}/channels/IN865
+    install -m 0644 ${WORKDIR}/channels/IN865/IN_865_867.toml ${D}${CONF_DIR}/channels/IN865/IN_865_867.toml
+    
+    install -m 0755 -d ${D}${CONF_DIR}/channels/RU864
+    install -m 0644 ${WORKDIR}/channels/RU864/RU_864_870_TTN.toml ${D}${CONF_DIR}/channels/RU864/RU_864_870_TTN.toml
+    
+    install -m 0755 -d ${D}${CONF_DIR}/channels/US915
+    install -m 0644 ${WORKDIR}/channels/US915/US_902_928_FSB_1.toml ${D}${CONF_DIR}/channels/US915/US_902_928_FSB_1.toml
+    install -m 0644 ${WORKDIR}/channels/US915/US_902_928_FSB_2.toml ${D}${CONF_DIR}/channels/US915/US_902_928_FSB_2.toml
+    install -m 0644 ${WORKDIR}/channels/US915/US_902_928_FSB_3.toml ${D}${CONF_DIR}/channels/US915/US_902_928_FSB_3.toml
+    install -m 0644 ${WORKDIR}/channels/US915/US_902_928_FSB_4.toml ${D}${CONF_DIR}/channels/US915/US_902_928_FSB_4.toml
+    install -m 0644 ${WORKDIR}/channels/US915/US_902_928_FSB_5.toml ${D}${CONF_DIR}/channels/US915/US_902_928_FSB_5.toml
+    install -m 0644 ${WORKDIR}/channels/US915/US_902_928_FSB_6.toml ${D}${CONF_DIR}/channels/US915/US_902_928_FSB_6.toml
+    install -m 0644 ${WORKDIR}/channels/US915/US_902_928_FSB_7.toml ${D}${CONF_DIR}/channels/US915/US_902_928_FSB_7.toml
+    install -m 0644 ${WORKDIR}/channels/US915/US_902_928_FSB_8.toml ${D}${CONF_DIR}/channels/US915/US_902_928_FSB_8.toml
 }
 
 do_install_append_sx1301() {

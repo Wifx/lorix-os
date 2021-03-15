@@ -1,0 +1,33 @@
+# +++
+# name: Asia 920-923 MHz
+# description: TTN Community Network frequency plan for Asian countries, using frequencies ≤ 923 MHz
+# countries: [my, sg]
+# +++
+
+
+# LoRa concentrator configuration.
+[gateway.concentrator]
+
+    # Multi spreading-factor channels (LoRa).
+    multi_sf_channels=[
+        923200000,
+        923400000,
+        922200000,
+        922400000,
+        922600000,
+        922800000,
+        923000000,
+        922000000,
+    ]
+
+    # LoRa std channel (single spreading-factor).
+    [gateway.concentrator.lora_std]
+        frequency=922100000
+        bandwidth=250000
+        spreading_factor=7
+
+    # FSK channel.
+    [gateway.concentrator.fsk]
+        frequency=921800000
+        bandwidth=125000
+        datarate=50000

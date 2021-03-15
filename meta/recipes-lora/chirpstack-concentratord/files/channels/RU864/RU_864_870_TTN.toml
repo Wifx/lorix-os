@@ -1,0 +1,20 @@
+# +++
+# name: Russia 864-870 MHz
+# description: TTN Community Network frequency plan for Russia
+# countries: [ru]
+# +++
+
+
+# LoRa concentrator configuration.
+[gateway.concentrator]
+
+    # Multi spreading-factor channels (LoRa).
+    multi_sf_channels=[
+        868900000,
+        869100000,
+        864100000,
+        864300000,
+        864500000,
+        864700000,
+        864900000,
+    ]

@@ -1,0 +1,27 @@
+# +++
+# name: Australia 915-928 MHz, FSB 2 (used by TTN)
+# description: TTN Community Network frequency plan for Australia, using sub-band 2
+# countries: [br, cl, nz, ar, au]
+# +++
+
+
+# LoRa concentrator configuration.
+[gateway.concentrator]
+
+    # Multi spreading-factor channels (LoRa).
+    multi_sf_channels=[
+        916800000,
+        917000000,
+        917200000,
+        917400000,
+        917600000,
+        917800000,
+        918000000,
+        918200000,
+    ]
+
+    # LoRa std channel (single spreading-factor).
+    [gateway.concentrator.lora_std]
+        frequency=917500000
+        bandwidth=500000
+        spreading_factor=8
