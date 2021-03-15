@@ -4,6 +4,8 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=99e425257f8a67b7efd81dc0009ed8ff"
 
 SRC_URI += "\
+    file://concentratord.toml \
+    file://gateway.toml \
     file://channels/* \
     file://channels/AS920/* \
     file://channels/AS923/* \
@@ -12,8 +14,6 @@ SRC_URI += "\
     file://channels/IN865/* \
     file://channels/RU864/* \
     file://channels/US915/* \
-    file://concentratord.toml \
-    file://gateway.toml \
 "
 
 # TODO: add support for splitted config in the concentratord
@@ -81,10 +81,12 @@ install_channels() {
     
     install -m 0755 -d ${D}${CONF_DIR}/channels/AS920
     install -m 0644 ${WORKDIR}/channels/AS920/AS_920_923.toml ${D}${CONF_DIR}/channels/AS920/AS_920_923.toml
+    set_default "AS920" "AS_920_923"
 
     install -m 0755 -d ${D}${CONF_DIR}/channels/AS923
     install -m 0644 ${WORKDIR}/channels/AS923/AS_923_925.toml ${D}${CONF_DIR}/channels/AS923/AS_923_925.toml
     install -m 0644 ${WORKDIR}/channels/AS923/AS_923_925_TTN_AU.toml ${D}${CONF_DIR}/channels/AS923/AS_923_925_TTN_AU.toml
+    set_default "AS923" "AS_923_925"
     
     install -m 0755 -d ${D}${CONF_DIR}/channels/AU915
     install -m 0644 ${WORKDIR}/channels/AU915/AU_915_928_FSB_1.toml ${D}${CONF_DIR}/channels/AU915/AU_915_928_FSB_1.toml
@@ -95,15 +97,19 @@ install_channels() {
     install -m 0644 ${WORKDIR}/channels/AU915/AU_915_928_FSB_6.toml ${D}${CONF_DIR}/channels/AU915/AU_915_928_FSB_6.toml
     install -m 0644 ${WORKDIR}/channels/AU915/AU_915_928_FSB_7.toml ${D}${CONF_DIR}/channels/AU915/AU_915_928_FSB_7.toml
     install -m 0644 ${WORKDIR}/channels/AU915/AU_915_928_FSB_8.toml ${D}${CONF_DIR}/channels/AU915/AU_915_928_FSB_8.toml
+    set_default "AU915" "AU_915_928_FSB_2"
     
     install -m 0755 -d ${D}${CONF_DIR}/channels/EU868
     install -m 0644 ${WORKDIR}/channels/EU868/EU_863_870.toml ${D}${CONF_DIR}/channels/EU868/EU_863_870.toml
+    set_default "EU868" "EU_863_870"
     
     install -m 0755 -d ${D}${CONF_DIR}/channels/IN865
     install -m 0644 ${WORKDIR}/channels/IN865/IN_865_867.toml ${D}${CONF_DIR}/channels/IN865/IN_865_867.toml
+    set_default "IN865" "IN_865_867"
     
     install -m 0755 -d ${D}${CONF_DIR}/channels/RU864
     install -m 0644 ${WORKDIR}/channels/RU864/RU_864_870_TTN.toml ${D}${CONF_DIR}/channels/RU864/RU_864_870_TTN.toml
+    set_default "RU864" "RU_864_870_TTN"
     
     install -m 0755 -d ${D}${CONF_DIR}/channels/US915
     install -m 0644 ${WORKDIR}/channels/US915/US_902_928_FSB_1.toml ${D}${CONF_DIR}/channels/US915/US_902_928_FSB_1.toml
@@ -114,7 +120,23 @@ install_channels() {
     install -m 0644 ${WORKDIR}/channels/US915/US_902_928_FSB_6.toml ${D}${CONF_DIR}/channels/US915/US_902_928_FSB_6.toml
     install -m 0644 ${WORKDIR}/channels/US915/US_902_928_FSB_7.toml ${D}${CONF_DIR}/channels/US915/US_902_928_FSB_7.toml
     install -m 0644 ${WORKDIR}/channels/US915/US_902_928_FSB_8.toml ${D}${CONF_DIR}/channels/US915/US_902_928_FSB_8.toml
+    set_default "US915" "US_902_928_FSB_1"
 }
+
+set_default() {
+    REGION=$1
+    ID=$2
+
+    TARGET_PATH="${D}${CONF_DIR}/channels/$REGION/$ID.toml"
+
+    if [ ! -f "$TARGET_PATH" ]; then
+        bberror "Default Frequency plan '$ID' defined for region '$REGION' does not exist: '$TARGET_PATH'"
+        exit 1
+    fi;
+
+    ln -snf "$ID.json" "${D}${CONF_DIR}/channels/$REGION/default"
+}
+
 
 do_install_append_sx1301() {
     install -m 0755 ${cargo_bindir}/chirpstack-concentratord-sx1301 ${D}${optdir}/chirpstack-concentratord/chirpstack-concentratord
@@ -148,10 +170,42 @@ pkg_postinst_ontarget_${PN} () {
 
         ### FREQUENCY PLAN ###
 
-        # TODO: set the active channel regarding hardware
-        # Set active channel
-        ln -snf "channels/EU868/EU_863_870.toml" "${CONF_DIR}/channels.toml"
-        echo "Frequency plan set to 'EU_863_870'"
+        # Set default channel
+        PRODUCT_TYPE=$(cat /sys/class/product/machine/product_type)
+        CHANNELS_CONFDIR=/etc/opt/chirpstack-concentratord/channels
+
+        if [ ! -f "$CHANNELS_CONFDIR/channels.toml" ]; then
+
+            cd "$CHANNELS_CONFDIR"
+            echo "Looking for concentratord channels for '$PRODUCT_TYPE' in '$CHANNELS_CONFDIR'"
+
+            # If the region provides a default channel plan, set it
+            if [ -f "$PRODUCT_TYPE/default" ]; then
+                echo "Using default channel"
+                CHANNEL_FILE_NAME=$(readlink "$PRODUCT_TYPE/default")
+                CHANNEL_FILE_PATH="$PRODUCT_TYPE/$CHANNEL_FILE_NAME"
+            else
+                # Otherwise take the first in the list
+                echo "Using first available channel in '$PRODUCT_TYPE'"
+                FILES="$PRODUCT_TYPE/*.toml"
+                for FILE in $FILES; do
+                    if [[ -f "$FILE" ]]; then
+                        CHANNEL_FILE_PATH=$FILE
+                        break
+                    fi
+                done
+            fi
+
+            if [ ! -z "$CHANNEL_FILE_PATH" ]; then
+                ln -snf "$CHANNEL_FILE_PATH" "channels_conf.toml"
+                echo "concentratord channel has been set to '$CHANNEL_FILE_PATH'"
+            else
+                echo "Could not find any channel"
+            fi
+
+        else
+            echo "concentratord channel already defined"
+        fi
     fi
 }
 

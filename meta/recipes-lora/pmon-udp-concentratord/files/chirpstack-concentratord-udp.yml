@@ -7,7 +7,7 @@ jobs:
         process:
             run-mode: exec
             program-path: /opt/chirpstack-concentratord/chirpstack-concentratord
-            program-arguments: -c /etc/opt/chirpstack-concentratord/00-concentratord.toml -c /etc/opt/chirpstack-concentratord/10-gateway.toml -c /etc/opt/chirpstack-concentratord/channels/EU868/EU_863_870.toml
+            program-arguments: -c /etc/opt/chirpstack-concentratord/00-concentratord.toml -c /etc/opt/chirpstack-concentratord/10-gateway.toml -c /etc/opt/chirpstack-concentratord/channels.toml
             delays:
                 start: 2000
                 term: 5000
