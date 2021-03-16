@@ -1,0 +1,23 @@
+# UDP Bridge configuration.
+[udp_bridge]
+
+  # Log level.
+  #
+  # Valid options are:
+  #   * TRACE
+  #   * DEBUG
+  #   * INFO
+  #   * WARN
+  #   * ERROR
+  #   * OFF
+  log_level="INFO"
+
+  # Log to syslog.
+  #
+  # When set to true, log messages are being written to syslog instead of stdout.
+  log_to_syslog=false
+
+  # Prometheus metrics bind.
+  #
+  # E.g. '0.0.0.0:9800', leave blank to disable the metrics endpoint.
+  metrics_bind="0.0.0.0:9800"
