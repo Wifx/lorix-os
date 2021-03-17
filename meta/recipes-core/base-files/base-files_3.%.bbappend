@@ -9,7 +9,11 @@ SRC_URI_FEATURE_MOTD_DYNAMIC = " \
 SRC_URI += " \
     file://motd-template \
     ${@bb.utils.contains('DISTRO_FEATURES','motd-dynamic','${SRC_URI_FEATURE_MOTD_DYNAMIC}','',d)} \
-    "
+    file://fstab \
+"
+
+dirs755_remove = "${localstatedir}/volatile/log"
+volatiles_remove = "log"
 
 def print_release_note(string, version_state, color, color_light):
 
@@ -147,6 +151,9 @@ do_install_append() {
         done
     fi
 
+    # install volatile log files (mounted to tmpfs by fstab)
+    install -d -m 0755 ${D}${localstatedir}/log-volatile
+    ln -snf log-volatile ${D}${localstatedir}/log
 
     # install skel files into root home if exists
     if [ -d ${D}${ROOT_HOME} ]; then

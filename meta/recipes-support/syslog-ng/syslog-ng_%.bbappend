@@ -1,7 +1,7 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 SRC_URI += " \
     file://syslog-ng.conf \
-    file://scl/local-file/persistant-file.conf \
+    file://scl/local-file/persistent-file.conf \
     file://scl/local-file/volatile-file.conf \
     file://rules/all.conf \
     file://rules/applicative.conf \
@@ -25,7 +25,7 @@ do_install_append() {
     # scl
     install -d ${D}/${sysconfdir}/${PN}/scl/
     install -d ${D}/${sysconfdir}/${PN}/scl/local-file/
-    install -m 755 ${WORKDIR}/scl/local-file/persistant-file.conf  ${D}/${sysconfdir}/${PN}/scl/local-file/persistant-file.conf
+    install -m 755 ${WORKDIR}/scl/local-file/persistent-file.conf  ${D}/${sysconfdir}/${PN}/scl/local-file/persistent-file.conf
     install -m 755 ${WORKDIR}/scl/local-file/volatile-file.conf    ${D}/${sysconfdir}/${PN}/scl/local-file/volatile-file.conf
 
     # rules

@@ -1,13 +1,25 @@
-/var/log/*.log
-/var/log/system/*.log
-/var/log-persistant/*.log
-/var/log-persistant/system/*.log
+/var/log-volatile/*
+/var/log-persistent/*
 {
 	missingok
 	notifempty
 	nodateext
 	maxsize 100k
 	rotate 5
+	sharedscripts
+	postrotate
+		/sbin/rc-service syslog-ng reload >/dev/null
+	endscript
+}
+
+/var/log-persistent/*/*
+/var/log-volatile/*/*
+{
+	missingok
+	notifempty
+	nodateext
+	maxsize 100k
+	rotate 3
 	sharedscripts
 	postrotate
 		/sbin/rc-service syslog-ng reload >/dev/null

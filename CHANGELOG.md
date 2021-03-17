@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-439] Reset lora-concentrator with libgpio tools
 - [LOR-444] Enable standard cron directories (hourly, daily, weekly, monthly)
 - [LOR-422] Upgrade NetworkManager to 1.28.0
-
+- [LOR-173] Restrict the size of /var/log
 ## [1.2.2] - 2021-02-18
 
 ### Changed

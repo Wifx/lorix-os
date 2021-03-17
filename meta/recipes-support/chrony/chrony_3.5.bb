@@ -102,9 +102,6 @@ do_install() {
     # Variable data (for drift and/or rtc file)
     install -d ${D}${localstatedir}/lib/chrony
 
-    # Log files
-    install -d ${D}${localstatedir}/log/chrony
-
     # Fix hard-coded paths in config files and init scripts
     sed -i -e 's!/var/!${localstatedir}/!g' -e 's!/etc/!${sysconfdir}/!g' \
            -e 's!/usr/sbin/!${sbindir}/!g' -e 's!/usr/bin/!${bindir}/!g' \
