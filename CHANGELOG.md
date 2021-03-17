@@ -9,14 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- The BasicStation now does a lora concentrator reset upon startup
+- [LOR-445] Add LoRa concentrator reset script to the BasicStation configuration
 - [LOR-426] Update the GPIO control system (add libgpio tools)
 
 ### Changes
 
 - [LOR-389] Rename OpenRC service "reset-lgw" to "lora-concentrator"
 - [LOR-439] Reset lora-concentrator with libgpio tools
-- Enable standard cron directories (hourly, daily, weekly, monthly)
+- [LOR-444] Enable standard cron directories (hourly, daily, weekly, monthly)
+- [LOR-422] Upgrade NetworkManager to 1.28.0
 
 ## [1.2.2] - 2021-02-18
 
