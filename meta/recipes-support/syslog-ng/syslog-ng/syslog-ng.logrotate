@@ -1,5 +1,5 @@
-/var/log-volatile/*
-/var/log-persistent/*
+/var/log-volatile/*.log
+/var/log-persistent/*.log
 {
 	missingok
 	notifempty
@@ -12,8 +12,9 @@
 	endscript
 }
 
-/var/log-persistent/*/*
-/var/log-volatile/*/*
+/var/log-volatile/dmesg
+/var/log-volatile/*/*.log
+/var/log-persistent/*/*.log
 {
 	missingok
 	notifempty
