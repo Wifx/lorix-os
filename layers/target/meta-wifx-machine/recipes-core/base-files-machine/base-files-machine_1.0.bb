@@ -12,6 +12,7 @@ SRC_URI = " \
     file://.machine-functions \
     file://machine-functions \
     file://20-spi.rules \
+    file://10-sd-card-automount.rules \
 "
 
 PR = "r0"
@@ -35,6 +36,9 @@ do_install () {
     # Install SPI fix udev rule
     install -m 755 -d ${D}${sysconfdir}/udev/rules.d
     install -m 644 ${WORKDIR}/20-spi.rules ${D}${sysconfdir}/udev/rules.d/20-spi.rules
+
+    # Install SD automount rule
+    install -m 644 ${WORKDIR}/10-sd-card-automount.rules ${D}${sysconfdir}/udev/rules.d/10-sd-card-automount.rules
 }
 
 pkg_postinst_ontarget_lorix_one () {
