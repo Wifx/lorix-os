@@ -12,13 +12,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-445] Add LoRa concentrator reset script to the BasicStation configuration
 - [LOR-426] Update the GPIO control system (add libgpio tools)
 
-### Changes
+### Changed
 
 - [LOR-389] Rename OpenRC service "reset-lgw" to "lora-concentrator"
 - [LOR-439] Reset lora-concentrator with libgpio tools
 - [LOR-444] Enable standard cron directories (hourly, daily, weekly, monthly)
 - [LOR-422] Upgrade NetworkManager to 1.28.0
 - [LOR-173] Restrict the size of /var/log
+- [LOR-449] Upgrade pmonitor to v0.8 
+
+### Fixed
+
+
+
 ## [1.2.2] - 2021-02-18
 
 ### Changed
