@@ -2,14 +2,6 @@
 # You can change the configuration in this file or add a new file with a partial configuration.
 # All configuration files must respect the TOML syntax.
 
-[plugins]
-
-  # When set to true, the manager will load the plugins
-  #enabled = true
-
-  # Path where the plugins are available
-  #path = "plugins"
-
 # Configure how the system is updated by the manager
 [update]
 
@@ -64,6 +56,31 @@
 
     # The expiration time of the token refresh possibility. External applications accessing the API will have to log in again after expiration.
     #tokenRefreshExpirationPeriod = "2h"
+  
+  # nats
+  [api.nats]
+    # The nats server provides connectivity for the Manager UI and Wifx Connect
+    #enabled = true
+
+    # Interfaces the nats server will listen to. Standard connections are reverse-proxyed through the HTTP ports.
+    #interface = "127.0.0.1"
+
+    # Port the nats server will listen to.
+    #port = 4222
+
+    [api.nats.gui]
+      # Enables the nats Websocket connection. Enables nats server reverse proxy on /nats.
+      #enabled = true
+
+      # Internal port used by the nats Websocket connection
+      #port = 4223
+
+    [api.nats.monitor]
+      # Enables the nats monitoring endpoint on /nats/monitor
+      #enabled = false
+
+      # Internal port used by the nats monitoring endpoint
+      #port = 8222
 
 # The manager has a web GUI
 [gui]
