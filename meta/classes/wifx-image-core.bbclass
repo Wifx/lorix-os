@@ -11,7 +11,6 @@ IMAGE_FEATURES += " package-management"
 IMAGE_INSTALL = " \
     ${CORE_IMAGE_EXTRA_INSTALL} \
     packagegroup-os \
-    cryptodev-module \
 "
 
 PACKAGE_EXCLUDE += " \
