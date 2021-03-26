@@ -4,6 +4,9 @@ HOMEPAGE = "https://mender.io"
 RDEPENDS_${PN}_append_mender-growfs-data_mender-systemd = " parted util-linux-fdisk"
 RPROVIDES_${PN} += "virtual/updater"
 
+FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
+SRC_URI_append = " file://artifact-verify-key.pem"
+
 def cert_location_if_server_crt_in(src_uri, d):
     for src in src_uri.split():
         if src.endswith("/server.crt"):
