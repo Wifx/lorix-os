@@ -3,27 +3,43 @@ HOMEPAGE = "https://www.chirpstack.io/"
 PRIORITY = "optional"
 
 LICENSE = "MIT"
-LIC_FILES_CHKSUM = "file://src/${GO_IMPORT}/LICENSE;md5=99e425257f8a67b7efd81dc0009ed8ff"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=99e425257f8a67b7efd81dc0009ed8ff"
 
 SRCTAG = "v${PV}"
 SRC_URI += " \
     git://github.com/brocaar/chirpstack-gateway-bridge.git;protocol=git;tag=${SRCTAG} \
 "
 
-inherit go-mod
+inherit goarch
 
 S = "${WORKDIR}/git"
 
-GO_IMPORT = "github.com/brocaar/chirpstack-gateway-bridge"
+DEPENDS = "go-native"
 
-BIN_DIR = "${optdir}/chirpstack-gateway-bridge"
+# Make sure that make runs one job at a time.
+PARALLEL_MAKE = ""
 
-GO_EXTRA_LDFLAGS = "-X main.version=${PV}"
+export GOOS = "${TARGET_GOOS}"
+export GOARCH = "${TARGET_GOARCH}"
+export GOARM = "${TARGET_GOARM}"
+export GOCACHE = "${WORKDIR}/go/cache"
+export HOME = "${WORKDIR}"
 
-do_install() {
-    install -d ${D}${BIN_DIR}
-    install -m 0755 "${B}/${GO_BUILD_BINDIR}/chirpstack-gateway-bridge" ${D}${BIN_DIR}/
+do_configure[noexec] = "1"
+
+do_compile() {
+    oe_runmake
+
+    # Clear the modcache. go mod sets the permissions such that yocto will
+    # raise permission errors when cleaning up the directory.
+    go clean -modcache
 }
 
-FILES_${PN} += "${BIN_DIR}"
-FILES_${PN}-dbg += "${BIN_DIR}/.debug"
+do_install() {
+    install -d ${D}${optdir}/chirpstack-gateway-bridge
+    install -m 0755 "${S}/build/chirpstack-gateway-bridge" ${D}${optdir}/chirpstack-gateway-bridge
+}
+
+INSANE_SKIP_${PN} = "already-stripped"
+
+FILES_${PN} += "${optdir}"
