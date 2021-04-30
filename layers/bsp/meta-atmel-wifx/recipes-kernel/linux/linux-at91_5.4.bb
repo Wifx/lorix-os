@@ -15,6 +15,7 @@ KBRANCH = "linux-5.4-at91"
 
 
 SRC_URI += " \
+    file://kernel-features/debug/debug.scc;type=kmeta;destsuffix=kernel-meta \
     file://kernel-features/netfilter/netfilter.scc;type=kmeta;destsuffix=kernel-meta \
     file://kernel-features/netfilter/netfilter6.scc;type=kmeta;destsuffix=kernel-meta \
     file://kernel-features/nf_tables/nf_tables.scc;type=kmeta;destsuffix=kernel-meta \
@@ -23,6 +24,7 @@ SRC_URI += " \
 "
 
 KERNEL_EXTRA_FEATURES ?= " \
+    ${@bb.utils.contains('EXTRA_IMAGE_FEATURES', 'debug-tweaks', 'kernel-features/debug/debug.scc', '', d)} \
     kernel-features/netfilter/netfilter.scc \
     ${@bb.utils.contains('DISTRO_FEATURES', 'ipv6', 'kernel-features/netfilter/netfilter6.scc', '', d)} \
     kernel-features/nf_tables/nf_tables.scc \
