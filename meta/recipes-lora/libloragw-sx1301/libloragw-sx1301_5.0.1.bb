@@ -65,6 +65,8 @@ do_install() {
 
 PACKAGES += "${PN}-utils ${PN}-tests"
 
+PACKAGE_ARCH = "${MACHINE_ARCH}"
+
 FILES_${PN}-utils = "${DIR_UTILS}"
 FILES_${PN}-tests = "${DIR_TESTS}"
 
