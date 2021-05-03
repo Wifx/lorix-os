@@ -19,4 +19,5 @@ PACKAGE_EXCLUDE += " \
 
 BAD_RECOMMENDATIONS = " \
     shared-mime-info \
+    cryptodev-module \
 "
