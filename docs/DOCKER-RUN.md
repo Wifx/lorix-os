@@ -39,7 +39,7 @@ $ docker rm lorix-os-bs
 
 ## Persistent cache
 
-If you want to make the cache persistent when the container is removed or when you run a new container, bind the cache folder to a names volume:
+If you want to make the cache persistent when the container is removed or when you run a new container, bind the cache folder to a named volume:
 ```shell
 $ docker run -it --name lorix-os-bs -v ~/lorix-os:/home/yocto/lorix-os -v lorix-os-yocto-cache:/yocto wifx/yocto:ubuntu-20.04
 ```
