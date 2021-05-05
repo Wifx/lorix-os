@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-422] Upgrade NetworkManager to 1.28.0
 - [LOR-173] Restrict the size of /var/log
 - [LOR-449] Upgrade pmonitor to v0.8 
+- [LOR-450] Update ChirpStack Gateway Bridge to 3.10.0 
 
 ### Fixed
 
