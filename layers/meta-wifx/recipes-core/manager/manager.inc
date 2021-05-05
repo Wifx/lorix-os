@@ -3,7 +3,7 @@ DESCRIPTION = "Provides the LORIX Manager daemon and REST API"
 AUTHOR = "Wifx Sàrl"
 
 LICENSE = "Proprietary"
-LIC_FILES_CHKSUM = "file://src/${GO_IMPORT}/LICENSE;md5=42af54d0b96581c4b8085315e05da454"
+LIC_FILES_CHKSUM = "file://src/${GO_IMPORT}/LICENSE;md5=ffdb0a8bda31b45fc5b72d3774d715e2"
 #LIC_FILES_CHKSUM = "file://LICENSE;md5=42af54d0b96581c4b8085315e05da454"
 
 RDEPENDS_${PN} += "openssl-bin dbus glibc"
