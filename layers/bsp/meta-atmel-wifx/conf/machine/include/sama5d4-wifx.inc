@@ -41,7 +41,7 @@ SERIAL_CONSOLES = "115200;ttyS0 115200;ttyGS0"
 SYSVINIT_ENABLED_GETTYS = ""
 USE_VT = "0"
 
-MACHINE_FEATURES += "rtc usbgadget usbhost lora"
+MACHINE_FEATURES += "rtc usbgadget usbhost"
 MACHINE_EXTRA_RRECOMMENDS += "mtd-utils mtd-utils-ubifs"
 
 # Packages required ideally at boot (as rrecommend and not rdepends to avoid build error on kernel version change)
