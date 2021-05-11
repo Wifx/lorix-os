@@ -1,8 +1,10 @@
 FROM ubuntu:20.04
 
+MAINTAINER Wifx "support@iot.wifx.net"
+
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get update && apt-get -y upgrade
+RUN apt-get update
 
 # Required Packages for the Host Development System
 # http://www.yoctoproject.org/docs/latest/mega-manual/mega-manual.html#required-packages-for-the-host-development-system
