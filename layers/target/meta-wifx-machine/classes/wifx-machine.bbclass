@@ -11,5 +11,5 @@ python() {
 
     # Add lora as MACHINE_FEATURES
     if d.getVar('LORA_CONCENTRATOR', True):
-        d.setVar('MACHINE_FEATURES_append', ':%s' % 'lora')
+        d.setVar('MACHINE_FEATURES_append', ' lora')
 }
