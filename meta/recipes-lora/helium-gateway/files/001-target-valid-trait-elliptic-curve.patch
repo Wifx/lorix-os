@@ -1,0 +1,33 @@
+diff --git a/Cargo.lock b/Cargo.lock
+index d3f07c6..e093e75 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -385,7 +385,7 @@ checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
+ [[package]]
+ name = "elliptic-curve"
+ version = "0.9.6"
+-source = "git+https://github.com/helium/traits.git?branch=rg/compact#c6cef06097aa9f8dbf608ffb96f95d6497622f86"
++source = "git+https://github.com/helium/traits.git?branch=rg/compact#b96df693572a6834feaa86e1a0b27b25ba960017"
+ dependencies = [
+  "ff",
+  "funty",
+@@ -646,7 +646,7 @@ dependencies = [
+ [[package]]
+ name = "helium-proto"
+ version = "0.1.0"
+-source = "git+https://github.com/helium/proto?branch=master#85a5d31353446c8a60880798466a7f45a2aa4d5f"
++source = "git+https://github.com/helium/proto?branch=master#dd6f9caa0d87b8d11056431891151690a7b1d031"
+ dependencies = [
+  "bytes",
+  "prost",
+@@ -956,8 +956,8 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
+ 
+ [[package]]
+ name = "p256"
+-version = "0.8.0-pre"
+-source = "git+https://github.com/helium/elliptic-curves?branch=rg/compact#0228308e80b24c08176b7010ad6dbba7ca30b215"
++version = "0.8.0"
++source = "git+https://github.com/helium/elliptic-curves?branch=rg/compact#a67c5c0f95bfa34b300aaba32444ea8b3fca980d"
+ dependencies = [
+  "ecdsa",
+  "elliptic-curve",
