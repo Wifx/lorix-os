@@ -6,7 +6,6 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=1c3a461cb3bfa8dedcbf13b9e8a6335a"
 SRC_URI += "\
     file://default.toml \
     file://000-remove-cargo-strip.patch \
-    file://001-target-valid-trait-elliptic-curve.patch \
 "
 
 inherit cargo
