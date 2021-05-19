@@ -20,6 +20,7 @@ SRC_URI += " \
 GO_IMPORT = "git.wifx.net/lorix/manager"
 
 S = "${WORKDIR}/git"
+B = "${WORKDIR}/build"
 
 inherit unpack-online-assets
 
