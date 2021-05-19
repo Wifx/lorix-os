@@ -15,6 +15,7 @@ SRC_URI += " \
 GO_IMPORT = "git.wifx.net/pmonitor/pmcli"
 
 S = "${WORKDIR}/git"
+B = "${WORKDIR}/build"
 
 inherit unpack-online-assets
 
