@@ -15,12 +15,19 @@ KBRANCH = "linux-5.4-at91"
 
 
 SRC_URI += " \
+    file://defconfig \
     file://kernel-features/debug/debug.scc;type=kmeta;destsuffix=kernel-meta \
+    file://kernel-features/debug/debug.cfg \
     file://kernel-features/netfilter/netfilter.scc;type=kmeta;destsuffix=kernel-meta \
+    file://kernel-features/netfilter/netfilter.cfg \
     file://kernel-features/netfilter/netfilter6.scc;type=kmeta;destsuffix=kernel-meta \
+    file://kernel-features/netfilter/netfilter6.cfg \
     file://kernel-features/nf_tables/nf_tables.scc;type=kmeta;destsuffix=kernel-meta \
+    file://kernel-features/nf_tables/nf_tables.cfg \
     file://kernel-features/nf_tables/nf_tables6.scc;type=kmeta;destsuffix=kernel-meta \
+    file://kernel-features/nf_tables/nf_tables6.cfg \
     file://kernel-features/wireguard/wireguard.scc;type=kmeta;destsuffix=kernel-meta \
+    file://kernel-features/wireguard/wireguard.cfg \
 "
 
 KERNEL_EXTRA_FEATURES ?= " \
