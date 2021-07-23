@@ -30,6 +30,7 @@ DEPENDS += " \
 
 DEPENDS_append_sx1301 = " libloragw-sx1301"
 DEPENDS_append_sx1302 = " libloragw-sx1302"
+RDEPENDS_${PN} += "machine-detect"
 
 inherit cargo
 
@@ -171,23 +172,23 @@ pkg_postinst_ontarget_${PN} () {
         ### FREQUENCY PLAN ###
 
         # Set default channel
-        PRODUCT_TYPE=$(cat /sys/class/product/machine/product_type)
+        source /etc/os/.machine-detect && machine_detect
         CHANNELS_CONFDIR=/etc/opt/chirpstack-concentratord/channels
 
         if [ ! -f "$CHANNELS_CONFDIR/channels.toml" ]; then
 
             cd "$CHANNELS_CONFDIR"
-            echo "Looking for concentratord channels for '$PRODUCT_TYPE' in '$CHANNELS_CONFDIR'"
+            echo "Looking for concentratord channels for '$MACHINE_TYPE' in '$CHANNELS_CONFDIR'"
 
             # If the region provides a default channel plan, set it
-            if [ -f "$PRODUCT_TYPE/default" ]; then
+            if [ -f "$MACHINE_TYPE/default" ]; then
                 echo "Using default channel"
-                CHANNEL_FILE_NAME=$(readlink "$PRODUCT_TYPE/default")
-                CHANNEL_FILE_PATH="$PRODUCT_TYPE/$CHANNEL_FILE_NAME"
+                CHANNEL_FILE_NAME=$(readlink "$MACHINE_TYPE/default")
+                CHANNEL_FILE_PATH="$MACHINE_TYPE/$CHANNEL_FILE_NAME"
             else
                 # Otherwise take the first in the list
-                echo "Using first available channel in '$PRODUCT_TYPE'"
-                FILES="$PRODUCT_TYPE/*.toml"
+                echo "Using first available channel in '$MACHINE_TYPE'"
+                FILES="$MACHINE_TYPE/*.toml"
                 for FILE in $FILES; do
                     if [[ -f "$FILE" ]]; then
                         CHANNEL_FILE_PATH=$FILE
