@@ -21,4 +21,4 @@
   # Antenna gain (dB).
   antenna_gain=0
   
-  model="wifx_lorix_one_863_870"
+  model="wifx_l1_863_870"

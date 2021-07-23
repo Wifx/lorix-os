@@ -6,4 +6,4 @@
 # frequency and TX gain table.
 
 [gateway]
-  model="wifx_l1_863_870"
+  model="wifx_lorix_one_863_870"
