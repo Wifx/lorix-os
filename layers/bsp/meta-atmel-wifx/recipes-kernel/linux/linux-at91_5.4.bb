@@ -4,15 +4,17 @@ include linux-at91-common.inc
 LIC_FILES_CHKSUM = "file://COPYING;md5=bbea815ee2795b2f4230826c0c6b8814"
 
 LINUX_VERSION ?= "5.4.41"
+#LINUX_VERSION ?= "5.4.104"
 LINUX_VERSION_EXTENSION = "-wifx"
 
 PR = "r0"
 
 S = "${WORKDIR}/git"
 
-SRCREV = "88ed8f08fe15108f28ba04ff135f93f0fa498416"
+SRCREV = "4eedead4a4e1bb708d5b1629a9749d46a878406e"
 KBRANCH = "linux-5.4-at91"
-
+#SRCREV = "ddc86f7db87cc248e6126c6aeb085382c8770964"
+#KBRANCH = "linux-5.4-at91-next-5.4.104"
 
 SRC_URI += " \
     file://defconfig \
@@ -28,6 +30,15 @@ SRC_URI += " \
     file://kernel-features/nf_tables/nf_tables6.cfg \
     file://kernel-features/wireguard/wireguard.scc;type=kmeta;destsuffix=kernel-meta \
     file://kernel-features/wireguard/wireguard.cfg \
+    file://0001-Add-original-support-for-the-Wifx-L1-gateway.patch \
+"
+
+SRC_URI_append_lorix = " \
+    file://lorix.cfg \
+"
+
+SRC_URI_append_l1 = " \
+    file://l1.cfg \
 "
 
 KERNEL_EXTRA_FEATURES ?= " \
