@@ -1,0 +1,27 @@
+From 2ab0c4583eb9e099c6f01923412b2644e11cad00 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Thu, 17 Dec 2020 14:03:03 +0100
+Subject: [PATCH] Restore default SPI path to keep tests and utils working.
+
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
+---
+ libloragw/src/loragw_spi.native.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/libloragw/src/loragw_spi.native.c b/libloragw/src/loragw_spi.native.c
+index 7af36c8..d4c4314 100644
+--- a/libloragw/src/loragw_spi.native.c
++++ b/libloragw/src/loragw_spi.native.c
+@@ -54,7 +54,8 @@ Maintainer: Sylvain Miermont
+ #define READ_ACCESS     0x00
+ #define WRITE_ACCESS    0x80
+ #define SPI_SPEED       8000000
+-char spi_dev_path[50];
++// default SPI path
++char spi_dev_path[50] = "/dev/spidev0.0";
+ 
+ /* -------------------------------------------------------------------------- */
+ /* --- PUBLIC FUNCTIONS DEFINITION ------------------------------------------ */
+-- 
+2.25.1
+
