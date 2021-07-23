@@ -17,6 +17,8 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=8e55ec883d6ec0b7e92fc81cd5069e9a"
 
 inherit mender-state-scripts
 
+RDEPENDS_${PN} += "machine-detect"
+
 do_compile() {
 
     ### Pre-migrations ##

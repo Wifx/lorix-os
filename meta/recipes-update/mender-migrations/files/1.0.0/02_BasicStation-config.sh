@@ -56,14 +56,13 @@ log $PREFIX "Migrating..."
 # The migration steps will depend on the type of migration. Prefer post-migration.
 # - Pre-migration : copy files from $S_ETC to $D_ETC, edit them but not rename them
 # - Post-migration : add, edit or remove files in $D_ETC
-
-PRODUCT_TYPE=`cat /sys/class/product/machine/product_type`
-if [[ "$PRODUCT_TYPE" == "EU868" ]]; then
+source /etc/os/.machine-detect && machine_detect
+if [[ "$MACHINE_TYPE" == "EU868" ]]; then
     HARDWARE="863-870"
-elif  [[ "$PRODUCT_TYPE" == "US915" || "$PRODUCT_TYPE" == "AU915" ]]; then
+elif  [[ "$MACHINE_TYPE" == "US915" || "$MACHINE_TYPE" == "AU915" ]]; then
     HARDWARE="902-928"
 else
-    log $PREFIX "Unknown product type '$PRODUCT_TYPE', skipping migration"
+    log $PREFIX "Unknown product type '$MACHINE_TYPE', skipping migration"
     exit 0
 fi
 log $PREFIX "Detected hardware: '$HARDWARE'"

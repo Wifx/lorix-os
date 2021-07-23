@@ -19,7 +19,7 @@ PREFERRED_PROVIDER_u-boot-mkenvimage-native = "u-boot-mkenvimage-native"
 PREFERRED_VERSION_linux-at91_sama5d4-wifx ?= "5.4%"
 
 # Linux kernel specific variables
-KERNEL_DEVICETREE = "${MACHINE}.dtb"
+KERNEL_DEVICETREE ?= "${MACHINE}.dtb"
 KERNEL_IMAGETYPE = "zImage"
 
 # U-Boot bootloader specific variables

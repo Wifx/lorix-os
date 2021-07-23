@@ -5,7 +5,7 @@ AUTHOR = "Wifx Sàrl <support@iot.wifx.net>"
 LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=8aebde4f3f92d0e71e58871d97d7420f"
 
-RDEPENDS_${PN} += "libcrypto"
+RDEPENDS_${PN} += "libcrypto machine-detect"
 RPROVIDES_${PN} += "virtual/udp-packet-forwarder"
 
 SRC_URI += " \
@@ -110,23 +110,23 @@ pkg_postinst_ontarget_${PN} () {
         done
 
         # Set default channel
-        PRODUCT_TYPE=$(cat /sys/class/product/machine/product_type)
+        source /etc/os/.machine-detect && machine_detect
         CHANNELS_CONFDIR=/etc/opt/udp-packet-forwarder/channels
 
         if [ ! -f "$CHANNELS_CONFDIR/channels_conf.json" ]; then
 
             cd "$CHANNELS_CONFDIR"
-            echo "Looking for UDP Packet Forwarder channels for '$PRODUCT_TYPE' in '$CHANNELS_CONFDIR'"
+            echo "Looking for UDP Packet Forwarder channels for '$MACHINE_TYPE' in '$CHANNELS_CONFDIR'"
 
             # If the region provides a default channel plan, set it
-            if [ -f "$PRODUCT_TYPE/default" ]; then
+            if [ -f "$MACHINE_TYPE/default" ]; then
                 echo "Using default channel"
-                CHANNEL_FILE_NAME=$(readlink "$PRODUCT_TYPE/default")
-                CHANNEL_FILE_PATH="$PRODUCT_TYPE/$CHANNEL_FILE_NAME"
+                CHANNEL_FILE_NAME=$(readlink "$MACHINE_TYPE/default")
+                CHANNEL_FILE_PATH="$MACHINE_TYPE/$CHANNEL_FILE_NAME"
             else
                 # Otherwise take the first in the list
-                echo "Using first available channel in '$PRODUCT_TYPE'"
-                FILES="$PRODUCT_TYPE/*.json"
+                echo "Using first available channel in '$MACHINE_TYPE'"
+                FILES="$MACHINE_TYPE/*.json"
                 for FILE in $FILES; do
                     if [[ -f "$FILE" ]]; then
                         CHANNEL_FILE_PATH=$FILE

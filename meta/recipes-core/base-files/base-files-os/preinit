@@ -156,14 +156,19 @@ preinit_manage_reset() {
         echo "Factory reset detection is impossible, abort"
         return 1
     fi
-    source /etc/os/.machine-detect
 
     # Launch machine detection
-    machine_detect
+    source /etc/os/.machine-detect && machine_detect
     if [ $? -ne 0 ]; then
         echo "Error during machine detection, abort"
         return 1
     fi
+    echo "WIFX Machine detected"
+    echo "======================="
+    echo " Name: "$MACHINE_NAME
+    echo " Type: "$MACHINE_TYPE
+    echo "   Fw: "$MACHINE_FW_VER
+    echo "   Hw: "$MACHINE_HW_VER
 
     # Test if we need to factory reset cause of reset button
     machine_needs_factory_reset
