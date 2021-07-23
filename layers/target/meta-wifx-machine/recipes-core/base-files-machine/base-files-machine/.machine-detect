@@ -7,7 +7,9 @@ PATH="/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin"
 SYSFS_MACHINE_PATH="/sys/class/product/machine/"
 MACHINE_BOOT_STATE_PATH=$SYSFS_MACHINE_PATH"boot_state"
 MACHINE_NAME_PATH=$SYSFS_MACHINE_PATH"product_name"
+MACHINE_NAME_ALT_PATH=$SYSFS_MACHINE_PATH"model"
 MACHINE_TYPE_PATH=$SYSFS_MACHINE_PATH"product_type"
+MACHINE_TYPE_ALT_PATH=$SYSFS_MACHINE_PATH"type"
 MACHINE_FW_VER_PATH=$SYSFS_MACHINE_PATH"fw_version"
 MACHINE_HW_VER_PATH=$SYSFS_MACHINE_PATH"hw_version"
 
@@ -19,8 +21,13 @@ machine_detect() {
 
     # Retrieve the various values
     export MACHINE_BOOT_STATE=$(cat $MACHINE_BOOT_STATE_PATH)
-    export MACHINE_NAME=$(cat $MACHINE_NAME_PATH)
-    export MACHINE_TYPE=$(cat $MACHINE_TYPE_PATH)
+    if [ -e $MACHINE_NAME_PATH ]; then
+        export MACHINE_NAME=$(cat $MACHINE_NAME_PATH)
+        export MACHINE_TYPE=$(cat $MACHINE_TYPE_PATH)
+    else
+        export MACHINE_NAME=$(cat $MACHINE_NAME_ALT_PATH)
+        export MACHINE_TYPE=$(cat $MACHINE_TYPE_ALT_PATH)
+    fi
     export MACHINE_FW_VER=$(cat $MACHINE_FW_VER_PATH)
     export MACHINE_HW_VER=$(cat $MACHINE_HW_VER_PATH)
     export MACHINE_DETECTED="true"

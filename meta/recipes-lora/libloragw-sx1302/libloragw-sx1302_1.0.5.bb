@@ -10,6 +10,11 @@ SRC_URI = "\
     file://library.cfg \
 "
 
+# Should probably be a RDEPENDS_${PN}-utils|tests on libloragw-sx1302-machine 
+# located in target/meta-wifx-machine but it's clean enough since it's only for
+# testing and debug purpose
+SRC_URI_append_l1 += "file://l1/reset_lgw.sh"
+
 S = "${WORKDIR}/git"
 
 # Use clang as we will be linking against this library using Rust. With the
@@ -39,6 +44,10 @@ do_install() {
     install -m 0755 -d                         ${D}${includedir}/libloragw-sx1302
     install -m 0644 ${S}/libloragw/inc/*       ${D}${includedir}/libloragw-sx1302
 
+    # essential tools
+    install -m 0644 ${S}/libtools/*.a           ${D}${libdir}
+    install -m 0644 ${S}/libtools/inc/*         ${D}${includedir}
+    
     # Install utils
     install -d ${D}/${DIR_UTILS}
     install -m 0755 util_chip_id/chip_id                        ${D}/${DIR_UTILS}
@@ -51,7 +60,14 @@ do_install() {
     install -m 0755 libloragw/test_*                            ${D}/${DIR_TESTS}
 }
 
+do_install_append_l1() {
+    install -m 0755 ${WORKDIR}/l1/reset_lgw.sh    ${D}/${DIR_UTILS}
+    install -m 0755 ${WORKDIR}/l1/reset_lgw.sh    ${D}/${DIR_TESTS}
+}
+
 PACKAGES += "${PN}-utils ${PN}-tests"
+
+PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 FILES_${PN}-utils = "${DIR_UTILS}"
 FILES_${PN}-tests = "${DIR_TESTS}"

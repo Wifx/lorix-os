@@ -5,3 +5,7 @@ MACHINE_EXTRA_RDEPENDS += " \
     mtd-utils \
     mtd-utils-ubifs \
 "
+
+MACHINE_EXTRA_RDEPENDS_l1 += " \
+    led-serial \
+"

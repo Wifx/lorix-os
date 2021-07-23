@@ -36,8 +36,9 @@ CONNECTIVITY_PACKAGES = " \
     ${NETWORK_MANAGER_PACKAGES} \
     dnsmasq \
     openvpn \
-    openssh \    
+    openssh \
     ${@bb.utils.contains('DISTRO_FEATURES','wireguard','wireguard-tools wireguard-module','', d)} \
+    ${@bb.utils.contains('MACHINE_FEATURES','gnss','gpsd gpsd-udev gpsd-conf gpsd-gpsctl gps-utils','',d)} \
 "
 
 RDEPENDS_${PN} = " \
