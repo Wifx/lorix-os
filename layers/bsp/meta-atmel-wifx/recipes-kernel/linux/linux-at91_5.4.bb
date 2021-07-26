@@ -3,18 +3,18 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/${P}:"
 include linux-at91-common.inc
 LIC_FILES_CHKSUM = "file://COPYING;md5=bbea815ee2795b2f4230826c0c6b8814"
 
-LINUX_VERSION ?= "5.4.41"
-#LINUX_VERSION ?= "5.4.104"
+#LINUX_VERSION ?= "5.4.41"
+LINUX_VERSION ?= "5.4.104"
 LINUX_VERSION_EXTENSION = "-wifx"
 
 PR = "r0"
 
 S = "${WORKDIR}/git"
 
-SRCREV = "4eedead4a4e1bb708d5b1629a9749d46a878406e"
-KBRANCH = "linux-5.4-at91"
-#SRCREV = "ddc86f7db87cc248e6126c6aeb085382c8770964"
-#KBRANCH = "linux-5.4-at91-next-5.4.104"
+#SRCREV = "4eedead4a4e1bb708d5b1629a9749d46a878406e"
+#KBRANCH = "linux-5.4-at91"
+SRCREV = "ddc86f7db87cc248e6126c6aeb085382c8770964"
+KBRANCH = "linux-5.4.104-at91"
 
 SRC_URI += " \
     file://defconfig \
