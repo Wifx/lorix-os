@@ -1,4 +1,4 @@
-From c4acf2dd7888289308274564519360c1578d71cd Mon Sep 17 00:00:00 2001
+From fa754b630d81e4174b5d2ab7b3ec0f9350fd6fbe Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
 Date: Thu, 22 Jul 2021 13:36:20 +0200
 Subject: [PATCH] Add original support for the Wifx L1 gateway
@@ -48,7 +48,7 @@ index 57a9300a2de8..8a50b2a25e9e 100644
  dtb-$(CONFIG_ARCH_ATLAS7) += \
 diff --git a/arch/arm/boot/dts/l1.dts b/arch/arm/boot/dts/l1.dts
 new file mode 100644
-index 000000000000..0188b7d46ad7
+index 000000000000..fe0852a0c392
 --- /dev/null
 +++ b/arch/arm/boot/dts/l1.dts
 @@ -0,0 +1,426 @@
@@ -339,7 +339,7 @@ index 000000000000..0188b7d46ad7
 +						atmel,pins = <AT91_PIOE 27 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
 +					};
 +					pinctrl_mcu_cpu_state: mcu_cpu_state {
-+						atmel,pins = <AT91_PIOA 19 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
++						atmel,pins = <AT91_PIOA 19 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(1))>;
 +					};
 +					pinctrl_macb0_phy_irq: macb0_phy_irq_0 {
 +						atmel,pins = <AT91_PIOA 4 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
