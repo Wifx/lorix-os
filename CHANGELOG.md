@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.3.2] - Unreleased
 
--  [LOR-463] Update syslog-ng to 3.33.2 
+- [LOR-463] Update syslog-ng to 3.33.2 
+- [LOR-464] Limit syslog maximal buffer size
 
 ## [1.3.1] - 2021-07-14
 
