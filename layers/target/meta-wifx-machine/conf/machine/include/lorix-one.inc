@@ -8,3 +8,5 @@ require conf/machine/include/sama5d4-wifx.inc
 MACHINEOVERRIDES =. "lorix-one:"
 
 MACHINE_FEATURES_OVERRIDES += "sx1301"
+
+MACHINE_PRETTY_NAME = "LORIX One"
