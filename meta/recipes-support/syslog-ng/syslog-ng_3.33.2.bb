@@ -4,7 +4,6 @@ require syslog-ng.inc
 #
 SRC_URI += " \
            file://syslog-ng.service-the-syslog-ng-service.patch \
-           file://0001-syslog-ng-fix-segment-fault-during-service-start.patch \
            file://syslog-ng-tmp.conf \
            "
 

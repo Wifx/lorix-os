@@ -22,7 +22,6 @@ SRC_URI = "https://github.com/balabit/syslog-ng/releases/download/${BP}/${BP}.ta
            file://syslog-ng.conf.sysvinit \
            file://initscript \
            file://volatiles.03_syslog-ng \
-           file://configure.ac-add-option-enable-thread-tls-to-manage-.patch \
 "
 
 UPSTREAM_CHECK_URI = "https://github.com/balabit/syslog-ng/releases"
