@@ -10,12 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [LOR-473] Add sftp support (fix sshd sftp configuration)
+
 ### Changed
 
 - [LOR-461] Update ChirpStack Gateway Bridge to v3.12
 - [LOR-469] Upgrade go compiler to v1.16
 - [LOR-470] Upgrade nodejs-native to v12
 - [LOR-471] Update mender-artifact to 3.5.2
+- [LOR-472] Upgrade manager to 0.12
+
 ## [1.3.3] - Unreleased
 
 ### Changed
