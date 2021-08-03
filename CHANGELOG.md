@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-469] Upgrade go compiler to v1.16
 - [LOR-470] Upgrade nodejs-native to v12
 - [LOR-471] Update mender-artifact to 3.5.2
+## [1.3.3] - Unreleased
+
+### Changed
+
+- [LOR-474] Restore FSB2 as default frequency plan for US region
 
 ## [1.3.2] - 2021-07-29
 
