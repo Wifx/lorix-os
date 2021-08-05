@@ -1,4 +1,4 @@
-From 850db9f8b64fdddc79e96675092785f79ccb7337 Mon Sep 17 00:00:00 2001
+From 9b73ce1bdc34b402a97aa052e86089707e3a0b62 Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
 Date: Fri, 23 Jul 2021 08:51:49 +0200
 Subject: [PATCH 3/3] Add Wifx L1 support
@@ -13,13 +13,13 @@ Subject: [PATCH 3/3] Add Wifx L1 support
  contrib/board/wifx/l1/board.mk              |    2 +
  contrib/board/wifx/l1/l1.c                  |  598 ++++++++++
  contrib/board/wifx/l1/l1.h                  |   97 ++
- contrib/board/wifx/l1/l1_nf_uboot_defconfig |   11 +
- contrib/board/wifx/l1/l1_sd_uboot_defconfig |    9 +
+ contrib/board/wifx/l1/l1_nf_uboot_defconfig |    8 +
+ contrib/board/wifx/l1/l1_sd_uboot_defconfig |    7 +
  contrib/include/contrib_board.h             |    4 +
  driver/board_hw_info.c                      | 1112 +++++++++----------
  include/board_hw_info.h                     |   71 +-
  scripts/addpmecchead.py                     |    2 +
- 15 files changed, 1318 insertions(+), 612 deletions(-)
+ 15 files changed, 1313 insertions(+), 612 deletions(-)
  create mode 100644 contrib/board/wifx/l1/Config.in.board
  create mode 100644 contrib/board/wifx/l1/Config.in.boardname
  create mode 100644 contrib/board/wifx/l1/Config.in.linux_arg
@@ -812,12 +812,11 @@ index 0000000..1d28c2e
 +#endif /* __L1_H__ */
 diff --git a/contrib/board/wifx/l1/l1_nf_uboot_defconfig b/contrib/board/wifx/l1/l1_nf_uboot_defconfig
 new file mode 100644
-index 0000000..074dfa8
+index 0000000..e28620b
 --- /dev/null
 +++ b/contrib/board/wifx/l1/l1_nf_uboot_defconfig
-@@ -0,0 +1,11 @@
+@@ -0,0 +1,8 @@
 +CONFIG_L1=y
-+CONFIG_CPU_CLK_600MHZ=y
 +CONFIG_RAM_256MB=y
 +# CONFIG_PMECC_AUTO_DETECT is not set
 +CONFIG_PMECC_CORRECT_BITS_4=y
@@ -825,14 +824,12 @@ index 0000000..074dfa8
 +CONFIG_DEBUG=y
 +# CONFIG_DISABLE_WATCHDOG is not set
 +# CONFIG_ENTER_NWD is not set
-+CONFIG_ACT8865_SET_VOLTAGE=y
-+# CONFIG_DISABLE_ACT8865_I2C is not set
 diff --git a/contrib/board/wifx/l1/l1_sd_uboot_defconfig b/contrib/board/wifx/l1/l1_sd_uboot_defconfig
 new file mode 100644
-index 0000000..f26418f
+index 0000000..ae9fbff
 --- /dev/null
 +++ b/contrib/board/wifx/l1/l1_sd_uboot_defconfig
-@@ -0,0 +1,9 @@
+@@ -0,0 +1,7 @@
 +CONFIG_L1=y
 +CONFIG_CPU_CLK_600MHZ=y
 +CONFIG_RAM_256MB=y
@@ -840,8 +837,6 @@ index 0000000..f26418f
 +CONFIG_DEBUG=y
 +# CONFIG_DISABLE_WATCHDOG is not set
 +# CONFIG_ENTER_NWD is not set
-+CONFIG_ACT8865_SET_VOLTAGE=y
-+# CONFIG_DISABLE_ACT8865_I2C is not set
 diff --git a/contrib/include/contrib_board.h b/contrib/include/contrib_board.h
 index 3ef4ab7..c1376ca 100644
 --- a/contrib/include/contrib_board.h
