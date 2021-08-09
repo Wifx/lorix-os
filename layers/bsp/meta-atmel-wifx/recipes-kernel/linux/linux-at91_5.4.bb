@@ -31,6 +31,8 @@ SRC_URI += " \
     file://kernel-features/wireguard/wireguard.scc;type=kmeta;destsuffix=kernel-meta \
     file://kernel-features/wireguard/wireguard.cfg \
     file://0001-Add-original-support-for-the-Wifx-L1-gateway.patch \
+    file://0002-wgw-ctrl-move-all-MCU-registers-to-a-specific-file-a.patch \
+    file://0003-wgw-ctrl-add-support-to-read-serial-from-MCU-through.patch \
 "
 
 SRC_URI_append_l1 = " \
