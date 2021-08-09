@@ -10,7 +10,7 @@ PR = "r0"
 
 S = "${WORKDIR}/git"
 
-SRCREV = "88ed8f08fe15108f28ba04ff135f93f0fa498416"
+SRCREV = "2d39cc3f27857a1d224b53dd03789bd05643d0e2"
 KBRANCH = "linux-5.4-at91"
 
 SRC_URI += " \
