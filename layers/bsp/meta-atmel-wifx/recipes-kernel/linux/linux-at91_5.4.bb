@@ -34,7 +34,7 @@ SRC_URI_append_lorix-one = " \
 "
 
 KERNEL_EXTRA_FEATURES ?= " \
-    ${@bb.utils.contains('EXTRA_IMAGE_FEATURES', 'debug-tweaks', 'kernel-features/debug/debug.scc', '', d)} \
+    ${@bb.utils.contains('IMAGE_FEATURES', 'debug-tweaks', 'kernel-features/debug/debug.scc', '', d)} \
     kernel-features/netfilter/netfilter.scc \
     ${@bb.utils.contains('DISTRO_FEATURES', 'ipv6', 'kernel-features/netfilter/netfilter6.scc', '', d)} \
     kernel-features/nf_tables/nf_tables.scc \
