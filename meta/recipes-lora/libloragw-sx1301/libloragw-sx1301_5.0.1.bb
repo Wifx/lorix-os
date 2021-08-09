@@ -8,6 +8,7 @@ PRR = "r2"
 
 SRC_URI = "\
     git://github.com/brocaar/lora_gateway.git;protocol=git;tag=v${PV}${PRR} \
+    file://0001-Restore-default-SPI-path-to-keep-tests-and-utils-wor.patch \
     file://library.cfg \
 "
 

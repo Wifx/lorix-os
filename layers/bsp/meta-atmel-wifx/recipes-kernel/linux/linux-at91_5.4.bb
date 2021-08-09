@@ -13,7 +13,7 @@ S = "${WORKDIR}/git"
 
 #SRCREV = "4eedead4a4e1bb708d5b1629a9749d46a878406e"
 #KBRANCH = "linux-5.4-at91"
-SRCREV = "ddc86f7db87cc248e6126c6aeb085382c8770964"
+SRCREV = "8bf5d83f09a23966a16957e8c10c112acb52743d"
 KBRANCH = "linux-5.4.104-at91"
 
 SRC_URI += " \
@@ -33,12 +33,12 @@ SRC_URI += " \
     file://0001-Add-original-support-for-the-Wifx-L1-gateway.patch \
 "
 
-SRC_URI_append_lorix = " \
-    file://lorix.cfg \
-"
-
 SRC_URI_append_l1 = " \
     file://l1.cfg \
+"
+
+SRC_URI_append_lorix-one = " \
+    file://lorix.cfg \
 "
 
 KERNEL_EXTRA_FEATURES ?= " \

@@ -1,5 +1,10 @@
-# Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
+# Copyright (c) 2019, Wifx Sàrl <info@wifx.net>
 # All rights reserved.
+
+FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
+SRC_URI += " \
+    file://sshd_config \
+"
 
 do_install_append() {
     if ${@bb.utils.contains('DISTRO_FEATURES','motd-dynamic','true','false',d)}; then
