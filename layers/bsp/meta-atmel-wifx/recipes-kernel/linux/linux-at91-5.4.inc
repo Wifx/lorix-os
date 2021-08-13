@@ -25,6 +25,10 @@ SRC_URI += " \
     file://0001-Add-original-support-for-the-Wifx-L1-gateway.patch \
     file://0002-wgw-ctrl-move-all-MCU-registers-to-a-specific-file-a.patch \
     file://0003-wgw-ctrl-add-support-to-read-serial-from-MCU-through.patch \
+    file://0004-Update-model-variant-clean-and-secure-the-code.patch \
+    file://0005-l1-Add-reference-defconfig-for-latest-version-see-lo.patch \
+    file://0006-l1-disable-unused-PWM-and-tcb-timer-support.patch \
+    file://0007-l1-fix-usb-data_mode-sysfs-store-function-doesn-t-re.patch \
 "
 
 SRC_URI_append_l1 = " \

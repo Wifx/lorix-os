@@ -1,0 +1,594 @@
+From 893fa38a9a4f1652348cdc9055fbf4da37f955f5 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Thu, 12 Aug 2021 13:55:48 +0200
+Subject: [PATCH 4/7] Update model/variant, clean and secure the code
+
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
+---
+ drivers/mfd/wgw-ctrl-core.c | 388 ++++++++++++++++++++++--------------
+ 1 file changed, 239 insertions(+), 149 deletions(-)
+
+diff --git a/drivers/mfd/wgw-ctrl-core.c b/drivers/mfd/wgw-ctrl-core.c
+index b0f344433699..1ebe86ea2009 100644
+--- a/drivers/mfd/wgw-ctrl-core.c
++++ b/drivers/mfd/wgw-ctrl-core.c
+@@ -14,8 +14,11 @@
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+  */
++#include <linux/delay.h>
+ #include <linux/dma-mapping.h>
+ #include <linux/err.h>
++#include <linux/interrupt.h>
++#include <linux/irq.h>
+ #include <linux/kernel.h>
+ #include <linux/module.h>
+ #include <linux/of.h>
+@@ -23,17 +26,14 @@
+ #include <linux/platform_device.h>
+ #include <linux/slab.h>
+ 
+-#include <linux/interrupt.h>
+-#include <linux/irq.h>
+-
+ #include <linux/mfd/core.h>
+ #include <linux/mfd/wgw-ctrl/core.h>
+ #include <linux/mfd/wgw-ctrl/reg.h>
+ 
+-#define PRODUCT_TYPE_WIFX_L1 0x10
+-#define PRODUCT_SUBTYPE_8xx 0x00
+-#define PRODUCT_SUBTYPE_9xx 0x02
+-#define PRODUCT_SUBTYPE_Y_LYNX 0x08
++#define PRODUCT_MODEL_WIFX_L1 0x01
++#define PRODUCT_VARIANT_8xx 0x00
++#define PRODUCT_VARIANT_9xx 0x02
++#define PRODUCT_VARIANT_Y_LYNX 0x08
+ 
+ static struct mfd_cell wgw_ctrl_devs[] = {
+ 	{
+@@ -46,31 +46,100 @@ static struct mfd_cell wgw_ctrl_devs[] = {
+ 	},
+ };
+ 
++enum model {
++	M_LORIX_ONE = 0,
++	M_WIFX_L1 = 1,
++};
++
++enum variant {
++	V_863_870 = 0,
++	V_902_928 = 2,
++	V_Y_Lynx = 8,
++	V_UNKNOWN = 100,
++};
++static const char *unknown_str = "unknown";
++static const char *undefined_str = "undefined";
++static const char *error_str = "error";
++
++static const char *model_strs[] = { "LORIX One", "Wifx L1",
++				    "Wifx L1 (Y-Lynx)" };
++int model_index(enum model model, enum variant variant)
++{
++	switch (model) {
++	case M_LORIX_ONE:
++		return 0;
++	case M_WIFX_L1:
++		switch (variant) {
++		case V_863_870:
++		case V_902_928:
++			return 1;
++		case V_Y_Lynx:
++			return 2;
++		default:
++			break;
++		}
++	default:
++		break;
++	}
++	return -1;
++}
++
++const char *model_str(enum model model, enum variant variant)
++{
++	int index;
++	if ((index = model_index(model, variant)) < 0) {
++		return unknown_str;
++	}
++	return model_strs[index];
++}
++
++static const char *variant_strs[] = { "863-870", "902-928" };
++int variant_index(enum variant variant)
++{
++	switch (variant) {
++	case V_863_870:
++	case V_Y_Lynx:
++		return 0;
++	case V_902_928:
++		return 1;
++	default:
++		return -1;
++	}
++}
++const char *variant_str(enum variant variant)
++{
++	int index;
++	if ((index = variant_index(variant)) < 0) {
++		return unknown_str;
++	}
++	return variant_strs[index];
++}
++
+ struct version {
+ 	u16 major;
+ 	u16 minor;
+ 	u16 revision;
+ };
+ 
+-#define HW_SN_MAX_SIZE 15
++#define HW_SN_MAX_SIZE 16
+ struct serial {
+ 	int status;
+-	char data[HW_SN_MAX_SIZE + 1];
++	char data[HW_SN_MAX_SIZE];
+ };
+ 
+ struct hw_info {
+ 	struct version version;
+-	u8 type;
+-	u8 subtype;
++	u8 model;
++	u8 variant;
+ 	struct serial serial;
+ };
+ 
+-#define APP_COMMIT_HASH_MAX_SIZE 15
+-#define APP_COMMIT_DATE_MAX_SIZE 31
++#define APP_COMMIT_HASH_MAX_SIZE 16
++#define APP_COMMIT_DATE_MAX_SIZE 32
+ struct fw_info {
+ 	struct version version;
+-	char commit_hash[APP_COMMIT_HASH_MAX_SIZE + 1];
+-	char commit_date[APP_COMMIT_DATE_MAX_SIZE + 1];
++	char commit_hash[APP_COMMIT_HASH_MAX_SIZE];
++	char commit_date[APP_COMMIT_DATE_MAX_SIZE];
+ };
+ 
+ struct product_info {
+@@ -79,7 +148,27 @@ struct product_info {
+ 	u8 boot_state;
+ };
+ 
+-static int boot_state_get(struct wgw_ctrl_dev *wgw, u8 *boot_state)
++static char *hw_version_str(const struct version *version)
++{
++	static char ver_str[10];
++	if (version->revision == 0) {
++		sprintf(ver_str, "%d.%d", version->major, version->minor);
++	} else {
++		sprintf(ver_str, "%d.%d%c", version->major, version->minor,
++			(char)(version->revision + 'A'));
++	}
++	return ver_str;
++}
++
++static char *fw_version_str(const struct version *version)
++{
++	static char ver_str[10];
++	sprintf(ver_str, "%d.%d.%d", version->major, version->minor,
++		version->revision);
++	return ver_str;
++}
++
++static int boot_state_fetch(struct wgw_ctrl_dev *wgw, u8 *boot_state)
+ {
+ 	int ret;
+ 	if ((ret = wgw->read_dev(wgw, WGW_CTRL_REG_LAST_RESET_STATE, boot_state,
+@@ -90,45 +179,49 @@ static int boot_state_get(struct wgw_ctrl_dev *wgw, u8 *boot_state)
+ 	return ret;
+ }
+ 
+-static int boot_state_clr(struct wgw_ctrl_dev *wgw)
++static int boot_state_clr_update(struct wgw_ctrl_dev *wgw, u8 *boot_state)
+ {
+ 	int ret;
+ 	u8 reg = 0xFF;
+ 	if ((ret = wgw->write_dev(wgw, WGW_CTRL_REG_LAST_RESET_STATE, &reg,
+ 				  1)) < 0) {
+ 		dev_err(wgw->dev, "failed to write to device\n");
++		return ret;
+ 	}
+-	return ret;
++
++	msleep(25);
++	// update local cache
++	return boot_state_fetch(wgw, boot_state);
+ }
+ 
+-static int serial_get(struct wgw_ctrl_dev *wgw, char *dest, size_t maxlen,
+-		      int *status)
++static int serial_fetch(struct wgw_ctrl_dev *wgw, struct serial *serial)
+ {
+-	int ret;
++	int32_t ret;
+ 	size_t len;
+ 	// contains serial status, serial and termination character
+-	char buffer[1 + HW_SN_MAX_SIZE + 1];
++	char buffer[1 + HW_SN_MAX_SIZE];
+ 
+ 	if ((ret = wgw->read_dev(wgw, WGW_CTRL_REG_SN, buffer,
+ 				 sizeof(buffer))) < 0) {
+-		dev_err(wgw->dev, "failed to read from device\n");
++		dev_err(wgw->dev, "failed to read serial from device\n");
+ 		return ret;
+ 	}
+ 
+-	*status = (int)buffer[0];
+-	if (!*status) {
++	serial->status = (int)buffer[0];
++	if (!serial->status) {
+ 		// serial is not set
++		strcpy(serial->data, undefined_str);
+ 		return 0;
+-	} else if (*status < 0) {
++	} else if (serial->status < 0) {
+ 		// error on MCU side
++		strcpy(serial->data, error_str);
+ 		dev_err(wgw->dev,
+ 			"get serial error: mcu returned an error (%d)\n",
+-			*status);
++			serial->status);
+ 		return -EIO;
+ 	}
+ 
+-	if ((len = strnlen(&buffer[1], HW_SN_MAX_SIZE + 1)) ==
+-	    HW_SN_MAX_SIZE + 1) {
++	if ((len = strnlen(&buffer[1], HW_SN_MAX_SIZE)) == HW_SN_MAX_SIZE) {
+ 		dev_err(wgw->dev, "get serial error: serial too long\n");
+ 		return -EINVAL;
+ 	}
+@@ -138,10 +231,71 @@ static int serial_get(struct wgw_ctrl_dev *wgw, char *dest, size_t maxlen,
+ 		return -EINVAL;
+ 	}
+ 
+-	strncpy(dest, &buffer[1], maxlen);
++	strcpy(serial->data, &buffer[1]);
+ 	return len;
+ }
+ 
++static int hw_info_fetch(struct wgw_ctrl_dev *wgw, struct hw_info *hw_info)
++{
++	int32_t ret;
++	if ((ret = wgw->read_dev(wgw, WGW_CTRL_REG_HW_INFO, (uint8_t *)hw_info,
++				 sizeof(struct hw_info) -
++					 sizeof(struct serial))) < 0) {
++		dev_err(wgw->dev, "failed to read hw_info from device\n");
++		return ret;
++	}
++	return serial_fetch(wgw, &hw_info->serial);
++}
++
++static int fw_info_fetch(struct wgw_ctrl_dev *wgw, struct fw_info *fw_info)
++{
++	int32_t ret;
++
++	// retrieve firmware version
++	if ((ret = wgw->read_dev(wgw, WGW_CTRL_REG_FW_INFO1,
++				 (u8 *)&fw_info->version,
++				 sizeof(struct version))) < 0) {
++		dev_err(wgw->dev, "failed to read firmware version (%d)\n",
++			ret);
++		return ret;
++	}
++
++	// retrieve firmware commit hash
++	if ((ret = wgw->read_dev(wgw, WGW_CTRL_REG_FW_INFO2,
++				 (u8 *)fw_info->commit_hash,
++				 APP_COMMIT_HASH_MAX_SIZE)) < 0) {
++		dev_err(wgw->dev, "failed to read firmware commit hash (%d)\n",
++			ret);
++		return ret;
++	}
++	if (strnlen(fw_info->commit_hash, APP_COMMIT_HASH_MAX_SIZE) ==
++	    APP_COMMIT_HASH_MAX_SIZE) {
++		fw_info->commit_hash[0] = '\0';
++		dev_err(wgw->dev,
++			"firmware commit hash string is too longth (%d)\n",
++			ret);
++		return ret;
++	}
++
++	// retrieve firmware commit date
++	if ((ret = wgw->read_dev(wgw, WGW_CTRL_REG_FW_INFO3,
++				 (u8 *)fw_info->commit_date,
++				 APP_COMMIT_DATE_MAX_SIZE)) < 0) {
++		dev_err(wgw->dev, "failed to read firmware commit date (%d)\n",
++			ret);
++		return ret;
++	}
++	if (strnlen(fw_info->commit_date, APP_COMMIT_DATE_MAX_SIZE) ==
++	    APP_COMMIT_DATE_MAX_SIZE) {
++		fw_info->commit_date[0] = '\0';
++		dev_err(wgw->dev,
++			"firmware commit date string is too longth (%d)\n",
++			ret);
++		return ret;
++	}
++	return 0;
++}
++
+ static ssize_t dev_version_show(struct device *dev,
+ 				struct device_attribute *attr, char *buf)
+ {
+@@ -151,11 +305,10 @@ static ssize_t dev_version_show(struct device *dev,
+ static ssize_t boot_state_show(struct device *dev,
+ 			       struct device_attribute *attr, char *buf)
+ {
+-	struct wgw_ctrl_dev *wgw = dev_get_drvdata(dev);
+-	u8 boot_state;
++	struct product_info *info =
++		((struct wgw_ctrl_dev *)dev_get_drvdata(dev))->product_info;
+ 
+-	boot_state_get(wgw, &boot_state);
+-	return sprintf(buf, "%d\n", boot_state);
++	return sprintf(buf, "%d\n", info->boot_state);
+ }
+ 
+ static ssize_t boot_state_store(struct device *dev,
+@@ -163,12 +316,17 @@ static ssize_t boot_state_store(struct device *dev,
+ 				size_t count)
+ {
+ 	struct wgw_ctrl_dev *wgw = dev_get_drvdata(dev);
+-	int inval;
++	struct product_info *info = wgw->product_info;
++	ssize_t ret;
++	unsigned int inval;
++
++	ret = count - 1;
++	if (!ret || ret > 1 || sscanf(buf, "%du\n", &inval) <= 0 || inval > 1)
++		return -EINVAL;
++
++	if (inval)
++		boot_state_clr_update(wgw, &info->boot_state);
+ 
+-	sscanf(buf, "%du", &inval);
+-	if (inval != 0) {
+-		boot_state_clr(wgw);
+-	}
+ 	return count;
+ }
+ 
+@@ -207,14 +365,7 @@ static ssize_t hw_version_show(struct device *dev,
+ 	struct product_info *info =
+ 		((struct wgw_ctrl_dev *)dev_get_drvdata(dev))->product_info;
+ 
+-	if (info->hw_info.version.revision == 0) {
+-		return sprintf(buf, "%d.%d\n", info->hw_info.version.major,
+-			       info->hw_info.version.minor);
+-	} else {
+-		return sprintf(buf, "%d.%d%c\n", info->hw_info.version.major,
+-			       info->hw_info.version.minor,
+-			       (char)(info->hw_info.version.revision + 'A'));
+-	}
++	return sprintf(buf, "%s\n", hw_version_str(&info->hw_info.version));
+ }
+ 
+ static ssize_t product_model_show(struct device *dev,
+@@ -223,31 +374,19 @@ static ssize_t product_model_show(struct device *dev,
+ 	struct product_info *info =
+ 		((struct wgw_ctrl_dev *)dev_get_drvdata(dev))->product_info;
+ 
+-	if (info->hw_info.type != PRODUCT_TYPE_WIFX_L1)
+-		return sprintf(buf, "Unknown\n");
+-
+-	if (info->hw_info.subtype == PRODUCT_SUBTYPE_Y_LYNX)
+-		return sprintf(buf, "Wifx L1 (Y-Lynx)\n");
+-
+-	return sprintf(buf, "Wifx L1\n");
++	return sprintf(buf, "%s\n",
++		       model_str((enum model)info->hw_info.model,
++				 (enum variant)info->hw_info.variant));
+ }
+ 
+-static ssize_t product_type_show(struct device *dev,
+-				 struct device_attribute *attr, char *buf)
++static ssize_t product_variant_show(struct device *dev,
++				    struct device_attribute *attr, char *buf)
+ {
+ 	struct product_info *info =
+ 		((struct wgw_ctrl_dev *)dev_get_drvdata(dev))->product_info;
+ 
+-	switch (info->hw_info.subtype) {
+-	case PRODUCT_SUBTYPE_8xx:
+-		return sprintf(buf, "863-870\n");
+-	case PRODUCT_SUBTYPE_9xx:
+-		return sprintf(buf, "902-928\n");
+-	case PRODUCT_SUBTYPE_Y_LYNX:
+-		return sprintf(buf, "Y-Lynx\n");
+-	default:
+-		return sprintf(buf, "unknown\n");
+-	}
++	return sprintf(buf, "%s\n",
++		       variant_str((enum variant)info->hw_info.variant));
+ }
+ 
+ static ssize_t serial_show(struct device *dev, struct device_attribute *attr,
+@@ -256,13 +395,7 @@ static ssize_t serial_show(struct device *dev, struct device_attribute *attr,
+ 	struct product_info *info =
+ 		((struct wgw_ctrl_dev *)dev_get_drvdata(dev))->product_info;
+ 
+-	if (!info->hw_info.serial.status) {
+-		return sprintf(buf, "%s\n", "not set");
+-	} else if (info->hw_info.serial.status < 0) {
+-		return sprintf(buf, "%s\n", "error");
+-	} else {
+-		return sprintf(buf, "%s\n", info->hw_info.serial.data);
+-	}
++	return sprintf(buf, "%s\n", info->hw_info.serial.data);
+ }
+ 
+ static ssize_t memory_ram_show(struct device *dev,
+@@ -279,7 +412,7 @@ static ssize_t memory_nand_show(struct device *dev,
+ 
+ static DEVICE_ATTR(dev_version, S_IRUGO, dev_version_show, NULL);
+ static DEVICE_ATTR(model, S_IRUGO, product_model_show, NULL);
+-static DEVICE_ATTR(type, S_IRUGO, product_type_show, NULL);
++static DEVICE_ATTR(variant, S_IRUGO, product_variant_show, NULL);
+ static DEVICE_ATTR(serial, S_IRUGO, serial_show, NULL);
+ static DEVICE_ATTR(boot_state,
+ 		   (S_IWUSR | S_IRUSR | S_IWGRP | S_IRGRP | S_IROTH),
+@@ -291,18 +424,12 @@ static DEVICE_ATTR(hw_version, S_IRUGO, hw_version_show, NULL);
+ static DEVICE_ATTR(mem_ram, S_IRUGO, memory_ram_show, NULL);
+ static DEVICE_ATTR(mem_nand, S_IRUGO, memory_nand_show, NULL);
+ static const struct attribute *machine_attrs[] = {
+-	&dev_attr_dev_version.attr,
+-	&dev_attr_model.attr,
+-	&dev_attr_type.attr,
+-	&dev_attr_serial.attr,
+-	&dev_attr_boot_state.attr,
+-	&dev_attr_fw_version.attr,
+-	&dev_attr_fw_version_hash.attr,
+-	&dev_attr_fw_version_date.attr,
+-	&dev_attr_hw_version.attr,
+-	&dev_attr_mem_ram.attr,
+-	&dev_attr_mem_nand.attr,
+-	NULL,
++	&dev_attr_dev_version.attr,	&dev_attr_model.attr,
++	&dev_attr_variant.attr,		&dev_attr_serial.attr,
++	&dev_attr_boot_state.attr,	&dev_attr_fw_version.attr,
++	&dev_attr_fw_version_hash.attr, &dev_attr_fw_version_date.attr,
++	&dev_attr_hw_version.attr,	&dev_attr_mem_ram.attr,
++	&dev_attr_mem_nand.attr,	NULL,
+ };
+ static const struct attribute_group machine_attr_group = {
+ 	.attrs = (struct attribute **)machine_attrs,
+@@ -330,43 +457,17 @@ static int populate_info(struct wgw_ctrl_dev *wgw)
+ 	}
+ 
+ 	/* Populate the cache */
+-	ret = wgw->read_dev(wgw, WGW_CTRL_REG_HW_INFO, (u8 *)&info->hw_info,
+-			    sizeof(struct hw_info));
+-	if (ret < 0) {
++	if ((ret = hw_info_fetch(wgw, &info->hw_info)) < 0) {
+ 		dev_err(dev, "failed to read hardware info (%d)\n", ret);
+ 		return ret;
+ 	}
+-	ret = serial_get(wgw, (u8 *)info->hw_info.serial.data,
+-			 sizeof(info->hw_info.serial.data),
+-			 &info->hw_info.serial.status);
+-	if (ret < 0) {
+-		dev_err(dev, "failed to read serial (%d)\n", ret);
+-	}
+-	ret = wgw->read_dev(wgw, WGW_CTRL_REG_FW_INFO1,
+-			    (u8 *)&info->fw_info.version,
+-			    sizeof(struct version));
+-	if (ret < 0) {
+-		dev_err(dev, "failed to read firmware version (%d)\n", ret);
+-		return ret;
+-	}
+-	ret = wgw->read_dev(wgw, WGW_CTRL_REG_FW_INFO2,
+-			    (u8 *)info->fw_info.commit_hash,
+-			    sizeof(info->fw_info.commit_hash));
+-	info->fw_info.commit_hash[sizeof(info->fw_info.commit_hash) - 1] = '\0';
+-	if (ret < 0) {
+-		dev_err(dev, "failed to read firmware commit hash (%d)\n", ret);
+-		return ret;
+-	}
+-	ret = wgw->read_dev(wgw, WGW_CTRL_REG_FW_INFO3,
+-			    (u8 *)info->fw_info.commit_date,
+-			    sizeof(info->fw_info.commit_date));
+-	info->fw_info.commit_date[sizeof(info->fw_info.commit_date) - 1] = '\0';
+-	if (ret < 0) {
+-		dev_err(dev, "failed to read firmware commit date (%d)\n", ret);
++
++	if ((ret = fw_info_fetch(wgw, &info->fw_info)) < 0) {
++		dev_err(dev, "failed to read firmware info (%d)\n", ret);
+ 		return ret;
+ 	}
+ 
+-	ret = boot_state_get(wgw, &info->boot_state);
++	ret = boot_state_fetch(wgw, &info->boot_state);
+ 	if (ret < 0) {
+ 		dev_err(dev, "failed to read boot state (%d)\n", ret);
+ 		return ret;
+@@ -381,48 +482,37 @@ static int verify_display_info(struct wgw_ctrl_dev *wgw)
+ 	struct product_info *info = wgw->product_info;
+ 
+ 	/* Verify the product is supported */
+-	if (info->hw_info.type != PRODUCT_TYPE_WIFX_L1) {
++	if (info->hw_info.model != PRODUCT_MODEL_WIFX_L1) {
+ 		dev_err(dev, "Unknown product detected\n");
+ 		return -ENODEV;
+ 	}
+ 
+-	dev_info(dev, "Product Wifx L1 detected\n");
+-
+-	switch (info->hw_info.subtype) {
+-	case PRODUCT_SUBTYPE_8xx:
+-		dev_info(dev, "  Type: 863-870\n");
+-		break;
+-	case PRODUCT_SUBTYPE_9xx:
+-		dev_info(dev, "  Type: 902-928\n");
+-		break;
+-	case PRODUCT_SUBTYPE_Y_LYNX:
+-		dev_info(dev, "  Type: Y-Lynx\n");
+-		break;
+-	default:
+-		dev_err(dev, "Subtype not detected or unknown\n");
++	dev_info(dev, "Wifx product detected\n");
++	dev_info(dev, "    Model: %s\n",
++		 model_str((enum model)info->hw_info.model,
++			   (enum variant)info->hw_info.variant));
++	dev_info(dev, "  Variant: %s\n",
++		 variant_str((enum variant)info->hw_info.variant));
++	if (model_index((enum model)info->hw_info.model,
++			(enum variant)info->hw_info.variant) < 0 ||
++	    variant_str((enum variant)info->hw_info.variant) < 0) {
++		dev_err(dev,
++			"Product model or variant not detected or unknown\n");
+ 		return -ENODEV;
+ 	}
+ 	if (!info->hw_info.serial.status) {
+-		dev_warn(dev, "  Serial: not set\n");
++		dev_warn(dev, "   Serial: %s\n", info->hw_info.serial.data);
+ 	} else if (info->hw_info.serial.status < 0) {
+-		dev_err(dev, "  Serial: error\n");
+-	} else {
+-		dev_info(dev, "  Serial: %s\n", info->hw_info.serial.data);
+-	}
+-
+-	if (info->hw_info.version.revision > 0) {
+-		dev_info(dev, "  HW ver: %d.%d%c\n",
+-			 info->hw_info.version.major,
+-			 info->hw_info.version.minor,
+-			 (char)(info->hw_info.version.revision + 'A'));
++		dev_err(dev, "   Serial: %s\n", info->hw_info.serial.data);
+ 	} else {
+-		dev_info(dev, "  HW ver: %d.%d\n", info->hw_info.version.major,
+-			 info->hw_info.version.minor);
++		dev_info(dev, "   Serial: %s\n", info->hw_info.serial.data);
+ 	}
+-	dev_info(dev, "  FW ver: %d.%d.%d (%s)\n", info->fw_info.version.major,
+-		 info->fw_info.version.minor, info->fw_info.version.revision,
++	dev_info(dev, "   HW ver: %s\n",
++		 hw_version_str(&info->hw_info.version));
++	dev_info(dev, "   FW ver: %s (%s)\n",
++		 fw_version_str(&info->fw_info.version),
+ 		 info->fw_info.commit_hash);
+-	dev_info(dev, "          %s\n", info->fw_info.commit_date);
++	dev_info(dev, "           %s\n", info->fw_info.commit_date);
+ 
+ 	/* Display boot state */
+ 	switch (info->boot_state) {
+@@ -436,7 +526,7 @@ static int verify_display_info(struct wgw_ctrl_dev *wgw)
+ 		dev_info(dev,
+ 			 "  Boot: 0x%02X (unknown mode), clearing boot state\n",
+ 			 info->boot_state);
+-		ret = boot_state_clr(wgw);
++		ret = boot_state_clr_update(wgw, &info->boot_state);
+ 		if (ret < 0)
+ 			return ret;
+ 		break;
+-- 
+2.25.1
+

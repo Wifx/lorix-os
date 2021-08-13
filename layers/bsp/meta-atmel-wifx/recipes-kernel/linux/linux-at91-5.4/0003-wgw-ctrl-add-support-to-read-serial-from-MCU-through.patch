@@ -1,16 +1,16 @@
-From e72814e24d5e94c8e3f69d82997a5b56fcb5265d Mon Sep 17 00:00:00 2001
+From bbbb32e8b1a8df19266510790c55b8cd31b0392e Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
 Date: Fri, 6 Aug 2021 16:28:36 +0200
-Subject: [PATCH 3/3] wgw-ctrl: add support to read serial from MCU through i2c
+Subject: [PATCH 3/7] wgw-ctrl: add support to read serial from MCU through i2c
 
 Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
 ---
- drivers/mfd/wgw-ctrl-core.c      | 77 ++++++++++++++++++++++++++++++++
+ drivers/mfd/wgw-ctrl-core.c      | 78 ++++++++++++++++++++++++++++++++
  include/linux/mfd/wgw-ctrl/reg.h |  1 +
- 2 files changed, 78 insertions(+)
+ 2 files changed, 79 insertions(+)
 
 diff --git a/drivers/mfd/wgw-ctrl-core.c b/drivers/mfd/wgw-ctrl-core.c
-index feec20c95274..18674fce7657 100644
+index feec20c95274..b0f344433699 100644
 --- a/drivers/mfd/wgw-ctrl-core.c
 +++ b/drivers/mfd/wgw-ctrl-core.c
 @@ -52,10 +52,17 @@ struct version {
@@ -79,15 +79,16 @@ index feec20c95274..18674fce7657 100644
  static ssize_t dev_version_show(struct device *dev,
  				struct device_attribute *attr, char *buf)
  {
-@@ -202,6 +250,20 @@ static ssize_t product_type_show(struct device *dev,
+@@ -202,6 +250,21 @@ static ssize_t product_type_show(struct device *dev,
  	}
  }
  
 +static ssize_t serial_show(struct device *dev, struct device_attribute *attr,
 +			   char *buf)
 +{
-+	struct wgw_ctrl_dev *wgw = dev_get_drvdata(dev);
-+	struct product_info *info = wgw->product_info;
++	struct product_info *info =
++		((struct wgw_ctrl_dev *)dev_get_drvdata(dev))->product_info;
++
 +	if (!info->hw_info.serial.status) {
 +		return sprintf(buf, "%s\n", "not set");
 +	} else if (info->hw_info.serial.status < 0) {
@@ -100,7 +101,7 @@ index feec20c95274..18674fce7657 100644
  static ssize_t memory_ram_show(struct device *dev,
  			       struct device_attribute *attr, char *buf)
  {
-@@ -217,6 +279,7 @@ static ssize_t memory_nand_show(struct device *dev,
+@@ -217,6 +280,7 @@ static ssize_t memory_nand_show(struct device *dev,
  static DEVICE_ATTR(dev_version, S_IRUGO, dev_version_show, NULL);
  static DEVICE_ATTR(model, S_IRUGO, product_model_show, NULL);
  static DEVICE_ATTR(type, S_IRUGO, product_type_show, NULL);
@@ -108,7 +109,7 @@ index feec20c95274..18674fce7657 100644
  static DEVICE_ATTR(boot_state,
  		   (S_IWUSR | S_IRUSR | S_IWGRP | S_IRGRP | S_IROTH),
  		   boot_state_show, boot_state_store);
-@@ -230,6 +293,7 @@ static const struct attribute *machine_attrs[] = {
+@@ -230,6 +294,7 @@ static const struct attribute *machine_attrs[] = {
  	&dev_attr_dev_version.attr,
  	&dev_attr_model.attr,
  	&dev_attr_type.attr,
@@ -116,7 +117,7 @@ index feec20c95274..18674fce7657 100644
  	&dev_attr_boot_state.attr,
  	&dev_attr_fw_version.attr,
  	&dev_attr_fw_version_hash.attr,
-@@ -271,6 +335,12 @@ static int populate_info(struct wgw_ctrl_dev *wgw)
+@@ -271,6 +336,12 @@ static int populate_info(struct wgw_ctrl_dev *wgw)
  		dev_err(dev, "failed to read hardware info (%d)\n", ret);
  		return ret;
  	}
@@ -129,7 +130,7 @@ index feec20c95274..18674fce7657 100644
  	ret = wgw->read_dev(wgw, WGW_CTRL_REG_FW_INFO1,
  			    (u8 *)&info->fw_info.version,
  			    sizeof(struct version));
-@@ -331,6 +401,13 @@ static int verify_display_info(struct wgw_ctrl_dev *wgw)
+@@ -331,6 +402,13 @@ static int verify_display_info(struct wgw_ctrl_dev *wgw)
  		dev_err(dev, "Subtype not detected or unknown\n");
  		return -ENODEV;
  	}
