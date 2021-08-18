@@ -25,5 +25,5 @@ RDEPENDS_${PN}_lorix-one = " \
 #    chirpstack-concentratord \
 #    chirpstack-udp-bridge \
 #    pmon-csgb-concentratord \
-#    pmon-udp-concentratord \
+#    pmon-csub-concentratord \
 #"

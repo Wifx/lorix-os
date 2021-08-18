@@ -13,7 +13,7 @@ jobs:
                 term: 5000
                 restart: 5000
     udp-bridge:
-        description: Bridge the concentratord to and UDP server
+        description: Bridges the concentratord to and UDP server
         process:
             run-mode: exec
             program-path: /opt/chirpstack-udp-bridge/chirpstack-udp-bridge

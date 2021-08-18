@@ -3,7 +3,7 @@ autostart: true
 log: true
 jobs:
     concentratord:
-        description: The forwarder receiving data from the SPI (SX13XX) and forwarding to the Gateway Bridge
+        description: The daemon receiving data from the LoRa concentrator (SX13XX) and forwarding to the Gateway Bridge
         process:
             run-mode: exec
             program-path: /opt/chirpstack-concentratord/chirpstack-concentratord
@@ -13,9 +13,7 @@ jobs:
                 term: 1000
                 restart: 5000
     gateway-bridge:
-        description: Gateway Bridge receiveing the forwarder packets and sending them to the ChirpStack Network Server
-        depends:
-            - concentratord
+        description: Gateway Bridge receiveing the cocnentrator daemon packets and sending them to the ChirpStack Network Server
         process:
             run-mode: exec
             program-path: /opt/chirpstack-gateway-bridge/chirpstack-gateway-bridge
