@@ -9,7 +9,7 @@ jobs:
             program-path: /opt/chirpstack-concentratord/chirpstack-concentratord
             program-arguments: -c /etc/opt/chirpstack-concentratord/00-concentratord.toml -c /etc/opt/chirpstack-concentratord/10-gateway.toml -c /etc/opt/chirpstack-concentratord/channels.toml
             delays:
-                start: 2000
+                start: 5000
                 term: 5000
                 restart: 5000
     udp-bridge:

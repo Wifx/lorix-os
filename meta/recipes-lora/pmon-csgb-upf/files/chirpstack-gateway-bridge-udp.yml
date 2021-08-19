@@ -9,7 +9,7 @@ jobs:
             program-path: /opt/chirpstack-gateway-bridge/chirpstack-gateway-bridge
             program-arguments: -c /etc/opt/chirpstack-gateway-bridge/chirpstack-gateway-bridge.toml
             delays:
-                start: 2000
+                start: 5000
                 term: 5000
                 restart: 5000
     udp-packet-forwarder:

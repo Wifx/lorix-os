@@ -120,7 +120,7 @@ install_channels() {
     install -m 0644 ${WORKDIR}/channels/US915/US_902_928_FSB_6.toml ${D}${CONF_DIR}/channels/US915/US_902_928_FSB_6.toml
     install -m 0644 ${WORKDIR}/channels/US915/US_902_928_FSB_7.toml ${D}${CONF_DIR}/channels/US915/US_902_928_FSB_7.toml
     install -m 0644 ${WORKDIR}/channels/US915/US_902_928_FSB_8.toml ${D}${CONF_DIR}/channels/US915/US_902_928_FSB_8.toml
-    set_default "US915" "US_902_928_FSB_1"
+    set_default "US915" "US_902_928_FSB_2"
 }
 
 set_default() {
@@ -146,6 +146,7 @@ do_install_append_sx1302() {
     install -m 0755 ${cargo_bindir}/chirpstack-concentratord-sx1302 ${D}${optdir}/chirpstack-concentratord/chirpstack-concentratord
 }
 
+# TODO: only for SX1301
 pkg_postinst_ontarget_${PN} () {
     if [ -z "$1" ]; then
         # execute only on first boot
