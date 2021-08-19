@@ -4,6 +4,7 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=99e425257f8a67b7efd81dc0009ed8ff"
 
 SRC_URI += "\
+    file://0001-Add-Wifx-L1-863-870-config.patch \
     file://concentratord.toml \
     file://gateway.toml \
     file://channels/* \

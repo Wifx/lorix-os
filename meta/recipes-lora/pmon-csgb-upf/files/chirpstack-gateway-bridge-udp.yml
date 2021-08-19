@@ -7,7 +7,7 @@ jobs:
         process:
             run-mode: exec
             program-path: /opt/chirpstack-gateway-bridge/chirpstack-gateway-bridge
-            program-arguments: -c /etc/opt/chirpstack-gateway-bridge/chirpstack-gateway-bridge.toml
+            program-arguments: -c /etc/opt/chirpstack-gateway-bridge/10-general.toml -c /etc/opt/chirpstack-gateway-bridge/20-backend_semtech-udp.toml -c /etc/opt/chirpstack-gateway-bridge/30-integration.toml -c /etc/opt/chirpstack-gateway-bridge/40-filters.toml
             delays:
                 start: 5000
                 term: 5000

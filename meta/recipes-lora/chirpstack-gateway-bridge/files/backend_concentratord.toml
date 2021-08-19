@@ -1,0 +1,5 @@
+# Gateway backend configuration.
+[backend]
+
+  # Backend type.
+  type="concentratord"

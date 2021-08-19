@@ -23,7 +23,7 @@
   model="wifx_lorix_one_863_870"
 
   # Static gateway location.
-  [gateway.location]
+  #[gateway.location]
 
     # When set to non-zero values, the static gateway location will be reported
     # Example for the Matterhorn (CH)
