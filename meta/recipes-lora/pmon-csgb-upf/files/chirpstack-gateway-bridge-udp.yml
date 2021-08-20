@@ -4,6 +4,7 @@ log: true
 jobs:
     gateway-bridge:
         description: Gateway Bridge receiveing the concentrator daemon packets and sending them to the ChirpStack Network Server
+        boot-order: 0
         process:
             run-mode: exec
             program-path: /opt/chirpstack-gateway-bridge/chirpstack-gateway-bridge
@@ -14,6 +15,7 @@ jobs:
                 restart: 5000
     udp-packet-forwarder:
         description: The daemon receiving data from the LoRa concentrator (SX13XX) and forwarding to the Gateway Bridge
+        boot-order: 1
         process:
             run-mode: exec
             program-path: /opt/udp-packet-forwarder/udp-packet-forwarder

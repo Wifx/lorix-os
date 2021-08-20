@@ -4,6 +4,7 @@ log: true
 jobs:
     concentratord:
         description: LoRa concentrator daemon
+        boot-order: 0
         process:
             run-mode: exec
             program-path: /opt/chirpstack-concentratord/chirpstack-concentratord
@@ -14,6 +15,7 @@ jobs:
                 restart: 5000
     udp-bridge:
         description: Bridges the concentratord to and UDP server
+        boot-order: 1
         process:
             run-mode: exec
             program-path: /opt/chirpstack-udp-bridge/chirpstack-udp-bridge

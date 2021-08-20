@@ -4,6 +4,7 @@ log: true
 jobs:
     concentratord:
         description: The daemon receiving data from the LoRa concentrator (SX13XX) and forwarding to the Gateway Bridge
+        boot-order: 0
         process:
             run-mode: exec
             program-path: /opt/chirpstack-concentratord/chirpstack-concentratord
@@ -14,6 +15,7 @@ jobs:
                 restart: 5000
     gateway-bridge:
         description: Gateway Bridge receiveing the cocnentrator daemon packets and sending them to the ChirpStack Network Server
+        boot-order: 1
         process:
             run-mode: exec
             program-path: /opt/chirpstack-gateway-bridge/chirpstack-gateway-bridge
