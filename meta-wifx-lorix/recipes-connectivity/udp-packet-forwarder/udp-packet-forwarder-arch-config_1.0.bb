@@ -28,7 +28,7 @@ do_install() {
     set_default "EU868" "EU_863_870"
     set_default "IN865" "IN_865_867"
     set_default "RU864" "RU_864_870_TTN"
-    set_default "US915" "US_902_928_FSB_1"
+    set_default "US915" "US_902_928_FSB_2"
 }
 
 do_install_lorix_one() {
