@@ -72,7 +72,7 @@ install_channels() {
     set_default "EU868" "EU_863_870"
     set_default "IN865" "IN_865_867"
     set_default "RU864" "RU_864_870_TTN"
-    set_default "US915" "US_902_928_FSB_1"
+    set_default "US915" "US_902_928_FSB_2"
 }
 
 set_default() {
