@@ -14,10 +14,11 @@ CHRONY=$(which chronyc)
 function chrony_status() {
         TIMEOUT=$(which timeout)
         if [ "$?" = "0" ]; then
-                $TIMEOUT -t 10 -s KILL $CHRONY $1
+                $TIMEOUT -s KILL 10 $CHRONY $1
         else
                 $CHRONY $1
         fi
+        return $?
 }
 
 function chrony_servers() {
