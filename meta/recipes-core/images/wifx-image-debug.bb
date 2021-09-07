@@ -10,7 +10,7 @@ inherit wifx-image-core wifx-image-base-users
 IMAGE_INSTALL += " \
     packagegroup-os-dev-utils \
     gdb \
-	chirpstack-concentratord \
+    chirpstack-concentratord \
     pmon-csgb-concentratord \
 "
 
