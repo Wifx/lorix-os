@@ -169,6 +169,46 @@ pkg_postinst_ontarget_${PN} () {
         sed -i 's/gateway_id=""/gateway_id="'${GWID}'"/g' $GW_ID_FILE_PATH
 
         echo "Gateway ID set to "$GWID" in file "$GW_ID_FILE_PATH
+
+
+        ### FREQUENCY PLAN ###
+
+        # Set default channel
+        source /etc/os/.machine-detect && machine_detect
+        CHANNELS_CONFDIR=/etc/opt/chirpstack-concentratord/channels
+
+        if [ ! -f "$CHANNELS_CONFDIR/channels.toml" ]; then
+
+            cd "$CHANNELS_CONFDIR"
+            echo "Looking for concentratord channels for '$MACHINE_TYPE' in '$CHANNELS_CONFDIR'"
+
+            # If the region provides a default channel plan, set it
+            if [ -f "$MACHINE_TYPE/default" ]; then
+                echo "Using default channel"
+                CHANNEL_FILE_NAME=$(readlink "$MACHINE_TYPE/default")
+                CHANNEL_FILE_PATH="$MACHINE_TYPE/$CHANNEL_FILE_NAME"
+            else
+                # Otherwise take the first in the list
+                echo "Using first available channel in '$MACHINE_TYPE'"
+                FILES="$MACHINE_TYPE/*.toml"
+                for FILE in $FILES; do
+                    if [[ -f "$FILE" ]]; then
+                        CHANNEL_FILE_PATH=$FILE
+                        break
+                    fi
+                done
+            fi
+
+            if [ ! -z "$CHANNEL_FILE_PATH" ]; then
+                ln -snf "$CHANNEL_FILE_PATH" "channels_conf.toml"
+                echo "concentratord channel has been set to '$CHANNEL_FILE_PATH'"
+            else
+                echo "Could not find any channel"
+            fi
+
+        else
+            echo "concentratord channel already defined"
+        fi
     fi
 }
 
