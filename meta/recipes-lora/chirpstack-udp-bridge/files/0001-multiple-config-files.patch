@@ -1,0 +1,58 @@
+Index: src/config.rs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/config.rs b/src/config.rs
+--- a/src/config.rs	(revision c28586ea86f19b0f01f11deb18361779532b10b6)
++++ b/src/config.rs	(revision a611cb8c88a7e69d2833d0cbedac25dabbc30b11)
+@@ -33,13 +33,17 @@
+ }
+ 
+ impl Configuration {
+-    pub fn get(filename: &str) -> Result<Configuration, String> {
+-        let toml_content = match fs::read_to_string(filename) {
+-            Ok(v) => v,
+-            Err(err) => return Err(format!("read config file error: {}", err).to_string()),
+-        };
++    pub fn get(filenames: Vec<String>) -> Result<Configuration, String> {
++        let mut content: String = String::new();
++
++        for file_name in &filenames {
++            content.push_str(&match fs::read_to_string(file_name) {
++                Ok(v) => v,
++                Err(err) => return Err(format!("read config file error: {}", err).to_string()),
++            });
++        }
+ 
+-        let config: Configuration = match toml::from_str(&toml_content) {
++        let config: Configuration = match toml::from_str(&content) {
+             Ok(v) => v,
+             Err(err) => return Err(format!("parse config file error: {}", err)),
+         };
+Index: src/main.rs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main.rs b/src/main.rs
+--- a/src/main.rs	(revision c28586ea86f19b0f01f11deb18361779532b10b6)
++++ b/src/main.rs	(revision a611cb8c88a7e69d2833d0cbedac25dabbc30b11)
+@@ -29,13 +29,15 @@
+                 .short("c")
+                 .long("config")
+                 .value_name("FILE")
++                .multiple(true)
++                .number_of_values(1)
+                 .help("Path to configuration file")
+                 .takes_value(true),
+         )
+         .get_matches();
+ 
+-    let config_file = matches.value_of_lossy("config").unwrap();
+-    let config = config::Configuration::get(&config_file).expect("read configuration error");
++    let config_files = matches.values_of_lossy("config").unwrap_or(vec![]);
++    let config = config::Configuration::get(config_files).expect("read configuration error");
+     let log_level =
+         log::Level::from_str(&config.udp_bridge.log_level).expect("parse log_level error");
+ 

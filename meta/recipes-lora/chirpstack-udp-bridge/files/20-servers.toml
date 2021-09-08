@@ -2,7 +2,7 @@
 # This section can be repeated.
 [[udp_bridge.servers]]
   # Server (hostname:port).
-  server="localhost:1700"
+  server="eu1.cloud.thethings.network:1700"
 
   # Keepalive interval (seconds).
   #

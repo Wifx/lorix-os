@@ -1,5 +1,5 @@
 SUMMARY = "ChirpStack concentratord/UDP bridge package"
-DESCRIPTION = "Configuration setup for interfacing the ChirpStack Cocnentratord with the Chripstack UDP Bridge."
+DESCRIPTION = "Configuration setup for interfacing the ChirpStack Concentratord with the Chripstack UDP Bridge."
 AUTHOR = "Wifx Sàrl"
 SECTION = "base"
 
@@ -14,7 +14,7 @@ RDEPENDS_${PN} += " \
 
 SRC_URI = " \
     file://LICENSE \
-    file://chirpstack-concentratord-udp.yml \
+    file://csub-concentratord.yml \
 "
 
 S = "${WORKDIR}"
@@ -26,13 +26,7 @@ do_compile[noexec] = "1"
 
 inherit pmonitor
 
-CONF_DIR = "${sysconfoptdir}/chirpstack-gateway-bridge"
-
 do_install() {
     # Pmonitor service configuration files
-    pmonitor_service_install ${WORKDIR}/chirpstack-concentratord-udp.yml
+    pmonitor_service_install ${WORKDIR}/csub-concentratord.yml
 }
-
-CONFFILES_${PN} += " \
-    ${CONF_DIR}/chirpstack-concentratord-udp.toml \
-"

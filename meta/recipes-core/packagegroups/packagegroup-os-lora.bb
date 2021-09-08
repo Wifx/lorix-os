@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
+# Copyright (c) 2019, Wifx Sàrl <info@wifx.net>
 # All rights reserved.
 
 SUMMARY = "OS LoRa Package Group"
@@ -25,7 +25,7 @@ RDEPENDS_${PN}_lorix-one = " \
 #    chirpstack-concentratord \
 #    chirpstack-udp-bridge \
 #    pmon-csgb-concentratord \
-#    pmon-udp-concentratord \
+#    pmon-csub-concentratord \
 #"
 
 RDEPENDS_${PN}_l1 = " \

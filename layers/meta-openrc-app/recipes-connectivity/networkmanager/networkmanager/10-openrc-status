@@ -16,20 +16,15 @@ PATH="${PATH}:@EPREFIX@/sbin:@EPREFIX@/usr/sbin"
 # Exit if the NetworkManager OpenRC service is not running
 rc-service NetworkManager status 2>&1 | grep -Eq "status: (starting|started|inactive|stopping)" || exit 0
 
-# Call rc-service in background mode so that the start/stop functions update
-# NetworkManager service status to started or inactive instead of actually
-# starting or stopping the daemon
-export IN_BACKGROUND=YES
-
 case "$2" in
 	up) nm-online -t 0 -x &&
 		! rc-service NetworkManager status 2>&1 | grep -q started &&
-		exec rc-service NetworkManager start ;;
+		exec rc-service NetworkManager update_up ;;
 	down) nm-online -t 0 -x ||
 		rc-service NetworkManager status 2>&1 | grep -q stopped ||
-		exec rc-service NetworkManager stop ;;
+		exec rc-service NetworkManager update_down ;;
 	pre-sleep) rc-service NetworkManager status 2>&1 | grep -q stopped ||
-		exec rc-service NetworkManager stop ;;
+		exec rc-service NetworkManager update_down ;;
 esac
 exit 0
 # vim: set ts=4:
