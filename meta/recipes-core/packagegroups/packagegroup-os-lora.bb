@@ -29,9 +29,7 @@ RDEPENDS_${PN}_lorix-one = " \
 #"
 
 RDEPENDS_${PN}_l1 = " \
-	chirpstack-concentratord \
-    pmon-csgb-concentratord \
     lora-basic-station \
-	chirpstack-gateway-bridge \
-    pmon-csgb-upf \
+    pmon-csgb-concentratord \
+    pmon-csub-concentratord \
 "
