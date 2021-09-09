@@ -4,7 +4,6 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=99e425257f8a67b7efd81dc0009ed8ff"
 
 SRC_URI += "\
-    file://0001-Add-Wifx-L1-863-870-config.patch \
     file://concentratord.toml \
     file://gateways/* \
     file://channels/* \
@@ -64,18 +63,17 @@ do_install() {
 install_configs() {
     install -m 0755 -d ${D}${CONF_DIR}
     install_config concentratord.toml                   00-concentratord.toml
-    #install_config gateway.toml                         10-gateway.toml
     #install_config gateway-id.toml                      11-gateway-id.toml
     #install_config models/wifx_lorix_one_863_870.toml   12-gateway-model.toml
     #install_config gateway-antenna.toml                 13-gateway-antenna.toml
 }
 
 do_install_append_lorix-one() {
-    install -m 0644 ${WORKDIR}/gateways/gateway-lorix-one.toml ${D}${CONF_DIR}/10-gateway.toml
+    install_config gateways/gateway-lorix-one.toml 10-gateway.toml
 }
 
 do_install_append_l1() {
-    install -m 0644 ${WORKDIR}/gateways/gateway-l1.toml ${D}${CONF_DIR}/10-gateway.toml
+    install_config gateways/gateway-l1.toml 10-gateway.toml
 }
 
 install_config() {
