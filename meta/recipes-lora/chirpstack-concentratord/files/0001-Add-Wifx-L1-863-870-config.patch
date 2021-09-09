@@ -1,51 +1,37 @@
-From 80f8d60561eb9e56086aa218618420f830d7dea1 Mon Sep 17 00:00:00 2001
-From: Yannick Lanz <yannick.lanz@wifx.net>
-Date: Fri, 23 Jul 2021 20:50:04 +0200
-Subject: [PATCH] Add Wifx L1 863-870 config
-
----
- .../src/config/mod.rs                         |  1 +
- .../src/config/vendor/mod.rs                  |  1 +
- .../src/config/vendor/wifx/l1_863_870.rs      | 73 +++++++++++++++++++
- .../src/config/vendor/wifx/mod.rs             |  1 +
- 4 files changed, 76 insertions(+)
- create mode 100644 chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870.rs
- create mode 100644 chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs
-
 diff --git a/chirpstack-concentratord-sx1302/src/config/mod.rs b/chirpstack-concentratord-sx1302/src/config/mod.rs
-index 7d8f104..7fd8519 100644
+index ad54401..6935740 100644
 --- a/chirpstack-concentratord-sx1302/src/config/mod.rs
 +++ b/chirpstack-concentratord-sx1302/src/config/mod.rs
-@@ -107,6 +107,7 @@ pub fn get(filenames: Vec<String>) -> Configuration {
-     config.gateway.model_config = match config.gateway.model.as_ref() {
-         "semtech_sx1302c868gw1_eu868" => vendor::semtech::sx1302c868gw1_eu868::new(&config),
-         "semtech_sx1302c915gw1_us915" => vendor::semtech::sx1302c915gw1_us915::new(&config),
+@@ -172,6 +172,7 @@ pub fn get(filenames: Vec<String>) -> Configuration {
+         "rak_2287_kr920" => vendor::rak::rak2287_kr920::new(&config),
+         "rak_2287_ru864" => vendor::rak::rak2287_ru864::new(&config),
+         "rak_2287_us915" => vendor::rak::rak2287_us915::new(&config),
 +        "wifx_l1_863_870" => vendor::wifx::l1_863_870::new(&config),
          _ => panic!("unexpected gateway model: {}", config.gateway.model),
      };
  
 diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs b/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs
-index 52afc50..d0586c3 100644
+index bdab222..db1be5c 100644
 --- a/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs
 +++ b/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs
-@@ -1,6 +1,7 @@
- use libloragw_sx1302::hal;
+@@ -2,6 +2,7 @@ use libloragw_sx1302::hal;
  
+ pub mod rak;
  pub mod semtech;
 +pub mod wifx;
  
- #[derive(Default, Clone)]
- pub struct Configuration {
+ #[derive(Clone)]
+ pub enum ComType {
 diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870.rs
 new file mode 100644
-index 0000000..8f9644b
+index 0000000..37f257c
 --- /dev/null
 +++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870.rs
-@@ -0,0 +1,73 @@
+@@ -0,0 +1,74 @@
 +use libloragw_sx1302::hal;
 +
 +use super::super::super::super::config;
-+use super::super::{Configuration, RadioConfig};
++use super::super::{ComType, Configuration, RadioConfig};
 +
 +pub fn new(conf: &config::Configuration) -> Configuration {
 +    Configuration {
@@ -110,9 +96,10 @@ index 0000000..8f9644b
 +            },
 +        ],
 +        gps_tty_path: None,
-+        spidev_path: "/dev/spidev0.0".to_string(),
++        com_type: ComType::SPI,
++        com_path: "/dev/spidev0.0".to_string(),
 +        reset_pin: Some(1),
-+        power_en_pin: None
++        power_en_pin: None,
 +    }
 +}
 diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs
@@ -122,6 +109,3 @@ index 0000000..e55b287
 +++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs
 @@ -0,0 +1 @@
 +pub mod l1_863_870;
--- 
-2.25.1
-

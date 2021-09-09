@@ -15,7 +15,6 @@ SRC_URI += "\
     file://channels/IN865/* \
     file://channels/RU864/* \
     file://channels/US915/* \
-    file://0001-Add-Wifx-L1-863-870-config.patch \
 "
 
 # TODO: add support for splitted config in the concentratord
