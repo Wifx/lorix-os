@@ -62,10 +62,7 @@ do_install() {
 
 install_configs() {
     install -m 0755 -d ${D}${CONF_DIR}
-    install_config concentratord.toml                   00-concentratord.toml
-    #install_config gateway-id.toml                      11-gateway-id.toml
-    #install_config models/wifx_lorix_one_863_870.toml   12-gateway-model.toml
-    #install_config gateway-antenna.toml                 13-gateway-antenna.toml
+    install_config concentratord.toml 00-concentratord.toml
 }
 
 do_install_append_lorix-one() {
@@ -77,58 +74,78 @@ do_install_append_l1() {
 }
 
 install_config() {
-    if [ -z "$1" ] || [ -z "$2"]; then
+    if [ -z "$1" ]; then
         bbfatal "Usage install_config <source> [dest]"
     fi
 
-    install -m 0644 ${WORKDIR}/$1 ${D}${CONF_DIR}/$2
+    if [ -z "$2"]; then
+        DEST = $1
+    else
+        DEST = $2
+    fi
+
+    install -m 0644 ${WORKDIR}/$1 ${D}${CONF_DIR}/$DEST
 }
 
 install_channels() {
     install -m 0755 -d ${D}${CONF_DIR}/channels
     
     install -m 0755 -d ${D}${CONF_DIR}/channels/AS920
-    install -m 0644 ${WORKDIR}/channels/AS920/AS_920_923.toml ${D}${CONF_DIR}/channels/AS920/AS_920_923.toml
+    install_channel AS920/AS_920_923.toml
     set_default "AS920" "AS_920_923"
 
     install -m 0755 -d ${D}${CONF_DIR}/channels/AS923
-    install -m 0644 ${WORKDIR}/channels/AS923/AS_923_925.toml ${D}${CONF_DIR}/channels/AS923/AS_923_925.toml
-    install -m 0644 ${WORKDIR}/channels/AS923/AS_923_925_TTN_AU.toml ${D}${CONF_DIR}/channels/AS923/AS_923_925_TTN_AU.toml
+    install_channel AS923/AS_923_925.toml
+    install_channel AS923/AS_923_925_TTN_AU.toml
     set_default "AS923" "AS_923_925"
     
     install -m 0755 -d ${D}${CONF_DIR}/channels/AU915
-    install -m 0644 ${WORKDIR}/channels/AU915/AU_915_928_FSB_1.toml ${D}${CONF_DIR}/channels/AU915/AU_915_928_FSB_1.toml
-    install -m 0644 ${WORKDIR}/channels/AU915/AU_915_928_FSB_2.toml ${D}${CONF_DIR}/channels/AU915/AU_915_928_FSB_2.toml
-    install -m 0644 ${WORKDIR}/channels/AU915/AU_915_928_FSB_3.toml ${D}${CONF_DIR}/channels/AU915/AU_915_928_FSB_3.toml
-    install -m 0644 ${WORKDIR}/channels/AU915/AU_915_928_FSB_4.toml ${D}${CONF_DIR}/channels/AU915/AU_915_928_FSB_4.toml
-    install -m 0644 ${WORKDIR}/channels/AU915/AU_915_928_FSB_5.toml ${D}${CONF_DIR}/channels/AU915/AU_915_928_FSB_5.toml
-    install -m 0644 ${WORKDIR}/channels/AU915/AU_915_928_FSB_6.toml ${D}${CONF_DIR}/channels/AU915/AU_915_928_FSB_6.toml
-    install -m 0644 ${WORKDIR}/channels/AU915/AU_915_928_FSB_7.toml ${D}${CONF_DIR}/channels/AU915/AU_915_928_FSB_7.toml
-    install -m 0644 ${WORKDIR}/channels/AU915/AU_915_928_FSB_8.toml ${D}${CONF_DIR}/channels/AU915/AU_915_928_FSB_8.toml
+    install_channel AU915/AU_915_928_FSB_1.toml
+    install_channel AU915/AU_915_928_FSB_2.toml
+    install_channel AU915/AU_915_928_FSB_3.toml
+    install_channel AU915/AU_915_928_FSB_4.toml
+    install_channel AU915/AU_915_928_FSB_5.toml
+    install_channel AU915/AU_915_928_FSB_6.toml
+    install_channel AU915/AU_915_928_FSB_7.toml
+    install_channel AU915/AU_915_928_FSB_8.toml
     set_default "AU915" "AU_915_928_FSB_2"
     
     install -m 0755 -d ${D}${CONF_DIR}/channels/EU868
-    install -m 0644 ${WORKDIR}/channels/EU868/EU_863_870.toml ${D}${CONF_DIR}/channels/EU868/EU_863_870.toml
+    install_channel EU868/EU_863_870.toml
     set_default "EU868" "EU_863_870"
     
     install -m 0755 -d ${D}${CONF_DIR}/channels/IN865
-    install -m 0644 ${WORKDIR}/channels/IN865/IN_865_867.toml ${D}${CONF_DIR}/channels/IN865/IN_865_867.toml
+    install_channel IN865/IN_865_867.toml
     set_default "IN865" "IN_865_867"
     
     install -m 0755 -d ${D}${CONF_DIR}/channels/RU864
-    install -m 0644 ${WORKDIR}/channels/RU864/RU_864_870_TTN.toml ${D}${CONF_DIR}/channels/RU864/RU_864_870_TTN.toml
+    install_channel RU864/RU_864_870_TTN.toml
     set_default "RU864" "RU_864_870_TTN"
     
     install -m 0755 -d ${D}${CONF_DIR}/channels/US915
-    install -m 0644 ${WORKDIR}/channels/US915/US_902_928_FSB_1.toml ${D}${CONF_DIR}/channels/US915/US_902_928_FSB_1.toml
-    install -m 0644 ${WORKDIR}/channels/US915/US_902_928_FSB_2.toml ${D}${CONF_DIR}/channels/US915/US_902_928_FSB_2.toml
-    install -m 0644 ${WORKDIR}/channels/US915/US_902_928_FSB_3.toml ${D}${CONF_DIR}/channels/US915/US_902_928_FSB_3.toml
-    install -m 0644 ${WORKDIR}/channels/US915/US_902_928_FSB_4.toml ${D}${CONF_DIR}/channels/US915/US_902_928_FSB_4.toml
-    install -m 0644 ${WORKDIR}/channels/US915/US_902_928_FSB_5.toml ${D}${CONF_DIR}/channels/US915/US_902_928_FSB_5.toml
-    install -m 0644 ${WORKDIR}/channels/US915/US_902_928_FSB_6.toml ${D}${CONF_DIR}/channels/US915/US_902_928_FSB_6.toml
-    install -m 0644 ${WORKDIR}/channels/US915/US_902_928_FSB_7.toml ${D}${CONF_DIR}/channels/US915/US_902_928_FSB_7.toml
-    install -m 0644 ${WORKDIR}/channels/US915/US_902_928_FSB_8.toml ${D}${CONF_DIR}/channels/US915/US_902_928_FSB_8.toml
+    install_channel US915/US_902_928_FSB_1.toml
+    install_channel US915/US_902_928_FSB_2.toml
+    install_channel US915/US_902_928_FSB_3.toml
+    install_channel US915/US_902_928_FSB_4.toml
+    install_channel US915/US_902_928_FSB_5.toml
+    install_channel US915/US_902_928_FSB_6.toml
+    install_channel US915/US_902_928_FSB_7.toml
+    install_channel US915/US_902_928_FSB_8.toml
     set_default "US915" "US_902_928_FSB_2"
+}
+
+install_channel() {
+    if [ -z "$1" ]; then
+        bbfatal "Usage install_channel <source> [dest]"
+    fi
+
+    if [ -z "$2"]; then
+        DEST = $1
+    else
+        DEST = $2
+    fi
+
+    install -m 0644 ${WORKDIR}/channels/$1 ${D}${CONF_DIR}/channels/$DEST
 }
 
 set_default() {
