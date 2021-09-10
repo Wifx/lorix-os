@@ -74,12 +74,12 @@ install_config() {
     fi
 
     if [ -z "$2"]; then
-        DEST = $1
+        DEST=$1
     else
-        DEST = $2
+        DEST=$2
     fi
 
-    install -m 0644 ${WORKDIR}/$1 ${D}${CONF_DIR}/$DEST
+    install -m 0644 ${WORKDIR}/$1 ${D}${CONF_DIR}/${DEST}
 }
 
 install_channels() {
@@ -135,12 +135,12 @@ install_channel() {
     fi
 
     if [ -z "$2"]; then
-        DEST = $1
+        DEST=$1
     else
-        DEST = $2
+        DEST=$2
     fi
 
-    install -m 0644 ${WORKDIR}/channels/$1 ${D}${CONF_DIR}/channels/$DEST
+    install -m 0644 ${WORKDIR}/channels/$1 ${D}${CONF_DIR}/channels/${DEST}
 }
 
 set_default() {
