@@ -3,7 +3,7 @@
 ### CONFIGURE THE MIGRATION ###
 
 # The prefix will be shown in the logs only. Keep it short. E.g. "NM-PROF-MV"
-PREFIX=TEMPLATE 
+PREFIX=CSGB-CFG
 
 # The following versions description uses semver: https://semver.org/
 # Condition syntax is defined by semver_rs "Range" object: https://docs.rs/semver_rs/0.1.3/semver_rs/struct.Range.html.
@@ -17,7 +17,7 @@ PREFIX=TEMPLATE
 # Defines what is the highest version (excluded) of the source system for the migration to be applied (semver).
 # This is generally set to the current version. If the user has this version (or higher), the migration is already done and not useful anymore.
 # Must not be empty. Can be left undefined.
-VERSION_MAX="1.0.0" 
+VERSION_MAX="1.4.0" 
 
 # Condition that will be finally be checked to know if the migration will be applied.
 # Is automatically generated with VERSION_MIN and VERSION_MAX if not defined. If defined VERSION_MIN/MAX are ignored
@@ -40,19 +40,45 @@ source /data/mender/migration-utils
 # WARNING - Path to files MUST not contain /etc (would refer to the currently mounted config)
 cd $D_ETC
 
-SOMEAPP_CONFIG_PATH="someapp/config.yml" # Refers to a file at /etc/someapp/config.yml
+CSGB_SRC_CONFIG="opt/chirpstack-gateway-bridge/chirpstack-gateway-bridge.toml" 
+CSGB_INTEGRATION_CONFIG="opt/chirpstack-gateway-bridge/30-integration.toml" 
 
-# It is generally a good thing to check wheter the migration should be applied or not depending on the FS state
-if [[ ! -f "$SOMEAPP_CONFIG_PATH" ]]; then
-    log $PREFIX "No config to migrate"
-    exit 0
+# Check if file exists
+if [[ -f "$CSGB_SRC_CONFIG" ]]; then
+    log $PREFIX "Migrating CSGB config..."
+
+    echo "# See https://www.chirpstack.io/gateway-bridge/install/config/ for a full
+# configuration example and documentation.
+
+" > "$CSGB_INTEGRATION_CONFIG"
+
+    sed -rz 's|.*(# Integration configuration.*)|\1|' "$CSGB_SRC_CONFIG" >> "$CSGB_INTEGRATION_CONFIG"
+
+    echo "
+" >> "$CSGB_INTEGRATION_CONFIG"
+
+    mv "$CSGB_SRC_CONFIG" "$CSGB_SRC_CONFIG.bk"
+
+else
+    log $PREFIX "No CSGB config to migrate"
 fi
 
-log $PREFIX "Migrating..."
+
+PMON_CONFIG="pmonitor/services-available/chirpstack-gateway-bridge-udp.yml" 
+
+if [[ -f "$PMON_CONFIG" ]]; then
+    log $PREFIX "Migrating pmonitor CSGB service profile..."
+    log $PREFIX "Restoring factory service profile..."
+    rm "$PMON_CONFIG"
+else
+    log $PREFIX "No pmonitor CSGB service profile to migrate"
+fi
 
 # The migration steps will depend on the type of migration. Prefer post-migration.
 # - Pre-migration : copy files from $S_ETC to $D_ETC, edit them but not rename them
 # - Post-migration : add, edit or remove files in $D_ETC
+
+
 
 log $PREFIX "Migration done"
 
