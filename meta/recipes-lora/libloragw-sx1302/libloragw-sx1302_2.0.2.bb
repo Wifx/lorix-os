@@ -7,6 +7,7 @@ PR = "r10"
 
 SRC_URI = "\
     git://github.com/Lora-net/sx1302_hal.git;protocol=git;tag=V${PV} \
+    file://0001-test-change-stdout-err-to-line-buffered.patch \
     file://library.cfg \
 "
 
