@@ -7,6 +7,7 @@ PR = "r10"
 
 SRC_URI = "\
     git://github.com/Lora-net/sx1302_hal.git;protocol=git;tag=V${PV} \
+    file://0001-test-change-stdout-err-to-line-buffered.patch \
     file://library.cfg \
     file://0001-test_loragw_hal_tx-enable-CRC-for-LoRa-TX-packets-by.patch \
     file://0002-test_loragw_hal_tx-add-optional-argument-to-disable-.patch \
