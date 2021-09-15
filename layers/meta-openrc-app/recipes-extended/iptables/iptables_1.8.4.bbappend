@@ -11,8 +11,9 @@ SRC_URI += " \
 
 inherit openrc
 
-# Not installed by default
 OPENRC_SERVICE_${PN} = "iptables ${@bb.utils.contains('DISTRO_FEATURES', 'ipv6', 'ip6tables', '', d)}"
+OPENRC_SERVICE_${PN}_remove = "${@bb.utils.contains('IMAGE_FEATURES', 'disable-firewall', ' iptables ip6tables', '', d)}"
+
 OPENRC_RUNLEVEL_iptables = "default"
 OPENRC_RUNLEVEL_ip6tables = "default"
 
@@ -36,5 +37,6 @@ do_install_append() {
 FILES_${PN} += " \
     ${OPENRC_INITDIR}/iptables \
     ${OPENRC_CONFDIR}/iptables \
+    ${sysconfdir}/runlevels \
     ${@bb.utils.contains('DISTRO_FEATURES', 'ipv6', '${OPENRC_INITDIR}/ip6tables ${OPENRC_CONFDIR}/ip6tables', '', d)} \
 "
