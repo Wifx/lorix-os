@@ -21,5 +21,3 @@ BAD_RECOMMENDATIONS = " \
     shared-mime-info \
     cryptodev-module \
 "
-
-IMAGE_FEATURES[validitems] += " disable-firewall"
