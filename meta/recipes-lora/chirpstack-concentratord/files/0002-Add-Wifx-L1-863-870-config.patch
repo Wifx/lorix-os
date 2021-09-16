@@ -37,9 +37,9 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870.rs
 new file mode 100644
---- /dev/null	(revision 4e04b017494223cd22aadee58cd32eecd15861ae)
-+++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870.rs	(revision 4e04b017494223cd22aadee58cd32eecd15861ae)
-@@ -0,0 +1,120 @@
+--- /dev/null	(revision f340c361f9bc8d021fb5178e149e0d8d3171f4a1)
++++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870.rs	(revision f340c361f9bc8d021fb5178e149e0d8d3171f4a1)
+@@ -0,0 +1,103 @@
 +use libloragw_sx1302::hal;
 +
 +use super::super::super::super::config;
@@ -47,7 +47,7 @@ new file mode 100644
 +use std::collections::HashMap;
 +use libloragw_sx1302::hal::TxGainConfig;
 +
-+fn getGainConfig(power: i8, gain: i8) -> TxGainConfig {
++pub fn new(conf: &config::Configuration) -> Configuration {
 +
 +    let mut power_configs:HashMap<i8, TxGainConfig> = HashMap::new();
 +    power_configs.insert( 5, hal::TxGainConfig { rf_power:  5, pa_gain: 0, pwr_idx:  5, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
@@ -74,23 +74,6 @@ new file mode 100644
 +    power_configs.insert(26, hal::TxGainConfig { rf_power: 26, pa_gain: 1, pwr_idx:  9, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
 +    power_configs.insert(27, hal::TxGainConfig { rf_power: 27, pa_gain: 1, pwr_idx: 14, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
 +
-+    let corrected_power = power - gain;
-+    match power_configs.get(&corrected_power) {
-+        Some(matching_config) => return hal::TxGainConfig {
-+            rf_power: matching_config.rf_power - gain,
-+            pa_gain: matching_config.pa_gain,
-+            pwr_idx: matching_config.pwr_idx,
-+            dig_gain: matching_config.dig_gain,
-+            dac_gain: matching_config.dac_gain,
-+            mix_gain: matching_config.mix_gain,
-+            offset_i: matching_config.offset_i,
-+            offset_q: matching_config.offset_q,
-+        },
-+        None => panic!("no gain config for power {} dBm with an antenna gain of {} dBi", power, gain),
-+    }
-+}
-+
-+pub fn new(conf: &config::Configuration) -> Configuration {
 +
 +    Configuration {
 +        radio_count: 2,
@@ -115,24 +98,24 @@ new file mode 100644
 +                tx_freq_max: 870000000,
 +                tx_gain_table: match conf.gateway.antenna_gain {
 +                    0 ..= 7 => vec![
-+                        getGainConfig(12, conf.gateway.antenna_gain),
-+                        getGainConfig(13, conf.gateway.antenna_gain),
-+                        getGainConfig(14, conf.gateway.antenna_gain),
-+                        getGainConfig(15, conf.gateway.antenna_gain),
-+                        getGainConfig(16, conf.gateway.antenna_gain),
-+                        getGainConfig(17, conf.gateway.antenna_gain),
-+                        getGainConfig(18, conf.gateway.antenna_gain),
-+                        getGainConfig(19, conf.gateway.antenna_gain),
-+                        getGainConfig(20, conf.gateway.antenna_gain),
-+                        getGainConfig(21, conf.gateway.antenna_gain),
-+                        getGainConfig(22, conf.gateway.antenna_gain),
-+                        getGainConfig(23, conf.gateway.antenna_gain),
-+                        getGainConfig(24, conf.gateway.antenna_gain),
-+                        getGainConfig(25, conf.gateway.antenna_gain),
-+                        getGainConfig(26, conf.gateway.antenna_gain),
-+                        getGainConfig(27, conf.gateway.antenna_gain),
++                        power_configs.get(&(12 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(13 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(14 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(15 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(16 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(17 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(18 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(19 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(20 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(21 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(22 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(23 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(24 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(25 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(26 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(27 - conf.gateway.antenna_gain)).unwrap().clone(),
 +                    ],
-+                    _ => panic!("Invalid antenna_gain: {}", conf.gateway.antenna_gain),
++                    _ => panic!("Invalid antenna_gain: {} (0-7 accepted)", conf.gateway.antenna_gain),
 +                },
 +            },
 +            RadioConfig {
