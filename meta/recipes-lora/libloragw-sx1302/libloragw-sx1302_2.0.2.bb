@@ -16,7 +16,9 @@ SRC_URI = "\
 # Should probably be a RDEPENDS_${PN}-utils|tests on libloragw-sx1302-machine 
 # located in target/meta-wifx-machine but it's clean enough since it's only for
 # testing and debug purpose
-SRC_URI_append_l1 += "file://l1/reset_lgw.sh"
+SRC_URI_append += "file://reset_lgw.sh"
+
+RDEPENDS_${PN}-tests += "lora-concentrator"
 
 S = "${WORKDIR}/git"
 
@@ -61,11 +63,9 @@ do_install() {
     # Install tests
     install -d ${D}/${DIR_TESTS}
     install -m 0755 libloragw/test_*                            ${D}/${DIR_TESTS}
-}
 
-do_install_append_l1() {
-    install -m 0755 ${WORKDIR}/l1/reset_lgw.sh    ${D}/${DIR_UTILS}
-    install -m 0755 ${WORKDIR}/l1/reset_lgw.sh    ${D}/${DIR_TESTS}
+    install -m 0755 ${WORKDIR}/reset_lgw.sh    ${D}/${DIR_UTILS}
+    install -m 0755 ${WORKDIR}/reset_lgw.sh    ${D}/${DIR_TESTS}
 }
 
 PACKAGES += "${PN}-utils ${PN}-tests"
