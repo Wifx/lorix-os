@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [LOR-473] Add sftp support (fix sshd sftp configuration)
+- [LOR-481] Supervise critical system daemons
+- [LOR-149] Provide product serial through sysfs
 
 ### Changed
 
@@ -18,6 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-470] Upgrade nodejs-native to v12
 - [LOR-471] Update mender-artifact to 3.5.2
 - [LOR-472] Upgrade manager to 0.12
+- [LOR-484] Update pmonitor to v0.9.0
+- [LOR-458] Update Linux kernel to 5.4.104
+
+### Fixed
+
+- [LOR-451] NetworkManager chrony dispatcher warning
 
 ## [1.3.3] - 2021-08-25
 
