@@ -29,6 +29,7 @@ SRC_URI += " \
     file://0005-l1-Add-reference-defconfig-for-latest-version-see-lo.patch \
     file://0006-l1-disable-unused-PWM-and-tcb-timer-support.patch \
     file://0007-l1-fix-usb-data_mode-sysfs-store-function-doesn-t-re.patch \
+    file://0008-l1-re-enable-tcb-timer-only-one-and-disable-tclib-to.patch \
 "
 
 SRC_URI_append_l1 = " \

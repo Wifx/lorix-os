@@ -1,7 +1,7 @@
 From bbbb32e8b1a8df19266510790c55b8cd31b0392e Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
 Date: Fri, 6 Aug 2021 16:28:36 +0200
-Subject: [PATCH 3/7] wgw-ctrl: add support to read serial from MCU through i2c
+Subject: [PATCH 3/9] wgw-ctrl: add support to read serial from MCU through i2c
 
 Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
 ---

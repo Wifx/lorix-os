@@ -1,7 +1,7 @@
 From 01eed5f80281cc62ddc155f5d30d282baf430a24 Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
 Date: Fri, 13 Aug 2021 10:13:00 +0200
-Subject: [PATCH 5/7] l1: Add reference defconfig (for latest version, see
+Subject: [PATCH 5/9] l1: Add reference defconfig (for latest version, see
  lorix-os yocto recipe)
 
 Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
