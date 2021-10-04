@@ -1,0 +1,38 @@
+# See https://www.chirpstack.io/gateway-bridge/install/config/ for a full
+# configuration example and documentation.
+
+# Integration configuration.
+[integration]
+
+  # Payload marshaler.
+  #
+  # This defines how the MQTT payloads are encoded. Valid options are:
+  # * protobuf:  Protobuf encoding (this will become the ChirpStack Gateway Bridge v3 default)
+  # * json:      JSON encoding (easier for debugging, but less compact than 'protobuf')
+  marshaler="protobuf"
+
+  # MQTT integration configuration.
+  [integration.mqtt]
+
+    # MQTT authentication.
+    [integration.mqtt.auth]
+
+      # Type defines the MQTT authentication type to use.
+      #
+      # Set this to the name of one of the sections below.
+      type="generic"
+
+      # Generic MQTT authentication.
+      [integration.mqtt.auth.generic]
+
+        # MQTT servers.
+        #
+        # Configure one or multiple MQTT server to connect to. Each item must be in
+        # the following format: scheme://host:port where scheme is tcp, ssl or ws.
+        server="tcp://127.0.0.1:1883"
+
+        # Connect with the given username (optional)
+        username=""
+
+        # Connect with the given password (optional)
+        password=""

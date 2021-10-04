@@ -89,3 +89,11 @@
 
   # Path to the GUI resources served by the manager
   #resourcesPath = "/srv/manager/"
+
+# Wifx Connect connectivity services
+[connect]
+  # When enabled, the gateway will try to connect to Wifx Connect
+  #enabled = false
+
+  # The address of the Wifx Connect server
+	#server = "broker.connect.iot.wifx.net:7422"

@@ -43,7 +43,7 @@ cd $D_ETC
 SOMEAPP_CONFIG_PATH="someapp/config.yml" # Refers to a file at /etc/someapp/config.yml
 
 # It is generally a good thing to check wheter the migration should be applied or not depending on the FS state
-if [[ ! -d "$SOMEAPP_CONFIG_PATH" ]]; then
+if [[ ! -f "$SOMEAPP_CONFIG_PATH" ]]; then
     log $PREFIX "No config to migrate"
     exit 0
 fi

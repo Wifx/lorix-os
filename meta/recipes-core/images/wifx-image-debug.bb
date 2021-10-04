@@ -12,6 +12,7 @@ IMAGE_INSTALL += " \
     gdb \
 	chirpstack-concentratord \
     pmon-csgb-concentratord \
+    binutils \
 "
 
 IMAGE_INSTALL_append_lorix-one = " \

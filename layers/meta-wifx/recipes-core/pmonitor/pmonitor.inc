@@ -17,6 +17,7 @@ SRC_URI += " \
 GO_IMPORT = "git.wifx.net/pmonitor/pmonitord"
 
 S = "${WORKDIR}/git"
+B = "${WORKDIR}/build"
 
 inherit unpack-online-assets useradd
 

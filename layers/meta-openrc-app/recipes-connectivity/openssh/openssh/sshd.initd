@@ -1,15 +1,18 @@
 #!/sbin/openrc-run
 
+name="sshd"
+description="SSH daemon"
+
 extra_commands="checkconfig"
 extra_started_commands="reload"
-
-pidfile="/var/run/sshd.pid"
-command_args=""
-description="SSH daemon"
-command="/usr/sbin/sshd"
-
-extra_started_commands="reload"
 description_reload="Reload ${SVCNAME}"
+
+# We want to monitor the network manager daemon in case it dies
+supervisor="supervise-daemon"
+
+command="/usr/sbin/sshd"
+command_args_foreground="-D"
+pidfile="/run/supervise-sshd.pid"
 
 depend() {
     use logger dns
@@ -22,7 +25,7 @@ start_pre() {
 
 reload() {
     ebegin "Reloading ${SVCNAME}"
-    start-stop-daemon --signal HUP \
-        --exec ${command} --pidfile ${pidfile}
+    ${supervisor} ${SVCNAME} --signal HUP --pidfile "${pidfile}"
+
     eend $?
 }

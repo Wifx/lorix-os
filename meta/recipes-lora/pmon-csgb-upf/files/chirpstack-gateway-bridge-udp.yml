@@ -3,17 +3,19 @@ autostart: true
 log: true
 jobs:
     gateway-bridge:
-        description: Gateway Bridge receiveing the forwarder packets and sending them to the ChirpStack Network Server
+        description: Gateway Bridge receiveing the concentrator daemon packets and sending them to the ChirpStack Network Server
+        boot-order: 0
         process:
             run-mode: exec
             program-path: /opt/chirpstack-gateway-bridge/chirpstack-gateway-bridge
-            program-arguments: -c /etc/opt/chirpstack-gateway-bridge/chirpstack-gateway-bridge.toml
+            program-arguments: -c /etc/opt/chirpstack-gateway-bridge/10-general.toml -c /etc/opt/chirpstack-gateway-bridge/20-backend_semtech-udp.toml -c /etc/opt/chirpstack-gateway-bridge/30-integration.toml -c /etc/opt/chirpstack-gateway-bridge/40-filters.toml
             delays:
-                start: 2000
+                start: 5000
                 term: 5000
                 restart: 5000
     udp-packet-forwarder:
-        description: The forwarder receiving data from the SPI (SX13XX) and forwarding to the Gateway Bridge
+        description: The daemon receiving data from the LoRa concentrator (SX13XX) and forwarding to the Gateway Bridge
+        boot-order: 1
         process:
             run-mode: exec
             program-path: /opt/udp-packet-forwarder/udp-packet-forwarder

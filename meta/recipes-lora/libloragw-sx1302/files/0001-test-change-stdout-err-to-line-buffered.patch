@@ -1,0 +1,30 @@
+diff --git a/libloragw/tst/test_loragw_hal_rx.c b/libloragw/tst/test_loragw_hal_rx.c
+index 65c896d..994db03 100644
+--- a/libloragw/tst/test_loragw_hal_rx.c
++++ b/libloragw/tst/test_loragw_hal_rx.c
+@@ -148,6 +148,10 @@ int main(int argc, char **argv)
+ 
+     const uint8_t channel_rfchain_mode1[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+ 
++    /* Change stdout/err to line buffered */
++    setlinebuf(stdout);
++    setlinebuf(stderr);
++
+     /* Parameter parsing */
+     int option_index = 0;
+     static struct option long_options[] = {
+diff --git a/libloragw/tst/test_loragw_hal_tx.c b/libloragw/tst/test_loragw_hal_tx.c
+index f9f2757..82874e5 100644
+--- a/libloragw/tst/test_loragw_hal_tx.c
++++ b/libloragw/tst/test_loragw_hal_tx.c
+@@ -162,6 +162,10 @@ int main(int argc, char **argv)
+     txlut.size = 0;
+     memset(txlut.lut, 0, sizeof txlut.lut);
+ 
++    /* Change stdout/err to line buffered */
++    setlinebuf(stdout);
++    setlinebuf(stderr);
++
+     /* Parameter parsing */
+     int option_index = 0;
+     static struct option long_options[] = {

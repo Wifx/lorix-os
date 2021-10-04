@@ -4,7 +4,7 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=09fe2246a30dca84af09ac8608093cd7"
 
 SRC_URI += "\
-    file://udp-bridge.toml \
+    file://0001-multiple-config-files.patch \
     file://00-concentratord.toml \
     file://10-udp-bridge.toml \
     file://20-servers.toml \
@@ -31,10 +31,9 @@ do_install() {
 
     # Configuration
     install -m 0755 -d ${D}${CONF_DIR}
-    install_config udp-bridge.toml udp-bridge.toml
-    #install_config 00-concentratord.toml 00-concentratord.toml
-    #install_config 10-udp-bridge.toml 10-udp-bridge.toml
-    #install_config 20-servers.toml 20-servers.toml
+    install_config 00-concentratord.toml 00-concentratord.toml
+    install_config 10-udp-bridge.toml 10-udp-bridge.toml
+    install_config 20-servers.toml 20-servers.toml
     
     # Bin directory
     install -m 0755 -d ${D}${optdir}/chirpstack-udp-bridge

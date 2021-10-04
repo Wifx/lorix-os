@@ -2,15 +2,14 @@ DESCRIPTION = "Mender image artifact library"
 GO_IMPORT = "github.com/mendersoftware/mender-artifact"
 
 inherit go
-# Fix Go 1.12.6 cache support
-export GOCACHE = "${B}/.cache"
+inherit go-ptest
 
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
 
 GOPATHDIR = "${B}/src/${GO_IMPORT}"
 
-BBCLASSEXTEND = "native"
+BBCLASSEXTEND = "native nativesdk"
 
 do_compile() {
     # we could check out the sources at some destsuffix and use default
