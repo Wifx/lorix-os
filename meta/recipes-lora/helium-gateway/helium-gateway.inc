@@ -18,7 +18,8 @@ DEPENDS += " \
 
 ASSUME_PROVIDED_remove = "cmake-native"
 
-CONF_DIR = "${sysconfoptdir}/helium-gateway"
+CONF_DIR = "${sysconfdir}/helium-gateway"
+OPT_DIR = "${sysconfoptdir}/helium-gateway"
 S = "${WORKDIR}/git"
 
 do_install() {
@@ -30,15 +31,15 @@ do_install() {
     fi
 
     # Config
-    instal -m 0664 default.toml $CONF_DIR/default.toml
+    instal -m 0664 default.toml ${D}${CONF_DIR}/default.toml
 
     # Bin directory
-    install -m 0775 -d ${D}${optdir}/helium-gateway
-    install -m 0777 ${cargo_bindir}/helium_gateway ${D}${optdir}/helium-gateway/helium-gateway
+    install -m 0775 -d ${D}${OPT_DIR}
+    install -m 0777 ${cargo_bindir}/helium_gateway ${D}${OPT_DIR}/helium-gateway/helium-gateway
 
 }
 
 FILES_${PN} += " \
     ${CONF_DIR}/ \
-    ${optdir}/helium-gateway/helium-gateway \
+    ${OPT_DIR}/helium-gateway \
 "
