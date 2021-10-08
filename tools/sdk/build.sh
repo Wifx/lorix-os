@@ -39,7 +39,7 @@ case $SOURCE in
         ;;
     
     "downloads")
-        wget $SDK_SRC_URL -o sdk-installer.sh
+        wget $SDK_SRC_URL -O sdk-installer.sh
         ;;
 
     *)
