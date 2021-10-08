@@ -4,8 +4,10 @@ LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=1c3a461cb3bfa8dedcbf13b9e8a6335a"
 
 SRC_URI += "\
-    file://default.toml \
     file://000-remove-cargo-strip.patch \
+    file://001-use-wifx-proto-no-rustfmt.patch \
+    file://default.toml \
+    file://settings.toml \
 "
 
 inherit cargo
@@ -13,10 +15,7 @@ inherit cargo
 DEPENDS += " \
     clang-native \
     cmake-native \
-    protobuf-c protobuf-c-native \
 "
-
-ASSUME_PROVIDED_remove = "cmake-native"
 
 CONF_DIR = "${sysconfdir}/helium-gateway"
 OPT_DIR = "${sysconfoptdir}/helium-gateway"
@@ -31,11 +30,12 @@ do_install() {
     fi
 
     # Config
-    instal -m 0664 default.toml ${D}${CONF_DIR}/default.toml
+    install -m 0664 default.toml     ${D}${CONF_DIR}/default.toml
+    install -m 0664 settings.toml    ${D}${CONF_DIR}/settings.toml
 
     # Bin directory
     install -m 0775 -d ${D}${OPT_DIR}
-    install -m 0777 ${cargo_bindir}/helium_gateway ${D}${OPT_DIR}/helium-gateway/helium-gateway
+    install -m 0777 ${cargo_bindir}/helium_gateway ${D}${OPT_DIR}/helium-gateway
 
 }
 

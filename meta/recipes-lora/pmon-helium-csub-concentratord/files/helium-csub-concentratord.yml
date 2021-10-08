@@ -30,7 +30,7 @@ jobs:
         process:
             run-mode: exec
             program-path: /opt/helium-gateway/helium-gateway
-            program-arguments: 
+            program-arguments: -c /etc/opt/helium-gateway/ server
             delays:
                 start: 5000
                 term: 10000
