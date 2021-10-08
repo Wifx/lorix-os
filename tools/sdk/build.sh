@@ -8,7 +8,7 @@ if [ "$#" -lt 1 ]; then
 fi
 
 VERSION_SDK=$1
-VERSION_GO="1.14.15"
+VERSION_GO="1.16"
 
 if [ "$#" -ge 2 ]; then
     case $2 in
