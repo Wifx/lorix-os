@@ -25,6 +25,4 @@ RUN rm sdk-installer.sh
 WORKDIR $WORKDIR
 ENV TOOLCHAIN_PATH ${TOOLCHAIN_PATH}
 
-ENTRYPOINT \
-    . ${TOOLCHAIN_PATH}/environment-setup-cortexa5t2hf-neon-vfpv4-lorixos-linux-gnueabi && \
-    /bin/bash
+ENTRYPOINT . ${TOOLCHAIN_PATH}/environment-setup-cortexa5t2hf-neon-vfpv4-lorixos-linux-gnueabi && /bin/bash
