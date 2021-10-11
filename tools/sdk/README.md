@@ -4,19 +4,16 @@ Dockerfile for a LORIX OS SDK Docker image. This images allows anyone to easily 
 
 ## Image description
 
-The image is based on Ubuntu 18.04 LTS and contains:
+The image is based on Ubuntu 20.10 LTS and contains:
 
 - Build essentials
 - The LORIX OS toolchain
   - C compiler
   - Included libraries and their headers
-- The GO 1.13 compiler
 
 ## Versions
 
 The tag name corresponds to the version of LORIX OS the toolchain is from.
-
-The version of the GO compiler corresponds to the version used in the corresponding LORIX OS version.
 
 ## Use
 
@@ -40,18 +37,23 @@ make
 
 ## Build
 
-To create a new version of the SDK, edit the docker file and edit the following variables:
+To create a new version of the SDK:
+
+1. Get a toolchain installer
+2. Build the image
+
+### Get a toolchain
+
+Either build it from the build system with the `wifx-image-sdk -c populate_sdk` recipe or download it from https://download.wifx.net/lorix-os/ with the download.sh script.
 
 ```bash
-GO_VERSION=<the version of the GO compiler that will be installed>
+./download.sh 1.3.3
 ```
 
-The assets are downloaded from the Internet (Wifx downloads and GO binary repository).
+Copy the installer shell script to the same location than the Dockerfile and call id sdk-installer.sh.
 
-Build the image with:
+### Build the image
 
 ```bash
-docker build -t wifx/lorix-os-sdk:1.3.0 --build-arg GO_VERSION=1.15 --build-arg LORIXOS_TOOLCHAIN_VERSION=1.3.0 .
+docker build -t wifx/lorix-os-sdk:<version> .
 ```
-
-Replace LORIXOS_TOOLCHAIN_VERSION with what you defined in the Dockerfile.

@@ -27,6 +27,4 @@ ENV TOOLCHAIN_PATH ${TOOLCHAIN_PATH}
 
 ENTRYPOINT \
     . ${TOOLCHAIN_PATH}/environment-setup-cortexa5t2hf-neon-vfpv4-lorixos-linux-gnueabi && \
-    export CGO_CFLAGS="-march=armv7-a -marm -mfpu=neon -mfloat-abi=hard -mcpu=cortex-a5 --sysroot=$SDKTARGETSYSROOT" && \
-    export CGO_LDFLAGS="--sysroot=$SDKTARGETSYSROOT" && \
     /bin/bash
