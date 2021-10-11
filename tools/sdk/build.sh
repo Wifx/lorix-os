@@ -60,6 +60,6 @@ docker build \
     -t wifx/lorix-os-sdk:"$VERSION_SDK" \
     --build-arg GO_VERSION="$VERSION_GO" \
     --build-arg LORIXOS_TOOLCHAIN_VERSION="$VERSION_SDK" \
-    .
+    lorix-os/tools/sdk
 
 rm sdk-installer.sh
