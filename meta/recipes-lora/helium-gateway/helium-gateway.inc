@@ -12,6 +12,8 @@ SRC_URI += "\
 
 inherit cargo
 
+RDEPENDS += "curl"
+
 DEPENDS += " \
     clang-native \
     cmake-native \
