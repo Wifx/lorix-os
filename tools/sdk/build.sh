@@ -29,9 +29,9 @@ else
     SOURCE="yocto"
 fi
 
-SDK_SCRIPT_NAME=lorix-os-glibc-x86_64-wifx-image-os-cortexa5t2hf-neon-vfpv4-lorix-one-512-toolchain-${VERSION_SDK}.sh
-SDK_SRC_PATH=../../poky/build/tmp/deploy/sdk/${SDK_SCRIPT_NAME}
-SDK_SRC_URL=https://download.wifx.net/lorix-os/${VERSION}/sdk/${SDK_SCRIPT_NAME}
+SDK_SCRIPT_BASE_NAME=lorix-os-glibc-x86_64-wifx-image-os-cortexa5t2hf-neon-vfpv4-lorix-one-512-toolchain
+SDK_SRC_PATH=../../poky/build/tmp/deploy/sdk/${SDK_SCRIPT_BASE_NAME}-*.sh
+SDK_SRC_URL=https://download.wifx.net/lorix-os/${VERSION}/sdk/${SDK_SCRIPT_BASE_NAME}-${VERSION_SDK}.sh
 
 case $SOURCE in
     "yocto")
