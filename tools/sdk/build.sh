@@ -1,6 +1,6 @@
 #!/bin/bash -x
 
-USAGE="Usage: build <sdk-version> [yocto(default)|downloads] [go-version]"
+USAGE="Usage: build <sdk-version> [yocto(default)|downloads] [sdk-path]"
 
 if [ "$#" -lt 1 ]; then
     echo $USAGE
@@ -30,8 +30,14 @@ else
 fi
 
 SDK_SCRIPT_BASE_NAME=lorix-os-glibc-x86_64-wifx-image-os-cortexa5t2hf-neon-vfpv4-lorix-one-512-toolchain
-SDK_SRC_PATH=../../poky/build/tmp/deploy/sdk/${SDK_SCRIPT_BASE_NAME}-*.sh
-SDK_SRC_URL=https://download.wifx.net/lorix-os/${VERSION}/sdk/${SDK_SCRIPT_BASE_NAME}-${VERSION_SDK}.sh
+
+if [[ ! -z "$3" ]]; then
+    SDK_SRC_PATH=$3/${SDK_SCRIPT_BASE_NAME}-*.sh
+else
+    SDK_SRC_PATH=../../poky/build/tmp/deploy/sdk/${SDK_SCRIPT_BASE_NAME}-*.sh
+fi
+
+SDK_SRC_URL=https://download.wifx.net/lorix-os/${VERSION_SDK}/sdk/${SDK_SCRIPT_BASE_NAME}-${VERSION_SDK}.sh
 
 case $SOURCE in
     "yocto")
