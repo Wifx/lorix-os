@@ -12,7 +12,7 @@ SRC_URI += "\
 
 inherit cargo
 
-RDEPENDS += "curl"
+RDEPENDS_${PN} += "curl"
 
 DEPENDS += " \
     clang-native \
