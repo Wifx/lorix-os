@@ -31,9 +31,9 @@ do_install() {
 
     # Configuration
     install -m 0755 -d ${D}${CONF_DIR}
-    install_config 00-concentratord.toml 00-concentratord.toml
-    install_config 10-udp-bridge.toml 10-udp-bridge.toml
-    install_config 20-servers.toml 20-servers.toml
+    install_config 00-concentratord.toml
+    install_config 10-udp-bridge.toml
+    install_config 20-servers.toml
     
     # Bin directory
     install -m 0755 -d ${D}${optdir}/chirpstack-udp-bridge
@@ -41,11 +41,17 @@ do_install() {
 }
 
 install_config() {
-    if [ -z "$1" ] || [ -z "$2"]; then
+    if [ -z "$1" ]; then
         bbfatal "Usage install_config <source> [dest]"
     fi
 
-    install -m 0644 ${WORKDIR}/$1 ${D}${CONF_DIR}/$2
+    if [ -z "$2"]; then
+        DEST=$1
+    else
+        DEST=$2
+    fi
+
+    install -m 0644 ${WORKDIR}/$1 ${D}${CONF_DIR}/${DEST}
 }
 
 FILES_${PN} += " \
