@@ -7,8 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.3.4] - Unreleased
 
+### Changed
+
+- [LOR-481] Supervise critical system daemons
+
 ### Fixed
 
+- [LOR-451] NetworkManager chrony dispatcher warning
 - [LOR-488] Remove mozilla/DST_Root_CA_X3.crt
 
 ## [1.3.3] - 2021-08-25
