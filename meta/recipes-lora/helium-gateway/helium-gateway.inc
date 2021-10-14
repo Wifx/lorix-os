@@ -32,13 +32,28 @@ do_install() {
     fi
 
     # Config
-    install -m 0664 default.toml     ${D}${CONF_DIR}/default.toml
-    install -m 0664 settings.toml    ${D}${CONF_DIR}/settings.toml
+    install -m 0755 -d ${D}${CONF_DIR}
+    install_config default.toml
+    install_config settings.toml
 
     # Bin directory
-    install -m 0775 -d ${D}${OPT_DIR}
+    install -m 0755 -d ${D}${OPT_DIR}
     install -m 0777 ${cargo_bindir}/helium_gateway ${D}${OPT_DIR}/helium-gateway
 
+}
+
+install_config() {
+    if [ -z "$1" ]; then
+        bbfatal "Usage install_config <source> [dest]"
+    fi
+
+    if [ -z "$2"]; then
+        DEST=$1
+    else
+        DEST=$2
+    fi
+
+    install -m 0644 ${WORKDIR}/$1 ${D}${CONF_DIR}/${DEST}
 }
 
 FILES_${PN} += " \
