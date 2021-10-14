@@ -19,7 +19,6 @@ RDEPENDS_${PN}_lorix-one = " \
     lora-basic-station \
     chirpstack-gateway-bridge \
     pmon-csgb-upf \
-    helium-gateway \
 "
 
 #RDEPENDS_${PN}_lorix-one += " \
@@ -27,4 +26,9 @@ RDEPENDS_${PN}_lorix-one = " \
 #    chirpstack-udp-bridge \
 #    pmon-csgb-concentratord \
 #    pmon-csub-concentratord \
+#"
+
+#RDEPENDS_${PN}_lorix-one += " \
+#    helium-gateway \
+#    pmon-helium-upf \
 #"
