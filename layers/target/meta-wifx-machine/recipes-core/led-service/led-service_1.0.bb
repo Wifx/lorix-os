@@ -1,4 +1,4 @@
-SUMMARY = "Basic scripts which manages the serial LED"
+SUMMARY = "Basic scripts which manages the service LED"
 AUTHOR = "Wifx Sàrl"
 SECTION = "base"
 
@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=83564c4ad755d0edeaa1ba4b3918b365"
 
 SRC_URI = " \
     file://LICENSE \
-    file://led-serial.initd \
+    file://led-service.initd \
 "
 
 PR = "r0"
@@ -20,12 +20,12 @@ do_compile[noexec] = "1"
 
 inherit openrc
 
-OPENRC_SERVICE_${PN} = "led-serial"
-OPENRC_RUNLEVEL_led-serial = "default"
+OPENRC_SERVICE_${PN} = "led-service"
+OPENRC_RUNLEVEL_led-service = "default"
 
 do_install_l1() {
     # Install OpenRC script
-    openrc_install_script ${WORKDIR}/led-serial.initd
+    openrc_install_script ${WORKDIR}/led-service.initd
 }
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"

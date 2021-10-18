@@ -1,7 +1,7 @@
-From 58f8bcfcc82d8c09ef1e675f7926c9fa42f3bd7e Mon Sep 17 00:00:00 2001
+From e19351b7e57692a3e641e5c0e065e485f6ba1151 Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
 Date: Thu, 5 Aug 2021 21:50:32 +0200
-Subject: [PATCH 2/9] wgw-ctrl: move all MCU registers to a specific file and
+Subject: [PATCH 02/11] wgw-ctrl: move all MCU registers to a specific file and
  swap data/size in read/write i2c callbacks functions.
 
 Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>

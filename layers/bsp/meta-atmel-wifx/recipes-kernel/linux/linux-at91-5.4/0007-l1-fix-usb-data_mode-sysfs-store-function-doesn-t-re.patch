@@ -1,8 +1,8 @@
-From 7e998e747c0b0b205432a5341e38af037b621f5b Mon Sep 17 00:00:00 2001
+From c0754d56655f5c2e77a7959681516e7e2ec60d75 Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
 Date: Fri, 13 Aug 2021 11:03:39 +0200
-Subject: [PATCH 7/9] l1: fix usb data_mode sysfs store function doesn't return
- correct written length
+Subject: [PATCH 07/11] l1: fix usb data_mode sysfs store function doesn't
+ return correct written length
 
 Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
 ---

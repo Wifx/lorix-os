@@ -1,7 +1,7 @@
-From d405e39901429aadd49e67096c5ba04945ab396d Mon Sep 17 00:00:00 2001
+From 23bf397b461aed06ba77b98e8e4248a934e1c181 Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
 Date: Wed, 22 Sep 2021 11:45:42 +0200
-Subject: [PATCH 8/9] l1: re-enable tcb timer (only one) and disable tclib to
+Subject: [PATCH 08/11] l1: re-enable tcb timer (only one) and disable tclib to
  keep highres timer
 
 Revert previous commit without boot log error message.

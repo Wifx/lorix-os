@@ -7,5 +7,5 @@ MACHINE_EXTRA_RDEPENDS += " \
 "
 
 MACHINE_EXTRA_RDEPENDS_l1 += " \
-    led-serial \
+    led-service \
 "

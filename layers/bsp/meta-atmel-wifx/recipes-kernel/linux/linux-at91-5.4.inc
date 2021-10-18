@@ -30,6 +30,9 @@ SRC_URI += " \
     file://0006-l1-disable-unused-PWM-and-tcb-timer-support.patch \
     file://0007-l1-fix-usb-data_mode-sysfs-store-function-doesn-t-re.patch \
     file://0008-l1-re-enable-tcb-timer-only-one-and-disable-tclib-to.patch \
+    file://0009-wgw-ctrl-add-support-to-write-serial-in-MCU-producti.patch \
+    file://0010-l1.dts-rename-serial-LED-to-service.patch \
+    file://0011-wgw-ctrl-update-to-comm-protocol-version-2-with-SMBu.patch \
 "
 
 SRC_URI_append_l1 = " \

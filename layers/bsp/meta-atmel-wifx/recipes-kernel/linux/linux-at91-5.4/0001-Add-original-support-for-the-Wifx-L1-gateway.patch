@@ -1,7 +1,7 @@
-From c1ed15e48972e221de4bc103412351037224dfef Mon Sep 17 00:00:00 2001
+From 5546d9489521b3acce0f5a0c236b5e69d2b9f5d0 Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
 Date: Fri, 6 Aug 2021 16:15:46 +0200
-Subject: [PATCH 1/9] Add original support for the Wifx L1 gateway
+Subject: [PATCH 01/11] Add original support for the Wifx L1 gateway
 
 Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
 ---

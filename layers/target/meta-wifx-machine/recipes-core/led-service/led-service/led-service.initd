@@ -8,7 +8,7 @@ depend() {
 }
 
 start() {
-        if [ -e /sys/class/leds/serial/enable ]; then
-                echo "1" > /sys/class/leds/serial/enable
+        if [ -e /sys/class/leds/service/enable ]; then
+                echo "1" > /sys/class/leds/service/enable
         fi
 }

@@ -1,7 +1,7 @@
-From 893fa38a9a4f1652348cdc9055fbf4da37f955f5 Mon Sep 17 00:00:00 2001
+From 0b31ca2b5aca9f4f26d8c086d764587fc748f025 Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
 Date: Thu, 12 Aug 2021 13:55:48 +0200
-Subject: [PATCH 4/9] Update model/variant, clean and secure the code
+Subject: [PATCH 04/11] Update model/variant, clean and secure the code
 
 Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
 ---
