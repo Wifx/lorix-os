@@ -1,4 +1,4 @@
-From cf70c4b581bfcdcebe9723ba272c8ee0078d8908 Mon Sep 17 00:00:00 2001
+From dc0f104c0338a35d195b844337075fbd4cf86ff1 Mon Sep 17 00:00:00 2001
 From: OpenEmbedded <oe.patch@oe>
 Date: Mon, 18 Oct 2021 21:29:45 +0200
 Subject: [PATCH 11/11] wgw-ctrl: update to comm protocol version 2 with SMBus
@@ -31,7 +31,7 @@ index 73f62044b039..5b67d1b3d845 100644
  
  static void wgw_ctrl_led_set(struct led_classdev *led_cdev,
 diff --git a/drivers/mfd/wgw-ctrl-core.c b/drivers/mfd/wgw-ctrl-core.c
-index 11b82742ad88..564084ca0930 100644
+index 11b82742ad88..59f052a7d790 100644
 --- a/drivers/mfd/wgw-ctrl-core.c
 +++ b/drivers/mfd/wgw-ctrl-core.c
 @@ -30,11 +30,6 @@
@@ -63,7 +63,7 @@ index 11b82742ad88..564084ca0930 100644
 +
 +enum frequency {
 +	F_863_870 = 0,
-+	F_902_928 = 2,
++	F_902_928 = 1,
  };
 +
  static const char *unknown_str = "unknown";
