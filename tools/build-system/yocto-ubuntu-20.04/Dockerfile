@@ -19,14 +19,8 @@ RUN apt-get install -y curl dosfstools mtools parted syslinux tree
 RUN curl http://storage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo
 RUN chmod a+x /usr/local/bin/repo
 
-# Create a non-root user that will perform the actual build
-RUN id yocto 2>/dev/null || useradd --uid 5000 --create-home yocto
-RUN apt-get install -y sudo
-RUN echo "yocto ALL=(ALL) NOPASSWD: ALL" | tee -a /etc/sudoers
-
 # Create yocto directory that will contain downloads and sstate cache (can be overridden by volume)
 RUN mkdir /yocto
-RUN chown yocto:yocto /yocto
 
 # Fix error "Please use a locale setting which supports utf-8."
 # See https://wiki.yoctoproject.org/wiki/TipsAndTricks/ResolvingLocaleIssues
@@ -40,8 +34,7 @@ ENV LC_ALL en_US.UTF-8
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US.UTF-8
 
-USER yocto
-WORKDIR /home/yocto
+WORKDIR /yocto
 CMD "/bin/bash"
 
 # EOF

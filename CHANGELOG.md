@@ -15,13 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- [LOR-461] Update ChirpStack Gateway Bridge to v3.12
+- [LOR-487] Update ChirpStack Gateway Bridge to v3.13
 - [LOR-469] Upgrade go compiler to v1.16
 - [LOR-470] Upgrade nodejs-native to v12
 - [LOR-471] Update mender-artifact to 3.5.2
 - [LOR-472] Upgrade manager to 0.12
 - [LOR-484] Update pmonitor to v0.9.0
 - [LOR-458] Update Linux kernel to 5.4.104
+- Update pvisor to v0.3.2
 
 ### Fixed
 

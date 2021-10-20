@@ -1,0 +1,14 @@
+FROM registry.wifx.net/yocto/lorix-os/build-system:ubuntu-20.04-rootless
+
+# Create a non-root user that will perform the actual build
+RUN id build 2>/dev/null || useradd --uid 5000 --create-home build
+RUN apt-get install -y sudo
+RUN echo "build ALL=(ALL) NOPASSWD: ALL" | tee -a /etc/sudoers
+
+# Create yocto directory that will contain downloads and sstate cache (can be overridden by volume)
+RUN chown build:build /yocto
+
+USER build
+WORKDIR /home/build
+
+# EOF

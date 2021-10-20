@@ -28,6 +28,11 @@ RDEPENDS_${PN}_lorix-one = " \
 #    pmon-csub-concentratord \
 #"
 
+#RDEPENDS_${PN}_lorix-one += " \
+#    helium-gateway \
+#    pmon-helium-upf \
+#"
+
 RDEPENDS_${PN}_l1 = " \
     lora-basic-station \
     pmon-csgb-concentratord \
