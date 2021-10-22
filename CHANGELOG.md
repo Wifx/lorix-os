@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [LOR-481] Supervise critical system daemons
 - [LOR-492] Update Manager GUI to v0.11.2
+- [LOR-493] Update pvisor to 0.3.2
 
 ### Fixed
 
