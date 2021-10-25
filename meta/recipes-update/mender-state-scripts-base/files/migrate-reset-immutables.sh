@@ -6,6 +6,7 @@ source /data/mender/migration-env
 # Some files must not be migrated if the user has changed them
 ETC_FILES=( 
     os-release
+    ca-certificates.conf
 )
 for FILE in "${ETC_FILES[@]}"
 do
