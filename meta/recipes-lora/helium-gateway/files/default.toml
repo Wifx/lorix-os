@@ -1,3 +1,4 @@
+listen = "127.0.0.1:1700"
 keypair = "/etc/opt/helium-gateway/gateway_key.bin"
 
 [log]

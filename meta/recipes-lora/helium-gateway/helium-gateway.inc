@@ -19,8 +19,8 @@ DEPENDS += " \
     cmake-native \
 "
 
-CONF_DIR = "${sysconfdir}/helium-gateway"
-OPT_DIR = "${sysconfoptdir}/helium-gateway"
+CONF_DIR = "${sysconfoptdir}/helium-gateway"
+OPT_DIR = "${optdir}/helium-gateway"
 S = "${WORKDIR}/git"
 
 do_install() {
