@@ -22,17 +22,8 @@ SRC_URI += " \
     file://kernel-features/nf_tables/nf_tables6.cfg \
     file://kernel-features/wireguard/wireguard.scc;type=kmeta;destsuffix=kernel-meta \
     file://kernel-features/wireguard/wireguard.cfg \
-    file://0001-Add-original-support-for-the-Wifx-L1-gateway.patch \
-    file://0002-wgw-ctrl-move-all-MCU-registers-to-a-specific-file-a.patch \
-    file://0003-wgw-ctrl-add-support-to-read-serial-from-MCU-through.patch \
-    file://0004-Update-model-variant-clean-and-secure-the-code.patch \
-    file://0005-l1-Add-reference-defconfig-for-latest-version-see-lo.patch \
-    file://0006-l1-disable-unused-PWM-and-tcb-timer-support.patch \
-    file://0007-l1-fix-usb-data_mode-sysfs-store-function-doesn-t-re.patch \
-    file://0008-l1-re-enable-tcb-timer-only-one-and-disable-tclib-to.patch \
-    file://0009-wgw-ctrl-add-support-to-write-serial-in-MCU-producti.patch \
-    file://0010-l1.dts-rename-serial-LED-to-service.patch \
-    file://0011-wgw-ctrl-update-to-comm-protocol-version-2-with-SMBu.patch \
+    file://0001-atmel_usba_udc-fix-usb-device-host-initial-state.patch \
+    file://0002-l1-add-support-for-the-Wifx-L1-board.patch \
 "
 
 SRC_URI_append_l1 = " \
