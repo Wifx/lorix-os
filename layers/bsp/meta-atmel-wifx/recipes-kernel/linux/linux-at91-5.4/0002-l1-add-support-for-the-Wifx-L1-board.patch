@@ -1,4 +1,4 @@
-From a5a095ac594f36d01dd651f9ff0f572ddef476d3 Mon Sep 17 00:00:00 2001
+From cb73bf6f5081e43ef0e8ae1d766a21a0143a0666 Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
 Date: Fri, 29 Oct 2021 16:12:58 +0200
 Subject: [PATCH 2/2] l1: add support for the Wifx L1 board
@@ -1856,7 +1856,7 @@ index 000000000000..d97477c6cde5
 \ No newline at end of file
 diff --git a/drivers/mfd/wgw_ec_dev.c b/drivers/mfd/wgw_ec_dev.c
 new file mode 100644
-index 000000000000..11a73119656d
+index 000000000000..a583694e7f37
 --- /dev/null
 +++ b/drivers/mfd/wgw_ec_dev.c
 @@ -0,0 +1,769 @@
@@ -2348,7 +2348,7 @@ index 000000000000..11a73119656d
 +		dev_err(ec->dev, "failed to read from device\n");
 +		*boot_state = 0xFF;
 +	}
-+	return ret;
++	return 0;
 +}
 +EXPORT_SYMBOL_GPL(wgw_ec_boot_state_get);
 +
@@ -2809,7 +2809,7 @@ index 000000000000..f2947e7dd9ac
 +MODULE_LICENSE("GPL v2");
 diff --git a/drivers/mfd/wgw_ec_sysfs.c b/drivers/mfd/wgw_ec_sysfs.c
 new file mode 100644
-index 000000000000..65f22a7d9cb4
+index 000000000000..4cd2597bfee6
 --- /dev/null
 +++ b/drivers/mfd/wgw_ec_sysfs.c
 @@ -0,0 +1,359 @@
@@ -3080,7 +3080,7 @@ index 000000000000..65f22a7d9cb4
 +	ret = wgw_ec_boot_state_clr_update(ec, &cache->boot_state);
 +	mutex_unlock(&ec->cache_lock);
 +
-+	if (ret) {
++	if (ret < 0) {
 +		return -EIO;
 +	}
 +	return count;
