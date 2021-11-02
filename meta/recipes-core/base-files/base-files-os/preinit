@@ -148,28 +148,27 @@ preinit_mount_overlay(){
 }
 
 preinit_manage_reset() {
-    reset_user=false
+    RESET_USER=false
 
-    # Try to source machine detection
-    if [ ! -f /etc/os/.machine-detect ]; then
-        echo "Machine specific functions not found"
-        echo "Factory reset detection is impossible, abort"
-        return 1
-    fi
-    source /etc/os/.machine-detect
-
-    # Launch machine detection
-    machine_detect
+    MACHINE_INFO=$(which machine-info)
     if [ $? -ne 0 ]; then
-        echo "Error during machine detection, abort"
+        echo "Can't find machine-info utils, abort"
         return 1
     fi
 
-    # Test if we need to factory reset cause of reset button
-    machine_needs_factory_reset
-    if [ $? -eq 1 ]; then
+    # Detect boot_state
+    RET=$(eval "$MACHINE_INFO -n -f BOOT_STATE" 2> /dev/null)
+    if [ $? -ne 0 ]; then
+        echo "Error trying to read boot state:"
+        echo $RET
+        echo "abort"
+        return 1
+    fi
+
+    if [ "$RET" == "factory" ]; then
+        # we need a factory reset
         echo "Factory reset required, triggered by user"
-        reset_user=true
+        RESET_USER=true
     else
         # Test now first init flag presence
         os_first_init_has_started "/mnt/data/overlay/user/diff/var/lib/os"
@@ -197,9 +196,15 @@ preinit_manage_reset() {
     rm -rf /mnt/data/overlay/config/rootfsB/*
     sync
 
-    if [ "$reset_user" = true ]; then
+    if [ "$RESET_USER" = true ]; then
         echo "Clearing factory reset state"
-        machine_clear_reset_state
+
+        RET=$(eval "$MACHINE_INFO --reset" 2> /dev/null)
+        if [ $? -ne 0 ]; then
+            echo "Failed to clear factory reset state:"
+            echo $RET
+            echo "continue"
+        fi
     fi
     echo "======== done ========="
 
