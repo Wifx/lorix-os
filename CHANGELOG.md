@@ -23,10 +23,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-484] Update pmonitor to v0.9.0
 - [LOR-458] Update Linux kernel to 5.4.104
 - Update pvisor to v0.3.2
+## [1.3.4] - 2021-10-25
+
+### Added
+
+- [LOR-489] Run update-ca-certificates after migration
+
+### Changed
+
+- [LOR-481] Supervise critical system daemons
+- [LOR-492] Update Manager GUI to v0.11.2
+- [LOR-493] Update pvisor to 0.3.2
 
 ### Fixed
 
 - [LOR-451] NetworkManager chrony dispatcher warning
+- [LOR-488] Remove mozilla/DST_Root_CA_X3.crt
 
 ## [1.3.3] - 2021-08-25
 

@@ -22,7 +22,7 @@ do_configure[noexec] = "1"
 do_compile[noexec] = "1"
 
 RDEPENDS_${PN} =+ " \
-    machine-detect \
+    machine-info \
     gawk \
     sed \
 "

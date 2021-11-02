@@ -8,7 +8,6 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=83564c4ad755d0edeaa1ba4b3918b365"
 
 SRC_URI = " \
     file://LICENSE \
-    file://.machine-detect \
     file://.machine-functions \
     file://machine-functions \
     file://20-spi.rules \
@@ -23,13 +22,10 @@ do_patch[noexec] = "1"
 do_configure[noexec] = "1"
 do_compile[noexec] = "1"
 
-RPROVIDES_${PN} += "machine-detect"
-
 osdir = "${sysconfdir}/os"
 
 do_install () {
     install -d ${D}${osdir}
-    install -m 0600 ${WORKDIR}/.machine-detect ${D}${osdir}/.machine-detect
     install -m 0600 ${WORKDIR}/.machine-functions ${D}${osdir}/.machine-functions
     install -m 0700 ${WORKDIR}/machine-functions ${D}${osdir}/machine-functions
 
