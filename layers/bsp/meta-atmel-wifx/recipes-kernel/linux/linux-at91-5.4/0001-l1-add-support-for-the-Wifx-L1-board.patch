@@ -1,7 +1,7 @@
-From cb73bf6f5081e43ef0e8ae1d766a21a0143a0666 Mon Sep 17 00:00:00 2001
+From 1104b1b31031abfe1c99b5a330764ec613af0065 Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
 Date: Fri, 29 Oct 2021 16:12:58 +0200
-Subject: [PATCH 2/2] l1: add support for the Wifx L1 board
+Subject: [PATCH] l1: add support for the Wifx L1 board
 
 ---
  arch/arm/boot/dts/Makefile              |   3 +-

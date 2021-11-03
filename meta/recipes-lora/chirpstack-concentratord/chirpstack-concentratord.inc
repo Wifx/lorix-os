@@ -31,7 +31,6 @@ REPENDS_${PN} += "machine-info"
 
 DEPENDS_append_sx1301 = " libloragw-sx1301"
 DEPENDS_append_sx1302 = " libloragw-sx1302"
-RDEPENDS_${PN} += "machine-detect"
 
 inherit cargo
 
