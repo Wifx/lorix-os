@@ -8,4 +8,5 @@ MACHINE_EXTRA_RDEPENDS += " \
 
 MACHINE_EXTRA_RDEPENDS_l1 += " \
     led-service \
+    wgw-ec-util \
 "

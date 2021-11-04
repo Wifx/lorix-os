@@ -14,5 +14,3 @@ do_install(){
     install -m 0755 -d ${D}${sbindir}
     install -m 0755 ${STAGING_ASSETS}/${sbindir}/machine-info ${D}${sbindir}/machine-info
 }
-
-PACKAGE_ARCH = "${MACHINE_ARCH}"
