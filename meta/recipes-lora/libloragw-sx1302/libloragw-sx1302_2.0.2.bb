@@ -42,14 +42,14 @@ do_install() {
 
     # Install utils
     install -d ${D}/${DIR_UTILS}
-    install -m 0755 util_chip_id/chip_id                        ${D}/${DIR_UTILS}
-    install -m 0755 util_net_downlink/net_downlink              ${D}/${DIR_UTILS}
-    install -m 0755 packet_forwarder/lora_pkt_fwd               ${D}/${DIR_UTILS}
-    install -m 0755 packet_forwarder/global_conf.json.sx1250.*  ${D}/${DIR_UTILS}
+    install -m 0755 ${S}/util_chip_id/chip_id                        ${D}/${DIR_UTILS}
+    install -m 0755 ${S}/util_net_downlink/net_downlink              ${D}/${DIR_UTILS}
+    install -m 0755 ${S}/packet_forwarder/lora_pkt_fwd               ${D}/${DIR_UTILS}
+    install -m 0755 ${S}/packet_forwarder/global_conf.json.sx1250.*  ${D}/${DIR_UTILS}
 
     # Install tests
     install -d ${D}/${DIR_TESTS}
-    install -m 0755 libloragw/test_*                            ${D}/${DIR_TESTS}
+    install -m 0755 ${S}/libloragw/test_*                            ${D}/${DIR_TESTS}
 }
 
 PACKAGES += "${PN}-utils ${PN}-tests"
