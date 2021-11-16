@@ -6,7 +6,12 @@ LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://src/${GO_IMPORT}/LICENSE;md5=ffdb0a8bda31b45fc5b72d3774d715e2"
 #LIC_FILES_CHKSUM = "file://LICENSE;md5=42af54d0b96581c4b8085315e05da454"
 
-RDEPENDS_${PN} += "openssl-bin dbus glibc"
+RDEPENDS_${PN} += " \
+    openssl-bin \
+    dbus \
+    glibc \
+    machine-info \
+"
 RRECOMMENDS_${PN} += "manager-gui mender-client networkmanager networkmanager-nmcli"
 
 SRC_URI += " \
@@ -86,7 +91,8 @@ EOM
         # Generating certificates
         if [ ! -f "${sysconfdir}/manager/keys/default.key" ] || [ ! -f "${sysconfdir}/manager/certs/default.crt" ]; then
             echo "Generating certificate..."
-            openssl req -new -newkey rsa:2048 -days 30 -nodes -x509 -subj "/CN=LORIX One" -keyout "${sysconfdir}/manager/keys/default.key" -out "${sysconfdir}/manager/certs/default.crt"
+            PRODUCT_LABEL=$(machine-info -n -f "PRODUCT_LABEL")
+            openssl req -new -newkey rsa:2048 -days 30 -nodes -x509 -subj "/CN=${PRODUCT_LABEL}" -keyout "${sysconfdir}/manager/keys/default.key" -out "${sysconfdir}/manager/certs/default.crt"
             chmod 600 ${sysconfdir}/manager/keys/default.key
             echo "done"
         fi
