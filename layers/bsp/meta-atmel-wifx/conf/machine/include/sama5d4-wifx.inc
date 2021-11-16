@@ -50,3 +50,6 @@ MACHINE_ESSENTIAL_EXTRA_RDEPENDS += "kernel-modules"
 
 # make sure that kernel and devicetree are installed
 IMAGE_INSTALL_append = " kernel-devicetree kernel-image-zimage"
+
+# Remove unused dependency which makes the build fail during the do_fetch
+EXTRA_IMAGEDEPENDS_remove = "sam-ba-native"
