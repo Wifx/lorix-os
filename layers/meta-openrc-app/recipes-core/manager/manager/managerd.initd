@@ -2,8 +2,8 @@
 # Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
 # All rights reserved.
 
-description="Daemon of the OS unified manager"
-name="OS unified manager"
+name="LORIX Manager daemon"
+description="System management software providing an API"
 
 # We want to monitor the manager daemon in case it dies
 # In this case, we wait

@@ -18,4 +18,5 @@ BAD_RECOMMENDATIONS += " \
     pmon-csgb-concentratord \
     pmon-csub-concentratord \
     pmon-helium-upf \
+    zabbix \
 "

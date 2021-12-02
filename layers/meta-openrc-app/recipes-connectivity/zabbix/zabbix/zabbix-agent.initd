@@ -1,0 +1,18 @@
+#!/sbin/openrc-run
+# Copyright 1999-2012 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+
+name="Zabbix agent"
+description="Zabbix monitoring agent"
+
+supervisor="supervise-daemon"
+respawn_delay="${RESPAWN_DELAY:-2}"
+
+command="/usr/sbin/zabbix_agentd"
+command_args_foreground="-f"
+command_user="root"
+
+depend() {
+        need dbus
+        use logger dns
+}
