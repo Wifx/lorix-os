@@ -17,7 +17,7 @@
 	url = https://github.com/Wifx/meta-openrc.git
 [submodule "meta-rust-bin"]
 	path = layers/meta-rust-bin
-	url = https://github.com/wifx/meta-rust-bin.git
+	url = https://github.com/rust-embedded/meta-rust-bin.git
 	branch = rust-1.56.1
 [submodule "meta-clang"]
 	path = layers/meta-clang
