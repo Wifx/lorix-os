@@ -54,7 +54,12 @@ if [[ ! -f "$PRODUCT_TYPE_CONFIG_PATH" ]]; then
     exit 0
 fi
 
-REGION=(< "$PRODUCT_TYPE_CONFIG_PATH")
+REGION=$(< "$PRODUCT_TYPE_CONFIG_PATH")
+
+if [[ "$REGION" != "EU868" && "$REGION" != "US915" &&"$REGION" != "AU915" ]]; then
+    log $PREFIX "Product region '$REGION' not specific, skipping migration"
+    exit 0
+fi
 
 log $PREFIX "Setting LoRa hardware region to $REGION"
 
