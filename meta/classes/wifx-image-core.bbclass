@@ -17,7 +17,7 @@ PACKAGE_EXCLUDE += " \
     udev-hwdb \
 "
 
-BAD_RECOMMENDATIONS = " \
+BAD_RECOMMENDATIONS += " \
     shared-mime-info \
     cryptodev-module \
 "
