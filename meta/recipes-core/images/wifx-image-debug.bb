@@ -27,7 +27,7 @@ IMAGE_INSTALL_append_l1 = " \
 
 
 # valgrind it too big for the LORIX One 256MB version
-BAD_RECOMMENDATIONS_lorix-one-256 = "valgrind"
-BAD_RECOMMENDATIONS_l1 = "valgrind"
+BAD_RECOMMENDATIONS_lorix-one-256 += "valgrind"
+BAD_RECOMMENDATIONS_l1 += "valgrind"
 
 EXTRA_IMAGE_FEATURES ?= " tools-debug debug-tweaks"

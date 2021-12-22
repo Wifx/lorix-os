@@ -21,4 +21,5 @@ RDEPENDS_${PN} = " \
 
 RRECOMMENDS_${PN} = " \
     net-snmp-server \
+    zabbix \
 "

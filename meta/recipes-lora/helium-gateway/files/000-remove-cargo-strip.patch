@@ -1,5 +1,5 @@
 diff --git a/Cargo.toml b/Cargo.toml
-index 3e09e10..285a1fd 100644
+index c9b1a60..d41e80c 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
 @@ -1,4 +1,4 @@
@@ -8,9 +8,10 @@ index 3e09e10..285a1fd 100644
  
  [package]
  name = "gateway-rs"
-@@ -61,4 +61,4 @@ codegen-units = 1
+@@ -64,5 +64,5 @@ codegen-units = 1
  panic = "abort"
  #debug = true
  #strip = "debuginfo"
 -strip = "symbols"
 +#strip = "symbols"
+ 

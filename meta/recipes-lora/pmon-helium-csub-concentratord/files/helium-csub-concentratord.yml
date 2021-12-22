@@ -1,4 +1,4 @@
-description: ChirpStack concentratord with an UDP Bridge
+description: ChirpStack concentratord with an UDP Bridge and the Helium forwarder
 autostart: true
 log: true
 jobs:
@@ -13,24 +13,24 @@ jobs:
                 start: 5000
                 term: 5000
                 restart: 5000
-    udp-bridge:
-        description: Bridges the concentratord to the Helium Gateway
-        boot-order: 1
-        process:
-            run-mode: exec
-            program-path: /opt/chirpstack-udp-bridge/chirpstack-udp-bridge
-            program-arguments: -c /etc/opt/chirpstack-udp-bridge/00-concentratord.toml -c /etc/opt/chirpstack-udp-bridge/10-udp-bridge.toml -c /etc/opt/chirpstack-udp-bridge/21-helium-gateway.toml
-            delays:
-                start: 5000
-                term: 10000
-                restart: 5000
     helium-gateway:
         description: Helium Gateway packet forwarder
-        boot-order: 2
+        boot-order: 1
         process:
             run-mode: exec
             program-path: /opt/helium-gateway/helium-gateway
             program-arguments: -c /etc/opt/helium-gateway/ server
+            delays:
+                start: 5000
+                term: 10000
+                restart: 5000
+    udp-bridge:
+        description: Bridges the concentratord to the Helium Gateway
+        boot-order: 2
+        process:
+            run-mode: exec
+            program-path: /opt/chirpstack-udp-bridge/chirpstack-udp-bridge
+            program-arguments: -c /etc/opt/chirpstack-udp-bridge/00-concentratord.toml -c /etc/opt/chirpstack-udp-bridge/10-udp-bridge.toml -c /etc/opt/chirpstack-udp-bridge/20-servers.toml
             delays:
                 start: 5000
                 term: 10000

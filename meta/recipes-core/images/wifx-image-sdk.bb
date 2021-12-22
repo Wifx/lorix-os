@@ -42,4 +42,4 @@ IMAGE_INSTALL += " \
 "
 
 # valgrind it too big for the LORIX One 256MB version
-BAD_RECOMMENDATIONS_lorix-one-256 = "valgrind"
+BAD_RECOMMENDATIONS_lorix-one-256 += "valgrind"
