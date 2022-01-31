@@ -11,6 +11,7 @@ SRC_URI = "git://github.com/Wifx/basicstation.git;protocol=git;tag=${SRCTAG}"
 
 SRC_URI += " \
     file://lora-basic-station.yml \
+    file://0001-Update-mbedTLS-dependency-to-version-2.7.5.-Fixes-14.patch \
 "
 
 SRC_URI_append_lorix-one = " \

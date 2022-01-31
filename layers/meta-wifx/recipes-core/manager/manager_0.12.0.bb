@@ -2,4 +2,4 @@ require manager.inc
 
 PR = "r0"
 
-SRC_URI[md5sum] = "a2a8b8cf4e982b0a9bd56fc003fe0e48"
+SRC_URI[md5sum] = "5fae65fe19f6ed2bd739ee3a78c481b1"
