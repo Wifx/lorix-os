@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - [LOR-505] Upgrade UDP Packet Forwarder to v5.1.1
+- [LOR-506] Upgrade Basic Station to v2.0.6
 
 ## [1.4.0] - 2021-12-22
 
