@@ -12,6 +12,7 @@ SRC_URI = " \
     file://1.2.0/01_UPF-channel-link.sh;subdir=${BPN}-${PV} \
     file://1.4.0/01_CSGB-config.sh;subdir=${BPN}-${PV} \
     file://1.4.0/02_Set-region.sh;subdir=${BPN}-${PV} \
+    file://1.4.1/01_fix-manager-config-permissions.sh;subdir=${BPN}-${PV} \
 "
 
 LICENSE = "Proprietary"
@@ -55,4 +56,6 @@ do_compile() {
 
     cp 1.4.0/01_CSGB-config.sh ${TARGET}_Migration_1.4.0_01_CSGB-config
     cp 1.4.0/02_Set-region.sh ${TARGET}_Migration_1.4.0_02_Set-region
+
+    cp 1.4.1/01_fix-manager-config-permissions.sh ${TARGET}_Migration_1.4.1_01_fix-manager-config-permissions
 }
