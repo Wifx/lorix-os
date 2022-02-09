@@ -9,6 +9,6 @@ update_sudoers(){
 }
 ROOTFS_POSTPROCESS_COMMAND += "update_sudoers;"
 
-EXTRA_USERS_PARAMS = " useradd admin; \
+EXTRA_USERS_PARAMS = " useradd -u 1000 admin; \
                        usermod -P 'lorix4u' admin; \
                        usermod -a -G sudo admin;"
