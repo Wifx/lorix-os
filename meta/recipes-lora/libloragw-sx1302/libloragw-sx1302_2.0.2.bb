@@ -59,10 +59,12 @@ do_install() {
     install -m 0755 ${S}/util_net_downlink/net_downlink              ${D}/${DIR_UTILS}
     install -m 0755 ${S}/packet_forwarder/lora_pkt_fwd               ${D}/${DIR_UTILS}
     install -m 0755 ${S}/packet_forwarder/global_conf.json.sx1250.*  ${D}/${DIR_UTILS}
+    install -m 0755 ${WORKDIR}/reset_lgw.sh                          ${D}/${DIR_UTILS}
 
     # Install tests
     install -d ${D}/${DIR_TESTS}
     install -m 0755 ${S}/libloragw/test_*                            ${D}/${DIR_TESTS}
+    install -m 0755 ${WORKDIR}/reset_lgw.sh                          ${D}/${DIR_TESTS}
 }
 
 PACKAGES += "${PN}-utils ${PN}-tests"

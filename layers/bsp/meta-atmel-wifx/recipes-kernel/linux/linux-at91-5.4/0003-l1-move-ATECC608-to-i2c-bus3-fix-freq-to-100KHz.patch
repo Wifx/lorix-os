@@ -1,0 +1,100 @@
+From 912adcffab03a564a2975c1aed7a7ed92b8fb841 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Wed, 9 Feb 2022 12:18:21 +0100
+Subject: [PATCH 3/3] l1: move ATECC608 to i2c bus3, fix freq to 100KHz
+
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
+---
+ arch/arm/boot/dts/l1.dts       | 48 +++++-----------------------------
+ arch/arm/boot/dts/sama5d4.dtsi |  1 +
+ 2 files changed, 7 insertions(+), 42 deletions(-)
+
+diff --git a/arch/arm/boot/dts/l1.dts b/arch/arm/boot/dts/l1.dts
+index 76834ff7000f..169368830fe9 100644
+--- a/arch/arm/boot/dts/l1.dts
++++ b/arch/arm/boot/dts/l1.dts
+@@ -124,12 +124,7 @@
+ 
+ 			i2c2: i2c@f8024000 {
+ 				status = "okay";
+-				clock-frequency = <200000>;
+-
+-				atecc508a@60 {
+-					compatible = "atmel,atecc508a";
+-					reg = <0x60>;
+-				};
++				clock-frequency = <400000>;
+ 
+ 				board_ec@2a {
+ 					compatible = "wifx,wgw-ec-i2c";
+@@ -175,41 +170,12 @@
+ 
+ 			i2c3: i2c@fc038000 {
+ 				status = "okay";
++				/* limited to 100KHz to support wake-up without bus mangling */
++				clock-frequency = <100000>;
+ 
+-				pmic: act8865@5b {
+-					compatible = "active-semi,act8865";
+-					reg = <0x5b>;
+-					status = "disabled";
+-
+-					regulators {
+-						vcc_1v8_reg: DCDC_REG1 {
+-							regulator-name = "VCC_1V8";
+-							regulator-min-microvolt = <1800000>;
+-							regulator-max-microvolt = <1800000>;
+-							regulator-always-on;
+-						};
+-
+-						vcc_1v2_reg: DCDC_REG2 {
+-							regulator-name = "VCC_1V2";
+-							regulator-min-microvolt = <1200000>;
+-							regulator-max-microvolt = <1200000>;
+-							regulator-always-on;
+-						};
+-
+-						vcc_3v3_reg: DCDC_REG3 {
+-							regulator-name = "VCC_3V3";
+-							regulator-min-microvolt = <3300000>;
+-							regulator-max-microvolt = <3300000>;
+-							regulator-always-on;
+-						};
+-
+-						vddana_reg: LDO_REG1 {
+-							regulator-name = "FUSE_2V5";
+-							regulator-min-microvolt = <2500000>;
+-							regulator-max-microvolt = <2500000>;
+-							regulator-always-on;
+-						};
+-					};
++				atecc508a@60 {
++					compatible = "atmel,atecc508a";
++					reg = <0x60>;
+ 				};
+ 			};
+ 
+@@ -229,8 +195,6 @@
+ 			mmc1: mmc@fc000000 {
+ 				pinctrl-names = "default";
+ 				pinctrl-0 = <&pinctrl_mmc1_clk_cmd_dat0 &pinctrl_mmc1_dat1_3 &pinctrl_mmc1_cd>;
+-				vmmc-supply = <&vcc_3v3_reg>;
+-				vqmmc-supply = <&vcc_3v3_reg>;
+ 				status = "okay";
+ 				slot@0 {
+ 					reg = <0>;
+diff --git a/arch/arm/boot/dts/sama5d4.dtsi b/arch/arm/boot/dts/sama5d4.dtsi
+index 3f087a1c25b8..5dbb3805be1b 100644
+--- a/arch/arm/boot/dts/sama5d4.dtsi
++++ b/arch/arm/boot/dts/sama5d4.dtsi
+@@ -40,6 +40,7 @@
+ 		i2c0 = &i2c0;
+ 		i2c1 = &i2c1;
+ 		i2c2 = &i2c2;
++		i2c3 = &i2c3;
+ 	};
+ 	cpus {
+ 		#address-cells = <1>;
+-- 
+2.25.1
+
