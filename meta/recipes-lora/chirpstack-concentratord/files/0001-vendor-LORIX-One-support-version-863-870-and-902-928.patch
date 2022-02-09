@@ -1,0 +1,233 @@
+From 5502b201ae09f6fd66ac7cc64f0fce4d237731e8 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Mon, 7 Feb 2022 14:44:35 +0100
+Subject: [PATCH] vendor: LORIX One support, version 863-870 and 902-928MHz
+ hardware with dynamic antenna gain
+
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
+---
+ .../src/config/mod.rs                         |  5 +-
+ .../config/vendor/wifx/lorix_one_863_870.rs   | 89 +++++++++++++++++++
+ .../config/vendor/wifx/lorix_one_902_928.rs   | 89 +++++++++++++++++++
+ .../src/config/vendor/wifx/mod.rs             |  3 +-
+ 4 files changed, 184 insertions(+), 2 deletions(-)
+ create mode 100644 chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_863_870.rs
+ create mode 100644 chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_902_928.rs
+
+diff --git a/chirpstack-concentratord-sx1301/src/config/mod.rs b/chirpstack-concentratord-sx1301/src/config/mod.rs
+index 672a17e..eebf67d 100644
+--- a/chirpstack-concentratord-sx1301/src/config/mod.rs
++++ b/chirpstack-concentratord-sx1301/src/config/mod.rs
+@@ -202,7 +202,10 @@ pub fn get(filenames: Vec<String>) -> Configuration {
+         "risinghf_rhf0m301_us915" => vendor::risinghf::rhf0m301_us915::new(&config),
+         "sandbox_lorago_port_eu868" => vendor::sandbox::lorago_port_eu868::new(&config),
+         "sandbox_lorago_port_us915" => vendor::sandbox::lorago_port_us915::new(&config),
+-        "wifx_lorix_one_eu868" => vendor::wifx::lorix_one_eu868::new(&config),
++        "wifx_lorix_one_863_870" | "wifx_lorix_one_eu868" => {
++            vendor::wifx::lorix_one_863_870::new(&config)
++        }
++        "wifx_lorix_one_902_928" => vendor::wifx::lorix_one_902_928::new(&config),
+         _ => panic!("unexpected gateway model: {}", config.gateway.model),
+     };
+ 
+diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_863_870.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_863_870.rs
+new file mode 100644
+index 0000000..49e81d9
+--- /dev/null
++++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_863_870.rs
+@@ -0,0 +1,89 @@
++use libloragw_sx1301::hal;
++
++use super::super::super::super::config;
++use super::super::Configuration;
++
++pub fn new(conf: &config::Configuration) -> Configuration {
++    Configuration {
++        radio_count: 2,
++        clock_source: 1,
++        radio_rssi_offset: vec![-166.0, -166.0],
++        radio_tx_enabled: vec![true, false],
++        radio_type: vec![hal::RadioType::SX1257, hal::RadioType::SX1257],
++        radio_min_max_tx_freq: vec![(863000000, 870000000), (863000000, 870000000)],
++        radio_tx_notch_freq: vec![0, 0],
++        lora_multi_sf_bandwidth: 125000,
++        tx_gain_table: get_tx_gain_table(conf.gateway.antenna_gain),
++        gps_tty_path: None,
++        spidev_path: "/dev/spidev0.0".to_owned(),
++        reset_pin: Some((0, 1)),
++    }
++}
++
++// Power table with an antenna gain of 0dBi
++lazy_static! {
++    static ref POWER_TABLE_BASE: [hal::TxGainConfig; 21] = [
++        gain_param(7, 1, 15, 2),
++        gain_param(8, 2, 9, 1),
++        gain_param(9, 2, 12, 3),
++        gain_param(10, 3, 8, 3),
++        gain_param(11, 2, 10, 0),
++        gain_param(12, 3, 9, 3),
++        gain_param(13, 2, 11, 0),
++        gain_param(14, 2, 13, 2),
++        gain_param(15, 3, 8, 1),
++        gain_param(16, 2, 13, 0),
++        gain_param(17, 2, 14, 0),
++        gain_param(18, 3, 10, 2),
++        gain_param(19, 3, 9, 0),
++        gain_param(20, 3, 10, 1),
++        gain_param(21, 3, 13, 3),
++        gain_param(22, 3, 12, 2),
++        gain_param(23, 3, 11, 0),
++        gain_param(24, 3, 13, 2),
++        gain_param(25, 3, 14, 2),
++        gain_param(26, 3, 14, 0),
++        gain_param(27, 3, 15, 0),
++    ];
++}
++
++fn gain_param(rf_power: i8, pa: u8, mix: u8, dig: u8) -> hal::TxGainConfig {
++    hal::TxGainConfig {
++        dig_gain: dig,
++        pa_gain: pa,
++        dac_gain: 3,
++        mix_gain: mix,
++        rf_power: rf_power,
++    }
++}
++
++fn get_tx_gain_table(antenna_gain: i8) -> Vec<hal::TxGainConfig> {
++    // filter the power values
++    let entries: Vec<hal::TxGainConfig> = POWER_TABLE_BASE
++        .iter()
++        .map(|entry| entry.clone())
++        .filter(|entry| {
++            let radiated_power = entry.rf_power + antenna_gain;
++            if radiated_power > 27 {
++                debug!(
++                    "Power table entry including antenna gain is too high, radiated power: {}, discarded",
++                    radiated_power
++                );
++                    return false;
++                }
++            return true;
++        })
++        .collect();
++
++    let count = entries.len();
++    if count == 0 {
++        panic!("No entries available for power table");
++    }
++    let mut start_index = 0;
++    if count > 16 {
++        start_index = count - 16;
++    }
++
++    // keep only max 16 higher entries
++    entries.as_slice()[start_index..].to_vec()
++}
+diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_902_928.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_902_928.rs
+new file mode 100644
+index 0000000..413f4eb
+--- /dev/null
++++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_902_928.rs
+@@ -0,0 +1,89 @@
++use libloragw_sx1301::hal;
++
++use super::super::super::super::config;
++use super::super::Configuration;
++
++pub fn new(conf: &config::Configuration) -> Configuration {
++    Configuration {
++        radio_count: 2,
++        clock_source: 1,
++        radio_rssi_offset: vec![-166.0, -166.0],
++        radio_tx_enabled: vec![true, false],
++        radio_type: vec![hal::RadioType::SX1257, hal::RadioType::SX1257],
++        radio_min_max_tx_freq: vec![(902000000, 928000000), (902000000, 928000000)],
++        radio_tx_notch_freq: vec![0, 0],
++        lora_multi_sf_bandwidth: 125000,
++        tx_gain_table: get_tx_gain_table(conf.gateway.antenna_gain),
++        gps_tty_path: None,
++        spidev_path: "/dev/spidev0.0".to_owned(),
++        reset_pin: Some((0, 1)),
++    }
++}
++
++// Power table with an antenna gain of 0dBi
++lazy_static! {
++    static ref POWER_TABLE_BASE: [hal::TxGainConfig; 21] = [
++        gain_param(7, 1, 12, 2),
++        gain_param(8, 1, 12, 1),
++        gain_param(9, 1, 12, 0),
++        gain_param(10, 1, 13, 0),
++        gain_param(11, 1, 15, 1),
++        gain_param(12, 2, 9, 0),
++        gain_param(13, 3, 8, 3),
++        gain_param(14, 2, 10, 0),
++        gain_param(15, 3, 9, 3),
++        gain_param(16, 2, 12, 1),
++        gain_param(17, 3, 10, 3),
++        gain_param(18, 2, 14, 2),
++        gain_param(19, 2, 15, 2),
++        gain_param(20, 3, 9, 1),
++        gain_param(21, 3, 12, 3),
++        gain_param(22, 3, 10, 1),
++        gain_param(23, 3, 11, 2),
++        gain_param(24, 3, 11, 1),
++        gain_param(25, 3, 14, 3),
++        gain_param(26, 3, 13, 2),
++        gain_param(27, 3, 13, 1),
++    ];
++}
++
++fn gain_param(rf_power: i8, pa: u8, mix: u8, dig: u8) -> hal::TxGainConfig {
++    hal::TxGainConfig {
++        dig_gain: dig,
++        pa_gain: pa,
++        dac_gain: 3,
++        mix_gain: mix,
++        rf_power: rf_power,
++    }
++}
++
++fn get_tx_gain_table(antenna_gain: i8) -> Vec<hal::TxGainConfig> {
++    // filter the power values
++    let entries: Vec<hal::TxGainConfig> = POWER_TABLE_BASE
++        .iter()
++        .map(|entry| entry.clone())
++        .filter(|entry| {
++            let radiated_power = entry.rf_power + antenna_gain;
++            if radiated_power > 27 {
++                debug!(
++                    "Power table entry including antenna gain is too high, radiated power: {}, discarded",
++                    radiated_power
++                );
++                    return false;
++                }
++            return true;
++        })
++        .collect();
++
++    let count = entries.len();
++    if count == 0 {
++        panic!("No entries available for power table");
++    }
++    let mut start_index = 0;
++    if count > 16 {
++        start_index = count - 16;
++    }
++
++    // keep only max 16 higher entries
++    entries.as_slice()[start_index..].to_vec()
++}
+diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs
+index ab9f708..4fdecef 100644
+--- a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs
++++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs
+@@ -1 +1,2 @@
+-pub mod lorix_one_eu868;
++pub mod lorix_one_863_870;
++pub mod lorix_one_902_928;
+-- 
+2.25.1
+
