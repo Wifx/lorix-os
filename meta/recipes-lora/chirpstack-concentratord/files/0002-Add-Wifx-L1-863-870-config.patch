@@ -139,7 +139,7 @@ new file mode 100644
 +        gps_tty_path: None,
 +        com_type: ComType::SPI,
 +        com_path: "/dev/spidev0.0".to_string(),
-+        reset_pin: Some(1),
++        reset_pin: Some((0, 1)),
 +        power_en_pin: None,
 +    }
 +}
