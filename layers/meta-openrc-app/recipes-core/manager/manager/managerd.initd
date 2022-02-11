@@ -9,6 +9,7 @@ description="System management software providing an API"
 # In this case, we wait
 supervisor=supervise-daemon
 respawn_delay="${RESPAWN_DELAY:-2}"
+respawn_max="${RESPAWN_MAX:-0}"
 
 command_user="root"
 command="${DAEMON_PATH:-/usr/sbin/managerd}"
