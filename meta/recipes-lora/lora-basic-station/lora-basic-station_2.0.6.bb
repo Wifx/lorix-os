@@ -46,7 +46,7 @@ do_configure_append_lorix-one() {
 do_configure_append_l1() {
     path="${S}/deps/lgw1302"
     # copy existing lgw linux patch for the L1
-    cp -f ${path}/V1.0.5-corecell.patch ${path}/V1.0.5-l1.patch
+    cp -f ${path}/V2.1.0-corecell.patch ${path}/V2.1.0-l1.patch
 }
 
 TARGET_CC_ARCH += "${LDFLAGS}"
