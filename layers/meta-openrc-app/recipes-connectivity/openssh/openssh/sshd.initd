@@ -7,6 +7,8 @@ extra_commands="checkconfig"
 extra_started_commands="reload"
 description_reload="Reload ${SVCNAME}"
 
+respawn_max="${RESPAWN_MAX:-0}"
+
 # We want to monitor the network manager daemon in case it dies
 supervisor="supervise-daemon"
 
