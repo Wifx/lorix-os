@@ -240,3 +240,5 @@ FILES_${PN} += " \
     ${CONF_DIR}/ \
     ${optdir}/chirpstack-concentratord/chirpstack-concentratord \
 "
+
+PACKAGE_ARCH = "${MACHINE_ARCH}"
