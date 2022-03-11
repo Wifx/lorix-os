@@ -33,8 +33,9 @@ do_compile() {
 do_install() {
     # library
     install -m 0755 -d                          ${D}${libdir}/libloragw-sx1302
-    install -m 0644 ${S}/libloragw/libloragw.a  ${D}${libdir}/libloragw-sx1302.a
     install -m 0644 ${S}/libloragw/library.cfg  ${D}${libdir}/libloragw-sx1302/library.cfg
+    install -m 0644 ${S}/libloragw/libloragw.a  ${D}${libdir}/libloragw-sx1302.a
+    install -m 0644 ${S}/libtools/*.a           ${D}${libdir}/
     
     # header files
     install -m 0755 -d                         ${D}${includedir}/libloragw-sx1302

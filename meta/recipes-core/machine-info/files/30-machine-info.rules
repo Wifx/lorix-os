@@ -1,0 +1,2 @@
+# Run the dev ID detection script when SX1302 is detected to create the cache
+KERNEL=="spidev0.0", ACTION=="add", RUN+="/usr/sbin/machine-info -e lora"
