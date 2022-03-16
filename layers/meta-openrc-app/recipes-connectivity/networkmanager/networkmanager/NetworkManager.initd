@@ -12,7 +12,8 @@ extra_commands="update_up update_down"
 # We want to monitor the network manager daemon in case it dies
 supervisor="supervise-daemon"
 respawn_delay="${RESPAWN_DELAY:-2}"
-respawn_max="${RESPAWN_MAX:-0}"
+respawn_period="${RESPAWN_PERIOD:-60}"
+respawn_max="${RESPAWN_MAX:-10}"
 
 command="/usr/sbin/NetworkManager"
 command_args_foreground="--no-daemon"
