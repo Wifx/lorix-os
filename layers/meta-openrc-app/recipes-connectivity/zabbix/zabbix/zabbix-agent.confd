@@ -1,5 +1,2 @@
 # Copyright 1999-2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-
-# Defines the delay before respawn of the supervised daemon
-RESPAWN_DELAY=2
