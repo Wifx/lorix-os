@@ -11,7 +11,6 @@ SRC_URI = "\
     file://library.cfg \
     file://0001-test_loragw_hal_tx-enable-CRC-for-LoRa-TX-packets-by.patch \
     file://0002-test_loragw_hal_tx-add-optional-argument-to-disable-.patch \
-    file://reset_lgw.sh \
 "
 
 # depends on lora-concentrator-reset script
