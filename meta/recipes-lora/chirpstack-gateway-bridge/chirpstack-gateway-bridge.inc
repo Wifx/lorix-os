@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=99e425257f8a67b7efd81dc0009ed8ff"
 
 SRCTAG = "v${PV}"
 SRC_URI += " \
-    git://github.com/brocaar/chirpstack-gateway-bridge.git;protocol=git;tag=${SRCTAG} \
+    git://github.com/brocaar/chirpstack-gateway-bridge.git;protocol=https;tag=${SRCTAG} \
     file://0001-multiple-config-files.patch \
     file://backend_concentratord.toml \
     file://backend_semtech-udp.toml \

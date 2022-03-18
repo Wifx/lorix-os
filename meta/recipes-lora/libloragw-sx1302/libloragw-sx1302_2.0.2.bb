@@ -6,7 +6,7 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/BSD;md5=3775480a712fc46a6964767
 PR = "r10"
 
 SRC_URI = "\
-    git://github.com/Lora-net/sx1302_hal.git;protocol=git;tag=V${PV} \
+    git://github.com/Lora-net/sx1302_hal.git;protocol=https;tag=V${PV} \
     file://0001-test-change-stdout-err-to-line-buffered.patch \
     file://library.cfg \
 "
