@@ -7,7 +7,7 @@ LICENSE = "BSD-3-Clause"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=a00b6155c30853bb390ec59ba94e2b06"
 
 SRCTAG = "v${PV}"
-SRC_URI = "git://github.com/lorabasics/basicstation.git;protocol=git;tag=${SRCTAG}"
+SRC_URI = "git://github.com/lorabasics/basicstation.git;protocol=https;tag=${SRCTAG}"
 
 SRC_URI += " \
     file://lora-basic-station.yml \

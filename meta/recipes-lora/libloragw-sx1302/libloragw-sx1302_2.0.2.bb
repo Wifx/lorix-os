@@ -6,19 +6,18 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/BSD;md5=3775480a712fc46a6964767
 PR = "r10"
 
 SRC_URI = "\
-    git://github.com/Lora-net/sx1302_hal.git;protocol=git;tag=V${PV} \
+    git://github.com/Lora-net/sx1302_hal.git;protocol=https;tag=V${PV} \
     file://0001-test-change-stdout-err-to-line-buffered.patch \
     file://library.cfg \
     file://0001-test_loragw_hal_tx-enable-CRC-for-LoRa-TX-packets-by.patch \
     file://0002-test_loragw_hal_tx-add-optional-argument-to-disable-.patch \
+    file://reset_lgw.sh \
 "
 
-# Should probably be a RDEPENDS_${PN}-utils|tests on libloragw-sx1302-machine 
-# located in target/meta-wifx-machine but it's clean enough since it's only for
-# testing and debug purpose
-SRC_URI_append += "file://reset_lgw.sh"
-
+# depends on lora-concentrator-reset script
+RDEPENDS_${PN}-utils += "lora-concentrator"
 RDEPENDS_${PN}-tests += "lora-concentrator"
+RDEPENDS_${PN}-tests-ext += "${PN}-tests"
 
 S = "${WORKDIR}/git"
 
@@ -68,12 +67,17 @@ do_install() {
     install -m 0755 ${WORKDIR}/reset_lgw.sh                          ${D}/${DIR_TESTS}
 }
 
-PACKAGES += "${PN}-utils ${PN}-tests"
+PACKAGES =+ "${PN}-utils ${PN}-tests ${PN}-tests-ext"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 FILES_${PN}-utils = "${DIR_UTILS}"
-FILES_${PN}-tests = "${DIR_TESTS}"
+FILES_${PN}-tests = " \
+    ${DIR_TESTS}/reset_lgw.sh \
+    ${DIR_TESTS}/test_loragw_hal_rx \
+    ${DIR_TESTS}/test_loragw_hal_tx \
+"
+FILES_${PN}-tests-ext = "${DIR_TESTS}"
 
 FILES_${PN}-dev = "${includedir}"
 FILES_${PN}-staticdev = "${libdir}"
