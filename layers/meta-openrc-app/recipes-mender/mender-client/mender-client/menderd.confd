@@ -1,4 +1,1 @@
 # /etc/conf.d/mender
-
-# Defines the delay before respawn of the supervised Mender daemon
-RESPAWN_DELAY=2

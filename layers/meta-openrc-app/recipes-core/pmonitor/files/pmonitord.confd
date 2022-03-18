@@ -1,8 +1,5 @@
 # /etc/conf.d/pmonitord
 
-# Defines the delay before respawn of the processes monitoring daemon
-RESPAWN_DELAY=2
-
 # Default processes monitoring daemon path
 # DAEMON_PATH=/usr/sbin/pmonitord
 

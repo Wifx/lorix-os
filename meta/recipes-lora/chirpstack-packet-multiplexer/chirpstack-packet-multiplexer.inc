@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://src/${GO_IMPORT}/LICENSE;md5=5301050fd7cd58850085239d
 
 SRCTAG = "v${PV}"
 SRC_URI += " \
-    git://github.com/brocaar/chirpstack-packet-multiplexer.git;protocol=git;tag=${SRCTAG} \
+    git://github.com/brocaar/chirpstack-packet-multiplexer.git;protocol=https;tag=${SRCTAG} \
     file://conf.toml \
     file://upf-multiplexer.yml \
 "

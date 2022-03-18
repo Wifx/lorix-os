@@ -9,7 +9,8 @@ name="Process monitoring service"
 # In this case, we wait
 supervisor=supervise-daemon
 respawn_delay="${RESPAWN_DELAY:-2}"
-respawn_max="${RESPAWN_MAX:-0}"
+respawn_period="${RESPAWN_PERIOD:-60}"
+respawn_max="${RESPAWN_MAX:-10}"
 
 command_user="root"
 command="${DAEMON_PATH:-/usr/sbin/pmonitord}"
