@@ -11,7 +11,13 @@ SRC_URI = "\
     file://library.cfg \
     file://0001-test_loragw_hal_tx-enable-CRC-for-LoRa-TX-packets-by.patch \
     file://0002-test_loragw_hal_tx-add-optional-argument-to-disable-.patch \
+    file://reset_lgw.sh \
 "
+
+# depends on lora-concentrator-reset script
+RDEPENDS_${PN}-utils += "lora-concentrator"
+RDEPENDS_${PN}-tests += "lora-concentrator"
+RDEPENDS_${PN}-tests-ext += "${PN}-tests"
 
 S = "${WORKDIR}/git"
 
@@ -55,10 +61,15 @@ do_install() {
     install -m 0755 ${S}/libloragw/test_*                            ${D}/${DIR_TESTS}
 }
 
-PACKAGES += "${PN}-utils ${PN}-tests"
+PACKAGES =+ "${PN}-utils ${PN}-tests ${PN}-tests-ext"
 
 FILES_${PN}-utils = "${DIR_UTILS}"
-FILES_${PN}-tests = "${DIR_TESTS}"
+FILES_${PN}-tests = " \
+    ${DIR_TESTS}/reset_lgw.sh \
+    ${DIR_TESTS}/test_loragw_hal_rx \
+    ${DIR_TESTS}/test_loragw_hal_tx \
+"
+FILES_${PN}-tests-ext = "${DIR_TESTS}"
 
 FILES_${PN}-dev = "${includedir}"
 FILES_${PN}-staticdev = "${libdir}"
