@@ -1,7 +1,7 @@
 From 5502b201ae09f6fd66ac7cc64f0fce4d237731e8 Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
 Date: Mon, 7 Feb 2022 14:44:35 +0100
-Subject: [PATCH] vendor: LORIX One support, version 863-870 and 902-928MHz
+Subject: [PATCH 1/2] vendor: LORIX One support, version 863-870 and 902-928MHz
  hardware with dynamic antenna gain
 
 Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
