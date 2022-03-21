@@ -13,6 +13,8 @@ SRC_URI = "\
     file://0002-test_loragw_hal_tx-add-optional-argument-to-disable-.patch \
 "
 
+COMPATIBLE_MACHINE_FEATURE = "sx1302"
+
 # depends on lora-concentrator-reset script
 RDEPENDS_${PN}-utils += "lora-concentrator"
 RDEPENDS_${PN}-tests += "lora-concentrator"
