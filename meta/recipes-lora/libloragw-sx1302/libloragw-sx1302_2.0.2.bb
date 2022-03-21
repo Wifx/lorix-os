@@ -14,6 +14,9 @@ SRC_URI = "\
     file://reset_lgw.sh \
 "
 
+# is normally true but machine-info requires it to stay generic
+#COMPATIBLE_MACHINE_FEATURE = "sx1302"
+
 # depends on lora-concentrator-reset script
 RDEPENDS_${PN}-utils += "lora-concentrator"
 RDEPENDS_${PN}-tests += "lora-concentrator"

@@ -14,9 +14,9 @@ SRC_URI = "\
 
 S = "${WORKDIR}/git"
 
-DEPENDS = "\
-    clang-native \
-"
+COMPATIBLE_MACHINE_FEATURE = "sx1301"
+
+DEPENDS = "clang-native"
 # Use clang as we will be linking against this library using Rust. With the
 # default gcc we get link errors.
 TOOLCHAIN = "clang"
