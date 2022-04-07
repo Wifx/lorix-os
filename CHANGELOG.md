@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.3.5] - Unreleased
 
+### Changed
+
+- [LOR-506] Upgrade Basic Station to v2.0.6
+
 ### Fixed
 
 - [LOR-508] Network connectivity check fails to validate global network (Internet) access
+
 ## [1.3.4] - 2021-10-25
 
 ### Added

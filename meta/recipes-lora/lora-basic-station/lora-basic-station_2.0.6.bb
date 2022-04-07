@@ -4,13 +4,14 @@ HOMEPAGE = "https://doc.sm.tc/station/"
 AUTHOR = "Semtech LoRa Basics"
 
 LICENSE = "BSD-3-Clause"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=5ffc1514bf7cad7ad7892ca90a7295cd"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=a00b6155c30853bb390ec59ba94e2b06"
 
 SRCTAG = "v${PV}"
-SRC_URI = "git://github.com/Wifx/basicstation.git;protocol=https;tag=${SRCTAG}"
+SRC_URI = "git://github.com/lorabasics/basicstation.git;protocol=https;tag=${SRCTAG}"
 
 SRC_URI += " \
     file://lora-basic-station.yml \
+    file://0001-editable-toolchain-path.patch \
 "
 
 SRC_URI_append_lorix-one = " \
@@ -40,10 +41,7 @@ do_configure_append_lorix-one() {
 TARGET_CC_ARCH += "${LDFLAGS}"
 
 do_compile_lorix-one() {
-    make platform=lorix variant=std \
-        ARCH.lorix=${TARGET_SYS} \
-        TOOLCHAIN=${STAGING_BINDIR_TOOLCHAIN} \
-        CFG.${TARGET_SYS}=linux
+    make platform=lorix variant=std ARCH.lorix=${TARGET_SYS}
 }
 
 do_install() {
