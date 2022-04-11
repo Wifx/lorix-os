@@ -171,6 +171,8 @@ do_deploy() {
     then
         echo "Deploying U-boot environment source file in ${DEPLOYDIR}"
         install -m 644 ${WORKDIR}/${UBOOT_ENV_SOURCE} "${DEPLOYDIR}/${UBOOT_ENV_IMAGE}.${UBOOT_ENV_SOURCE_SUFFIX}"
+        ln -sf ${UBOOT_ENV_IMAGE}.${UBOOT_ENV_SOURCE_SUFFIX} ${DEPLOYDIR}/${UBOOT_ENV_SYMLINK}.${UBOOT_ENV_SOURCE_SUFFIX}
+        ln -sf ${UBOOT_ENV_IMAGE}.${UBOOT_ENV_SOURCE_SUFFIX} ${DEPLOYDIR}/u-boot-env.${UBOOT_ENV_SOURCE_SUFFIX}
 
         echo "Deploying U-boot environment binary file in ${DEPLOYDIR}"
         install -m 644 ${WORKDIR}/${UBOOT_ENV_BINARY} "${DEPLOYDIR}/${UBOOT_ENV_IMAGE}.${UBOOT_ENV_BINARY_SUFFIX}"

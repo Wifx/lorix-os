@@ -6,7 +6,7 @@ SECTION = "base"
 LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://${WORKDIR}/LICENSE;md5=83564c4ad755d0edeaa1ba4b3918b365"
 
-RDEPENDS_${PN} += "bash"
+RDEPENDS_${PN} += "libgpiod-tools"
 
 SRC_URI += " \
     file://LICENSE \
@@ -30,3 +30,5 @@ FILES_${PN} =+ " \
     ${sbindir}/lora-concentrator-reset \
     ${sbindir}/reset-lgw \
 "
+
+PACKAGE_ARCH = "${MACHINE_ARCH}"
