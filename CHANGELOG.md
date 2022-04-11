@@ -42,6 +42,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-451] NetworkManager chrony dispatcher warning
 - [LOR-479] syslog-ng configuration files too old
 
+## [1.3.5] - 2022-04-08
+
+### Changed
+
+- [LOR-506] Upgrade Basic Station to v2.0.6
+
+### Fixed
+
+- [LOR-508] Network connectivity check fails to validate global network (Internet) access
+
 ## [1.3.4] - 2021-10-25
 
 ### Added
