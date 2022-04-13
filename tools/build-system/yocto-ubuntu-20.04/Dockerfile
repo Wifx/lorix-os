@@ -4,13 +4,14 @@ MAINTAINER Wifx "support@iot.wifx.net"
 
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get update
+RUN apt-get update && apt-get -y upgrade
 
 # Required Packages for the Host Development System
 # http://www.yoctoproject.org/docs/latest/mega-manual/mega-manual.html#required-packages-for-the-host-development-system
-RUN apt-get install -y gawk wget git-core diffstat unzip texinfo gcc-multilib g++-multilib \
-     build-essential chrpath socat cpio python python3 python3-pip python3-pexpect \
-     apt-utils tmux xz-utils debianutils iputils-ping libncurses5-dev
+RUN apt-get install -y gawk wget git-core git-lfs diffstat unzip texinfo \
+     gcc-multilib g++-multilib build-essential chrpath socat cpio python \
+     python3 python3-pip python3-pexpect apt-utils tmux xz-utils debianutils \
+     iputils-ping libncurses5-dev
 
 # Additional host packages required by poky/scripts/wic
 RUN apt-get install -y curl dosfstools mtools parted syslinux tree
