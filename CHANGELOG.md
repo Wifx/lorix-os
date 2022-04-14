@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-506] Upgrade Basic Station to v2.0.6
 - [LOR-483] Force admin user UID/GID
 - [LOR-507] Indefinitely restart essential services 
+- [LOR-509] Upgrade manager to v0.12.1
 - Update machine-info to v0.5.1
 
 ### Fixed
