@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.4.1] - Unreleased
+## [1.4.1] - 2022-04-14
 
 ### Changed
 
@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-506] Upgrade Basic Station to v2.0.6
 - [LOR-483] Force admin user UID/GID
 - [LOR-507] Indefinitely restart essential services 
+- Update machine-info to v0.5.1
+
+### Fixed
+
+- [LOR-508] Network connectivity check fails to validate global network (Internet) access
 
 ## [1.4.0] - 2021-12-22
 
