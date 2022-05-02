@@ -6,6 +6,7 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/files/v2018.09-wifx:"
 SRC_URI += " \
     file://0004-Add-common-mender-support.patch \
     file://0005-Add-mender-support-for-lorix-one-256-512-machines.patch \
+    file://0005-Add-mender-support-for-the-L1-machine.patch \
 "
 
 MENDER_UBOOT_AUTO_CONFIGURE = "0"

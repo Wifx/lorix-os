@@ -69,6 +69,10 @@ do_install_append_lorix-one() {
     install_config gateways/gateway-lorix-one.toml 10-gateway.toml
 }
 
+do_install_append_l1() {
+    install_config gateways/gateway-l1.toml 10-gateway.toml
+}
+
 install_config() {
     if [ -z "$1" ]; then
         bbfatal "Usage install_config <source> [dest]"

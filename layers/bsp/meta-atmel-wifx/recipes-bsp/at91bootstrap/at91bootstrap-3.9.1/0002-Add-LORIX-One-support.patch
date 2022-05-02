@@ -1,7 +1,7 @@
-From 4016aac32eb8f62c4fda0b59f84c72b9f76f3b94 Mon Sep 17 00:00:00 2001
+From da0f8abe8b6511c7e0d35b9eefd06356ac8c6a69 Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
 Date: Mon, 11 May 2020 12:01:38 +0200
-Subject: [PATCH 2/2] Add LORIX One support
+Subject: [PATCH 2/3] Add LORIX One support
 
 ---
  contrib/board/Config.in.board                 |   2 +
@@ -20,7 +20,7 @@ Subject: [PATCH 2/2] Add LORIX One support
  .../wifx/lorix_one_512/Config.in.linux_arg    |   3 +
  contrib/board/wifx/lorix_one_512/board.mk     |   2 +
  .../board/wifx/lorix_one_512/lorix_one_512.c  | 745 ++++++++++++++++++
- .../board/wifx/lorix_one_512/lorix_one_512.h  |  99 +++
+ .../board/wifx/lorix_one_512/lorix_one_512.h  |  97 +++
  .../lorix_one_512_nf_uboot_defconfig          |   9 +
  .../lorix_one_512_sd_uboot_defconfig          |   9 +
  contrib/include/contrib_board.h               |   8 +
@@ -29,7 +29,7 @@ Subject: [PATCH 2/2] Add LORIX One support
  include/board_hw_info.h                       |   3 +
  include/twi.h                                 |   1 +
  scripts/addpmecchead.py                       |   6 +-
- 25 files changed, 1833 insertions(+), 1 deletion(-)
+ 25 files changed, 1831 insertions(+), 1 deletion(-)
  create mode 100644 contrib/board/wifx/lorix_one_256/Config.in.board
  create mode 100644 contrib/board/wifx/lorix_one_256/Config.in.boardname
  create mode 100644 contrib/board/wifx/lorix_one_256/Config.in.linux_arg
@@ -126,7 +126,7 @@ index 0000000..8976886
 +ASFLAGS += -DCONFIG_LORIX_ONE_256
 diff --git a/contrib/board/wifx/lorix_one_256/lorix_one_256.c b/contrib/board/wifx/lorix_one_256/lorix_one_256.c
 new file mode 100644
-index 0000000..16ffd15
+index 0000000..bf346f1
 --- /dev/null
 +++ b/contrib/board/wifx/lorix_one_256/lorix_one_256.c
 @@ -0,0 +1,745 @@
@@ -219,7 +219,7 @@ index 0000000..16ffd15
 +				| AT91C_DDRC2_NR_13
 +				| AT91C_DDRC2_CAS_5
 +				| AT91C_DDRC2_DISABLE_RESET_DLL
-+				| AT91C_DDRC2_DISABLE_DLL
++				| AT91C_DDRC2_ENABLE_DLL
 +				| AT91C_DDRC2_NB_BANKS_8
 +				| AT91C_DDRC2_DECOD_INTERLEAVED
 +				| AT91C_DDRC2_UNAL_SUPPORTED);
@@ -605,14 +605,14 @@ index 0000000..16ffd15
 +	value = ACT8865_3V3;
 +	ret = act8865_set_reg_voltage(reg, value);
 +	if (ret)
-+		dbg_loud("ACT8865: Failed to make REG5 output 3300mV\n");
++		console_printf("ACT8865: Failed to make REG5 output 3300mV\n");
 +
 +	/* Enable REG6 output 1.8V */
 +	reg = REG6_0;
 +	value = ACT8865_1V8;
 +	ret = act8865_set_reg_voltage(reg, value);
 +	if (ret)
-+		dbg_loud("ACT8865: Failed to make REG6 output 1800mV\n");
++		console_printf("ACT8865: Failed to make REG6 output 1800mV\n");
 +
 +	return 0;
 +}
@@ -877,7 +877,7 @@ index 0000000..16ffd15
 +#endif
 diff --git a/contrib/board/wifx/lorix_one_256/lorix_one_256.h b/contrib/board/wifx/lorix_one_256/lorix_one_256.h
 new file mode 100644
-index 0000000..e9f269c
+index 0000000..c35f716
 --- /dev/null
 +++ b/contrib/board/wifx/lorix_one_256/lorix_one_256.h
 @@ -0,0 +1,97 @@
@@ -913,7 +913,7 @@ index 0000000..e9f269c
 +#ifndef __LORIX_ONE_256_H__
 +#define __LORIX_ONE_256_H__
 +
-+ /*
++/*
 + * PMC Setting
 + *
 + * The main oscillator is enabled as soon as possible in the lowlevel_clock_init
@@ -958,8 +958,8 @@ index 0000000..e9f269c
 +#define	USART_BASE	AT91C_BASE_USART3
 +
 +/*
-+* NandFlash Settings
-+*/
++ * NandFlash Settings
++ */
 +#define CONFIG_SYS_NAND_BASE			AT91C_BASE_CS3
 +#define CONFIG_SYS_NAND_MASK_ALE		(1 << 21)
 +#define CONFIG_SYS_NAND_MASK_CLE		(1 << 22)
@@ -973,8 +973,8 @@ index 0000000..e9f269c
 +#define	NO_GALOIS_TABLE_IN_ROM
 +
 +/*
-+* MCI Settings
-+*/
++ * MCI Settings
++ */
 +#define CONFIG_SYS_BASE_MCI	AT91C_BASE_HSMCI1
 +
 +#endif /* __LORIX_ONE_256_H__ */
@@ -1057,7 +1057,7 @@ index 0000000..e549285
 +ASFLAGS += -DCONFIG_LORIX_ONE_512
 diff --git a/contrib/board/wifx/lorix_one_512/lorix_one_512.c b/contrib/board/wifx/lorix_one_512/lorix_one_512.c
 new file mode 100644
-index 0000000..a16c3c2
+index 0000000..191d09c
 --- /dev/null
 +++ b/contrib/board/wifx/lorix_one_512/lorix_one_512.c
 @@ -0,0 +1,745 @@
@@ -1150,7 +1150,7 @@ index 0000000..a16c3c2
 +				| AT91C_DDRC2_NR_13
 +				| AT91C_DDRC2_CAS_5
 +				| AT91C_DDRC2_DISABLE_RESET_DLL
-+				| AT91C_DDRC2_DISABLE_DLL
++				| AT91C_DDRC2_ENABLE_DLL
 +				| AT91C_DDRC2_NB_BANKS_8
 +				| AT91C_DDRC2_DECOD_INTERLEAVED
 +				| AT91C_DDRC2_UNAL_SUPPORTED);
@@ -1536,14 +1536,14 @@ index 0000000..a16c3c2
 +	value = ACT8865_3V3;
 +	ret = act8865_set_reg_voltage(reg, value);
 +	if (ret)
-+		dbg_loud("ACT8865: Failed to make REG5 output 3300mV\n");
++		console_printf("ACT8865: Failed to make REG5 output 3300mV\n");
 +
 +	/* Enable REG6 output 1.8V */
 +	reg = REG6_0;
 +	value = ACT8865_1V8;
 +	ret = act8865_set_reg_voltage(reg, value);
 +	if (ret)
-+		dbg_loud("ACT8865: Failed to make REG6 output 1800mV\n");
++		console_printf("ACT8865: Failed to make REG6 output 1800mV\n");
 +
 +	return 0;
 +}
@@ -1808,10 +1808,10 @@ index 0000000..a16c3c2
 +#endif
 diff --git a/contrib/board/wifx/lorix_one_512/lorix_one_512.h b/contrib/board/wifx/lorix_one_512/lorix_one_512.h
 new file mode 100644
-index 0000000..5045464
+index 0000000..18f1f41
 --- /dev/null
 +++ b/contrib/board/wifx/lorix_one_512/lorix_one_512.h
-@@ -0,0 +1,99 @@
+@@ -0,0 +1,97 @@
 +/* ----------------------------------------------------------------------------
 + *         ATMEL Microcontroller Software Support
 + * ----------------------------------------------------------------------------
@@ -1844,7 +1844,7 @@ index 0000000..5045464
 +#ifndef __LORIX_ONE_512_H__
 +#define __LORIX_ONE_512_H__
 +
-+ /*
++/*
 + * PMC Setting
 + *
 + * The main oscillator is enabled as soon as possible in the lowlevel_clock_init
@@ -1889,8 +1889,8 @@ index 0000000..5045464
 +#define	USART_BASE	AT91C_BASE_USART3
 +
 +/*
-+* NandFlash Settings
-+*/
++ * NandFlash Settings
++ */
 +#define CONFIG_SYS_NAND_BASE			AT91C_BASE_CS3
 +#define CONFIG_SYS_NAND_MASK_ALE		(1 << 21)
 +#define CONFIG_SYS_NAND_MASK_CLE		(1 << 22)
@@ -1904,10 +1904,8 @@ index 0000000..5045464
 +#define	NO_GALOIS_TABLE_IN_ROM
 +
 +/*
-+
-+* MCI Settings
-+
-+*/
++ * MCI Settings
++ */
 +#define CONFIG_SYS_BASE_MCI	AT91C_BASE_HSMCI1
 +
 +#endif /* __LORIX_ONE_512_H__ */
@@ -2088,5 +2086,5 @@ index 6e68e02..9f90773 100755
  vec = struct.pack("<I", pmecc_word)
  
 -- 
-2.17.1
+2.25.1
 

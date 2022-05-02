@@ -1,0 +1,2257 @@
+From 9b73ce1bdc34b402a97aa052e86089707e3a0b62 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Fri, 23 Jul 2021 08:51:49 +0200
+Subject: [PATCH 3/3] Add Wifx L1 support
+
+---
+ contrib/board/Config.in.board               |    1 +
+ contrib/board/Config.in.boardname           |    1 +
+ contrib/board/Config.in.linux_arg           |    1 +
+ contrib/board/wifx/l1/Config.in.board       |   16 +
+ contrib/board/wifx/l1/Config.in.boardname   |    2 +
+ contrib/board/wifx/l1/Config.in.linux_arg   |    3 +
+ contrib/board/wifx/l1/board.mk              |    2 +
+ contrib/board/wifx/l1/l1.c                  |  598 ++++++++++
+ contrib/board/wifx/l1/l1.h                  |   97 ++
+ contrib/board/wifx/l1/l1_nf_uboot_defconfig |    8 +
+ contrib/board/wifx/l1/l1_sd_uboot_defconfig |    7 +
+ contrib/include/contrib_board.h             |    4 +
+ driver/board_hw_info.c                      | 1112 +++++++++----------
+ include/board_hw_info.h                     |   71 +-
+ scripts/addpmecchead.py                     |    2 +
+ 15 files changed, 1313 insertions(+), 612 deletions(-)
+ create mode 100644 contrib/board/wifx/l1/Config.in.board
+ create mode 100644 contrib/board/wifx/l1/Config.in.boardname
+ create mode 100644 contrib/board/wifx/l1/Config.in.linux_arg
+ create mode 100644 contrib/board/wifx/l1/board.mk
+ create mode 100644 contrib/board/wifx/l1/l1.c
+ create mode 100644 contrib/board/wifx/l1/l1.h
+ create mode 100644 contrib/board/wifx/l1/l1_nf_uboot_defconfig
+ create mode 100644 contrib/board/wifx/l1/l1_sd_uboot_defconfig
+
+diff --git a/contrib/board/Config.in.board b/contrib/board/Config.in.board
+index c73cc73..ba7fd11 100644
+--- a/contrib/board/Config.in.board
++++ b/contrib/board/Config.in.board
+@@ -12,3 +12,4 @@ source "contrib/board/mini-box/pico_sam9g45/Config.in.board"
+ source "contrib/board/stephan/sama5d3_stephan/Config.in.board"
+ source "contrib/board/wifx/lorix_one_256/Config.in.board"
+ source "contrib/board/wifx/lorix_one_512/Config.in.board"
++source "contrib/board/wifx/l1/Config.in.board"
+diff --git a/contrib/board/Config.in.boardname b/contrib/board/Config.in.boardname
+index bb11763..ac9d245 100644
+--- a/contrib/board/Config.in.boardname
++++ b/contrib/board/Config.in.boardname
+@@ -12,3 +12,4 @@ source "contrib/board/mini-box/pico_sam9g45/Config.in.boardname"
+ source "contrib/board/stephan/sama5d3_stephan/Config.in.boardname"
+ source "contrib/board/wifx/lorix_one_256/Config.in.boardname"
+ source "contrib/board/wifx/lorix_one_512/Config.in.boardname"
++source "contrib/board/wifx/l1/Config.in.boardname"
+diff --git a/contrib/board/Config.in.linux_arg b/contrib/board/Config.in.linux_arg
+index 16aa04e..9370112 100644
+--- a/contrib/board/Config.in.linux_arg
++++ b/contrib/board/Config.in.linux_arg
+@@ -12,3 +12,4 @@ source "contrib/board/mini-box/pico_sam9g45/Config.in.linux_arg"
+ source "contrib/board/stephan/sama5d3_stephan/Config.in.linux_arg"
+ source "contrib/board/wifx/lorix_one_256/Config.in.linux_arg"
+ source "contrib/board/wifx/lorix_one_512/Config.in.linux_arg"
++source "contrib/board/wifx/l1/Config.in.linux_arg"
+diff --git a/contrib/board/wifx/l1/Config.in.board b/contrib/board/wifx/l1/Config.in.board
+new file mode 100644
+index 0000000..b23b688
+--- /dev/null
++++ b/contrib/board/wifx/l1/Config.in.board
+@@ -0,0 +1,16 @@
++config CONFIG_L1
++	bool "l1"
++	select SAMA5D4
++	select CONFIG_CPU_V7
++	select CONFIG_DDRC
++	select ALLOW_NANDFLASH
++	select ALLOW_SDCARD
++	select ALLOW_CPU_CLK_600MHZ
++	select ALLOW_CRYSTAL_12_000MHZ
++	select CONFIG_HAS_EEPROM
++	select CONFIG_HAS_PMIC_ACT8865
++	select CONFIG_SUPPORT_PM
++	select CONFIG_HAS_EHT0_PHY
++	select SUPPORT_BUS_SPEED_200MHZ
++	help
++	  Use the Wifx L1 LoRa gateway board
+diff --git a/contrib/board/wifx/l1/Config.in.boardname b/contrib/board/wifx/l1/Config.in.boardname
+new file mode 100644
+index 0000000..e6d2da1
+--- /dev/null
++++ b/contrib/board/wifx/l1/Config.in.boardname
+@@ -0,0 +1,2 @@
++config CONFIG_BOARDNAME
++	default "l1" if CONFIG_L1
+diff --git a/contrib/board/wifx/l1/Config.in.linux_arg b/contrib/board/wifx/l1/Config.in.linux_arg
+new file mode 100644
+index 0000000..84861af
+--- /dev/null
++++ b/contrib/board/wifx/l1/Config.in.linux_arg
+@@ -0,0 +1,3 @@
++config CONFIG_LINUX_KERNEL_ARG_STRING
++	default "console=ttyS0,115200 mtdparts=atmel_nand:8M(bootstrap/kernel)ro,-(rootfs) rw rootfstype=ubifs ubi.mtd=1 root=ubi0:rootfs" if CONFIG_L1 && !CONFIG_SDCARD
++	default "console=ttyS0,115200 root=/dev/mmcblk0p2 rootdelay=2" if CONFIG_L1 && CONFIG_SDCARD
+diff --git a/contrib/board/wifx/l1/board.mk b/contrib/board/wifx/l1/board.mk
+new file mode 100644
+index 0000000..c500e1f
+--- /dev/null
++++ b/contrib/board/wifx/l1/board.mk
+@@ -0,0 +1,2 @@
++CPPFLAGS += -DCONFIG_L1
++ASFLAGS += -DCONFIG_L1
+diff --git a/contrib/board/wifx/l1/l1.c b/contrib/board/wifx/l1/l1.c
+new file mode 100644
+index 0000000..bb50b1c
+--- /dev/null
++++ b/contrib/board/wifx/l1/l1.c
+@@ -0,0 +1,598 @@
++/* ----------------------------------------------------------------------------
++ *         ATMEL Microcontroller Software Support
++ * ----------------------------------------------------------------------------
++ * Copyright (c) 2014, Atmel Corporation
++ * Copyright (c) 2021, Wifx Sàrl
++ *
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions are met:
++ *
++ * - Redistributions of source code must retain the above copyright notice,
++ * this list of conditions and the disclaimer below.
++ *
++ * Atmel's name may not be used to endorse or promote products derived from
++ * this software without specific prior written permission.
++ *
++ * DISCLAIMER: THIS SOFTWARE IS PROVIDED BY ATMEL "AS IS" AND ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
++ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT ARE
++ * DISCLAIMED. IN NO EVENT SHALL ATMEL BE LIABLE FOR ANY DIRECT, INDIRECT,
++ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
++ * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
++ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
++ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
++ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++#include "common.h"
++#include "ddramc.h"
++#include "debug.h"
++#include "gpio.h"
++#include "hardware.h"
++#include "pmc.h"
++#include "string.h"
++#include "timer.h"
++#include "usart.h"
++#include "watchdog.h"
++
++#include "act8865.h"
++#include "arch/at91_ddrsdrc.h"
++#include "arch/at91_pio.h"
++#include "arch/at91_pmc/pmc.h"
++#include "arch/at91_rstc.h"
++#include "arch/at91_sfr.h"
++#include "arch/sama5_smc.h"
++#include "arch/tz_matrix.h"
++#include "l1.h"
++#include "l2cc.h"
++#include "matrix.h"
++#include "twi.h"
++#include "tz_utils.h"
++
++static void at91_dbgu_hw_init(void) {
++  const struct pio_desc dbgu_pins[] = {
++      {"RXD", AT91C_PIN_PE(16), 0, PIO_DEFAULT, PIO_PERIPH_B},
++      {"TXD", AT91C_PIN_PE(17), 0, PIO_DEFAULT, PIO_PERIPH_B},
++      {(char *)0, 0, 0, PIO_DEFAULT, PIO_PERIPH_A},
++  };
++
++  pio_configure(dbgu_pins);
++  pmc_enable_periph_clock(AT91C_ID_PIOE);
++  pmc_enable_periph_clock(AT91C_ID_USART3);
++}
++
++static void initialize_dbgu(void) {
++  unsigned int baudrate = 115200;
++
++  at91_dbgu_hw_init();
++
++  if (pmc_check_mck_h32mxdiv())
++    usart_init(BAUDRATE(MASTER_CLOCK / 2, baudrate));
++  else
++    usart_init(BAUDRATE(MASTER_CLOCK, baudrate));
++}
++
++#ifdef CONFIG_DDR2
++static void ddramc_reg_config(struct ddramc_register *ddramc_config) {
++  ddramc_config->mdr = (AT91C_DDRC2_DBW_16_BITS | AT91C_DDRC2_MD_DDR2_SDRAM);
++
++  ddramc_config->cr =
++      (AT91C_DDRC2_NC_DDR10_SDR9 | AT91C_DDRC2_NR_14 | AT91C_DDRC2_CAS_3 |
++       AT91C_DDRC2_DISABLE_RESET_DLL | AT91C_DDRC2_ENABLE_DLL |
++       AT91C_DDRC2_NB_BANKS_8 | AT91C_DDRC2_DECOD_INTERLEAVED |
++       AT91C_DDRC2_UNAL_SUPPORTED);
++
++#if defined(CONFIG_BUS_SPEED_200MHZ)
++
++  ddramc_config->rtr = 0x61B;
++
++  ddramc_config->t0pr =
++      (AT91C_DDRC2_TRAS_(9) | AT91C_DDRC2_TRCD_(3) | AT91C_DDRC2_TWR_(3) |
++       AT91C_DDRC2_TRC_(12) | AT91C_DDRC2_TRP_(3) | AT91C_DDRC2_TRRD_(2) |
++       AT91C_DDRC2_TWTR_(2) | AT91C_DDRC2_TMRD_(2));
++
++  ddramc_config->t1pr = (AT91C_DDRC2_TXP_(2) | AT91C_DDRC2_TXSRD_(200) |
++                         AT91C_DDRC2_TXSNR_(28) | AT91C_DDRC2_TRFC_(26));
++
++  ddramc_config->t2pr =
++      (AT91C_DDRC2_TFAW_(9) | AT91C_DDRC2_TRTP_(2) | AT91C_DDRC2_TRPA_(3) |
++       AT91C_DDRC2_TXARDS_(8) | AT91C_DDRC2_TXARD_(2));
++
++#else
++#error "No CLK setting defined"
++#endif
++}
++
++static void ddramc_init(void) {
++  struct ddramc_register ddramc_reg;
++  unsigned int reg;
++
++  ddramc_reg_config(&ddramc_reg);
++
++  /* enable ddr2 clock */
++  pmc_enable_periph_clock(AT91C_ID_MPDDRC);
++  pmc_enable_system_clock(AT91C_PMC_DDR);
++
++  /* configure Shift Sampling Point of Data */
++#if defined(CONFIG_BUS_SPEED_200MHZ)
++  reg = AT91C_MPDDRC_RD_DATA_PATH_TWO_CYCLES;
++#else
++  reg = AT91C_MPDDRC_RD_DATA_PATH_ONE_CYCLES;
++#endif
++  writel(reg, (AT91C_BASE_MPDDRC + MPDDRC_RD_DATA_PATH));
++
++  /* MPDDRC I/O Calibration Register */
++  reg = readl(AT91C_BASE_MPDDRC + MPDDRC_IO_CALIBR);
++  reg &= ~AT91C_MPDDRC_RDIV;
++  reg &= ~AT91C_MPDDRC_TZQIO;
++  reg &= ~AT91C_MPDDRC_CALCODEP;
++  reg &= ~AT91C_MPDDRC_CALCODEN;
++  reg |= AT91C_MPDDRC_RDIV_DDR2_RZQ_50;
++  reg |= AT91C_MPDDRC_TZQIO_5; /* @ 170 & 176 MHz */
++  reg |= AT91C_MPDDRC_EN_CALIB;
++
++  writel(reg, (AT91C_BASE_MPDDRC + MPDDRC_IO_CALIBR));
++
++  /* DDRAM2 Controller initialize */
++  ddram_initialize(AT91C_BASE_MPDDRC, AT91C_BASE_DDRCS, &ddramc_reg);
++
++  ddramc_dump_regs(AT91C_BASE_MPDDRC);
++}
++#endif /* #ifdef CONFIG_DDR2 */
++
++#if defined(CONFIG_MATRIX)
++static int matrix_configure_slave(void) {
++  unsigned int ddr_port;
++  unsigned int ssr_setting, sasplit_setting, srtop_setting;
++
++  /*
++   * Matrix 0 (H64MX)
++   */
++
++  /*
++   * 0: Bridge from H64MX to AXIMX
++   * (Internal ROM, Crypto Library, PKCC RAM): Always Secured
++   */
++
++  /* 1: H64MX Peripheral Bridge */
++
++  /* 2: Video Decoder 1M: Non-Secure */
++  srtop_setting = MATRIX_SRTOP(0, MATRIX_SRTOP_VALUE_1M);
++  sasplit_setting = MATRIX_SASPLIT(0, MATRIX_SASPLIT_VALUE_1M);
++  ssr_setting =
++      (MATRIX_LANSECH_NS(0) | MATRIX_RDNSECH_NS(0) | MATRIX_WRNSECH_NS(0));
++  matrix_configure_slave_security(AT91C_BASE_MATRIX64,
++                                  H64MX_SLAVE_VIDEO_DECODER, srtop_setting,
++                                  sasplit_setting, ssr_setting);
++
++  /* 4 ~ 10 DDR2 Port1 ~ 7: Non-Secure */
++  srtop_setting = MATRIX_SRTOP(0, MATRIX_SRTOP_VALUE_128M);
++  sasplit_setting = (MATRIX_SASPLIT(0, MATRIX_SASPLIT_VALUE_128M) |
++                     MATRIX_SASPLIT(1, MATRIX_SASPLIT_VALUE_128M) |
++                     MATRIX_SASPLIT(2, MATRIX_SASPLIT_VALUE_128M) |
++                     MATRIX_SASPLIT(3, MATRIX_SASPLIT_VALUE_128M));
++  ssr_setting =
++      (MATRIX_LANSECH_NS(0) | MATRIX_LANSECH_NS(1) | MATRIX_LANSECH_NS(2) |
++       MATRIX_LANSECH_NS(3) | MATRIX_RDNSECH_NS(0) | MATRIX_RDNSECH_NS(1) |
++       MATRIX_RDNSECH_NS(2) | MATRIX_RDNSECH_NS(3) | MATRIX_WRNSECH_NS(0) |
++       MATRIX_WRNSECH_NS(1) | MATRIX_WRNSECH_NS(2) | MATRIX_WRNSECH_NS(3));
++  /* DDR port 0 not used from NWd */
++  for (ddr_port = 1; ddr_port < 8; ddr_port++) {
++    matrix_configure_slave_security(
++        AT91C_BASE_MATRIX64, (H64MX_SLAVE_DDR2_PORT_0 + ddr_port),
++        srtop_setting, sasplit_setting, ssr_setting);
++  }
++
++  /*
++   * 11: Internal SRAM 128K
++   * TOP0 is set to 128K
++   * SPLIT0 is set to 64K
++   * LANSECH0 is set to 0, the low area of region 0 is the Securable one
++   * RDNSECH0 is set to 0, region 0 Securable area is secured for reads.
++   * WRNSECH0 is set to 0, region 0 Securable area is secured for writes
++   */
++  srtop_setting = MATRIX_SRTOP(0, MATRIX_SRTOP_VALUE_128K);
++  sasplit_setting = MATRIX_SASPLIT(0, MATRIX_SASPLIT_VALUE_64K);
++  ssr_setting =
++      (MATRIX_LANSECH_S(0) | MATRIX_RDNSECH_S(0) | MATRIX_WRNSECH_S(0));
++  matrix_configure_slave_security(AT91C_BASE_MATRIX64,
++                                  H64MX_SLAVE_INTERNAL_SRAM, srtop_setting,
++                                  sasplit_setting, ssr_setting);
++
++  /* 12:  Bridge from H64MX to H32MX */
++
++  /*
++   * Matrix 1 (H32MX)
++   */
++
++  /* 0: Bridge from H32MX to H64MX: Not Secured */
++
++  /* 1: H32MX Peripheral Bridge 0: Not Secured */
++
++  /* 2: H32MX Peripheral Bridge 1: Not Secured */
++
++  /*
++   * 3: External Bus Interface
++   * EBI CS0 Memory(256M) ----> Slave Region 0, 1
++   * EBI CS1 Memory(256M) ----> Slave Region 2, 3
++   * EBI CS2 Memory(256M) ----> Slave Region 4, 5
++   * EBI CS3 Memory(128M) ----> Slave Region 6
++   * NFC Command Registers(128M) -->Slave Region 7
++   *
++   * NANDFlash(EBI CS3) --> Slave Region 6: Non-Secure
++   */
++  srtop_setting = MATRIX_SRTOP(6, MATRIX_SRTOP_VALUE_128M);
++  srtop_setting |= MATRIX_SRTOP(7, MATRIX_SRTOP_VALUE_128M);
++  sasplit_setting = MATRIX_SASPLIT(6, MATRIX_SASPLIT_VALUE_128M);
++  sasplit_setting |= MATRIX_SASPLIT(7, MATRIX_SASPLIT_VALUE_128M);
++  ssr_setting =
++      (MATRIX_LANSECH_NS(6) | MATRIX_RDNSECH_NS(6) | MATRIX_WRNSECH_NS(6));
++  ssr_setting |=
++      (MATRIX_LANSECH_NS(7) | MATRIX_RDNSECH_NS(7) | MATRIX_WRNSECH_NS(7));
++  matrix_configure_slave_security(AT91C_BASE_MATRIX32, H32MX_EXTERNAL_EBI,
++                                  srtop_setting, sasplit_setting, ssr_setting);
++
++  /* 4: NFC SRAM (4K): Non-Secure */
++  srtop_setting = MATRIX_SRTOP(0, MATRIX_SRTOP_VALUE_8K);
++  sasplit_setting = MATRIX_SASPLIT(0, MATRIX_SASPLIT_VALUE_8K);
++  ssr_setting =
++      (MATRIX_LANSECH_NS(0) | MATRIX_RDNSECH_NS(0) | MATRIX_WRNSECH_NS(0));
++  matrix_configure_slave_security(AT91C_BASE_MATRIX32, H32MX_NFC_SRAM,
++                                  srtop_setting, sasplit_setting, ssr_setting);
++
++  /* 5:
++   * USB Device High Speed Dual Port RAM (DPR): 1M
++   * USB Host OHCI registers: 1M
++   * USB Host EHCI registers: 1M
++   */
++  srtop_setting = (MATRIX_SRTOP(0, MATRIX_SRTOP_VALUE_1M) |
++                   MATRIX_SRTOP(1, MATRIX_SRTOP_VALUE_1M) |
++                   MATRIX_SRTOP(2, MATRIX_SRTOP_VALUE_1M));
++  sasplit_setting = (MATRIX_SASPLIT(0, MATRIX_SASPLIT_VALUE_1M) |
++                     MATRIX_SASPLIT(1, MATRIX_SASPLIT_VALUE_1M) |
++                     MATRIX_SASPLIT(2, MATRIX_SASPLIT_VALUE_1M));
++  ssr_setting =
++      (MATRIX_LANSECH_NS(0) | MATRIX_LANSECH_NS(1) | MATRIX_LANSECH_NS(2) |
++       MATRIX_RDNSECH_NS(0) | MATRIX_RDNSECH_NS(1) | MATRIX_RDNSECH_NS(2) |
++       MATRIX_WRNSECH_NS(0) | MATRIX_WRNSECH_NS(1) | MATRIX_WRNSECH_NS(2));
++  matrix_configure_slave_security(AT91C_BASE_MATRIX32, H32MX_USB, srtop_setting,
++                                  sasplit_setting, ssr_setting);
++
++  /* 6: Soft Modem (1M): Non-Secure */
++  srtop_setting = MATRIX_SRTOP(0, MATRIX_SRTOP_VALUE_1M);
++  sasplit_setting = MATRIX_SASPLIT(0, MATRIX_SASPLIT_VALUE_1M);
++  ssr_setting =
++      (MATRIX_LANSECH_NS(0) | MATRIX_RDNSECH_NS(0) | MATRIX_WRNSECH_NS(0));
++  matrix_configure_slave_security(AT91C_BASE_MATRIX32, H32MX_SMD, srtop_setting,
++                                  sasplit_setting, ssr_setting);
++  return 0;
++}
++
++static unsigned int security_ps_peri_id[] = {
++    AT91C_ID_VDEC,   AT91C_ID_PIOA,   AT91C_ID_PIOB,   AT91C_ID_PIOC,
++    AT91C_ID_PIOE,   AT91C_ID_USART2, AT91C_ID_USART3, AT91C_ID_USART4,
++    AT91C_ID_TWI0,   AT91C_ID_TWI2,   AT91C_ID_HSMC,   AT91C_ID_HSMCI0,
++    AT91C_ID_HSMCI1, AT91C_ID_TC0,    AT91C_ID_TC1,    AT91C_ID_ADC,
++    AT91C_ID_UHPHS,  AT91C_ID_UDPHS,  AT91C_ID_LCDC,   AT91C_ID_ISI,
++    AT91C_ID_GMAC,   AT91C_ID_GMAC1,  AT91C_ID_SPI0,   AT91C_ID_SPI1,
++    AT91C_ID_SMD,    AT91C_ID_SSC0,   AT91C_ID_SSC1,
++};
++
++static int matrix_config_periheral(void) {
++  unsigned int *peri_id = security_ps_peri_id;
++  unsigned int array_size = sizeof(security_ps_peri_id) / sizeof(unsigned int);
++  int ret;
++
++  ret = matrix_configure_peri_security(peri_id, array_size);
++  if (ret)
++    return -1;
++
++  return 0;
++}
++
++static int matrix_init(void) {
++  int ret;
++
++  matrix_write_protect_disable(AT91C_BASE_MATRIX64);
++  matrix_write_protect_disable(AT91C_BASE_MATRIX32);
++
++  ret = matrix_configure_slave();
++  if (ret)
++    return -1;
++
++  ret = matrix_config_periheral();
++  if (ret)
++    return -1;
++
++  return 0;
++}
++#endif /* #if defined(CONFIG_MATRIX) */
++
++#if defined(CONFIG_TWI)
++unsigned int at91_twi0_hw_init(void) {
++  unsigned int base_addr = AT91C_BASE_TWI0;
++
++  const struct pio_desc twi_pins[] = {
++      {"TWD0", AT91C_PIN_PA(30), 0, PIO_DEFAULT, PIO_PERIPH_A},
++      {"TWCK0", AT91C_PIN_PA(31), 0, PIO_DEFAULT, PIO_PERIPH_A},
++      {(char *)0, 0, 0, PIO_DEFAULT, PIO_PERIPH_A},
++  };
++
++  pmc_enable_periph_clock(AT91C_ID_PIOA);
++  pio_configure(twi_pins);
++
++  pmc_enable_periph_clock(AT91C_ID_TWI0);
++
++  return base_addr;
++}
++
++unsigned int at91_twi1_hw_init(void) { return 0; }
++
++unsigned int at91_twi2_hw_init(void) {
++  unsigned int base_addr = AT91C_BASE_TWI2;
++
++  const struct pio_desc twi_pins[] = {
++      {"TWD2", AT91C_PIN_PB(29), 0, PIO_DEFAULT, PIO_PERIPH_A},
++      {"TWCK2", AT91C_PIN_PB(30), 0, PIO_DEFAULT, PIO_PERIPH_A},
++      {(char *)0, 0, 0, PIO_DEFAULT, PIO_PERIPH_A},
++  };
++
++  pmc_enable_periph_clock(AT91C_ID_PIOB);
++  pio_configure(twi_pins);
++
++  pmc_enable_periph_clock(AT91C_ID_TWI2);
++
++  return base_addr;
++}
++
++unsigned int at91_twi3_hw_init(void) {
++  unsigned int base_addr = AT91C_BASE_TWI3;
++  const struct pio_desc twi_pins[] = {
++      {"TWD3", AT91C_PIN_PC(25), 0, PIO_DEFAULT, PIO_PERIPH_B},
++      {"TWCK3", AT91C_PIN_PC(26), 0, PIO_DEFAULT, PIO_PERIPH_B},
++      {(char *)0, 0, 0, PIO_DEFAULT, PIO_PERIPH_A},
++  };
++
++  pmc_enable_periph_clock(AT91C_ID_PIOC);
++  pio_configure(twi_pins);
++
++  pmc_enable_periph_clock(AT91C_ID_TWI3);
++
++  return base_addr;
++}
++#endif
++
++#if defined(CONFIG_AUTOCONFIG_TWI_BUS)
++void at91_board_config_twi_bus(void) {
++  at24xx_twi_bus = 0;
++
++  attiny_twi_bus = 2;
++
++  act8865_twi_bus = 3;
++}
++#endif
++
++#if defined(CONFIG_ACT8865_SET_VOLTAGE)
++int at91_board_act8865_set_reg_voltage(void) {
++  unsigned char reg, value;
++  int ret;
++
++  /* Check ACT8865 I2C interface */
++  if (act8865_check_i2c_disabled())
++    return 0;
++
++  /* Enable REG5 output 3.3V */
++  reg = REG5_0;
++  value = ACT8865_3V3;
++  ret = act8865_set_reg_voltage(reg, value);
++  if (ret)
++    console_printf("ACT8865: Failed to make REG5 output 3300mV\n");
++
++  /* Enable REG6 output 1.8V */
++  reg = REG6_0;
++  value = ACT8865_1V8;
++  ret = act8865_set_reg_voltage(reg, value);
++  if (ret)
++    console_printf("ACT8865: Failed to make REG6 output 1800mV\n");
++
++  return 0;
++}
++#endif
++
++#if defined(CONFIG_PM)
++void at91_disable_smd_clock(void) {
++  /*
++   * set pin DIBP to pull-up and DIBN to pull-down
++   * to save power on VDDIOP0
++   */
++  pmc_enable_system_clock(AT91C_PMC_SMDCK);
++  pmc_set_smd_clock_divider(AT91C_PMC_SMDDIV);
++  pmc_enable_periph_clock(AT91C_ID_SMD);
++  writel(0xF, (0x0C + AT91C_BASE_SMD));
++  pmc_disable_periph_clock(AT91C_ID_SMD);
++  pmc_disable_system_clock(AT91C_PMC_SMDCK);
++}
++#endif
++
++#if defined(CONFIG_MAC0_PHY)
++unsigned int at91_eth0_hw_init(void) {
++  unsigned int base_addr = AT91C_BASE_GMAC;
++
++  const struct pio_desc macb_pins[] = {
++      {"G0_MDC", AT91C_PIN_PB(16), 0, PIO_DEFAULT, PIO_PERIPH_A},
++      {"G0_MDIO", AT91C_PIN_PB(17), 0, PIO_DEFAULT, PIO_PERIPH_A},
++      {(char *)0, 0, 0, PIO_DEFAULT, PIO_PERIPH_A},
++  };
++
++  pio_configure(macb_pins);
++  pmc_enable_periph_clock(AT91C_ID_PIOB);
++
++  pmc_enable_periph_clock(AT91C_ID_GMAC);
++  return base_addr;
++}
++#endif
++
++#if defined(CONFIG_MACB)
++void at91_disable_mac_clock(void) {
++#if defined(CONFIG_MAC0_PHY)
++  pmc_disable_periph_clock(AT91C_ID_GMAC);
++#endif
++}
++#endif
++
++#ifdef CONFIG_HW_INIT
++void hw_init(void) {
++  /* Disable watchdog */
++  at91_disable_wdt();
++
++  /* At this stage the main oscillator is supposed
++   * to be enabled PCK = MCK = MOSC
++   */
++
++  /* Switch PCK/MCK on Main clock output */
++  pmc_cfg_mck(BOARD_PRESCALER_MAIN_CLOCK);
++
++  /* Configure PLLA = MOSC * (PLL_MULA + 1) / PLL_DIVA */
++  pmc_cfg_plla(PLLA_SETTINGS);
++
++  /* Initialize PLLA charge pump */
++  /* not needed for SAMA5D4 */
++  pmc_init_pll(0);
++
++  /* Switch MCK on PLLA output */
++  pmc_cfg_mck(BOARD_PRESCALER_PLLA);
++
++  /* Enable External Reset */
++  writel(AT91C_RSTC_KEY_UNLOCK | AT91C_RSTC_URSTEN, AT91C_BASE_RSTC + RSTC_RMR);
++
++#if defined(CONFIG_ENTER_NWD)
++  cpacr_init();
++
++  /* Program the DACR to allow client access to *all* domains */
++  dacr_swd_init();
++#endif
++
++#if defined(CONFIG_MATRIX)
++  /* Initialize the matrix */
++  matrix_init();
++#endif
++
++  /* initialize the dbgu */
++  initialize_dbgu();
++
++#if defined(CONFIG_MATRIX)
++  matrix_read_slave_security();
++  matrix_read_periperal_security();
++#endif
++
++  /* Init timer */
++  timer_init();
++
++#ifdef CONFIG_DDR2
++  /* Initialize MPDDR Controller */
++  ddramc_init();
++#endif
++
++  /* Prepare L2 cache setup */
++  l2cache_prepare();
++
++#if defined(CONFIG_TWI)
++  twi_init();
++#endif
++}
++#endif /* #ifdef CONFIG_HW_INIT */
++
++#ifdef CONFIG_SDCARD
++#ifdef CONFIG_OF_LIBFDT
++void at91_board_set_dtb_name(char *of_name) { strcpy(of_name, "l1.dtb"); }
++#endif
++
++void at91_mci0_hw_init(void) {
++  const struct pio_desc mci_pins[] = {
++      {"MCI1_CK", AT91C_PIN_PE(18), 0, PIO_DEFAULT, PIO_PERIPH_C},
++      {"MCI1_CDA", AT91C_PIN_PE(19), 0, PIO_DEFAULT, PIO_PERIPH_C},
++
++      {"MCI1_DA0", AT91C_PIN_PE(20), 0, PIO_DEFAULT, PIO_PERIPH_C},
++      {"MCI1_DA1", AT91C_PIN_PE(21), 0, PIO_DEFAULT, PIO_PERIPH_C},
++      {"MCI1_DA2", AT91C_PIN_PE(22), 0, PIO_DEFAULT, PIO_PERIPH_C},
++      {"MCI1_DA3", AT91C_PIN_PE(23), 0, PIO_DEFAULT, PIO_PERIPH_C},
++      {(char *)0, 0, 0, PIO_DEFAULT, PIO_PERIPH_A},
++  };
++
++  /* Configure the PIO controller */
++  pio_configure(mci_pins);
++  pmc_enable_periph_clock(AT91C_ID_PIOE);
++  pmc_enable_periph_clock(AT91C_ID_HSMCI1);
++}
++#endif /* #ifdef CONFIG_SDCARD */
++
++#ifdef CONFIG_NANDFLASH
++void nandflash_hw_init(void) {
++  /* Configure nand pins */
++  const struct pio_desc nand_pins[] = {
++      {"NANDOE", CONFIG_SYS_NAND_OE_PIN, 0, PIO_PULLUP, PIO_PERIPH_A},
++      {"NANDWE", CONFIG_SYS_NAND_WE_PIN, 0, PIO_PULLUP, PIO_PERIPH_A},
++      {"NANDALE", CONFIG_SYS_NAND_ALE_PIN, 0, PIO_PULLUP, PIO_PERIPH_A},
++      {"NANDCLE", CONFIG_SYS_NAND_CLE_PIN, 0, PIO_PULLUP, PIO_PERIPH_A},
++      {"NANDCS", CONFIG_SYS_NAND_ENABLE_PIN, 1, PIO_DEFAULT, PIO_OUTPUT},
++      {"D0", AT91C_PIN_PC(5), 0, PIO_PULLUP, PIO_PERIPH_A},
++      {"D1", AT91C_PIN_PC(6), 0, PIO_PULLUP, PIO_PERIPH_A},
++      {"D2", AT91C_PIN_PC(7), 0, PIO_PULLUP, PIO_PERIPH_A},
++      {"D3", AT91C_PIN_PC(8), 0, PIO_PULLUP, PIO_PERIPH_A},
++      {"D4", AT91C_PIN_PC(9), 0, PIO_PULLUP, PIO_PERIPH_A},
++      {"D5", AT91C_PIN_PC(10), 0, PIO_PULLUP, PIO_PERIPH_A},
++      {"D6", AT91C_PIN_PC(11), 0, PIO_PULLUP, PIO_PERIPH_A},
++      {"D7", AT91C_PIN_PC(12), 0, PIO_PULLUP, PIO_PERIPH_A},
++      {(char *)0, 0, 0, PIO_DEFAULT, PIO_PERIPH_A},
++  };
++
++  /* Configure the nand controller pins*/
++  pio_configure(nand_pins);
++  pmc_enable_periph_clock(AT91C_ID_PIOC);
++
++  /* Enable the clock */
++  pmc_enable_periph_clock(AT91C_ID_HSMC);
++
++  /* EBI Configuration Register */
++  writel((AT91C_EBICFG_DRIVE0_HIGH | AT91C_EBICFG_PULL0_NONE |
++          AT91C_EBICFG_DRIVE1_HIGH | AT91C_EBICFG_PULL1_NONE),
++         SFR_EBICFG + AT91C_BASE_SFR);
++
++  /* Configure SMC CS3 for NAND/SmartMedia */
++  writel(AT91C_SMC_SETUP_NWE(1) | AT91C_SMC_SETUP_NCS_WR(1) |
++             AT91C_SMC_SETUP_NRD(1) | AT91C_SMC_SETUP_NCS_RD(1),
++         (ATMEL_BASE_SMC + SMC_SETUP3));
++
++  writel(AT91C_SMC_PULSE_NWE(2) | AT91C_SMC_PULSE_NCS_WR(3) |
++             AT91C_SMC_PULSE_NRD(2) | AT91C_SMC_PULSE_NCS_RD(3),
++         (ATMEL_BASE_SMC + SMC_PULSE3));
++
++  writel(AT91C_SMC_CYCLE_NWE(5) | AT91C_SMC_CYCLE_NRD(5),
++         (ATMEL_BASE_SMC + SMC_CYCLE3));
++
++  writel(AT91C_SMC_TIMINGS_TCLR(2) | AT91C_SMC_TIMINGS_TADL(7) |
++             AT91C_SMC_TIMINGS_TAR(2) | AT91C_SMC_TIMINGS_TRR(3) |
++             AT91C_SMC_TIMINGS_TWB(7) | AT91C_SMC_TIMINGS_RBNSEL(2) |
++             AT91C_SMC_TIMINGS_NFSEL,
++         (ATMEL_BASE_SMC + SMC_TIMINGS3));
++
++  writel(AT91C_SMC_MODE_READMODE_NRD_CTRL | AT91C_SMC_MODE_WRITEMODE_NWE_CTRL |
++             AT91C_SMC_MODE_DBW_8 | AT91C_SMC_MODE_TDF_CYCLES(1),
++         (ATMEL_BASE_SMC + SMC_MODE3));
++}
++#endif /* #ifdef CONFIG_NANDFLASH */
++
++#if defined(CONFIG_TWI)
++void twi_init() {
++  twi_bus_init(at91_twi0_hw_init);
++  twi_bus_init(at91_twi1_hw_init);
++  twi_bus_init(at91_twi2_hw_init);
++  twi_bus_init(at91_twi3_hw_init);
++#if defined(CONFIG_AUTOCONFIG_TWI_BUS)
++  dbg_loud("Auto-Config the TWI Bus by the board\n");
++  at91_board_config_twi_bus();
++#endif
++}
++#endif
+diff --git a/contrib/board/wifx/l1/l1.h b/contrib/board/wifx/l1/l1.h
+new file mode 100644
+index 0000000..1d28c2e
+--- /dev/null
++++ b/contrib/board/wifx/l1/l1.h
+@@ -0,0 +1,97 @@
++/* ----------------------------------------------------------------------------
++ *         ATMEL Microcontroller Software Support
++ * ----------------------------------------------------------------------------
++ * Copyright (c) 2014, Atmel Corporation
++ * Copyright (c) 2021, Wifx Sàrl
++ *                     Yannick Lanz <yannick.lanz@wifx.net>
++ *
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions are met:
++ *
++ * - Redistributions of source code must retain the above copyright notice,
++ * this list of conditions and the disclaimer below.
++ *
++ * Atmel's name may not be used to endorse or promote products derived from
++ * this software without specific prior written permission.
++ *
++ * DISCLAIMER: THIS SOFTWARE IS PROVIDED BY ATMEL "AS IS" AND ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
++ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT ARE
++ * DISCLAIMED. IN NO EVENT SHALL ATMEL BE LIABLE FOR ANY DIRECT, INDIRECT,
++ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
++ * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
++ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
++ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
++ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++#ifndef __L1_H__
++#define __L1_H__
++
++/*
++ * PMC Setting
++ *
++ * The main oscillator is enabled as soon as possible in the lowlevel_clock_init
++ * and MCK is switched on the main oscillator.
++ */
++#define BOARD_MAINOSC		12000000
++
++#if defined(CONFIG_CPU_CLK_600MHZ)
++
++/* PCK: 600MHz, MCK: 200MHz */
++#define BOARD_PLLA_MULA		99
++
++#define BOARD_PCK		((unsigned long)((BOARD_MAINOSC * (BOARD_PLLA_MULA + 1)) / 2))
++#define BOARD_MCK		((unsigned long)((BOARD_MAINOSC * (BOARD_PLLA_MULA + 1)) / 2 / 3))
++
++#define BOARD_CKGR_PLLA		(AT91C_CKGR_SRCA | AT91C_CKGR_OUTA_0)
++#define BOARD_PLLACOUNT		(0x3F << 8)
++#define BOARD_MULA		((AT91C_CKGR_MULA << 2) & (BOARD_PLLA_MULA << 18))
++#define BOARD_DIVA		(AT91C_CKGR_DIVA & 1)
++
++/* Master Clock Register */
++#define BOARD_PRESCALER_MAIN_CLOCK	(AT91C_PMC_PLLADIV2_2 \
++					| AT91C_PMC_MDIV_3 \
++					| AT91C_PMC_CSS_MAIN_CLK)
++
++#define BOARD_PRESCALER_PLLA		(AT91C_PMC_H32MXDIV_H32MXDIV2 \
++					| AT91C_PMC_PLLADIV2_2 \
++					| AT91C_PMC_MDIV_3 \
++					| AT91C_PMC_CSS_PLLA_CLK)
++
++#define MASTER_CLOCK		200000000
++
++#else
++#error "No CLK setting defined"
++#endif
++
++#define PLLA_SETTINGS		(BOARD_CKGR_PLLA | \
++				BOARD_PLLACOUNT | \
++				BOARD_MULA | \
++				BOARD_DIVA)
++
++#define	USART_BASE	AT91C_BASE_USART3
++
++/*
++ * NandFlash Settings
++ */
++#define CONFIG_SYS_NAND_BASE			AT91C_BASE_CS3
++#define CONFIG_SYS_NAND_MASK_ALE		(1 << 21)
++#define CONFIG_SYS_NAND_MASK_CLE		(1 << 22)
++
++#define CONFIG_SYS_NAND_OE_PIN			AT91C_PIN_PC(13)
++#define CONFIG_SYS_NAND_WE_PIN			AT91C_PIN_PC(14)
++#define CONFIG_SYS_NAND_ALE_PIN			AT91C_PIN_PC(17)
++#define CONFIG_SYS_NAND_CLE_PIN			AT91C_PIN_PC(18)
++#define CONFIG_SYS_NAND_ENABLE_PIN		AT91C_PIN_PC(15)
++
++#define	NO_GALOIS_TABLE_IN_ROM
++
++/*
++ * MCI Settings
++ */
++#define CONFIG_SYS_BASE_MCI	AT91C_BASE_HSMCI1
++
++#endif /* __L1_H__ */
+diff --git a/contrib/board/wifx/l1/l1_nf_uboot_defconfig b/contrib/board/wifx/l1/l1_nf_uboot_defconfig
+new file mode 100644
+index 0000000..e28620b
+--- /dev/null
++++ b/contrib/board/wifx/l1/l1_nf_uboot_defconfig
+@@ -0,0 +1,8 @@
++CONFIG_L1=y
++CONFIG_RAM_256MB=y
++# CONFIG_PMECC_AUTO_DETECT is not set
++CONFIG_PMECC_CORRECT_BITS_4=y
++CONFIG_IMG_SIZE="0x000C0000"
++CONFIG_DEBUG=y
++# CONFIG_DISABLE_WATCHDOG is not set
++# CONFIG_ENTER_NWD is not set
+diff --git a/contrib/board/wifx/l1/l1_sd_uboot_defconfig b/contrib/board/wifx/l1/l1_sd_uboot_defconfig
+new file mode 100644
+index 0000000..ae9fbff
+--- /dev/null
++++ b/contrib/board/wifx/l1/l1_sd_uboot_defconfig
+@@ -0,0 +1,7 @@
++CONFIG_L1=y
++CONFIG_CPU_CLK_600MHZ=y
++CONFIG_RAM_256MB=y
++CONFIG_SDCARD=y
++CONFIG_DEBUG=y
++# CONFIG_DISABLE_WATCHDOG is not set
++# CONFIG_ENTER_NWD is not set
+diff --git a/contrib/include/contrib_board.h b/contrib/include/contrib_board.h
+index 3ef4ab7..c1376ca 100644
+--- a/contrib/include/contrib_board.h
++++ b/contrib/include/contrib_board.h
+@@ -73,4 +73,8 @@
+ #include "lorix_one_512.h"
+ #endif
+ 
++#ifdef CONFIG_L1
++#include "l1.h"
++#endif
++
+ #endif
+diff --git a/driver/board_hw_info.c b/driver/board_hw_info.c
+index 72d710a..70f0a86 100644
+--- a/driver/board_hw_info.c
++++ b/driver/board_hw_info.c
+@@ -25,66 +25,66 @@
+  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  */
+-#include "common.h"
+-#include "hardware.h"
+-#include "string.h"
+ #include "board_hw_info.h"
+-#include "ds24xx.h"
+ #include "at24xx.h"
++#include "common.h"
+ #include "debug.h"
++#include "ds24xx.h"
++#include "hardware.h"
++#include "string.h"
+ 
+ /* Board Type */
+-#define BOARD_TYPE_CPU		1
+-#define BOARD_TYPE_EK		2
+-#define BOARD_TYPE_DM		3
++#define BOARD_TYPE_CPU 1
++#define BOARD_TYPE_EK 2
++#define BOARD_TYPE_DM 3
+ 
+ /* One Wire informaion */
+-#define BOARD_NAME_LEN		12
+-#define VENDOR_NAME_LEN		10
+-#define VENDOR_COUNTRY_LEN	2
++#define BOARD_NAME_LEN 12
++#define VENDOR_NAME_LEN 10
++#define VENDOR_COUNTRY_LEN 2
+ 
+-#define VENDOR_NAME_ALT_LEN	6
+-#define VENDOR_COUNTRY_ALT_LEN	3
++#define VENDOR_NAME_ALT_LEN 6
++#define VENDOR_COUNTRY_ALT_LEN 3
+ 
+ typedef struct hw_info_map {
+-	unsigned char total_bytes;
+-	char vendor_name[VENDOR_NAME_LEN];
+-	char vendor_country[VENDOR_COUNTRY_LEN];
+-	unsigned char board_name[BOARD_NAME_LEN];
+-	unsigned char year;
+-	unsigned char week;
+-	unsigned char revision_code;
+-	unsigned char revision_id;
+-	unsigned char bom_revision;
+-	unsigned char revision_mapping;
++  unsigned char total_bytes;
++  char vendor_name[VENDOR_NAME_LEN];
++  char vendor_country[VENDOR_COUNTRY_LEN];
++  unsigned char board_name[BOARD_NAME_LEN];
++  unsigned char year;
++  unsigned char week;
++  unsigned char revision_code;
++  unsigned char revision_id;
++  unsigned char bom_revision;
++  unsigned char revision_mapping;
+ } __attribute__((packed)) hw_info_map_t;
+ 
+ typedef struct hw_info_alt_map {
+-	unsigned char size_byte;
+-	unsigned char vendor_name[VENDOR_NAME_ALT_LEN];
+-	unsigned char vendor_country[VENDOR_COUNTRY_ALT_LEN];
+-	unsigned char year;
+-	unsigned char week;
+-	unsigned char revision_code;
+-	unsigned char revision_id;
+-	unsigned char bom_revision;
+-	unsigned char crc_serial;
+-	unsigned char ext_config_addr[2];
+-	unsigned char board_name[BOARD_NAME_LEN];
+-	unsigned char revision_mapping;
++  unsigned char size_byte;
++  unsigned char vendor_name[VENDOR_NAME_ALT_LEN];
++  unsigned char vendor_country[VENDOR_COUNTRY_ALT_LEN];
++  unsigned char year;
++  unsigned char week;
++  unsigned char revision_code;
++  unsigned char revision_id;
++  unsigned char bom_revision;
++  unsigned char crc_serial;
++  unsigned char ext_config_addr[2];
++  unsigned char board_name[BOARD_NAME_LEN];
++  unsigned char revision_mapping;
+ } __attribute__((packed)) hw_info_alt_map_t;
+ 
+ typedef struct board_hw_info {
+-	char *board_name;
+-	char *vendor_name;
+-	unsigned char board_type;
+-	unsigned char board_id;
+-	unsigned char revision_code;
+-	unsigned char revision_id;
+-	unsigned char bom_revision;
+-	unsigned char vendor_id;
+-	unsigned char year;
+-	unsigned char week;
++  char *board_name;
++  char *vendor_name;
++  unsigned char board_type;
++  unsigned char board_id;
++  unsigned char revision_code;
++  unsigned char revision_id;
++  unsigned char bom_revision;
++  unsigned char vendor_id;
++  unsigned char year;
++  unsigned char week;
+ } board_info_t;
+ 
+ static unsigned int sn;
+@@ -92,258 +92,232 @@ static unsigned int rev;
+ static unsigned char buffer[HW_INFO_TOTAL_SIZE];
+ 
+ static struct {
+-	char *board_name;
+-	unsigned char board_type;
+-	unsigned char board_id;
++  char *board_name;
++  unsigned char board_type;
++  unsigned char board_id;
+ } board_list[] = {
+-	{"SAM9x5-EK",	BOARD_TYPE_EK,	BOARD_ID_SAM9X5_EK},
+-	{"SAM9x5-DM",	BOARD_TYPE_DM,	BOARD_ID_SAM9x5_DM},
+-	{"SAM9G15-CM",	BOARD_TYPE_CPU,	BOARD_ID_SAM9G15_CM},
+-	{"SAM9G25-CM",	BOARD_TYPE_CPU,	BOARD_ID_SAM9G25_CM},
+-	{"SAM9G35-CM",	BOARD_TYPE_CPU,	BOARD_ID_SAM9G35_CM},
+-	{"SAM9X25-CM",	BOARD_TYPE_CPU,	BOARD_ID_SAM9X25_CM},
+-	{"SAM9X35-CM",	BOARD_TYPE_CPU,	BOARD_ID_SAM9X35_CM},
+-	{"PDA-DM",	BOARD_TYPE_DM,	BOARD_ID_PDA_DM},
+-	{"TM4300",	BOARD_TYPE_DM,	BOARD_ID_PDA_DM},
+-	{"TM4301",	BOARD_TYPE_DM,	BOARD_ID_PDA_DM},
+-	{"TM7000",	BOARD_TYPE_DM,	BOARD_ID_PDA7_DM},
+-	{"SAMA5D3x-MB",	BOARD_TYPE_EK,	BOARD_ID_SAMA5D3X_MB},
+-	{"SAMA5D3x-DM",	BOARD_TYPE_DM,	BOARD_ID_SAMA5D3X_DM},
+-	{"SAMA5D31-CM",	BOARD_TYPE_CPU,	BOARD_ID_SAMA5D31_CM},
+-	{"SAMA5D33-CM",	BOARD_TYPE_CPU,	BOARD_ID_SAMA5D33_CM},
+-	{"SAMA5D34-CM",	BOARD_TYPE_CPU,	BOARD_ID_SAMA5D34_CM},
+-	{"SAMA5D35-CM",	BOARD_TYPE_CPU,	BOARD_ID_SAMA5D35_CM},
+-	{"SAMA5D36-CM",	BOARD_TYPE_CPU,	BOARD_ID_SAMA5D36_CM},
+-	{"SAMA5D36-CP",	BOARD_TYPE_CPU,	BOARD_ID_SAMA5D36_CP},
+-	{"SAMA5D44-MB",	BOARD_TYPE_EK,	BOARD_ID_SAMA5D4_MB},
+-	{"SAMA5D4-XULT",BOARD_TYPE_EK,	BOARD_ID_SAMA5D4_MB},
+-	{"SAMA5D2-XULT",BOARD_TYPE_EK,	BOARD_ID_SAMA5D2_XULT},
+-	{"SAMA5D2-ICP", BOARD_TYPE_EK,	BOARD_ID_SAMA5D2_ICP},
+-	{"SAM9X60-EK",	BOARD_TYPE_EK,	BOARD_ID_SAM9X60_EK},
+-	{0,		0,		0},
++    {"SAM9x5-EK", BOARD_TYPE_EK, BOARD_ID_SAM9X5_EK},
++    {"SAM9x5-DM", BOARD_TYPE_DM, BOARD_ID_SAM9x5_DM},
++    {"SAM9G15-CM", BOARD_TYPE_CPU, BOARD_ID_SAM9G15_CM},
++    {"SAM9G25-CM", BOARD_TYPE_CPU, BOARD_ID_SAM9G25_CM},
++    {"SAM9G35-CM", BOARD_TYPE_CPU, BOARD_ID_SAM9G35_CM},
++    {"SAM9X25-CM", BOARD_TYPE_CPU, BOARD_ID_SAM9X25_CM},
++    {"SAM9X35-CM", BOARD_TYPE_CPU, BOARD_ID_SAM9X35_CM},
++    {"PDA-DM", BOARD_TYPE_DM, BOARD_ID_PDA_DM},
++    {"TM4300", BOARD_TYPE_DM, BOARD_ID_PDA_DM},
++    {"TM4301", BOARD_TYPE_DM, BOARD_ID_PDA_DM},
++    {"TM7000", BOARD_TYPE_DM, BOARD_ID_PDA7_DM},
++    {"SAMA5D3x-MB", BOARD_TYPE_EK, BOARD_ID_SAMA5D3X_MB},
++    {"SAMA5D3x-DM", BOARD_TYPE_DM, BOARD_ID_SAMA5D3X_DM},
++    {"SAMA5D31-CM", BOARD_TYPE_CPU, BOARD_ID_SAMA5D31_CM},
++    {"SAMA5D33-CM", BOARD_TYPE_CPU, BOARD_ID_SAMA5D33_CM},
++    {"SAMA5D34-CM", BOARD_TYPE_CPU, BOARD_ID_SAMA5D34_CM},
++    {"SAMA5D35-CM", BOARD_TYPE_CPU, BOARD_ID_SAMA5D35_CM},
++    {"SAMA5D36-CM", BOARD_TYPE_CPU, BOARD_ID_SAMA5D36_CM},
++    {"SAMA5D36-CP", BOARD_TYPE_CPU, BOARD_ID_SAMA5D36_CP},
++    {"SAMA5D44-MB", BOARD_TYPE_EK, BOARD_ID_SAMA5D4_MB},
++    {"SAMA5D4-XULT", BOARD_TYPE_EK, BOARD_ID_SAMA5D4_MB},
++    {"SAMA5D2-XULT", BOARD_TYPE_EK, BOARD_ID_SAMA5D2_XULT},
++    {"SAMA5D2-ICP", BOARD_TYPE_EK, BOARD_ID_SAMA5D2_ICP},
++    {"SAM9X60-EK", BOARD_TYPE_EK, BOARD_ID_SAM9X60_EK},
++    {0, 0, 0},
+ };
+ 
+ static struct {
+-	char *vendor_name;
+-	char vendor_id;
++  char *vendor_name;
++  char vendor_id;
+ } vendor_list[] = {
+-	{"EMBEST",	VENDOR_EMBEST},
+-	{"FLEX",	VENDOR_FLEX},
+-	{"RONETIX",	VENDOR_RONETIX},
+-	{"COGENT",	VENDOR_COGENT},
+-	{"PDA INC",	VENDOR_PDA},
+-	{"PDA",		VENDOR_PDA},
+-	{"ATMEL-RFO",	VENDOR_ATMEL_RFO},
+-	{"ATMEL RFO",	VENDOR_ATMEL_RFO},
+-	{"ATMEL-RF0",	VENDOR_ATMEL_RFO},
+-	{"MCHIP RFO",	VENDOR_MCHIP_RFO},
+-	{"MCHIP RDC",	VENDOR_MCHIP_RDC},
+-	{0,		0},
++    {"EMBEST", VENDOR_EMBEST},       {"FLEX", VENDOR_FLEX},
++    {"RONETIX", VENDOR_RONETIX},     {"COGENT", VENDOR_COGENT},
++    {"PDA INC", VENDOR_PDA},         {"PDA", VENDOR_PDA},
++    {"ATMEL-RFO", VENDOR_ATMEL_RFO}, {"ATMEL RFO", VENDOR_ATMEL_RFO},
++    {"ATMEL-RF0", VENDOR_ATMEL_RFO}, {"MCHIP RFO", VENDOR_MCHIP_RFO},
++    {"MCHIP RDC", VENDOR_MCHIP_RDC}, {0, 0},
+ };
+ 
+-static unsigned char normalize_rev_code(const unsigned char c)
+-{
+-	if ((c >= 'A') && (c <= 'Z'))
+-		return c;
++static unsigned char normalize_rev_code(const unsigned char c) {
++  if ((c >= 'A') && (c <= 'Z'))
++    return c;
+ 
+-	if ((c >= 'a') && (c <= 'z'))
+-		return c - 0x20;
++  if ((c >= 'a') && (c <= 'z'))
++    return c - 0x20;
+ 
+-	if ((c >= '0') && (c <= '9'))
+-		return c;
++  if ((c >= '0') && (c <= '9'))
++    return c;
+ 
+-	/* by default, return revision 'A' */
+-	return 'A';
++  /* by default, return revision 'A' */
++  return 'A';
+ }
+ 
+-static unsigned char normalize_rev_id(const unsigned char c)
+-{
+-	if ((c >= '0') && (c <= '9'))
+-		return c;
++static unsigned char normalize_rev_id(const unsigned char c) {
++  if ((c >= '0') && (c <= '9'))
++    return c;
+ 
+-	if (c > '9') {
+-		if (((c >= 'A') && (c <= 'F'))
+-			|| ((c >= 'a') && (c <= 'f')))
+-			return '9';
+-	}
++  if (c > '9') {
++    if (((c >= 'A') && (c <= 'F')) || ((c >= 'a') && (c <= 'f')))
++      return '9';
++  }
+ 
+-	/* by default, return revision '0' */
+-	return '0';
++  /* by default, return revision '0' */
++  return '0';
+ }
+ 
+-static unsigned char normalize_rev_id_map_b(const unsigned char c)
+-{
+-	return normalize_rev_code(c);
++static unsigned char normalize_rev_id_map_b(const unsigned char c) {
++  return normalize_rev_code(c);
+ }
+ 
+-static unsigned char normalize_bom_revision(const unsigned char c)
+-{
+-	return normalize_rev_id(c);
++static unsigned char normalize_bom_revision(const unsigned char c) {
++  return normalize_rev_id(c);
+ }
+ 
+-static int parse_board_hw_info(unsigned char *buff,
+-			       board_info_t *bd_info)
+-{
+-	char board_name[BOARD_NAME_LEN + 1];
+-	char vendor_name[VENDOR_NAME_LEN + 1];
+-	int i;
+-
+-	hw_info_map_t *p = (hw_info_map_t *)buff;
+-
+-	if (p->total_bytes != HW_INFO_TOTAL_SIZE) {
+-		dbg_loud("HW Info: The total size: %x isn't correct\n",
+-			 p->total_bytes);
+-		return -1;
+-	}
+-
+-	for (i = 0; i < ARRAY_SIZE(board_list); i++) {
+-		if (strncmp(board_list[i].board_name,
+-				(const char *)p->board_name,
+-				strlen(board_list[i].board_name)) == 0)
+-			break;
+-	}
+-
+-	if (i == ARRAY_SIZE(board_list))
+-		goto fail_to_search_board;
+-
+-	bd_info->board_type = board_list[i].board_type;
+-	bd_info->board_id = board_list[i].board_id;
+-
+-	bd_info->revision_code = normalize_rev_code(p->revision_code);
+-	if (p->revision_mapping == 'B') {
+-		bd_info->revision_id = normalize_rev_id_map_b(p->revision_id);
+-		bd_info->bom_revision = normalize_bom_revision(p->bom_revision);
+-	} else {
+-		bd_info->revision_id = normalize_rev_id(p->revision_id);
+-	}
+-	bd_info->board_name = board_list[i].board_name;
+-
+-	for (i = 0; i < ARRAY_SIZE(vendor_list); i++) {
+-		if (strncmp(vendor_list[i].vendor_name,
+-				(const char *)p->vendor_name,
+-				strlen(vendor_list[i].vendor_name)) == 0)
+-			break;
+-	}
+-
+-	if (i == ARRAY_SIZE(vendor_list))
+-		goto fail_to_search_vendor;
+-
+-	bd_info->vendor_id = vendor_list[i].vendor_id;
+-	bd_info->vendor_name = vendor_list[i].vendor_name;
+-
+-	return 0;
++static int parse_board_hw_info(unsigned char *buff, board_info_t *bd_info) {
++  char board_name[BOARD_NAME_LEN + 1];
++  char vendor_name[VENDOR_NAME_LEN + 1];
++  int i;
++
++  hw_info_map_t *p = (hw_info_map_t *)buff;
++
++  if (p->total_bytes != HW_INFO_TOTAL_SIZE) {
++    dbg_loud("HW Info: The total size: %x isn't correct\n", p->total_bytes);
++    return -1;
++  }
++
++  for (i = 0; i < ARRAY_SIZE(board_list); i++) {
++    if (strncmp(board_list[i].board_name, (const char *)p->board_name,
++                strlen(board_list[i].board_name)) == 0)
++      break;
++  }
++
++  if (i == ARRAY_SIZE(board_list))
++    goto fail_to_search_board;
++
++  bd_info->board_type = board_list[i].board_type;
++  bd_info->board_id = board_list[i].board_id;
++
++  bd_info->revision_code = normalize_rev_code(p->revision_code);
++  if (p->revision_mapping == 'B') {
++    bd_info->revision_id = normalize_rev_id_map_b(p->revision_id);
++    bd_info->bom_revision = normalize_bom_revision(p->bom_revision);
++  } else {
++    bd_info->revision_id = normalize_rev_id(p->revision_id);
++  }
++  bd_info->board_name = board_list[i].board_name;
++
++  for (i = 0; i < ARRAY_SIZE(vendor_list); i++) {
++    if (strncmp(vendor_list[i].vendor_name, (const char *)p->vendor_name,
++                strlen(vendor_list[i].vendor_name)) == 0)
++      break;
++  }
++
++  if (i == ARRAY_SIZE(vendor_list))
++    goto fail_to_search_vendor;
++
++  bd_info->vendor_id = vendor_list[i].vendor_id;
++  bd_info->vendor_name = vendor_list[i].vendor_name;
++
++  return 0;
+ 
+ fail_to_search_board:
+-	for (i = 0; i < BOARD_NAME_LEN; i++)
+-		board_name[i] = p->board_name[i];
+-	board_name[i] = 0;
++  for (i = 0; i < BOARD_NAME_LEN; i++)
++    board_name[i] = p->board_name[i];
++  board_name[i] = 0;
+ 
+-	dbg_info("Failed to parse the board name: %s\n", board_name);
++  dbg_info("Failed to parse the board name: %s\n", board_name);
+ 
+-	return -1;
++  return -1;
+ 
+ fail_to_search_vendor:
+-	for (i = 0; i < VENDOR_NAME_LEN; i++)
+-		vendor_name[i] = p->vendor_name[i];
+-	vendor_name[i] = 0;
++  for (i = 0; i < VENDOR_NAME_LEN; i++)
++    vendor_name[i] = p->vendor_name[i];
++  vendor_name[i] = 0;
+ 
+-	dbg_info("Failed to parse the vendor name: %s\n", vendor_name);
++  dbg_info("Failed to parse the vendor name: %s\n", vendor_name);
+ 
+-	return -1;
++  return -1;
+ }
+ 
+-static int parse_alt_board_hw_info(unsigned char *buff,
+-				   board_info_t *bd_info)
+-{
+-	unsigned int i;
+-	unsigned char *board, *vendor;
+-	hw_info_alt_map_t *p = (hw_info_alt_map_t *)buff;
++static int parse_alt_board_hw_info(unsigned char *buff, board_info_t *bd_info) {
++  unsigned int i;
++  unsigned char *board, *vendor;
++  hw_info_alt_map_t *p = (hw_info_alt_map_t *)buff;
+ 
+-	if (p->size_byte != 0x41) {
+-		dbg_info("%s: Size of byte is incorrect\n");
+-		return -1;
+-	}
++  if (p->size_byte != 0x41) {
++    dbg_info("%s: Size of byte is incorrect\n");
++    return -1;
++  }
+ 
+-	for (i = 0; i < ARRAY_SIZE(board_list); i++) {
+-		if (!strncmp((const char *)p->board_name,
+-			     (const char *)board_list[i].board_name,
+-			     strlen(board_list[i].board_name)))
+-			break;
+-	}
++  for (i = 0; i < ARRAY_SIZE(board_list); i++) {
++    if (!strncmp((const char *)p->board_name,
++                 (const char *)board_list[i].board_name,
++                 strlen(board_list[i].board_name)))
++      break;
++  }
+ 
+-	if (i == ARRAY_SIZE(board_list))
+-		goto failed;
++  if (i == ARRAY_SIZE(board_list))
++    goto failed;
+ 
+-	bd_info->board_type = board_list[i].board_type;
+-	bd_info->board_id = board_list[i].board_id;
+-	bd_info->board_name = board_list[i].board_name;
++  bd_info->board_type = board_list[i].board_type;
++  bd_info->board_id = board_list[i].board_id;
++  bd_info->board_name = board_list[i].board_name;
+ 
+-	for (i = 0; i < ARRAY_SIZE(vendor_list); i++) {
+-		if (!strncmp((const char *)p->vendor_name,
+-			     (const char *)vendor_list[i].vendor_name,
+-			     strlen(vendor_list[i].vendor_name)))
+-			break;
+-	}
++  for (i = 0; i < ARRAY_SIZE(vendor_list); i++) {
++    if (!strncmp((const char *)p->vendor_name,
++                 (const char *)vendor_list[i].vendor_name,
++                 strlen(vendor_list[i].vendor_name)))
++      break;
++  }
+ 
+-	if (i == ARRAY_SIZE(vendor_list))
+-		goto failed;
++  if (i == ARRAY_SIZE(vendor_list))
++    goto failed;
+ 
+-	bd_info->vendor_id = vendor_list[i].vendor_id;
+-	bd_info->vendor_name = vendor_list[i].vendor_name;
++  bd_info->vendor_id = vendor_list[i].vendor_id;
++  bd_info->vendor_name = vendor_list[i].vendor_name;
+ 
+-	bd_info->revision_code = normalize_rev_code(p->revision_code);
+-	bd_info->revision_id = normalize_rev_id_map_b(p->revision_id);
+-	bd_info->bom_revision = normalize_bom_revision(p->bom_revision);
++  bd_info->revision_code = normalize_rev_code(p->revision_code);
++  bd_info->revision_id = normalize_rev_id_map_b(p->revision_id);
++  bd_info->bom_revision = normalize_bom_revision(p->bom_revision);
+ 
+-	bd_info->year = p->year;
+-	bd_info->week = p->week;
++  bd_info->year = p->year;
++  bd_info->week = p->week;
+ 
+-	return 0;
++  return 0;
+ 
+ failed:
+-	board = p->board_name;
+-	vendor = p->vendor_name;
+-	board[BOARD_NAME_LEN] = 0;
+-	vendor[VENDOR_NAME_ALT_LEN + VENDOR_COUNTRY_ALT_LEN] = 0;
++  board = p->board_name;
++  vendor = p->vendor_name;
++  board[BOARD_NAME_LEN] = 0;
++  vendor[VENDOR_NAME_ALT_LEN + VENDOR_COUNTRY_ALT_LEN] = 0;
+ 
+-	dbg_info("%s: Failed to parse with board: %s, vendor: %s\n",
+-		 __func__, board, vendor);
++  dbg_info("%s: Failed to parse with board: %s, vendor: %s\n", __func__, board,
++           vendor);
+ 
+-	return -1;
++  return -1;
+ }
+-static int get_board_hw_info(unsigned char *buff,
+-			     unsigned char board_sn,
+-			     board_info_t *bd_info)
+-{
+-	int ret;
+-	unsigned char mapping_revision = buff[30];
+-
+-	if (mapping_revision == 'C')
+-		ret = parse_alt_board_hw_info(buff, bd_info);
+-	else
+-		ret = parse_board_hw_info(buff, bd_info);
+-
+-	if (ret)
+-		return ret;
+-
+-	dbg_info("  #%d", board_sn);
+-	if ((mapping_revision == 'B') ||
+-	    (mapping_revision == 'C')) {
+-		dbg_info("  %s [%c%c%c]      %s\n",
+-		bd_info->board_name,
+-		bd_info->revision_code,
+-		bd_info->revision_id,
+-		bd_info->bom_revision,
+-		bd_info->vendor_name);
+-	} else {
+-		dbg_info("  %s [%c%c]      %s\n",
+-		bd_info->board_name,
+-		bd_info->revision_code,
+-		bd_info->revision_id,
+-		bd_info->vendor_name);
+-	}
+-
+-	return 0;
++static int get_board_hw_info(unsigned char *buff, unsigned char board_sn,
++                             board_info_t *bd_info) {
++  int ret;
++  unsigned char mapping_revision = buff[30];
++
++  if (mapping_revision == 'C')
++    ret = parse_alt_board_hw_info(buff, bd_info);
++  else
++    ret = parse_board_hw_info(buff, bd_info);
++
++  if (ret)
++    return ret;
++
++  dbg_info("  #%d", board_sn);
++  if ((mapping_revision == 'B') || (mapping_revision == 'C')) {
++    dbg_info("  %s [%c%c%c]      %s\n", bd_info->board_name,
++             bd_info->revision_code, bd_info->revision_id,
++             bd_info->bom_revision, bd_info->vendor_name);
++  } else {
++    dbg_info("  %s [%c%c]      %s\n", bd_info->board_name,
++             bd_info->revision_code, bd_info->revision_id,
++             bd_info->vendor_name);
++  }
++
++  return 0;
+ }
+ 
+ /*******************************************************************************
+@@ -366,434 +340,418 @@ static int get_board_hw_info(unsigned char *buff,
+  *******************************************************************************
+  */
+ /* SN */
+-#define SN_MASK			0x1F
+-#define CM_SN_OFFSET		0
+-#define DM_SN_OFFSET		10
+-#define EK_SN_OFFSET		20
++#define SN_MASK 0x1F
++#define CM_SN_OFFSET 0
++#define DM_SN_OFFSET 10
++#define EK_SN_OFFSET 20
+ 
+ /* Vendor */
+-#define VENDOR_MASK		0x1F
+-#define CM_VENDOR_OFFSET	5
+-#define DM_VENDOR_OFFSET	15
+-#define EK_VENDOR_OFFSET	25
++#define VENDOR_MASK 0x1F
++#define CM_VENDOR_OFFSET 5
++#define DM_VENDOR_OFFSET 15
++#define EK_VENDOR_OFFSET 25
+ 
+ /* Revision Code */
+-#define REV_MASK		0x1F
+-#define CM_REV_OFFSET		0
+-#define DM_REV_OFFSET		5
+-#define EK_REV_OFFSET		10
++#define REV_MASK 0x1F
++#define CM_REV_OFFSET 0
++#define DM_REV_OFFSET 5
++#define EK_REV_OFFSET 10
+ 
+ /* Revision ID */
+-#define	REV_ID_MASK		0x07
+-#define CM_REV_ID_OFFSET	15
+-#define DM_REV_ID_OFFSET	18
+-#define EK_REV_ID_OFFSET	21
+-
+-static int construct_sn_rev(board_info_t *bd_info,
+-			    unsigned int *psn,
+-			    unsigned int *prev)
+-{
+-	int ret = 0;
+-
+-	switch (bd_info->board_type) {
+-	case BOARD_TYPE_CPU:
+-		*psn |= (bd_info->board_id & SN_MASK);
+-		*psn |= ((bd_info->vendor_id & VENDOR_MASK)
+-							<< CM_VENDOR_OFFSET);
+-		*prev |= ((bd_info->revision_code - 'A') & REV_MASK);
+-		*prev |= (((bd_info->revision_id - '0') & REV_ID_MASK)
+-							<< CM_REV_ID_OFFSET);
+-		break;
+-
+-	case BOARD_TYPE_DM:
+-		*psn |= ((bd_info->board_id & SN_MASK) << DM_SN_OFFSET);
+-		*psn |= ((bd_info->vendor_id & VENDOR_MASK)
+-							<< DM_VENDOR_OFFSET);
+-		*prev |= (((bd_info->revision_code - 'A') & REV_MASK)
+-							<< DM_REV_OFFSET);
+-		*prev |= (((bd_info->revision_id - '0') & REV_ID_MASK)
+-							<< DM_REV_ID_OFFSET);
+-		break;
+-
+-	case BOARD_TYPE_EK:
+-		*psn |= ((bd_info->board_id & SN_MASK) << EK_SN_OFFSET);
+-		*psn |= ((bd_info->vendor_id & VENDOR_MASK)
+-							<< EK_VENDOR_OFFSET);
+-		*prev |= (((bd_info->revision_code - 'A') & REV_MASK)
+-							<< EK_REV_OFFSET);
+-		*prev |= (((bd_info->revision_id - '0') & REV_ID_MASK)
+-							<< EK_REV_ID_OFFSET);
+-		break;
+-
+-	default:
+-		dbg_info("WARNING: Unknown board type\n");
+-		ret = -1;
+-		break;
+-	}
+-
+-	return ret;
++#define REV_ID_MASK 0x07
++#define CM_REV_ID_OFFSET 15
++#define DM_REV_ID_OFFSET 18
++#define EK_REV_ID_OFFSET 21
++
++static int construct_sn_rev(board_info_t *bd_info, unsigned int *psn,
++                            unsigned int *prev) {
++  int ret = 0;
++
++  switch (bd_info->board_type) {
++  case BOARD_TYPE_CPU:
++    *psn |= (bd_info->board_id & SN_MASK);
++    *psn |= ((bd_info->vendor_id & VENDOR_MASK) << CM_VENDOR_OFFSET);
++    *prev |= ((bd_info->revision_code - 'A') & REV_MASK);
++    *prev |= (((bd_info->revision_id - '0') & REV_ID_MASK) << CM_REV_ID_OFFSET);
++    break;
++
++  case BOARD_TYPE_DM:
++    *psn |= ((bd_info->board_id & SN_MASK) << DM_SN_OFFSET);
++    *psn |= ((bd_info->vendor_id & VENDOR_MASK) << DM_VENDOR_OFFSET);
++    *prev |= (((bd_info->revision_code - 'A') & REV_MASK) << DM_REV_OFFSET);
++    *prev |= (((bd_info->revision_id - '0') & REV_ID_MASK) << DM_REV_ID_OFFSET);
++    break;
++
++  case BOARD_TYPE_EK:
++    *psn |= ((bd_info->board_id & SN_MASK) << EK_SN_OFFSET);
++    *psn |= ((bd_info->vendor_id & VENDOR_MASK) << EK_VENDOR_OFFSET);
++    *prev |= (((bd_info->revision_code - 'A') & REV_MASK) << EK_REV_OFFSET);
++    *prev |= (((bd_info->revision_id - '0') & REV_ID_MASK) << EK_REV_ID_OFFSET);
++    break;
++
++  default:
++    dbg_info("WARNING: Unknown board type\n");
++    ret = -1;
++    break;
++  }
++
++  return ret;
+ }
+ 
+-static unsigned int set_default_sn(void)
+-{
+-	unsigned int board_id_cm = 0;
+-	unsigned int board_id_dm = 0;
+-	unsigned int board_id_ek = 0;
+-	unsigned int vendor_cm = 0;
+-	unsigned int vendor_dm = 0;
+-	unsigned int vendor_ek = 0;
++static unsigned int set_default_sn(void) {
++  unsigned int board_id_cm = 0;
++  unsigned int board_id_dm = 0;
++  unsigned int board_id_ek = 0;
++  unsigned int vendor_cm = 0;
++  unsigned int vendor_dm = 0;
++  unsigned int vendor_ek = 0;
+ 
+ #if defined(CONFIG_AT91SAM9X5EK)
+-	/* at91sam9x5ek
+-	 * CPU Module: SAM9X25-CM, EMBEST
+-	 * Display Module: SAM9x5-DM, FLEX
+-	 * EK Module: SAM9x5-EK, FLEX
+-	 */
+-	board_id_cm = BOARD_ID_SAM9X25_CM;
+-	board_id_dm = BOARD_ID_SAM9x5_DM;
+-	board_id_ek = BOARD_ID_SAM9X5_EK;
+-	vendor_cm = VENDOR_EMBEST;
+-	vendor_dm = VENDOR_FLEX;
+-	vendor_ek = VENDOR_FLEX;
++  /* at91sam9x5ek
++   * CPU Module: SAM9X25-CM, EMBEST
++   * Display Module: SAM9x5-DM, FLEX
++   * EK Module: SAM9x5-EK, FLEX
++   */
++  board_id_cm = BOARD_ID_SAM9X25_CM;
++  board_id_dm = BOARD_ID_SAM9x5_DM;
++  board_id_ek = BOARD_ID_SAM9X5_EK;
++  vendor_cm = VENDOR_EMBEST;
++  vendor_dm = VENDOR_FLEX;
++  vendor_ek = VENDOR_FLEX;
+ 
+ #elif defined(CONFIG_SAMA5D3XEK) || defined(CONFIG_SAMA5D3X_CMP)
+ 
+-	/* sama5d3xek
+-	 * CPU Module: SAMA5D31-CM, EMBEST
+-	 * Display Module: SAMA5D3x-DM, FLEX
+-	 * EK Module: SAMA5D3x-MB, FLEX
+-	 */
+-	board_id_cm = BOARD_ID_SAMA5D31_CM;
+-	board_id_dm = BOARD_ID_SAMA5D3X_DM;
+-	board_id_ek = BOARD_ID_SAMA5D3X_MB;
+-	vendor_cm = VENDOR_EMBEST;
+-	vendor_dm = VENDOR_FLEX;
+-	vendor_ek = VENDOR_FLEX;
++  /* sama5d3xek
++   * CPU Module: SAMA5D31-CM, EMBEST
++   * Display Module: SAMA5D3x-DM, FLEX
++   * EK Module: SAMA5D3x-MB, FLEX
++   */
++  board_id_cm = BOARD_ID_SAMA5D31_CM;
++  board_id_dm = BOARD_ID_SAMA5D3X_DM;
++  board_id_ek = BOARD_ID_SAMA5D3X_MB;
++  vendor_cm = VENDOR_EMBEST;
++  vendor_dm = VENDOR_FLEX;
++  vendor_ek = VENDOR_FLEX;
+ #elif defined(CONFIG_SAMA5D4EK) || defined(CONFIG_SAMA5D4_XPLAINED)
+-	/*
+-	 * SAMA5D4-EK
+-	 * Display Module: SAMA5D3x-DM, FLEX
+-	 * EK Module: SAMA5D4x-MB, FLEX
+-	 */
+-	board_id_dm = BOARD_ID_SAMA5D3X_DM;
+-	board_id_ek = BOARD_ID_SAMA5D4_MB;
+-	vendor_cm = VENDOR_EMBEST;
+-	vendor_dm = VENDOR_FLEX;
++  /*
++   * SAMA5D4-EK
++   * Display Module: SAMA5D3x-DM, FLEX
++   * EK Module: SAMA5D4x-MB, FLEX
++   */
++  board_id_dm = BOARD_ID_SAMA5D3X_DM;
++  board_id_ek = BOARD_ID_SAMA5D4_MB;
++  vendor_cm = VENDOR_EMBEST;
++  vendor_dm = VENDOR_FLEX;
+ #elif defined(CONFIG_SAMA5D2_XPLAINED)
+-	board_id_ek = BOARD_ID_SAMA5D2_XULT;
+-	vendor_ek = VENDOR_ATMEL_RFO;
++  board_id_ek = BOARD_ID_SAMA5D2_XULT;
++  vendor_ek = VENDOR_ATMEL_RFO;
+ #elif defined(CONFIG_SAMA5D2_ICP)
+-	board_id_ek = BOARD_ID_SAMA5D2_ICP;
+-	vendor_ek = VENDOR_MCHIP_RFO;
++  board_id_ek = BOARD_ID_SAMA5D2_ICP;
++  vendor_ek = VENDOR_MCHIP_RFO;
+ #elif defined(CONFIG_LORIX_ONE_256)
+-    /*
+-     * LORIX One (256MB NAND version)
+-     * Display Module: no
+-     * EK Module: LORIX_ONE_256, WIFX
+-     */
+-    board_id_ek = BOARD_ID_LORIX_ONE_256;
+-    vendor_cm = VENDOR_WIFX;
++  /*
++   * LORIX One (256MB NAND version)
++   * Display Module: no
++   * EK Module: LORIX_ONE_256, WIFX
++   */
++  board_id_ek = BOARD_ID_LORIX_ONE_256;
++  vendor_cm = VENDOR_WIFX;
+ #elif defined(CONFIG_LORIX_ONE_512)
+-    /*
+-     * LORIX One (512MB NAND version)
+-     * Display Module: no
+-     * EK Module: LORIX_ONE_512, WIFX
+-     */
+-    board_id_ek = BOARD_ID_LORIX_ONE_512;
+-    vendor_cm = VENDOR_WIFX;
+-#elif defined(CONFIG_SAM9X60EK) || defined(CONFIG_SAM9X60_DDR2_SIP_EB) || defined(CONFIG_SAM9X60_SDR_SIP_EB)
+-	/* sam9x60ek ; sam9x60 ddr2 sip eb and sam9x60 sdr sip eb
+-	 */
+-	board_id_ek = BOARD_ID_SAM9X60_EK;
+-	vendor_ek = VENDOR_MCHIP_RDC;
++  /*
++   * LORIX One (512MB NAND version)
++   * Display Module: no
++   * EK Module: LORIX_ONE_512, WIFX
++   */
++  board_id_ek = BOARD_ID_LORIX_ONE_512;
++  vendor_cm = VENDOR_WIFX;
++#elif defined(CONFIG_L1)
++  /*
++   * Wifx L1
++   * Display Module: no
++   * EK Module: L1, WIFX
++   */
++  board_id_ek = BOARD_ID_L1;
++  vendor_cm = VENDOR_WIFX;
++#elif defined(CONFIG_SAM9X60EK) || defined(CONFIG_SAM9X60_DDR2_SIP_EB) ||      \
++    defined(CONFIG_SAM9X60_SDR_SIP_EB)
++  /* sam9x60ek ; sam9x60 ddr2 sip eb and sam9x60 sdr sip eb
++   */
++  board_id_ek = BOARD_ID_SAM9X60_EK;
++  vendor_ek = VENDOR_MCHIP_RDC;
+ #else
+ #error "OneWire: No defined board"
+ #endif
+ 
+-	return (board_id_cm & SN_MASK)
+-		| ((vendor_cm & VENDOR_MASK) << CM_VENDOR_OFFSET)
+-		| ((board_id_dm & SN_MASK) << DM_SN_OFFSET)
+-		| ((vendor_dm & VENDOR_MASK) << DM_VENDOR_OFFSET)
+-		| ((board_id_ek & SN_MASK) << EK_SN_OFFSET)
+-		| ((vendor_ek & VENDOR_MASK) << EK_VENDOR_OFFSET);
++  return (board_id_cm & SN_MASK) |
++         ((vendor_cm & VENDOR_MASK) << CM_VENDOR_OFFSET) |
++         ((board_id_dm & SN_MASK) << DM_SN_OFFSET) |
++         ((vendor_dm & VENDOR_MASK) << DM_VENDOR_OFFSET) |
++         ((board_id_ek & SN_MASK) << EK_SN_OFFSET) |
++         ((vendor_ek & VENDOR_MASK) << EK_VENDOR_OFFSET);
+ }
+ 
+-static unsigned int set_default_rev(void)
+-{
+-	unsigned int rev_cm;
+-	unsigned int rev_dm;
+-	unsigned int rev_ek;
+-	unsigned int rev_id_cm;
+-	unsigned int rev_id_dm;
+-	unsigned int rev_id_ek;
++static unsigned int set_default_rev(void) {
++  unsigned int rev_cm;
++  unsigned int rev_dm;
++  unsigned int rev_ek;
++  unsigned int rev_id_cm;
++  unsigned int rev_id_dm;
++  unsigned int rev_id_ek;
+ 
+ #if defined(CONFIG_AT91SAM9X5EK)
+-	/* at91sam9x5ek
+-	 * CPU Module: 'B', '1'
+-	 * Display Module: 'B', '0'
+-	 * EK Module: 'B','0'
+-	 */
+-	rev_cm = 'B';
+-	rev_dm = 'B';
+-	rev_ek = 'B';
+-	rev_id_cm = '1';
+-	rev_id_dm = '0';
+-	rev_id_ek = '0';
++  /* at91sam9x5ek
++   * CPU Module: 'B', '1'
++   * Display Module: 'B', '0'
++   * EK Module: 'B','0'
++   */
++  rev_cm = 'B';
++  rev_dm = 'B';
++  rev_ek = 'B';
++  rev_id_cm = '1';
++  rev_id_dm = '0';
++  rev_id_ek = '0';
+ 
+ #elif defined(CONFIG_SAMA5D3XEK) || defined(CONFIG_SAMA5D3X_CMP)
+ 
+-	/* sama5d3xek
+-	 * CPU Module: 'D', '4'
+-	 * Display Module: 'B', '2'
+-	 * EK Module: 'C','3'
+-	 */
+-	rev_cm = 'D';
+-	rev_dm = 'B';
+-	rev_ek = 'C';
+-	rev_id_cm = '4';
+-	rev_id_dm = '2';
+-	rev_id_ek = '3';
++  /* sama5d3xek
++   * CPU Module: 'D', '4'
++   * Display Module: 'B', '2'
++   * EK Module: 'C','3'
++   */
++  rev_cm = 'D';
++  rev_dm = 'B';
++  rev_ek = 'C';
++  rev_id_cm = '4';
++  rev_id_dm = '2';
++  rev_id_ek = '3';
+ #elif defined(CONFIG_SAMA5D4EK) || defined(CONFIG_SAMA5D4_XPLAINED)
+-	/*
+-	 * SAMA5D4-EK
+-	 * Display Module: 'B', '2'
+-	 * EK Module: 'B','3'
+-	 */
+-	rev_cm = 'A';
+-	rev_dm = 'B';
+-	rev_ek = 'C';
+-	rev_id_cm = '0';
+-	rev_id_dm = '2';
+-	rev_id_ek = '3';
++  /*
++   * SAMA5D4-EK
++   * Display Module: 'B', '2'
++   * EK Module: 'B','3'
++   */
++  rev_cm = 'A';
++  rev_dm = 'B';
++  rev_ek = 'C';
++  rev_id_cm = '0';
++  rev_id_dm = '2';
++  rev_id_ek = '3';
+ 
+ #elif defined(CONFIG_SAMA5D2_XPLAINED)
+-	rev_cm = 'A';
+-	rev_dm = 'A';
+-	rev_ek = 'A';
+-	rev_id_cm = '1';
+-	rev_id_dm = '1';
+-	rev_id_ek = '1';
++  rev_cm = 'A';
++  rev_dm = 'A';
++  rev_ek = 'A';
++  rev_id_cm = '1';
++  rev_id_dm = '1';
++  rev_id_ek = '1';
+ 
+ #elif defined(CONFIG_SAMA5D2_ICP)
+-	rev_cm = 'A';
+-	rev_dm = 'A';
+-	rev_ek = 'A';
+-	rev_id_cm = '1';
+-	rev_id_dm = '1';
+-	rev_id_ek = '1';
++  rev_cm = 'A';
++  rev_dm = 'A';
++  rev_ek = 'A';
++  rev_id_cm = '1';
++  rev_id_dm = '1';
++  rev_id_ek = '1';
+ #elif defined(CONFIG_LORIX_ONE_256)
+-    /*
+-     * LORIX One (256MB NAND version)
+-     * Display Module: 'B', '2'
+-     * EK Module: 'B','3'
+-     */
+-    rev_cm = 'A';
+-    rev_dm = 'A';
+-    rev_ek = 'A';
+-    rev_id_cm = '1';
+-    rev_id_dm = '1';
+-    rev_id_ek = '1';
++  /*
++   * LORIX One (256MB NAND version)
++   * Display Module: 'B', '2'
++   * EK Module: 'B','3'
++   */
++  rev_cm = 'A';
++  rev_dm = 'A';
++  rev_ek = 'A';
++  rev_id_cm = '1';
++  rev_id_dm = '1';
++  rev_id_ek = '1';
+ #elif defined(CONFIG_LORIX_ONE_512)
+-    /*
+-     * LORIX One (512MB NAND version)
+-     * Display Module: 'B', '2'
+-     * EK Module: 'B','3'
+-     */
+-    rev_cm = 'A';
+-    rev_dm = 'A';
+-    rev_ek = 'A';
+-    rev_id_cm = '1';
+-    rev_id_dm = '1';
+-    rev_id_ek = '1';
++  /*
++   * LORIX One (512MB NAND version)
++   * Display Module: 'B', '2'
++   * EK Module: 'B','3'
++   */
++  rev_cm = 'A';
++  rev_dm = 'A';
++  rev_ek = 'A';
++  rev_id_cm = '1';
++  rev_id_dm = '1';
++  rev_id_ek = '1';
++#elif defined(BOARD_ID_L1)
++  /*
++   * Wifx L1
++   * Display Module: 'A', '1'
++   * EK Module: 'A','1'
++   */
++  rev_cm = 'A';
++  rev_dm = 'A';
++  rev_ek = 'A';
++  rev_id_cm = '1';
++  rev_id_dm = '1';
++  rev_id_ek = '1';
+ #elif defined(CONFIG_SAM9X60EK)
+-	rev_cm = 'A';
+-	rev_dm = 'A';
+-	rev_ek = 'A';
+-	rev_id_cm = '0';
+-	rev_id_dm = '0';
+-	rev_id_ek = '0';
++  rev_cm = 'A';
++  rev_dm = 'A';
++  rev_ek = 'A';
++  rev_id_cm = '0';
++  rev_id_dm = '0';
++  rev_id_ek = '0';
+ #elif defined(CONFIG_SAM9X60_DDR2_SIP_EB)
+-	rev_cm = 'A';
+-	rev_dm = 'A';
+-	rev_ek = 'A';
+-	rev_id_cm = '0';
+-	rev_id_dm = '0';
+-	rev_id_ek = '0';
++  rev_cm = 'A';
++  rev_dm = 'A';
++  rev_ek = 'A';
++  rev_id_cm = '0';
++  rev_id_dm = '0';
++  rev_id_ek = '0';
+ #elif defined(CONFIG_SAM9X60_SDR_SIP_EB)
+-	rev_cm = 'A';
+-	rev_dm = 'A';
+-	rev_ek = 'A';
+-	rev_id_cm = '0';
+-	rev_id_dm = '0';
+-	rev_id_ek = '0';
++  rev_cm = 'A';
++  rev_dm = 'A';
++  rev_ek = 'A';
++  rev_id_cm = '0';
++  rev_id_dm = '0';
++  rev_id_ek = '0';
+ #else
+ #error "OneWire: No defined board"
+ #endif
+ 
+-	return ((rev_cm - 'A') & REV_MASK)
+-		| (((rev_dm - 'A') & REV_MASK) << DM_REV_OFFSET)
+-		| (((rev_ek - 'A') & REV_MASK) << EK_REV_OFFSET)
+-		| (((rev_id_cm - '0') & REV_ID_MASK) << CM_REV_ID_OFFSET)
+-		| (((rev_id_dm - '0') & REV_ID_MASK) << DM_REV_ID_OFFSET)
+-		| (((rev_id_ek - '0') & REV_ID_MASK) << EK_REV_ID_OFFSET);
++  return ((rev_cm - 'A') & REV_MASK) |
++         (((rev_dm - 'A') & REV_MASK) << DM_REV_OFFSET) |
++         (((rev_ek - 'A') & REV_MASK) << EK_REV_OFFSET) |
++         (((rev_id_cm - '0') & REV_ID_MASK) << CM_REV_ID_OFFSET) |
++         (((rev_id_dm - '0') & REV_ID_MASK) << DM_REV_ID_OFFSET) |
++         (((rev_id_ek - '0') & REV_ID_MASK) << EK_REV_ID_OFFSET);
+ }
+ 
+-unsigned int get_sys_sn(void)
+-{
+-	return sn;
+-}
++unsigned int get_sys_sn(void) { return sn; }
+ 
+-unsigned int get_sys_rev(void)
+-{
+-	return rev;
+-}
++unsigned int get_sys_rev(void) { return rev; }
+ 
+-unsigned int get_cm_sn(void)
+-{
+-	return (sn  >> CM_SN_OFFSET) & SN_MASK;
+-}
++unsigned int get_cm_sn(void) { return (sn >> CM_SN_OFFSET) & SN_MASK; }
+ 
+-unsigned int get_cm_vendor(void)
+-{
+-	return (sn >> CM_VENDOR_OFFSET) & VENDOR_MASK;
++unsigned int get_cm_vendor(void) {
++  return (sn >> CM_VENDOR_OFFSET) & VENDOR_MASK;
+ }
+ 
+-char get_cm_rev(void)
+-{
+-	return 'A' + ((rev >> CM_REV_OFFSET) & REV_MASK);
+-}
++char get_cm_rev(void) { return 'A' + ((rev >> CM_REV_OFFSET) & REV_MASK); }
+ 
+-unsigned int get_dm_sn(void)
+-{
+-	return (sn >> DM_SN_OFFSET) & SN_MASK;
+-}
++unsigned int get_dm_sn(void) { return (sn >> DM_SN_OFFSET) & SN_MASK; }
+ 
+-char get_ek_rev(void)
+-{
+-	return 'A' + ((rev >> EK_REV_OFFSET) & REV_MASK);
+-}
++char get_ek_rev(void) { return 'A' + ((rev >> EK_REV_OFFSET) & REV_MASK); }
+ 
+-unsigned int get_ek_sn(void)
+-{
+-	return (sn  >> EK_SN_OFFSET) & SN_MASK;
+-}
++unsigned int get_ek_sn(void) { return (sn >> EK_SN_OFFSET) & SN_MASK; }
+ 
+ #if defined(CONFIG_LOAD_ONE_WIRE)
+ static int load_1wire_info(unsigned char *buff, unsigned int size,
+-			   unsigned int *psn, unsigned int *prev)
+-{
+-	board_info_t board_info;
+-	board_info_t *bd_info = &board_info;
+-	unsigned int count;
+-	unsigned int parsing = 0;
+-	int i;
++                           unsigned int *psn, unsigned int *prev) {
++  board_info_t board_info;
++  board_info_t *bd_info = &board_info;
++  unsigned int count;
++  unsigned int parsing = 0;
++  int i;
+ 
+-	memset(bd_info, 0, sizeof(*bd_info));
++  memset(bd_info, 0, sizeof(*bd_info));
+ 
+-	dbg_info("1-Wire: Loading 1-Wire information ...\n");
++  dbg_info("1-Wire: Loading 1-Wire information ...\n");
+ 
+-	count = enumerate_all_rom();
+-	if (!count) {
+-		dbg_info("WARNING: 1-Wire: No 1-Wire chip found\n");
+-		return -1;
+-	}
++  count = enumerate_all_rom();
++  if (!count) {
++    dbg_info("WARNING: 1-Wire: No 1-Wire chip found\n");
++    return -1;
++  }
+ 
+-	dbg_info("1-Wire: BoardName | [Revid] | VendorName\n");
++  dbg_info("1-Wire: BoardName | [Revid] | VendorName\n");
+ 
+-	for (i = 0; i < count; i++) {
+-		if (ds24xx_read_memory(i, 0, 0, size, buff) < 0) {
+-			dbg_info("WARNING: 1-Wire: Failed to read from 1-Wire chip!\n");
+-			return -1;
+-		}
++  for (i = 0; i < count; i++) {
++    if (ds24xx_read_memory(i, 0, 0, size, buff) < 0) {
++      dbg_info("WARNING: 1-Wire: Failed to read from 1-Wire chip!\n");
++      return -1;
++    }
+ 
+-		dbg_loud("board: #%d: ", i);
++    dbg_loud("board: #%d: ", i);
+ #if (BOOTSTRAP_DEBUG_LEVEL >= DEBUG_LOUD)
+-		dbg_hexdump(buff, size, DUMP_WIDTH_BIT_8);
++    dbg_hexdump(buff, size, DUMP_WIDTH_BIT_8);
+ #endif
+ 
+-		if (get_board_hw_info(buff, i, bd_info))
+-			continue;
++    if (get_board_hw_info(buff, i, bd_info))
++      continue;
+ 
+-		if (construct_sn_rev(bd_info, psn, prev))
+-			continue;
++    if (construct_sn_rev(bd_info, psn, prev))
++      continue;
+ 
+-		parsing++;
+-	}
++    parsing++;
++  }
+ 
+-	if (!parsing)
+-		return -1;
++  if (!parsing)
++    return -1;
+ 
+-	return 0;
++  return 0;
+ }
+ #endif /* #if defined(CONFIG_LOAD_ONE_WIRE) */
+ 
+ #if defined(CONFIG_LOAD_EEPROM)
+ static int load_eeprom_info(unsigned char *buff, unsigned int size,
+-			    unsigned int boardsn, unsigned int *psn,
+-			    unsigned int *prev)
+-{
+-	board_info_t board_info;
+-	board_info_t *bd_info = &board_info;
++                            unsigned int boardsn, unsigned int *psn,
++                            unsigned int *prev) {
++  board_info_t board_info;
++  board_info_t *bd_info = &board_info;
+ 
+-	memset(bd_info, 0, sizeof(*bd_info));
++  memset(bd_info, 0, sizeof(*bd_info));
+ 
+-	dbg_info("EEPROM: Loading AT24xx information ...\n");
++  dbg_info("EEPROM: Loading AT24xx information ...\n");
+ 
+-	dbg_info("EEPROM: BoardName | [Revid] | VendorName\n");
++  dbg_info("EEPROM: BoardName | [Revid] | VendorName\n");
+ 
+-	if (load_ek_at24xx(buff, size))
+-		return -1;
++  if (load_ek_at24xx(buff, size))
++    return -1;
+ 
+-	if (get_board_hw_info(buff, boardsn, bd_info))
+-		return -1;
++  if (get_board_hw_info(buff, boardsn, bd_info))
++    return -1;
+ 
+-	if (construct_sn_rev(bd_info, psn, prev))
+-		return -1;
++  if (construct_sn_rev(bd_info, psn, prev))
++    return -1;
+ 
+-	dbg_info("EEPROM: BoardDate | Year | Week\n");
+-	dbg_info("EEPROM:             %u    %u\n",
+-		 2000 + bd_info->year, bd_info->week);
++  dbg_info("EEPROM: BoardDate | Year | Week\n");
++  dbg_info("EEPROM:             %u    %u\n", 2000 + bd_info->year,
++           bd_info->week);
+ 
+-	return 0;
++  return 0;
+ }
+ #endif /* #if defined(CONFIG_LOAD_EEPROM) */
+ 
+-void load_board_hw_info(void)
+-{
+-	unsigned int size = HW_INFO_TOTAL_SIZE;
+-	int ret;
++void load_board_hw_info(void) {
++  unsigned int size = HW_INFO_TOTAL_SIZE;
++  int ret;
+ 
+ #if defined(CONFIG_LOAD_ONE_WIRE)
+-	ret = load_1wire_info(buffer, size, &sn, &rev);
++  ret = load_1wire_info(buffer, size, &sn, &rev);
+ #endif
+ #if defined(CONFIG_LOAD_EEPROM)
+-	ret = load_eeprom_info(buffer, size, 0, &sn, &rev);
++  ret = load_eeprom_info(buffer, size, 0, &sn, &rev);
+ #endif
+-	if (ret) {
++  if (ret) {
+ #if defined(CONFIG_LOAD_ONE_WIRE)
+-		dbg_info("\n1-Wire: ");
++    dbg_info("\n1-Wire: ");
+ #endif
+ #if defined(CONFIG_LOAD_EEPROM)
+-		dbg_info("\nEEPROM: ");
++    dbg_info("\nEEPROM: ");
+ #endif
+-		dbg_info("Using default information\n");
++    dbg_info("Using default information\n");
+ 
+-		sn = set_default_sn();
+-		rev = set_default_rev();
+-	}
++    sn = set_default_sn();
++    rev = set_default_rev();
++  }
+ 
+ #ifdef AT91C_BASE_GPBR
+-	writel(sn, AT91C_BASE_GPBR + 4 * 2);
+-	writel(rev, AT91C_BASE_GPBR + 4 * 3);
++  writel(sn, AT91C_BASE_GPBR + 4 * 2);
++  writel(rev, AT91C_BASE_GPBR + 4 * 3);
+ #endif
+ 
+ #if defined(CONFIG_LOAD_ONE_WIRE)
+-	dbg_info("\n1-Wire: ");
++  dbg_info("\n1-Wire: ");
+ #endif
+ #if defined(CONFIG_LOAD_EEPROM)
+-	dbg_info("\nEEPROM: ");
++  dbg_info("\nEEPROM: ");
+ #endif
+-	dbg_info("Board sn: %x revision: %x\n\n", sn, rev);
++  dbg_info("Board sn: %x revision: %x\n\n", sn, rev);
+ 
+-	return;
++  return;
+ }
+diff --git a/include/board_hw_info.h b/include/board_hw_info.h
+index a41060e..f35f3f2 100644
+--- a/include/board_hw_info.h
++++ b/include/board_hw_info.h
+@@ -29,43 +29,44 @@
+ #define __BOARD_HW_INFO_H__
+ 
+ /* Board id definition */
+-#define BOARD_ID_SAM9X5_EK	0
+-#define BOARD_ID_SAM9x5_DM	1
+-#define	BOARD_ID_SAM9G15_CM	2
+-#define	BOARD_ID_SAM9G25_CM	3
+-#define	BOARD_ID_SAM9G35_CM	4
+-#define	BOARD_ID_SAM9X25_CM	5
+-#define	BOARD_ID_SAM9X35_CM	6
+-#define	BOARD_ID_PDA_DM		7
+-#define	BOARD_ID_SAMA5D3X_MB	8
+-#define	BOARD_ID_SAMA5D3X_DM	9
+-#define	BOARD_ID_SAMA5D31_CM	10
+-#define	BOARD_ID_SAMA5D33_CM	11
+-#define	BOARD_ID_SAMA5D34_CM	12
+-#define	BOARD_ID_SAMA5D35_CM	13
+-#define	BOARD_ID_SAMA5D36_CM	14
+-#define	BOARD_ID_PDA7_DM	15
+-#define	BOARD_ID_SAMA5D4_MB	16
+-#define	BOARD_ID_SAMA5D4_XULT	17
+-#define	BOARD_ID_SAMA5D36_CP	18
+-#define	BOARD_ID_SAMA5D2_XULT	19
+-#define	BOARD_ID_SAMA5D2_ICP	20
+-#define	BOARD_ID_SAM9X60_EK	21
+-#define BOARD_ID_LORIX_ONE_512	98
+-#define BOARD_ID_LORIX_ONE_256	99
++#define BOARD_ID_SAM9X5_EK 0
++#define BOARD_ID_SAM9x5_DM 1
++#define BOARD_ID_SAM9G15_CM 2
++#define BOARD_ID_SAM9G25_CM 3
++#define BOARD_ID_SAM9G35_CM 4
++#define BOARD_ID_SAM9X25_CM 5
++#define BOARD_ID_SAM9X35_CM 6
++#define BOARD_ID_PDA_DM 7
++#define BOARD_ID_SAMA5D3X_MB 8
++#define BOARD_ID_SAMA5D3X_DM 9
++#define BOARD_ID_SAMA5D31_CM 10
++#define BOARD_ID_SAMA5D33_CM 11
++#define BOARD_ID_SAMA5D34_CM 12
++#define BOARD_ID_SAMA5D35_CM 13
++#define BOARD_ID_SAMA5D36_CM 14
++#define BOARD_ID_PDA7_DM 15
++#define BOARD_ID_SAMA5D4_MB 16
++#define BOARD_ID_SAMA5D4_XULT 17
++#define BOARD_ID_SAMA5D36_CP 18
++#define BOARD_ID_SAMA5D2_XULT 19
++#define BOARD_ID_SAMA5D2_ICP 20
++#define BOARD_ID_SAM9X60_EK 21
++#define BOARD_ID_L1 97
++#define BOARD_ID_LORIX_ONE_512 98
++#define BOARD_ID_LORIX_ONE_256 99
+ 
+ /* Vendor id definition */
+-#define VENDOR_EMBEST		1
+-#define VENDOR_FLEX		2
+-#define VENDOR_RONETIX		3
+-#define VENDOR_COGENT		4
+-#define VENDOR_PDA		5
+-#define VENDOR_ATMEL_RFO	6
+-#define VENDOR_MCHIP_RFO	7
+-#define VENDOR_MCHIP_RDC	8
+-#define VENDOR_WIFX		9
++#define VENDOR_EMBEST 1
++#define VENDOR_FLEX 2
++#define VENDOR_RONETIX 3
++#define VENDOR_COGENT 4
++#define VENDOR_PDA 5
++#define VENDOR_ATMEL_RFO 6
++#define VENDOR_MCHIP_RFO 7
++#define VENDOR_MCHIP_RDC 8
++#define VENDOR_WIFX 9
+ 
+-#define HW_INFO_TOTAL_SIZE	0x20
++#define HW_INFO_TOTAL_SIZE 0x20
+ 
+ extern unsigned int get_cm_sn(void);
+ extern char get_cm_rev(void);
+@@ -78,4 +79,4 @@ extern unsigned int get_ek_sn(void);
+ 
+ extern void load_board_hw_info(void);
+ 
+-#endif	/* #ifndef __BOARD_HW_INFO_H__ */
++#endif /* #ifndef __BOARD_HW_INFO_H__ */
+diff --git a/scripts/addpmecchead.py b/scripts/addpmecchead.py
+index 9f90773..7b884e4 100755
+--- a/scripts/addpmecchead.py
++++ b/scripts/addpmecchead.py
+@@ -29,6 +29,8 @@ elif sys.argv[3] == "lorix_one_256":
+ 	pmecc_word = pmecc_head.gen_pmecc_header(2048, 64, 4, 512)
+ elif sys.argv[3] == "lorix_one_512":
+ 	pmecc_word = pmecc_head.gen_pmecc_header(4096, 224, 8, 512)
++elif sys.argv[3] == "l1":
++	pmecc_word = pmecc_head.gen_pmecc_header(2048, 64, 4, 512)
+ else:
+ 	sys.exit("Not supported board!")
+ 
+-- 
+2.25.1
+

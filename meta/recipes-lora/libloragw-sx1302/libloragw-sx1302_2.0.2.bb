@@ -11,6 +11,7 @@ SRC_URI = "\
     file://library.cfg \
     file://0001-test_loragw_hal_tx-enable-CRC-for-LoRa-TX-packets-by.patch \
     file://0002-test_loragw_hal_tx-add-optional-argument-to-disable-.patch \
+    file://reset_lgw.sh \
 "
 
 # is normally true but machine-info requires it to stay generic
@@ -51,19 +52,27 @@ do_install() {
     install -m 0755 -d                         ${D}${includedir}/libloragw-sx1302
     install -m 0644 ${S}/libloragw/inc/*       ${D}${includedir}/libloragw-sx1302
 
+    # essential tools
+    install -m 0644 ${S}/libtools/*.a           ${D}${libdir}
+    install -m 0644 ${S}/libtools/inc/*         ${D}${includedir}
+    
     # Install utils
     install -d ${D}/${DIR_UTILS}
     install -m 0755 ${S}/util_chip_id/chip_id                        ${D}/${DIR_UTILS}
     install -m 0755 ${S}/util_net_downlink/net_downlink              ${D}/${DIR_UTILS}
     install -m 0755 ${S}/packet_forwarder/lora_pkt_fwd               ${D}/${DIR_UTILS}
     install -m 0755 ${S}/packet_forwarder/global_conf.json.sx1250.*  ${D}/${DIR_UTILS}
+    install -m 0755 ${WORKDIR}/reset_lgw.sh                          ${D}/${DIR_UTILS}
 
     # Install tests
     install -d ${D}/${DIR_TESTS}
     install -m 0755 ${S}/libloragw/test_*                            ${D}/${DIR_TESTS}
+    install -m 0755 ${WORKDIR}/reset_lgw.sh                          ${D}/${DIR_TESTS}
 }
 
 PACKAGES =+ "${PN}-utils ${PN}-tests ${PN}-tests-ext"
+
+PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 FILES_${PN}-utils = "${DIR_UTILS}"
 FILES_${PN}-tests = " \

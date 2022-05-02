@@ -1,0 +1,810 @@
+From 42e287f1491bcdbaaa5ebe069761748b06c442c3 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Thu, 22 Jul 2021 22:09:46 +0200
+Subject: [PATCH] Add Wifx L1 machine support
+
+---
+ arch/arm/dts/Makefile          |   3 +
+ arch/arm/dts/l1.dts            | 221 ++++++++++++++++++++++++++++++++
+ arch/arm/mach-at91/Kconfig     |   8 ++
+ board/wifx/l1/Kconfig          |  12 ++
+ board/wifx/l1/MAINTAINERS      |   7 ++
+ board/wifx/l1/Makefile         |   8 ++
+ board/wifx/l1/l1.c             | 222 +++++++++++++++++++++++++++++++++
+ configs/l1_mmc_defconfig       |  66 ++++++++++
+ configs/l1_nandflash_defconfig |  65 ++++++++++
+ include/configs/l1.h           |  92 ++++++++++++++
+ 10 files changed, 704 insertions(+)
+ create mode 100644 arch/arm/dts/l1.dts
+ create mode 100644 board/wifx/l1/Kconfig
+ create mode 100644 board/wifx/l1/MAINTAINERS
+ create mode 100644 board/wifx/l1/Makefile
+ create mode 100644 board/wifx/l1/l1.c
+ create mode 100644 configs/l1_mmc_defconfig
+ create mode 100644 configs/l1_nandflash_defconfig
+ create mode 100644 include/configs/l1.h
+
+diff --git a/arch/arm/dts/Makefile b/arch/arm/dts/Makefile
+index 7d70467353..fcc16e4685 100644
+--- a/arch/arm/dts/Makefile
++++ b/arch/arm/dts/Makefile
+@@ -538,6 +538,9 @@ dtb-$(CONFIG_TARGET_LORIX_ONE_256) += \
+ dtb-$(CONFIG_TARGET_LORIX_ONE_512) += \
+ 	lorix-one-512.dtb
+ 
++dtb-$(CONFIG_TARGET_L1) += \
++	l1.dtb
++
+ dtb-$(CONFIG_TARGET_VINCO) += \
+ 	at91-vinco.dtb
+ 
+diff --git a/arch/arm/dts/l1.dts b/arch/arm/dts/l1.dts
+new file mode 100644
+index 0000000000..231d1a7cd0
+--- /dev/null
++++ b/arch/arm/dts/l1.dts
+@@ -0,0 +1,221 @@
++/*
++ * l1.dts
++ *  Device Tree file for the Wifx L1 LoRa gateway from
++ *  Wifx Sàrl
++ *
++ *  Copyright (C) 2021 Wifx,
++ *                2021 Yannick Lanz <yannick.lanz@wifx.net>
++ *
++ * This file is dual-licensed: you can use it either under the terms
++ * of the GPL or the X11 license, at your option. Note that this dual
++ * licensing only applies to this file, and not this project as a
++ * whole.
++ *
++ *  a) This file is free software; you can redistribute it and/or
++ *     modify it under the terms of the GNU General Public License as
++ *     published by the Free Software Foundation; either version 2 of the
++ *     License, or (at your option) any later version.
++ *
++ *     This file is distributed in the hope that it will be useful,
++ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *     GNU General Public License for more details.
++ *
++ * Or, alternatively,
++ *
++ *  b) Permission is hereby granted, free of charge, to any person
++ *     obtaining a copy of this software and associated documentation
++ *     files (the "Software"), to deal in the Software without
++ *     restriction, including without limitation the rights to use,
++ *     copy, modify, merge, publish, distribute, sublicense, and/or
++ *     sell copies of the Software, and to permit persons to whom the
++ *     Software is furnished to do so, subject to the following
++ *     conditions:
++ *
++ *     The above copyright notice and this permission notice shall be
++ *     included in all copies or substantial portions of the Software.
++ *
++ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
++ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
++ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
++ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
++ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
++ *     OTHER DEALINGS IN THE SOFTWARE.
++ */
++/dts-v1/;
++#include "sama5d4.dtsi"
++
++/ {
++	model = "Wifx L1";
++	compatible = "wifx,l1", "atmel,sama5d4", "atmel,sama5";
++
++	chosen {
++		u-boot,dm-pre-reloc;
++		stdout-path = &usart3;
++	};
++
++	aliases {
++		serial1 = &usart1;
++	};
++
++	memory {
++		reg = <0x20000000 0x10000000>;
++	};
++
++	clocks {
++		slow_xtal {
++			clock-frequency = <32768>;
++		};
++
++		main_xtal {
++			clock-frequency = <12000000>;
++		};
++	};
++
++	ahb {
++		apb {
++			i2c1: i2c@f8018000 {
++				status = "okay";
++
++				at24mac402: mac_eeprom@58 {
++					compatible = "atmel,24mac402";
++					reg = <0x58>;
++					status = "okay";
++				};
++			};
++
++			macb0: ethernet@f8020000 {
++				phy-mode = "rmii";
++				status = "okay";
++				pinctrl-names = "default";
++				pinctrl-0 = <&pinctrl_macb0_rmii &pinctrl_macb0_phy_irq>;
++
++				phy0: ethernet-phy@0 {
++					reg = <1>;
++					interrupt-parent = <&pioA>;
++					interrupts = <4 IRQ_TYPE_LEVEL_LOW>;
++				};
++			};
++
++			mmc1: mmc@fc000000 {
++				u-boot,dm-pre-reloc;
++				pinctrl-names = "default";
++				pinctrl-0 = <&pinctrl_mmc1_clk_cmd_dat0 &pinctrl_mmc1_dat1_3 &pinctrl_mmc1_cd>;
++				vmmc-supply = <&vcc_3v3_reg>;
++				vqmmc-supply = <&vcc_3v3_reg>;
++				status = "okay";
++				slot@0 {
++					reg = <0>;
++					bus-width = <4>;
++					cd-gpios = <&pioE 3 0>;
++				};
++			};
++
++			usart3: serial@fc00c000 {
++				u-boot,dm-pre-reloc;
++				status = "okay";
++			};
++
++			watchdog@fc068640 {
++				status = "okay";
++			};
++
++			pinctrl@fc06a000 {
++				board {
++					u-boot,dm-pre-reloc;
++					pinctrl_mmc1_cd: mmc1_cd {
++						u-boot,dm-pre-reloc;
++						atmel,pins = <AT91_PIOE 3 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
++					};
++					pinctrl_usb_vbus: usb_vbus {
++						atmel,pins = <AT91_PIOE 31 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
++					};
++					pinctrl_usb_id: usb_id {
++						atmel,pins = <AT91_PIOD 11 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
++					};
++					pinctrl_mcu_irq: mcu_irq_0 {
++						atmel,pins = <AT91_PIOE 27 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
++					};
++					pinctrl_mcu_cpu_state: mcu_cpu_state {
++						atmel,pins = <AT91_PIOA 19 AT91_PERIPH_GPIO AT91_PINCTRL_NONE>;
++					};
++					pinctrl_macb0_phy_irq: macb0_phy_irq_0 {
++						atmel,pins = <AT91_PIOA 4 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
++					};
++					pinctrl_sx130x_rst: sx130x_rst {
++						atmel,pins = <AT91_PIOA 1 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
++					};
++					pinctrl_rf_front_pwr_en: rf_front_pwr_en {
++						atmel,pins = <AT91_PIOA 1 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
++					};
++
++					pinctrl_ext_rst: ext_rst {
++						atmel,pins = <AT91_PIOA 17 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
++					};
++					pinctrl_ext_pwr_en: ext_pwr_en {
++						atmel,pins = <AT91_PIOD 18 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_DOWN>;
++					};
++					pinctrl_ext_boot_n: ext_boot_n {
++						atmel,pins = <AT91_PIOD 19 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
++					};
++					pinctrl_ext_wake: ext_wake {
++						atmel,pins = <AT91_PIOA 5 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
++					};
++					pinctrl_gnss_pps: gnss_pps {
++						atmel,pins = <AT91_PIOC 24 AT91_PERIPH_GPIO AT91_PINCTRL_DEGLITCH>;
++					};
++				};
++			};
++		};
++
++		usb0: gadget@00400000 {
++			atmel,vbus-gpio = <&pioE 31 GPIO_ACTIVE_HIGH>;
++			pinctrl-names = "default";
++			pinctrl-0 = <&pinctrl_usb_vbus>;
++			status = "okay";
++		};
++
++		usb2: ehci@00600000 {
++			status = "okay";
++		};
++
++		nand0: nand@80000000 {
++			nand-bus-width = <8>;
++			nand-ecc-mode = "hw";
++			nand-on-flash-bbt;
++			status = "okay";
++
++			at91bootstrap@0 {
++				label = "at91bootstrap";
++				reg = <0x0 0x40000>;
++			};
++
++			uboot@40000 {
++				label = "uboot";
++				reg = <0x40000 0xC0000>;
++			};
++
++			uboot-env@100000 {
++				label = "uboot-env";
++				reg = <0x100000 0x80000>;
++			};
++
++			ubi@180000 {
++				label = "ubi";
++				reg = <0x180000 0x3FE80000>;
++			};
++		};
++	};
++
++	vcc_3v3_reg: fixedregulator@0 {
++		compatible = "regulator-fixed";
++		regulator-name = "VCC 3V3";
++		regulator-min-microvolt = <3300000>;
++		regulator-max-microvolt = <3300000>;
++		regulator-boot-on;
++		regulator-always-on;
++		reg = <0 1>;
++	};
++};
+diff --git a/arch/arm/mach-at91/Kconfig b/arch/arm/mach-at91/Kconfig
+index 18648fb5f4..52b509c268 100644
+--- a/arch/arm/mach-at91/Kconfig
++++ b/arch/arm/mach-at91/Kconfig
+@@ -213,6 +213,13 @@ config TARGET_LORIX_ONE_512
+ 	select SAMA5D4
+ 	select SUPPORT_SPL
+ 
++config TARGET_L1
++	bool "Wifx L1"
++	select BOARD_EARLY_INIT_F
++	select BOARD_LATE_INIT
++	select SAMA5D4
++	select SUPPORT_SPL
++
+ config TARGET_MEESC
+ 	bool "Support meesc"
+ 	select AT91SAM9263
+@@ -307,6 +314,7 @@ source "board/laird/wb45n/Kconfig"
+ source "board/laird/wb50n/Kconfig"
+ source "board/wifx/lorix-one-256/Kconfig"
+ source "board/wifx/lorix-one-512/Kconfig"
++source "board/wifx/l1/Kconfig"
+ 
+ config SPL_LDSCRIPT
+ 	default "arch/arm/mach-at91/arm926ejs/u-boot-spl.lds" if CPU_ARM926EJS
+diff --git a/board/wifx/l1/Kconfig b/board/wifx/l1/Kconfig
+new file mode 100644
+index 0000000000..6134d16cf0
+--- /dev/null
++++ b/board/wifx/l1/Kconfig
+@@ -0,0 +1,12 @@
++if TARGET_L1
++
++config SYS_BOARD
++	default "l1"
++
++config SYS_VENDOR
++	default "wifx"
++
++config SYS_CONFIG_NAME
++	default "l1"
++
++endif
+diff --git a/board/wifx/l1/MAINTAINERS b/board/wifx/l1/MAINTAINERS
+new file mode 100644
+index 0000000000..ef41b56447
+--- /dev/null
++++ b/board/wifx/l1/MAINTAINERS
+@@ -0,0 +1,7 @@
++Wifx L1 LoRa gateway
++M:	Yannick Lanz <yannick.lanz@wifx.net>
++S:	Maintained
++F:	board/wifx/l1/
++F:	include/configs/l1.h
++F:	configs/l1_mmc_defconfig
++F:	configs/l1_nandflash_defconfig
+diff --git a/board/wifx/l1/Makefile b/board/wifx/l1/Makefile
+new file mode 100644
+index 0000000000..8bf2a5ff55
+--- /dev/null
++++ b/board/wifx/l1/Makefile
+@@ -0,0 +1,8 @@
++#
++# Copyright (C) 2021 Wifx Sàrl
++#               Yannick Lanz <yannick.lanz@wifx.net>
++#
++# SPDX-License-Identifier:	GPL-2.0+
++#
++
++obj-y += l1.o
+diff --git a/board/wifx/l1/l1.c b/board/wifx/l1/l1.c
+new file mode 100644
+index 0000000000..fa961a3134
+--- /dev/null
++++ b/board/wifx/l1/l1.c
+@@ -0,0 +1,222 @@
++// SPDX-License-Identifier: GPL-2.0+
++/*
++ * Board file for the LX One/LX One Plus platform
++ * Based on the the SAMA5D4 Xplained Ultra board file
++ * Copyright (C) 2014 Atmel
++ *		      Bo Shen <voice.shen@atmel.com>
++ * Copyright (C) 2020 Wifx
++ *		      Yannick Lanz <yannick.lanz@wifx.net>
++ */
++
++#include <common.h>
++#include <asm/io.h>
++#include <asm/arch/at91_common.h>
++#include <asm/arch/at91_rstc.h>
++#include <asm/arch/atmel_mpddrc.h>
++#include <asm/arch/gpio.h>
++#include <asm/arch/clk.h>
++#include <asm/arch/sama5d3_smc.h>
++#include <asm/arch/sama5d4.h>
++#include <debug_uart.h>
++#include <watchdog.h>
++
++DECLARE_GLOBAL_DATA_PTR;
++
++#ifdef CONFIG_NAND_ATMEL
++static void l1_nand_hw_init(void)
++{
++	struct at91_smc *smc = (struct at91_smc *)ATMEL_BASE_SMC;
++
++	at91_periph_clk_enable(ATMEL_ID_SMC);
++
++	/* Configure SMC CS3 for NAND */
++	writel(AT91_SMC_SETUP_NWE(2) | AT91_SMC_SETUP_NCS_WR(1) |
++	       AT91_SMC_SETUP_NRD(2) | AT91_SMC_SETUP_NCS_RD(1),
++	       &smc->cs[3].setup);
++	writel(AT91_SMC_PULSE_NWE(3) | AT91_SMC_PULSE_NCS_WR(5) |
++	       AT91_SMC_PULSE_NRD(3) | AT91_SMC_PULSE_NCS_RD(5),
++	       &smc->cs[3].pulse);
++	writel(AT91_SMC_CYCLE_NWE(8) | AT91_SMC_CYCLE_NRD(8),
++	       &smc->cs[3].cycle);
++	writel(AT91_SMC_TIMINGS_TCLR(3) | AT91_SMC_TIMINGS_TADL(10) |
++	       AT91_SMC_TIMINGS_TAR(3)  | AT91_SMC_TIMINGS_TRR(4)   |
++	       AT91_SMC_TIMINGS_TWB(7)  | AT91_SMC_TIMINGS_RBNSEL(3)|
++	       AT91_SMC_TIMINGS_NFSEL(1), &smc->cs[3].timings);
++	writel(AT91_SMC_MODE_RM_NRD | AT91_SMC_MODE_WM_NWE |
++	       AT91_SMC_MODE_EXNW_DISABLE |
++	       AT91_SMC_MODE_DBW_8 |
++	       AT91_SMC_MODE_TDF_CYCLE(3),
++	       &smc->cs[3].mode);
++
++	at91_pio3_set_a_periph(AT91_PIO_PORTC, 5, 0);	/* D0 */
++	at91_pio3_set_a_periph(AT91_PIO_PORTC, 6, 0);	/* D1 */
++	at91_pio3_set_a_periph(AT91_PIO_PORTC, 7, 0);	/* D2 */
++	at91_pio3_set_a_periph(AT91_PIO_PORTC, 8, 0);	/* D3 */
++	at91_pio3_set_a_periph(AT91_PIO_PORTC, 9, 0);	/* D4 */
++	at91_pio3_set_a_periph(AT91_PIO_PORTC, 10, 0);	/* D5 */
++	at91_pio3_set_a_periph(AT91_PIO_PORTC, 11, 0);	/* D6 */
++	at91_pio3_set_a_periph(AT91_PIO_PORTC, 12, 0);	/* D7 */
++	at91_pio3_set_a_periph(AT91_PIO_PORTC, 13, 0);	/* RE */
++	at91_pio3_set_a_periph(AT91_PIO_PORTC, 14, 0);	/* WE */
++	at91_pio3_set_a_periph(AT91_PIO_PORTC, 15, 1);	/* NCS */
++	at91_pio3_set_a_periph(AT91_PIO_PORTC, 16, 1);	/* RDY */
++	at91_pio3_set_a_periph(AT91_PIO_PORTC, 17, 1);	/* ALE */
++	at91_pio3_set_a_periph(AT91_PIO_PORTC, 18, 1);	/* CLE */
++}
++#endif
++
++#ifdef CONFIG_CMD_USB
++static void l1_usb_hw_init(void)
++{
++	at91_set_pio_output(AT91_PIO_PORTE, 11, 1);
++	at91_set_pio_output(AT91_PIO_PORTE, 14, 1);
++}
++#endif
++
++#ifdef CONFIG_BOARD_LATE_INIT
++int board_late_init(void)
++{
++	return 0;
++}
++#endif
++
++#ifdef CONFIG_DEBUG_UART_BOARD_INIT
++static void l1_serial3_hw_init(void)
++{
++	at91_pio3_set_b_periph(AT91_PIO_PORTE, 17, 1);	/* TXD3 */
++	at91_pio3_set_b_periph(AT91_PIO_PORTE, 16, 0);	/* RXD3 */
++
++	/* Enable clock */
++	at91_periph_clk_enable(ATMEL_ID_USART3);
++}
++
++void board_debug_uart_init(void)
++{
++	l1_serial3_hw_init();
++}
++#endif
++
++#ifdef CONFIG_BOARD_EARLY_INIT_F
++int board_early_init_f(void)
++{
++#ifdef CONFIG_DEBUG_UART
++	debug_uart_init();
++#endif
++	return 0;
++}
++#endif
++
++#define AT24MAC_MAC_OFFSET	0x9a
++
++#ifdef CONFIG_MISC_INIT_R
++int misc_init_r(void)
++{
++#ifdef CONFIG_I2C_EEPROM
++	at91_set_ethaddr(AT24MAC_MAC_OFFSET);
++#endif
++	return 0;
++}
++#endif
++
++int board_init(void)
++{
++	/* adress of boot parameters */
++	gd->bd->bi_boot_params = CONFIG_SYS_SDRAM_BASE + 0x100;
++
++#ifdef CONFIG_AT91SAM9_WATCHDOG
++	hw_watchdog_init();
++#endif
++#ifdef CONFIG_NAND_ATMEL
++	l1_nand_hw_init();
++#endif
++#ifdef CONFIG_CMD_USB
++	l1_usb_hw_init();
++#endif
++
++	return 0;
++}
++
++int dram_init(void)
++{
++	gd->ram_size = get_ram_size((void *)CONFIG_SYS_SDRAM_BASE,
++				    CONFIG_SYS_SDRAM_SIZE);
++	return 0;
++}
++
++/* SPL */
++#ifdef CONFIG_SPL_BUILD
++void spl_board_init(void)
++{
++#if CONFIG_NAND_BOOT
++	l1_nand_hw_init();
++#endif
++}
++
++static void ddr2_conf(struct atmel_mpddrc_config *ddr2)
++{
++	ddr2->md = (ATMEL_MPDDRC_MD_DBW_16_BITS | ATMEL_MPDDRC_MD_DDR2_SDRAM);
++
++	ddr2->cr = (ATMEL_MPDDRC_CR_NC_COL_10 |
++		    ATMEL_MPDDRC_CR_NR_ROW_14 |
++		    ATMEL_MPDDRC_CR_CAS_DDR_CAS3 |
++		    ATMEL_MPDDRC_CR_NB_8BANKS |
++		    ATMEL_MPDDRC_CR_NDQS_DISABLED |
++		    ATMEL_MPDDRC_CR_DECOD_INTERLEAVED |
++		    ATMEL_MPDDRC_CR_UNAL_SUPPORTED);
++
++	ddr2->rtr = 0x2b0;
++
++	ddr2->tpr0 = (8 << ATMEL_MPDDRC_TPR0_TRAS_OFFSET |
++		      3 << ATMEL_MPDDRC_TPR0_TRCD_OFFSET |
++		      3 << ATMEL_MPDDRC_TPR0_TWR_OFFSET |
++		      10 << ATMEL_MPDDRC_TPR0_TRC_OFFSET |
++		      3 << ATMEL_MPDDRC_TPR0_TRP_OFFSET |
++		      2 << ATMEL_MPDDRC_TPR0_TRRD_OFFSET |
++		      2 << ATMEL_MPDDRC_TPR0_TWTR_OFFSET |
++		      2 << ATMEL_MPDDRC_TPR0_TMRD_OFFSET);
++
++	ddr2->tpr1 = (2 << ATMEL_MPDDRC_TPR1_TXP_OFFSET |
++		      200 << ATMEL_MPDDRC_TPR1_TXSRD_OFFSET |
++		      25 << ATMEL_MPDDRC_TPR1_TXSNR_OFFSET |
++		      23 << ATMEL_MPDDRC_TPR1_TRFC_OFFSET);
++
++	ddr2->tpr2 = (7 << ATMEL_MPDDRC_TPR2_TFAW_OFFSET |
++		      2 << ATMEL_MPDDRC_TPR2_TRTP_OFFSET |
++		      3 << ATMEL_MPDDRC_TPR2_TRPA_OFFSET |
++		      2 << ATMEL_MPDDRC_TPR2_TXARDS_OFFSET |
++		      8 << ATMEL_MPDDRC_TPR2_TXARD_OFFSET);
++}
++
++void mem_init(void)
++{
++	struct atmel_mpddrc_config ddr2;
++
++	ddr2_conf(&ddr2);
++
++	/* Enable MPDDR clock */
++	at91_periph_clk_enable(ATMEL_ID_MPDDRC);
++	at91_system_clk_enable(AT91_PMC_DDR);
++
++	/* DDRAM2 Controller initialize */
++	ddr2_init(ATMEL_BASE_MPDDRC, ATMEL_BASE_DDRCS, &ddr2);
++}
++
++void at91_pmc_init(void)
++{
++	u32 tmp;
++
++	tmp = AT91_PMC_PLLAR_29 |
++	      AT91_PMC_PLLXR_PLLCOUNT(0x3f) |
++	      AT91_PMC_PLLXR_MUL(87) |
++	      AT91_PMC_PLLXR_DIV(1);
++	at91_plla_init(tmp);
++
++	at91_pllicpr_init(AT91_PMC_IPLL_PLLA(0x0));
++
++	tmp = AT91_PMC_MCKR_H32MXDIV |
++	      AT91_PMC_MCKR_PLLADIV_2 |
++	      AT91_PMC_MCKR_MDIV_3 |
++	      AT91_PMC_MCKR_CSS_PLLA;
++	at91_mck_init(tmp);
++}
++#endif
+diff --git a/configs/l1_mmc_defconfig b/configs/l1_mmc_defconfig
+new file mode 100644
+index 0000000000..0cfdc91750
+--- /dev/null
++++ b/configs/l1_mmc_defconfig
+@@ -0,0 +1,66 @@
++CONFIG_ARM=y
++CONFIG_ARCH_AT91=y
++CONFIG_SYS_TEXT_BASE=0x26f00000
++CONFIG_TARGET_L1=y
++CONFIG_SYS_MALLOC_F_LEN=0x2000
++CONFIG_DEBUG_UART_BOARD_INIT=y
++CONFIG_DEBUG_UART_BASE=0xfc00c000
++CONFIG_DEBUG_UART_CLOCK=100000000
++CONFIG_DEBUG_UART=y
++CONFIG_ENV_VARS_UBOOT_CONFIG=y
++CONFIG_NR_DRAM_BANKS=1
++CONFIG_FIT=y
++CONFIG_SD_BOOT=y
++CONFIG_BOOTDELAY=1
++CONFIG_USE_BOOTARGS=y
++CONFIG_BOOTARGS="console=ttyS0,115200 earlyprintk cma=0 root=/dev/mmcblk0p2 rw rootwait"
++CONFIG_USE_BOOTCOMMAND=y
++CONFIG_BOOTCOMMAND="fatload mmc 0:1 0x21000000 l1.dtb;fatload mmc 0:1 0x22000000 zImage;bootz 0x22000000 - 0x21000000"
++CONFIG_CONSOLE_MUX=y
++CONFIG_MISC_INIT_R=y
++# CONFIG_DISPLAY_BOARDINFO is not set
++CONFIG_HUSH_PARSER=y
++CONFIG_CMD_BOOTZ=y
++# CONFIG_CMD_IMI is not set
++# CONFIG_CMD_FLASH is not set
++# CONFIG_CMD_LOADS is not set
++CONFIG_CMD_MMC=y
++CONFIG_CMD_NAND=y
++CONFIG_CMD_DHCP=y
++CONFIG_CMD_PING=y
++CONFIG_CMD_FAT=y
++CONFIG_CMD_FS_GENERIC=y
++CONFIG_MTDIDS_DEFAULT="nand0=atmel_nand"
++CONFIG_CMD_UBI=y
++CONFIG_OF_CONTROL=y
++CONFIG_DEFAULT_DEVICE_TREE="l1"
++CONFIG_ENV_IS_IN_FAT=y
++CONFIG_ENV_FAT_FILE="u-boot.env"
++CONFIG_DM=y
++CONFIG_CLK=y
++CONFIG_CLK_AT91=y
++CONFIG_AT91_UTMI=y
++CONFIG_AT91_H32MX=y
++CONFIG_DM_GPIO=y
++CONFIG_AT91_GPIO=y
++CONFIG_DM_I2C=y
++CONFIG_SYS_I2C_AT91=y
++CONFIG_I2C_EEPROM=y
++CONFIG_DM_MMC=y
++CONFIG_GENERIC_ATMEL_MCI=y
++CONFIG_NAND=y
++CONFIG_NAND_ATMEL=y
++CONFIG_DM_ETH=y
++CONFIG_MACB=y
++CONFIG_PINCTRL=y
++CONFIG_PINCTRL_AT91=y
++CONFIG_DM_SERIAL=y
++CONFIG_DEBUG_UART_ATMEL=y
++CONFIG_DEBUG_UART_ANNOUNCE=y
++CONFIG_ATMEL_USART=y
++CONFIG_SPI=y
++CONFIG_DM_SPI=y
++CONFIG_TIMER=y
++CONFIG_ATMEL_PIT_TIMER=y
++CONFIG_OF_LIBFDT_OVERLAY=y
++CONFIG_SPL_OF_LIBFDT=y
+diff --git a/configs/l1_nandflash_defconfig b/configs/l1_nandflash_defconfig
+new file mode 100644
+index 0000000000..727064e42d
+--- /dev/null
++++ b/configs/l1_nandflash_defconfig
+@@ -0,0 +1,65 @@
++CONFIG_ARM=y
++CONFIG_ARCH_AT91=y
++CONFIG_SYS_TEXT_BASE=0x26f00000
++CONFIG_TARGET_L1=y
++CONFIG_SYS_MALLOC_F_LEN=0x2000
++CONFIG_DEBUG_UART_BOARD_INIT=y
++CONFIG_DEBUG_UART_BASE=0xfc00c000
++CONFIG_DEBUG_UART_CLOCK=100000000
++CONFIG_DEBUG_UART=y
++CONFIG_ENV_VARS_UBOOT_CONFIG=y
++CONFIG_NR_DRAM_BANKS=1
++CONFIG_FIT=y
++CONFIG_NAND_BOOT=y
++CONFIG_BOOTDELAY=1
++CONFIG_USE_BOOTARGS=y
++CONFIG_BOOTARGS="console=ttyS0,115200 earlyprintk cma=0 mtdparts=atmel_nand:256k(bootstrap)ro,768k(uboot)ro,512k(uboot-env),-(ubi) rootfstype=ubifs ubi.mtd=3 root=ubi0:rootfs"
++CONFIG_USE_BOOTCOMMAND=y
++CONFIG_BOOTCOMMAND="ubi part ubi;ubifsmount ubi0:rootfs;ubifsload 0x21000000 /boot/l1.dtb;ubifsload 0x22000000 /boot/zImage;bootz 0x22000000 - 0x21000000"
++CONFIG_CONSOLE_MUX=y
++CONFIG_MISC_INIT_R=y
++# CONFIG_DISPLAY_BOARDINFO is not set
++CONFIG_HUSH_PARSER=y
++CONFIG_CMD_BOOTZ=y
++# CONFIG_CMD_IMI is not set
++# CONFIG_CMD_FLASH is not set
++# CONFIG_CMD_LOADS is not set
++CONFIG_CMD_MMC=y
++CONFIG_CMD_NAND=y
++CONFIG_CMD_DHCP=y
++CONFIG_CMD_PING=y
++CONFIG_CMD_FAT=y
++CONFIG_CMD_FS_GENERIC=y
++CONFIG_MTDIDS_DEFAULT="nand0=atmel_nand"
++CONFIG_MTDPARTS_DEFAULT="mtdparts=atmel_nand:256k(bootstrap)ro,768k(uboot)ro,512k(uboot-env),-(ubi)"
++CONFIG_CMD_UBI=y
++CONFIG_OF_CONTROL=y
++CONFIG_DEFAULT_DEVICE_TREE="l1"
++CONFIG_ENV_IS_IN_NAND=y
++CONFIG_DM=y
++CONFIG_CLK=y
++CONFIG_CLK_AT91=y
++CONFIG_AT91_UTMI=y
++CONFIG_AT91_H32MX=y
++CONFIG_DM_GPIO=y
++CONFIG_AT91_GPIO=y
++CONFIG_DM_I2C=y
++CONFIG_SYS_I2C_AT91=y
++CONFIG_I2C_EEPROM=y
++CONFIG_DM_MMC=y
++CONFIG_GENERIC_ATMEL_MCI=y
++CONFIG_NAND_ATMEL=y
++CONFIG_DM_ETH=y
++CONFIG_MACB=y
++CONFIG_PINCTRL=y
++CONFIG_PINCTRL_AT91=y
++CONFIG_DM_SERIAL=y
++CONFIG_DEBUG_UART_ATMEL=y
++CONFIG_DEBUG_UART_ANNOUNCE=y
++CONFIG_ATMEL_USART=y
++CONFIG_SPI=y
++CONFIG_DM_SPI=y
++CONFIG_TIMER=y
++CONFIG_ATMEL_PIT_TIMER=y
++CONFIG_OF_LIBFDT_OVERLAY=y
++CONFIG_SPL_OF_LIBFDT=y
+diff --git a/include/configs/l1.h b/include/configs/l1.h
+new file mode 100644
+index 0000000000..af961cb71f
+--- /dev/null
++++ b/include/configs/l1.h
+@@ -0,0 +1,92 @@
++/* SPDX-License-Identifier: GPL-2.0+ */
++/*
++ * Based on configuration settings for the SAMA5D4 Xplained ultra board.
++ * Configuration settings for the Wifx L1 LoRa gateway.
++ *
++ * Copyright (C) 2014 Atmel
++ *		      Bo Shen <voice.shen@atmel.com>
++ * Copyright (C) 2021 Wifx
++ *		      Yannick Lanz <yannick.lanz@wifx.net>
++ *
++ */
++
++#ifndef __CONFIG_H
++#define __CONFIG_H
++
++#include "at91-sama5_common.h"
++#include <linux/sizes.h>
++
++/* SDRAM */
++#define CONFIG_SYS_SDRAM_BASE		0x20000000
++#define CONFIG_SYS_SDRAM_SIZE		SZ_256M
++#define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE
++#define CONFIG_SYS_MEMTEST_END		\
++	(CONFIG_SYS_MEMTEST_START + CONFIG_SYS_SDRAM_SIZE - SZ_32M)
++
++#ifdef CONFIG_SPL_BUILD
++#define CONFIG_SYS_INIT_SP_ADDR		0x218000
++#else
++#define CONFIG_SYS_INIT_SP_ADDR \
++	(CONFIG_SYS_SDRAM_BASE + 16 * 1024 - GENERATED_GBL_DATA_SIZE)
++#endif
++
++#define CONFIG_SYS_LOAD_ADDR		0x22000000 /* load address */
++
++#ifdef CONFIG_CMD_SF
++#define CONFIG_SF_DEFAULT_SPEED		30000000
++#endif
++
++/* NAND flash */
++#ifdef CONFIG_CMD_NAND
++#define CONFIG_SYS_MAX_NAND_DEVICE	1
++#define CONFIG_SYS_NAND_BASE		ATMEL_BASE_CS3
++/* our ALE is AD21 */
++#define CONFIG_SYS_NAND_MASK_ALE	(1 << 21)
++/* our CLE is AD22 */
++#define CONFIG_SYS_NAND_MASK_CLE	(1 << 22)
++#define CONFIG_SYS_NAND_ONFI_DETECTION
++/* PMECC & PMERRLOC */
++#define CONFIG_ATMEL_NAND_HWECC
++#define CONFIG_ATMEL_NAND_HW_PMECC
++#endif
++
++/* SPL */
++#define CONFIG_SPL_TEXT_BASE		0x200000
++#define CONFIG_SPL_MAX_SIZE			0x18000
++#define CONFIG_SPL_BSS_START_ADDR	0x20000000
++#define CONFIG_SPL_BSS_MAX_SIZE		0x80000
++#define CONFIG_SYS_SPL_MALLOC_START	0x20080000
++#define CONFIG_SYS_SPL_MALLOC_SIZE	0x80000
++
++#define CONFIG_SYS_MONITOR_LEN		(512 << 10)
++
++#ifdef CONFIG_SD_BOOT
++#define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION	1
++#define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME		"u-boot.img"
++
++#elif CONFIG_SYS_USE_NANDFLASH
++#elif CONFIG_SPI_BOOT
++#define CONFIG_SYS_SPI_U_BOOT_OFFS		0x10000
++
++#elif CONFIG_NAND_BOOT
++#define CONFIG_SPL_NAND_DRIVERS
++#define CONFIG_SPL_NAND_BASE
++#endif
++
++#define CONFIG_PMECC_CAP				4
++#define CONFIG_PMECC_SECTOR_SIZE		512
++#define CONFIG_SYS_NAND_U_BOOT_OFFS		0x40000
++#define CONFIG_SYS_NAND_5_ADDR_CYCLE
++#define CONFIG_SYS_NAND_PAGE_SIZE		0x0800
++#define CONFIG_SYS_NAND_PAGE_COUNT		64
++#define CONFIG_SYS_NAND_OOBSIZE			64
++#define CONFIG_SYS_NAND_BLOCK_SIZE		0x20000
++#define CONFIG_SYS_NAND_BAD_BLOCK_POS	0x0
++#define CONFIG_SYS_NAND_USE_FLASH_BBT
++#define CONFIG_SPL_GENERATE_ATMEL_PMECC_HEADER
++
++/* Watchdog support */
++#define CONFIG_AT91SAM9_WATCHDOG
++#define CONFIG_HW_WATCHDOG
++
++#endif /* __CONFIG_H */
+-- 
+2.25.1
+

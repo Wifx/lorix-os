@@ -29,3 +29,9 @@ RRECOMMENDS_${PN}_lorix-one = " \
     pmon-csub-concentratord \
     pmon-helium-upf \
 "
+
+RDEPENDS_${PN}_l1 = " \
+    lora-basic-station \
+    pmon-csgb-concentratord \
+    pmon-csub-concentratord \
+"

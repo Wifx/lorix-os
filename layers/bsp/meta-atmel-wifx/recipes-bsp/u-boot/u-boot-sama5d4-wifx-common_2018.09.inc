@@ -18,6 +18,7 @@ SRC_URI += " \
     file://0001-Change-extraversion-to-wifx.patch \
     file://0002-Add-LORIX-One-support.patch \
     file://0003-Overwrite-existing-MMC-env-MAC-address-if-differ-fro.patch \
+    file://0001-Add-Wifx-L1-machine-support.patch \
 "
 
 S = "${WORKDIR}/git"

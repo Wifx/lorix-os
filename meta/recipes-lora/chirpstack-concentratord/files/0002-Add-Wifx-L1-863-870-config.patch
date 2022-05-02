@@ -1,0 +1,156 @@
+Index: chirpstack-concentratord-sx1302/src/config/mod.rs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/chirpstack-concentratord-sx1302/src/config/mod.rs b/chirpstack-concentratord-sx1302/src/config/mod.rs
+--- a/chirpstack-concentratord-sx1302/src/config/mod.rs	(revision e3da9c17bc00ba53c78514716d2acd9fa41049e3)
++++ b/chirpstack-concentratord-sx1302/src/config/mod.rs	(revision 1f930f151415ab47f44f40c978d356214189dc77)
+@@ -172,6 +172,7 @@
+         "rak_2287_kr920" => vendor::rak::rak2287_kr920::new(&config),
+         "rak_2287_ru864" => vendor::rak::rak2287_ru864::new(&config),
+         "rak_2287_us915" => vendor::rak::rak2287_us915::new(&config),
++        "wifx_l1_863_870" => vendor::wifx::l1_863_870::new(&config),
+         _ => panic!("unexpected gateway model: {}", config.gateway.model),
+     };
+ 
+Index: chirpstack-concentratord-sx1302/src/config/vendor/mod.rs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs b/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs
+--- a/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs	(revision e3da9c17bc00ba53c78514716d2acd9fa41049e3)
++++ b/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs	(revision 1f930f151415ab47f44f40c978d356214189dc77)
+@@ -2,6 +2,7 @@
+ 
+ pub mod rak;
+ pub mod semtech;
++pub mod wifx;
+ 
+ #[derive(Clone)]
+ pub enum ComType {
+Index: chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870.rs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870.rs
+new file mode 100644
+--- /dev/null	(revision f340c361f9bc8d021fb5178e149e0d8d3171f4a1)
++++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870.rs	(revision f340c361f9bc8d021fb5178e149e0d8d3171f4a1)
+@@ -0,0 +1,103 @@
++use libloragw_sx1302::hal;
++
++use super::super::super::super::config;
++use super::super::{ComType, Configuration, RadioConfig};
++use std::collections::HashMap;
++use libloragw_sx1302::hal::TxGainConfig;
++
++pub fn new(conf: &config::Configuration) -> Configuration {
++
++    let mut power_configs:HashMap<i8, TxGainConfig> = HashMap::new();
++    power_configs.insert( 5, hal::TxGainConfig { rf_power:  5, pa_gain: 0, pwr_idx:  5, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
++    power_configs.insert( 6, hal::TxGainConfig { rf_power:  6, pa_gain: 0, pwr_idx:  6, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
++    power_configs.insert( 7, hal::TxGainConfig { rf_power:  7, pa_gain: 0, pwr_idx:  7, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
++    power_configs.insert( 8, hal::TxGainConfig { rf_power:  8, pa_gain: 0, pwr_idx:  8, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
++    power_configs.insert( 9, hal::TxGainConfig { rf_power:  9, pa_gain: 0, pwr_idx:  9, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
++    power_configs.insert(10, hal::TxGainConfig { rf_power: 10, pa_gain: 0, pwr_idx: 10, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
++    power_configs.insert(11, hal::TxGainConfig { rf_power: 11, pa_gain: 0, pwr_idx: 11, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
++    power_configs.insert(12, hal::TxGainConfig { rf_power: 12, pa_gain: 0, pwr_idx: 12, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
++    power_configs.insert(13, hal::TxGainConfig { rf_power: 13, pa_gain: 0, pwr_idx: 13, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
++    power_configs.insert(14, hal::TxGainConfig { rf_power: 14, pa_gain: 0, pwr_idx: 14, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
++    power_configs.insert(15, hal::TxGainConfig { rf_power: 15, pa_gain: 0, pwr_idx: 15, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
++    power_configs.insert(16, hal::TxGainConfig { rf_power: 16, pa_gain: 0, pwr_idx: 16, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
++    power_configs.insert(17, hal::TxGainConfig { rf_power: 17, pa_gain: 0, pwr_idx: 18, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
++    power_configs.insert(18, hal::TxGainConfig { rf_power: 18, pa_gain: 0, pwr_idx: 19, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
++    power_configs.insert(19, hal::TxGainConfig { rf_power: 19, pa_gain: 1, pwr_idx:  0, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
++    power_configs.insert(20, hal::TxGainConfig { rf_power: 20, pa_gain: 1, pwr_idx:  1, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
++    power_configs.insert(21, hal::TxGainConfig { rf_power: 21, pa_gain: 1, pwr_idx:  2, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
++    power_configs.insert(22, hal::TxGainConfig { rf_power: 22, pa_gain: 1, pwr_idx:  3, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
++    power_configs.insert(23, hal::TxGainConfig { rf_power: 23, pa_gain: 1, pwr_idx:  4, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
++    power_configs.insert(24, hal::TxGainConfig { rf_power: 24, pa_gain: 1, pwr_idx:  5, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
++    power_configs.insert(25, hal::TxGainConfig { rf_power: 25, pa_gain: 1, pwr_idx:  7, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
++    power_configs.insert(26, hal::TxGainConfig { rf_power: 26, pa_gain: 1, pwr_idx:  9, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
++    power_configs.insert(27, hal::TxGainConfig { rf_power: 27, pa_gain: 1, pwr_idx: 14, dig_gain: 0, dac_gain: 0, mix_gain: 5, offset_i: 0, offset_q: 0 });
++
++
++    Configuration {
++        radio_count: 2,
++        clock_source: 1,
++        full_duplex: false,
++        lora_multi_sf_bandwidth: 125000,
++        radio_config: vec![
++            RadioConfig {
++                enable: true,
++                radio_type: hal::RadioType::SX1250,
++                single_input_mode: true,
++                rssi_offset: -207.0,
++                rssi_temp_compensation: hal::RssiTempCompensationConfig {
++                    coeff_a: 0.0,
++                    coeff_b: 0.0,
++                    coeff_c: 20.41,
++                    coeff_d: 2162.56,
++                    coeff_e: 0.0,
++                },
++                tx_enable: true,
++                tx_freq_min: 863000000,
++                tx_freq_max: 870000000,
++                tx_gain_table: match conf.gateway.antenna_gain {
++                    0 ..= 7 => vec![
++                        power_configs.get(&(12 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(13 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(14 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(15 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(16 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(17 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(18 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(19 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(20 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(21 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(22 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(23 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(24 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(25 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(26 - conf.gateway.antenna_gain)).unwrap().clone(),
++                        power_configs.get(&(27 - conf.gateway.antenna_gain)).unwrap().clone(),
++                    ],
++                    _ => panic!("Invalid antenna_gain: {} (0-7 accepted)", conf.gateway.antenna_gain),
++                },
++            },
++            RadioConfig {
++                enable: true,
++                radio_type: hal::RadioType::SX1250,
++                single_input_mode: false,
++                rssi_offset: -215.4,
++                rssi_temp_compensation: hal::RssiTempCompensationConfig {
++                    coeff_a: 0.0,
++                    coeff_b: 0.0,
++                    coeff_c: 20.41,
++                    coeff_d: 2162.56,
++                    coeff_e: 0.0,
++                },
++                tx_enable: false,
++                tx_freq_min: 0,
++                tx_freq_max: 0,
++                tx_gain_table: vec![],
++            },
++        ],
++        gps_tty_path: None,
++        com_type: ComType::SPI,
++        com_path: "/dev/spidev0.0".to_string(),
++        reset_pin: Some((0, 1)),
++        power_en_pin: None,
++    }
++}
+Index: chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs
+new file mode 100644
+--- /dev/null	(revision 1f930f151415ab47f44f40c978d356214189dc77)
++++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs	(revision 1f930f151415ab47f44f40c978d356214189dc77)
+@@ -0,0 +1,1 @@
++pub mod l1_863_870;

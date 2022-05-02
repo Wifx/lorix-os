@@ -1,0 +1,3 @@
+CFG.l1 = linux lgw1 sx1302 no_leds
+LIBS.l1= -llgw1302 -lmbedtls -lmbedx509 -lmbedcrypto -lpthread
+DEPS.l1 = mbedtls lgw1302

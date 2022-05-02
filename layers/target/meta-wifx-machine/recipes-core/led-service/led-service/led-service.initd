@@ -1,0 +1,14 @@
+#!/sbin/openrc-run
+
+export EINFO_QUIET="${quiet:-yes}"
+
+depend() {
+        after local
+        keyword -prefix
+}
+
+start() {
+        if [ -e /sys/class/leds/service/enable ]; then
+                echo "1" > /sys/class/leds/service/enable
+        fi
+}

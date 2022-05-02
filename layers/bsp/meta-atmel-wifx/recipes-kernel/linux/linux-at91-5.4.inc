@@ -22,6 +22,13 @@ SRC_URI += " \
     file://kernel-features/nf_tables/nf_tables6.cfg \
     file://kernel-features/wireguard/wireguard.scc;type=kmeta;destsuffix=kernel-meta \
     file://kernel-features/wireguard/wireguard.cfg \
+    file://0001-l1-add-support-for-the-Wifx-L1-board.patch \
+    file://0002-crypto-atmel-update-to-latest-driver-version-and-add.patch \
+    file://0003-l1-move-ATECC608-to-i2c-bus3-fix-freq-to-100KHz.patch \
+"
+
+SRC_URI_append_l1 = " \
+    file://l1.cfg \
 "
 
 SRC_URI_append_lorix-one = " \
