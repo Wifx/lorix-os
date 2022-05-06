@@ -27,7 +27,8 @@ DEPENDS += " \
     clang-native \
     cmake-native \
 "
-REPENDS_${PN} += "machine-info"
+
+RDEPENDS_${PN} += "machine-info"
 
 DEPENDS_append_sx1301 = " libloragw-sx1301"
 DEPENDS_append_sx1302 = " libloragw-sx1302"

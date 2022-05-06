@@ -22,6 +22,8 @@ do_patch[noexec] = "1"
 do_configure[noexec] = "1"
 do_compile[noexec] = "1"
 
+RDEPENDS_${PN} += "machine-info"
+
 osdir = "${sysconfdir}/os"
 
 do_install () {
@@ -46,7 +48,7 @@ pkg_postinst_ontarget_lorix_one () {
             mac=$(cat /sys/class/net/eth0/address)
             id=$(echo $mac | awk -F':' '{print $4$5$6}')
             echo "lorix-one-$id" > /etc/hostname
-            # Set LORIX One hostname to "lorix-one-xxxxxx" to have uniq hostname (for mDNS for example)
+            # Set LORIX One hostname to "lorix-one-xxxxxx" to have unique hostname (for mDNS for example)
         else
             echo "lorix-one" > /etc/hostname
         fi
@@ -57,15 +59,11 @@ pkg_postinst_ontarget_l1 () {
     if [ -z "$1" ]; then
         # execute only on first boot
 
-        if [ -e /sys/class/net/eth0/address ]; then
-            # Construct the hostname based on last 3 Bytes of eth0 MAC address
-            mac=$(cat /sys/class/net/eth0/address)
-            id=$(echo $mac | awk -F':' '{print $4$5$6}')
-            echo "l1-$id" > /etc/hostname
-            # Set Wifx L1 hostname to "l1-xxxxxx" to have uniq hostname (for mDNS for example)
-        else
-            echo "l1" > /etc/hostname
-        fi
+        # get lower case serial
+        SERIAL=$(machine-info --field "PRODUCT_SERIAL" --noheader | awk '{print tolower($0)}')
+        
+        # Set gateway hostname to "gw-serial" to have unique hostname (for mDNS for example)
+        echo "gw-$SERIAL" > /etc/hostname
     fi
 }
 
