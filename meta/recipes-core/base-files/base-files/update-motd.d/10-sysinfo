@@ -5,8 +5,11 @@ load=$(cat /proc/loadavg | awk '{print $1}')
 root_usage=$(df -hP / | awk '/\// {print $(NF-1)}')
 memory_usage=$(free -m | awk '/Mem/ { printf("%3.1f%%", $3/$2*100) }')
 users=$(users | wc -w)
+uptime=$(uptime --pretty)
+uptime_since=$(uptime --since)
 
 echo " System information as of: $date"
-printf "  System load:\t%s\tMemory usage:\t%s\n" $load $memory_usage
-printf "  Usage on /:\t%s\tLocal users:\t%s\n" $root_usage $users
+printf "  Uptime:\t%s (%s)\n" "$uptime" "$uptime_since"
+printf "  System load:\t%s\tMemory usage:\t%s\n" "$load" "$memory_usage"
+printf "  Usage on /:\t%s\tLocal users:\t%s\n" "$root_usage" "$users"
 echo ""

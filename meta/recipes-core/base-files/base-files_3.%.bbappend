@@ -2,12 +2,20 @@ inherit wifx-tools
 
 DEPENDS += "os-release"
 
+RDEPENDS_${PN} += "machine-info"
+
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
+
 SRC_URI_FEATURE_MOTD_DYNAMIC = " \
-    file://update-motd.d/* \
+    file://update-motd.d/00-header \
+    file://update-motd.d/05-product \
+    file://update-motd.d/10-sysinfo \
+    file://update-motd.d/20-update \
+    file://update-motd.d/90-release-notes \
+    file://update-motd.d/99-reset-style \
 "
 SRC_URI += " \
-    file://motd-template \
+    file://motd-header-template \
     ${@bb.utils.contains('DISTRO_FEATURES','motd-dynamic','${SRC_URI_FEATURE_MOTD_DYNAMIC}','',d)} \
     file://fstab \
 "
@@ -62,39 +70,7 @@ def populate_release_note(string, version_str, variant_str, audience_str):
 
 python do_motd_static() {
     import shutil
-
-    # Retrieve os-release values
-    source_shell_param_file(d.expand('${STAGING_DIR_TARGET}${libdir}/os-release'), d)
-
-    # Copy the motd template file to have a clean file on each iteration
-    shutil.copy2(d.expand('${WORKDIR}/motd-template'), d.expand('${WORKDIR}/motd'))
-
-    version = d.getVar('DISTRO_VERSION', True)
-    rev_hash = d.getVar('WORKSPACE_REV_HASH', True)
-    rev_date_str = d.getVar('WORKSPACE_REV_DATE', True)
-    codename = d.getVar('VERSION_CODENAME', True)
-    variant_id = d.getVar('VARIANT_ID', True)
-    audience_id = d.getVar('AUDIENCE_ID', True)
-
-    machine = d.getVar('MACHINE', True)
-
-    # Populate motd file with version, hash and date
-    string = open(d.expand('${WORKDIR}/motd'),'r').read()
-    string = populate_header(string, version, rev_hash, rev_date_str, codename, machine)
-    # Create release note string
-    str_tmp = populate_release_note("", version, variant_id, audience_id)
-    if str_tmp:
-        string += str_tmp
-        if not (d.getVar('INHIBIT_DEFAULT_ENDLF', True) == '1'):
-            string += "\n"
-
-    f = open(d.expand('${WORKDIR}/motd'),'w')
-    f.write(string)
-    f.close()
-}
-
-python do_motd_dynamic() {
-    import shutil
+    import os
 
     # Retrieve os-release values
     source_shell_param_file(d.expand('${STAGING_DIR_TARGET}${libdir}/os-release'), d)
@@ -106,27 +82,35 @@ python do_motd_dynamic() {
     variant_id = d.getVar('VARIANT_ID', True)
     audience_id = d.getVar('AUDIENCE_ID', True)
     machine = d.getVar('MACHINE', True)
+
+    # Read motd header template
+    header_template = open(d.expand('${WORKDIR}/motd-header-template'),'r').read()
+
+    static_motd_dir = d.expand('${WORKDIR}/motd-static')
+    if not os.path.exists(static_motd_dir):
+        os.makedirs(static_motd_dir)
 
     # Populate motd header file with version, hash and date with static content
-    string = open(d.expand('${WORKDIR}/update-motd.d/static/00-header'),'r').read()
-    f = open(d.expand('${WORKDIR}/update-motd.d/static/00-header'),'w')
-    f.write(populate_header(string, version, rev_hash, rev_date_str, codename, machine))
+    f = open(d.expand('${WORKDIR}/motd-static/00-header'),'w+')
+    f.write(populate_header(header_template, version, rev_hash, rev_date_str, codename, machine))
     f.close()
 
-    # Populate motd release file with static content
+    # Populate motd release file with release note
     string = populate_release_note("", version, variant_id, audience_id)
     if string and not (d.getVar('INHIBIT_DEFAULT_ENDLF', True) == '1'):
         string += "\n"
-    f = open(d.expand('${WORKDIR}/update-motd.d/static/99-release-notes'),'w')
+    f = open(d.expand('${WORKDIR}/motd-static/99-release-notes'),'w+')
     f.write(string)
+    f.close()
+
+    f = open(d.expand('${WORKDIR}/motd'),'w')
+    f.write(open(d.expand('${WORKDIR}/motd-static/00-header'),'r').read())
+    f.write(open(d.expand('${WORKDIR}/motd-static/99-release-notes'),'r').read())
     f.close()
 }
 
 python __anonymous() {
-    if bb.utils.contains('DISTRO_FEATURES', 'motd-dynamic', True, False, d):
-        bb.build.addtask('do_motd_dynamic', 'do_install', 'do_unpack', d)
-    else:
-        bb.build.addtask('do_motd_static', 'do_install', 'do_unpack', d)
+    bb.build.addtask('do_motd_static', 'do_install', 'do_unpack', d)
 
     # We need to reset the files thanks to unpack on each os-release data update
     d.setVarFlag('do_unpack', 'depends', 'os-release:do_populate_sysroot')
@@ -137,18 +121,20 @@ do_install_append() {
         # we remove the standard motd
         rm -rf ${D}${sysconfdir}/motd
 
-        # create dynamic motd
         install -m 0755 -d ${D}${sysconfdir}/update-motd.d
+
+        # install static motd
         install -m 0755 -d ${D}${sysconfdir}/update-motd.d/static
+        for file in $(find ${WORKDIR}/motd-static -maxdepth 1 -type f -execdir echo {} ';'); do
+            install -m 0644 -D ${WORKDIR}/motd-static/$file ${D}${sysconfdir}/update-motd.d/static/$file
+        done
 
         # install dynamic motd generation files
-        cd ${WORKDIR}/update-motd.d
-        for file in $(find . -maxdepth 1 -type f); do
-            install -m 0755 -D ${WORKDIR}/update-motd.d/$file ${D}${sysconfdir}/update-motd.d/$file
-        done
-        for file in $(find static -maxdepth 1 -type f); do
-            install -m 0644 -D ${WORKDIR}/update-motd.d/$file ${D}${sysconfdir}/update-motd.d/$file
-        done
+        if ${@bb.utils.contains('DISTRO_FEATURES','motd-dynamic','true','false',d)}; then
+            for file in $(find ${WORKDIR}/update-motd.d -maxdepth 1 -type f -execdir echo {} ';'); do
+                install -m 0755 -D ${WORKDIR}/update-motd.d/$file ${D}${sysconfdir}/update-motd.d/$file
+            done
+        fi
     fi
 
     # install volatile log files (mounted to tmpfs by fstab)

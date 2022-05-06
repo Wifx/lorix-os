@@ -1,0 +1,11 @@
+#!/bin/sh
+
+product=$(machine-info --field "PRODUCT_LABEL_LONG" --noheader)
+rf_variant=$(machine-info --field "PRODUCT_FREQUENCY" --noheader)
+serial=$(machine-info --field "PRODUCT_SERIAL" --noheader)
+
+echo " Product information"
+printf "  Product:\t%s\n" "$product"
+printf "  RF Variant:\t%s\n" "$rf_variant"
+printf "  Serial:\t%s\n" "$serial"
+echo ""

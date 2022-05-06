@@ -1,0 +1,3 @@
+#!/bin/sh
+
+cat /etc/update-motd.d/static/99-release-notes
