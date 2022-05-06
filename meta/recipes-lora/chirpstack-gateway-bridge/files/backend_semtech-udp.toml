@@ -1,5 +1,6 @@
 # Gateway backend configuration.
 [backend]
+
   # Backend type.
   type="semtech_udp"
 
@@ -13,3 +14,9 @@
     # so make sure the 'serv_port_up' and 'serv_port_down' from your
     # packet-forwarder matches this port.
     udp_bind = "127.0.0.1:1700"
+
+    # Fake RX timestamp.
+    #
+    # Fake the RX time when the gateway does not have GPS, in which case
+    # the time would otherwise be unset.
+    fake_rx_time = true
