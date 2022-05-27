@@ -96,16 +96,16 @@ python do_motd_static() {
     f.close()
 
     # Populate motd release file with release note
-    string = populate_release_note("", version, variant_id, audience_id)
-    if string and not (d.getVar('INHIBIT_DEFAULT_ENDLF', True) == '1'):
-        string += "\n"
-    f = open(d.expand('${WORKDIR}/motd-static/99-release-notes'),'w+')
-    f.write(string)
+    release_note = populate_release_note("", version, variant_id, audience_id)
+    if release_note and not (d.getVar('INHIBIT_DEFAULT_ENDLF', True) == '1'):
+        release_note += "\n"
+    f = open(d.expand('${WORKDIR}/motd-static/90-release-notes'),'w+')
+    f.write(release_note)
     f.close()
 
     f = open(d.expand('${WORKDIR}/motd'),'w')
     f.write(open(d.expand('${WORKDIR}/motd-static/00-header'),'r').read())
-    f.write(open(d.expand('${WORKDIR}/motd-static/99-release-notes'),'r').read())
+    f.write(open(d.expand('${WORKDIR}/motd-static/90-release-notes'),'r').read())
     f.close()
 }
 
