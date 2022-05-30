@@ -1,11 +1,13 @@
-From 1104b1b31031abfe1c99b5a330764ec613af0065 Mon Sep 17 00:00:00 2001
+From 9fe5603331c757132d92c56c126be95033000c91 Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
-Date: Fri, 29 Oct 2021 16:12:58 +0200
-Subject: [PATCH 1/3] l1: add support for the Wifx L1 board
+Date: Tue, 24 May 2022 07:54:06 +0200
+Subject: [PATCH] l1: add support for the Wifx L1 board
 
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
 ---
  arch/arm/boot/dts/Makefile              |   3 +-
- arch/arm/boot/dts/l1.dts                | 436 ++++++++++++++
+ arch/arm/boot/dts/l1.dts                | 405 +++++++++++++
+ arch/arm/boot/dts/sama5d4.dtsi          |   5 +-
  arch/arm/configs/l1_defconfig           | 225 +++++++
  drivers/leds/Kconfig                    |  10 +
  drivers/leds/Makefile                   |   1 +
@@ -25,7 +27,7 @@ Subject: [PATCH 1/3] l1: add support for the Wifx L1 board
  include/linux/mfd/wgw-ec/core.h         | 145 +++++
  include/linux/mfd/wgw-ec/reg.h          |  41 ++
  include/linux/mfd/wgw-ec/usbc.h         |  65 ++
- 21 files changed, 3642 insertions(+), 1 deletion(-)
+ 22 files changed, 3614 insertions(+), 3 deletions(-)
  create mode 100644 arch/arm/boot/dts/l1.dts
  create mode 100644 arch/arm/configs/l1_defconfig
  create mode 100644 drivers/leds/leds-wgw-ec.c
@@ -57,10 +59,10 @@ index 57a9300a2de8..8a50b2a25e9e 100644
  dtb-$(CONFIG_ARCH_ATLAS7) += \
 diff --git a/arch/arm/boot/dts/l1.dts b/arch/arm/boot/dts/l1.dts
 new file mode 100644
-index 000000000000..76834ff7000f
+index 000000000000..c6189a12b163
 --- /dev/null
 +++ b/arch/arm/boot/dts/l1.dts
-@@ -0,0 +1,436 @@
+@@ -0,0 +1,405 @@
 +/*
 + * l1.dts
 + *  Device Tree file for the Wifx L1 LoRa gateway from Wifx Sàrl
@@ -140,8 +142,9 @@ index 000000000000..76834ff7000f
 +	ahb {
 +		apb {
 +			spi0: spi@f8010000 {
-+				cs-gpios = <&pioC 3 0>;
 +				status = "okay";
++				cs-gpios = <&pioC 3 0>;
++
 +				sx1302@0 {
 +					compatible = "semtech,sx1301";
 +					spi-max-frequency = <10000000>;
@@ -152,11 +155,15 @@ index 000000000000..76834ff7000f
 +			i2c0: i2c@f8014000 {
 +				status = "okay";
 +				clock-frequency = <100000>;
++				i2c-digital-filter = "true";
++				i2c-analog-filter = "true";
 +			};
 +
 +			i2c1: i2c@f8018000 {
 +				status = "okay";
 +				clock-frequency = <400000>;
++				i2c-digital-filter = "true";
++				i2c-analog-filter = "true";
 +
 +				stts751: temp_sensor@38 {
 +					compatible = "stts751";
@@ -187,12 +194,9 @@ index 000000000000..76834ff7000f
 +
 +			i2c2: i2c@f8024000 {
 +				status = "okay";
-+				clock-frequency = <200000>;
-+
-+				atecc508a@60 {
-+					compatible = "atmel,atecc508a";
-+					reg = <0x60>;
-+				};
++				clock-frequency = <400000>;
++				i2c-digital-filter = "true";
++				i2c-analog-filter = "true";
 +
 +				board_ec@2a {
 +					compatible = "wifx,wgw-ec-i2c";
@@ -238,42 +242,11 @@ index 000000000000..76834ff7000f
 +
 +			i2c3: i2c@fc038000 {
 +				status = "okay";
-+
-+				pmic: act8865@5b {
-+					compatible = "active-semi,act8865";
-+					reg = <0x5b>;
-+					status = "disabled";
-+
-+					regulators {
-+						vcc_1v8_reg: DCDC_REG1 {
-+							regulator-name = "VCC_1V8";
-+							regulator-min-microvolt = <1800000>;
-+							regulator-max-microvolt = <1800000>;
-+							regulator-always-on;
-+						};
-+
-+						vcc_1v2_reg: DCDC_REG2 {
-+							regulator-name = "VCC_1V2";
-+							regulator-min-microvolt = <1200000>;
-+							regulator-max-microvolt = <1200000>;
-+							regulator-always-on;
-+						};
-+
-+						vcc_3v3_reg: DCDC_REG3 {
-+							regulator-name = "VCC_3V3";
-+							regulator-min-microvolt = <3300000>;
-+							regulator-max-microvolt = <3300000>;
-+							regulator-always-on;
-+						};
-+
-+						vddana_reg: LDO_REG1 {
-+							regulator-name = "FUSE_2V5";
-+							regulator-min-microvolt = <2500000>;
-+							regulator-max-microvolt = <2500000>;
-+							regulator-always-on;
-+						};
-+					};
-+				};
++				/* limited to 100KHz to support wake-up without bus mangling */
++				clock-frequency = <100000>;
++				atmel,fifo-size = <16>;
++				i2c-digital-filter = "true";
++				i2c-analog-filter = "true";
 +			};
 +
 +			macb0: ethernet@f8020000 {
@@ -292,8 +265,6 @@ index 000000000000..76834ff7000f
 +			mmc1: mmc@fc000000 {
 +				pinctrl-names = "default";
 +				pinctrl-0 = <&pinctrl_mmc1_clk_cmd_dat0 &pinctrl_mmc1_dat1_3 &pinctrl_mmc1_cd>;
-+				vmmc-supply = <&vcc_3v3_reg>;
-+				vqmmc-supply = <&vcc_3v3_reg>;
 +				status = "okay";
 +				slot@0 {
 +					reg = <0>;
@@ -497,6 +468,31 @@ index 000000000000..76834ff7000f
 +		compatible = "pps-gpio";
 +	};
 +};
+diff --git a/arch/arm/boot/dts/sama5d4.dtsi b/arch/arm/boot/dts/sama5d4.dtsi
+index 3f087a1c25b8..faba4e5f08d1 100644
+--- a/arch/arm/boot/dts/sama5d4.dtsi
++++ b/arch/arm/boot/dts/sama5d4.dtsi
+@@ -40,6 +40,7 @@
+ 		i2c0 = &i2c0;
+ 		i2c1 = &i2c1;
+ 		i2c2 = &i2c2;
++		i2c3 = &i2c3;
+ 	};
+ 	cpus {
+ 		#address-cells = <1>;
+@@ -549,10 +550,10 @@
+ 				compatible = "atmel,sama5d4-i2c";
+ 				reg = <0xfc038000 0x4000>;
+ 				interrupts = <62 IRQ_TYPE_LEVEL_HIGH 6>;
+-				dmas = <&dma1
++				dmas = <&dma0
+ 					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1)
+ 					| AT91_XDMAC_DT_PERID(8))>,
+-				       <&dma1
++				       <&dma0
+ 					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1)
+ 					| AT91_XDMAC_DT_PERID(9))>;
+ 				dma-names = "tx", "rx";
 diff --git a/arch/arm/configs/l1_defconfig b/arch/arm/configs/l1_defconfig
 new file mode 100644
 index 000000000000..b483b684aaa0
