@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-510] Serial-based default hostname for L1
 - Update Helium gateway-rs to Alpha 26
 - [LOR-518] Upgrade ChirpStack Gateway Bridge to v3.13.3
+- [LOR-515] Update Manager GUI to v0.12.2
 
 ### Fixed
 
