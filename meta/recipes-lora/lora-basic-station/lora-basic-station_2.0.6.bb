@@ -92,4 +92,18 @@ do_install_append_l1() {
     done
 }
 
+pkg_postinst_ontarget_${PN} () {
+    if [ -z "$1" ]; then
+        # execute only on first boot
+        
+        # Update gateway ID in config
+
+        # retrieve gateway ID from machine-info
+        file="${sysconfoptdir}/lora-basic-station/gateway-id"
+        GWID=$(machine-info -e lora -n -f "LORA_GATEWAY_ID")
+        echo "$GWID" > "$file"
+        echo "Gateway ID set to "$GWID" in file "$file
+    fi
+}
+
 FILES_${PN} += "${optdir}"

@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - [LOR-516] RU864 concentratord config cannot be parsed (only 7 multi SF channels)
+- [LOR-517] Use SX1302 ID as gateway-id in LoRa Basic Station for L1
 
 ## [1.4.2] - Unreleased
 
