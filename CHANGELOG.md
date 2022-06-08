@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-510] Serial-based default hostname for L1
 - Update Helium gateway-rs to Alpha 26
 
+### Fixed
+
+- [LOR-516] RU864 concentratord config cannot be parsed (only 7 multi SF channels)
+
 ## [1.4.2] - Unreleased
 
 ### Changed
