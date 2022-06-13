@@ -60,10 +60,12 @@ pkg_postinst_ontarget_l1 () {
         # execute only on first boot
 
         # get lower case serial
-        SERIAL=$(machine-info --field "PRODUCT_SERIAL" --noheader | awk '{print tolower($0)}')
+        SERIAL_LABEL=$(machine-info --field "PRODUCT_SERIAL" --noheader)
+
+        SERIAL=$(echo "${SERIAL_LABEL//-/}" | awk '{print tolower($0)}')
         
-        # Set gateway hostname to "gw-serial" to have unique hostname (for mDNS for example)
-        echo "gw-$SERIAL" > /etc/hostname
+        # Set gateway hostname to "gw<serial>" to have unique hostname (for mDNS for example)
+        echo "gw$SERIAL" > /etc/hostname
     fi
 }
 
