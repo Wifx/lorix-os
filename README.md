@@ -1,6 +1,6 @@
 # LORIX OS Build System (yocto) Quick Start
 
-This workspace provides all the material needed to build a LORIX OS distribution for the Wifx LORIX gateways.
+This workspace provides all the material needed to build a LORIX OS distribution for the Wifx gateways.
 
 The LORIX OS documentation is available on https://iot.wifx.net/docs/lorix-os. This documention will focus on the LORIX OS Build System Quick Start.
 
@@ -8,6 +8,7 @@ The LORIX OS documentation is available on https://iot.wifx.net/docs/lorix-os. T
 
 * LORIX One 256MB
 * LORIX One 512MB
+* Wifx L1
 
 ## Pre-requisites
 
