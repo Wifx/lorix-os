@@ -1,16 +1,19 @@
-From f56421a28c035ceb630984191d5f9b6b7b8632dc Mon Sep 17 00:00:00 2001
+From f22550b5f1e7687ea3e60c047ebd480ee46905b9 Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
-Date: Mon, 11 May 2020 18:16:33 +0200
-Subject: [PATCH 2/3] Add LORIX One support
+Date: Mon, 25 Jul 2022 18:13:52 +0200
+Subject: [PATCH 1/2] Add base support for Wifx LORIX One machine
 
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
 ---
  arch/arm/dts/Makefile                     |   6 +
  arch/arm/dts/lorix-one-256.dts            |  82 ++++++++
  arch/arm/dts/lorix-one-512.dts            |  82 ++++++++
  arch/arm/dts/lorix-one-base.dtsi          | 163 ++++++++++++++++
- arch/arm/mach-at91/Kconfig                |  16 ++
- board/wifx/common/Makefile                |   9 +
- board/wifx/common/mac_eeprom.c            |  38 ++++
+ arch/arm/mach-at91/Kconfig                |  17 ++
+ board/wifx/Kconfig                        |  10 +
+ board/wifx/common/Makefile                |  10 +
+ board/wifx/common/at91sam9_wdt.c          |  80 ++++++++
+ board/wifx/common/mac_eeprom.c            |  64 ++++++
  board/wifx/lorix-one-256/Kconfig          |  12 ++
  board/wifx/lorix-one-256/MAINTAINERS      |   7 +
  board/wifx/lorix-one-256/Makefile         |   8 +
@@ -19,18 +22,22 @@ Subject: [PATCH 2/3] Add LORIX One support
  board/wifx/lorix-one-512/MAINTAINERS      |   7 +
  board/wifx/lorix-one-512/Makefile         |   8 +
  board/wifx/lorix-one-512/lorix-one-512.c  | 228 ++++++++++++++++++++++
- configs/lorix_one_256_mmc_defconfig       |  66 +++++++
- configs/lorix_one_256_nandflash_defconfig |  65 ++++++
- configs/lorix_one_512_mmc_defconfig       |  66 +++++++
- configs/lorix_one_512_nandflash_defconfig |  65 ++++++
- include/configs/at91-sama5_common.h       |  18 +-
- include/configs/lorix-one-256.h           |  93 +++++++++
- include/configs/lorix-one-512.h           |  93 +++++++++
- 22 files changed, 1367 insertions(+), 5 deletions(-)
+ cmd/nvedit.c                              |  16 +-
+ configs/lorix_one_256_mmc_defconfig       |  67 +++++++
+ configs/lorix_one_256_nandflash_defconfig |  66 +++++++
+ configs/lorix_one_512_mmc_defconfig       |  67 +++++++
+ configs/lorix_one_512_nandflash_defconfig |  66 +++++++
+ include/common.h                          |  12 ++
+ include/configs/at91-sama5_common.h       |  15 +-
+ include/configs/lorix-one-256.h           |  92 +++++++++
+ include/configs/lorix-one-512.h           |  92 +++++++++
+ 26 files changed, 1513 insertions(+), 4 deletions(-)
  create mode 100644 arch/arm/dts/lorix-one-256.dts
  create mode 100644 arch/arm/dts/lorix-one-512.dts
  create mode 100644 arch/arm/dts/lorix-one-base.dtsi
+ create mode 100644 board/wifx/Kconfig
  create mode 100644 board/wifx/common/Makefile
+ create mode 100644 board/wifx/common/at91sam9_wdt.c
  create mode 100644 board/wifx/common/mac_eeprom.c
  create mode 100644 board/wifx/lorix-one-256/Kconfig
  create mode 100644 board/wifx/lorix-one-256/MAINTAINERS
@@ -48,10 +55,10 @@ Subject: [PATCH 2/3] Add LORIX One support
  create mode 100644 include/configs/lorix-one-512.h
 
 diff --git a/arch/arm/dts/Makefile b/arch/arm/dts/Makefile
-index 31d9256a3e..7d70467353 100644
+index 2b2fa66f9d..a8ed93b091 100644
 --- a/arch/arm/dts/Makefile
 +++ b/arch/arm/dts/Makefile
-@@ -532,6 +532,12 @@ dtb-$(CONFIG_TARGET_SAMA5D4EK) += \
+@@ -668,6 +668,12 @@ dtb-$(CONFIG_TARGET_SAMA5D4EK) += \
  dtb-$(CONFIG_TARGET_SAMA5D4_XPLAINED) += \
  	at91-sama5d4_xplained.dtb
  
@@ -411,10 +418,10 @@ index 0000000000..a039941c89
 +	};
 +};
 diff --git a/arch/arm/mach-at91/Kconfig b/arch/arm/mach-at91/Kconfig
-index 69856c8942..18648fb5f4 100644
+index 85524004f9..f028265537 100644
 --- a/arch/arm/mach-at91/Kconfig
 +++ b/arch/arm/mach-at91/Kconfig
-@@ -199,6 +199,20 @@ config TARGET_SAMA5D4EK
+@@ -247,6 +247,22 @@ config TARGET_SAMA5D4EK
  	select SAMA5D4
  	select SUPPORT_SPL
  
@@ -424,6 +431,7 @@ index 69856c8942..18648fb5f4 100644
 +	select BOARD_LATE_INIT
 +	select SAMA5D4
 +	select SUPPORT_SPL
++	select WDT_LEGACY_AT91
 +
 +config TARGET_LORIX_ONE_512
 +	bool "Wifx LORIX One (512MB NAND version)"
@@ -431,25 +439,41 @@ index 69856c8942..18648fb5f4 100644
 +	select BOARD_LATE_INIT
 +	select SAMA5D4
 +	select SUPPORT_SPL
++	select WDT_LEGACY_AT91
 +
  config TARGET_MEESC
  	bool "Support meesc"
  	select AT91SAM9263
-@@ -291,6 +305,8 @@ source "board/siemens/taurus/Kconfig"
+@@ -348,6 +364,7 @@ source "board/siemens/taurus/Kconfig"
  source "board/siemens/smartweb/Kconfig"
  source "board/laird/wb45n/Kconfig"
  source "board/laird/wb50n/Kconfig"
-+source "board/wifx/lorix-one-256/Kconfig"
-+source "board/wifx/lorix-one-512/Kconfig"
++source "board/wifx/Kconfig"
  
  config SPL_LDSCRIPT
  	default "arch/arm/mach-at91/arm926ejs/u-boot-spl.lds" if CPU_ARM926EJS
+diff --git a/board/wifx/Kconfig b/board/wifx/Kconfig
+new file mode 100644
+index 0000000000..6d05946c8f
+--- /dev/null
++++ b/board/wifx/Kconfig
+@@ -0,0 +1,10 @@
++config WDT_LEGACY_AT91
++	bool "Enable support for AT91 legacy watchdog driver"
++
++config AT91_HW_WDT_TIMEOUT
++	int "Watchdog timeout in second"
++	depends on WDT_LEGACY_AT91
++	default 15
++
++source "board/wifx/lorix-one-256/Kconfig"
++source "board/wifx/lorix-one-512/Kconfig"
 diff --git a/board/wifx/common/Makefile b/board/wifx/common/Makefile
 new file mode 100644
-index 0000000000..e64d868c06
+index 0000000000..b972b39461
 --- /dev/null
 +++ b/board/wifx/common/Makefile
-@@ -0,0 +1,9 @@
+@@ -0,0 +1,10 @@
 +# SPDX-License-Identifier: GPL-2.0+
 +#
 +# Based on the Atmel family products common code
@@ -459,12 +483,99 @@ index 0000000000..e64d868c06
 +#		      Yannick Lanz <yannick.lanz@wifx.net>
 +
 +obj-$(CONFIG_I2C_EEPROM) += mac_eeprom.o
++obj-$(CONFIG_WDT_LEGACY_AT91) += at91sam9_wdt.o
+diff --git a/board/wifx/common/at91sam9_wdt.c b/board/wifx/common/at91sam9_wdt.c
+new file mode 100644
+index 0000000000..fca2849918
+--- /dev/null
++++ b/board/wifx/common/at91sam9_wdt.c
+@@ -0,0 +1,80 @@
++// SPDX-License-Identifier: GPL-2.0+
++/*
++ * [origin: Linux kernel drivers/watchdog/at91sam9_wdt.c]
++ *
++ * Watchdog driver for Atmel AT91SAM9x processors.
++ *
++ * Copyright (C) 2008 Jean-Christophe PLAGNIOL-VILLARD <plagnioj@jcrosoft.com>
++ * Copyright (C) 2008 Renaud CERRATO r.cerrato@til-technologies.fr
++ */
++
++/*
++ * The Watchdog Timer Mode Register can be only written to once. If the
++ * timeout need to be set from U-Boot, be sure that the bootstrap doesn't
++ * write to this register. Inform Linux to it too
++ */
++
++#include <common.h>
++#include <watchdog.h>
++#include <asm/arch/hardware.h>
++#include <asm/io.h>
++#include <asm/arch/at91_wdt.h>
++
++/*
++ * AT91SAM9 watchdog runs a 12bit counter @ 256Hz,
++ * use this to convert a watchdog
++ * value from/to milliseconds.
++ */
++#define ms_to_ticks(t)	(((t << 8) / 1000) - 1)
++#define ticks_to_ms(t)	(((t + 1) * 1000) >> 8)
++
++/* Hardware timeout in seconds */
++#if !defined(CONFIG_AT91_HW_WDT_TIMEOUT)
++#define WDT_HW_TIMEOUT 2
++#else
++#define WDT_HW_TIMEOUT CONFIG_AT91_HW_WDT_TIMEOUT
++#endif
++
++/*
++ * Set the watchdog time interval in 1/256Hz (write-once)
++ * Counter is 12 bit.
++ */
++static int at91_wdt_settimeout(unsigned int timeout)
++{
++	unsigned int reg;
++	at91_wdt_t *wd = (at91_wdt_t *) ATMEL_BASE_WDT;
++
++	/* Check if disabled */
++	if (readl(&wd->mr) & AT91_WDT_MR_WDDIS) {
++		printf("sorry, watchdog is disabled\n");
++		return -1;
++	}
++
++	/*
++	 * All counting occurs at SLOW_CLOCK / 128 = 256 Hz
++	 *
++	 * Since WDV is a 12-bit counter, the maximum period is
++	 * 4096 / 256 = 16 seconds.
++	 */
++
++	reg = AT91_WDT_MR_WDRSTEN		/* causes watchdog reset */
++		| AT91_WDT_MR_WDDBGHLT		/* disabled in debug mode */
++		| AT91_WDT_MR_WDD(0xfff)	/* restart at any time */
++		| AT91_WDT_MR_WDV(timeout);	/* timer value */
++
++	writel(reg, &wd->mr);
++
++	return 0;
++}
++
++void hw_watchdog_reset(void)
++{
++	at91_wdt_t *wd = (at91_wdt_t *) ATMEL_BASE_WDT;
++	writel(AT91_WDT_CR_WDRSTT | AT91_WDT_CR_KEY, &wd->cr);
++}
++
++void hw_watchdog_init(void)
++{
++	/* 16 seconds timer, resets enabled */
++	at91_wdt_settimeout(ms_to_ticks(WDT_HW_TIMEOUT * 1000));
++}
 diff --git a/board/wifx/common/mac_eeprom.c b/board/wifx/common/mac_eeprom.c
 new file mode 100644
-index 0000000000..ddd4648853
+index 0000000000..76b6923c8f
 --- /dev/null
 +++ b/board/wifx/common/mac_eeprom.c
-@@ -0,0 +1,38 @@
+@@ -0,0 +1,64 @@
 +// SPDX-License-Identifier: GPL-2.0+
 +/*
 + * Copyright (C) 2017 Microchip
@@ -484,22 +595,48 @@ index 0000000000..ddd4648853
 +	const int ETH_ADDR_LEN = 6;
 +	unsigned char ethaddr[ETH_ADDR_LEN];
 +	const char *ETHADDR_NAME = "ethaddr";
++	char envbuf[ARP_HLEN_ASCII + 1];
 +	struct udevice *dev;
 +	int ret;
 +
-+	if (env_get(ETHADDR_NAME))
-+		return 0;
++	// retrieve mac address from env (true if exists and valid)
++	ret = eth_env_get_enetaddr(ETHADDR_NAME, (uint8_t *)envbuf);
 +
++#ifndef CONFIG_ENV_IS_IN_MMC
++	// if valid and env not in mmc, we keep the mac as it is
++	if (ret)
++		return 0;
++#endif
++
++	// if env is in mmc, we read the mac from eeprom in all cases
 +	ret = uclass_first_device_err(UCLASS_I2C_EEPROM, &dev);
 +	if (ret)
 +		return ret;
 +
-+	ret = i2c_eeprom_read(dev, offset, ethaddr, 6);
++	ret = i2c_eeprom_read(dev, offset, ethaddr, ETH_ADDR_LEN);
 +	if (ret)
 +		return ret;
 +
-+	if (is_valid_ethaddr(ethaddr))
-+		eth_env_set_enetaddr(ETHADDR_NAME, ethaddr);
++	if (is_valid_ethaddr(ethaddr)){
++		char envbufnew[ARP_HLEN_ASCII + 1];
++		sprintf(envbufnew, "%pM", ethaddr);
++
++		// we compare env mac and eeprom mac
++		if(memcmp(envbuf, ethaddr, ETH_ADDR_LEN) == 0){
++			// addresses are the same, don't update it
++			return 0;
++		}
++
++#ifdef CONFIG_ENV_IS_IN_MMC
++		// update the mac address and save the environment only if env is in MMC
++		return env_set_force(ETHADDR_NAME, envbufnew) && env_save();
++#else
++		// if env not in mmc, we update the volatile env but don't save it
++		// if env not in mmc, we can be here only is mac address not found in env,
++		// so env_set_force is not needed (or should not)
++		return env_set(ETHADDR_NAME, envbufnew);
++#endif
++	}
 +
 +	return 0;
 +}
@@ -550,7 +687,7 @@ index 0000000000..7dea4fe121
 +obj-y += lorix-one-256.o
 diff --git a/board/wifx/lorix-one-256/lorix-one-256.c b/board/wifx/lorix-one-256/lorix-one-256.c
 new file mode 100644
-index 0000000000..9673b19f81
+index 0000000000..4c8e1e94f2
 --- /dev/null
 +++ b/board/wifx/lorix-one-256/lorix-one-256.c
 @@ -0,0 +1,228 @@
@@ -679,7 +816,7 @@ index 0000000000..9673b19f81
 +	/* adress of boot parameters */
 +	gd->bd->bi_boot_params = CONFIG_SYS_SDRAM_BASE + 0x100;
 +
-+#ifdef CONFIG_AT91SAM9_WATCHDOG
++#ifdef CONFIG_WDT_LEGACY_AT91
 +	hw_watchdog_init();
 +#endif
 +#ifdef CONFIG_NAND_ATMEL
@@ -829,7 +966,7 @@ index 0000000000..28b9536ec0
 +obj-y += lorix-one-512.o
 diff --git a/board/wifx/lorix-one-512/lorix-one-512.c b/board/wifx/lorix-one-512/lorix-one-512.c
 new file mode 100644
-index 0000000000..9721aca337
+index 0000000000..6cef656dcd
 --- /dev/null
 +++ b/board/wifx/lorix-one-512/lorix-one-512.c
 @@ -0,0 +1,228 @@
@@ -958,7 +1095,7 @@ index 0000000000..9721aca337
 +	/* adress of boot parameters */
 +	gd->bd->bi_boot_params = CONFIG_SYS_SDRAM_BASE + 0x100;
 +
-+#ifdef CONFIG_AT91SAM9_WATCHDOG
++#ifdef CONFIG_WDT_LEGACY_AT91
 +	hw_watchdog_init();
 +#endif
 +#ifdef CONFIG_NAND_ATMEL
@@ -1061,12 +1198,47 @@ index 0000000000..9721aca337
 +	at91_mck_init(tmp);
 +}
 +#endif
+diff --git a/cmd/nvedit.c b/cmd/nvedit.c
+index 24a6cf7824..1f2241f0e2 100644
+--- a/cmd/nvedit.c
++++ b/cmd/nvedit.c
+@@ -292,7 +292,7 @@ static int _do_env_set(int flag, int argc, char * const argv[], int env_flag)
+ 	return 0;
+ }
+ 
+-int env_set(const char *varname, const char *varvalue)
++static int env_set_generic(const char *varname, const char *varvalue, int env_flag)
+ {
+ 	const char * const argv[4] = { "setenv", varname, varvalue, NULL };
+ 
+@@ -301,9 +301,19 @@ int env_set(const char *varname, const char *varvalue)
+ 		return 1;
+ 
+ 	if (varvalue == NULL || varvalue[0] == '\0')
+-		return _do_env_set(0, 2, (char * const *)argv, H_PROGRAMMATIC);
++		return _do_env_set(0, 2, (char * const *)argv, env_flag);
+ 	else
+-		return _do_env_set(0, 3, (char * const *)argv, H_PROGRAMMATIC);
++		return _do_env_set(0, 3, (char * const *)argv, env_flag);
++}
++
++int env_set(const char *varname, const char *varvalue)
++{
++	return env_set_generic(varname, varvalue, H_PROGRAMMATIC);
++}
++
++int env_set_force(const char *varname, const char *varvalue)
++{
++	return env_set_generic(varname, varvalue, H_PROGRAMMATIC | H_FORCE);
+ }
+ 
+ /**
 diff --git a/configs/lorix_one_256_mmc_defconfig b/configs/lorix_one_256_mmc_defconfig
 new file mode 100644
-index 0000000000..2afb59b7ac
+index 0000000000..04593ca6b7
 --- /dev/null
 +++ b/configs/lorix_one_256_mmc_defconfig
-@@ -0,0 +1,66 @@
+@@ -0,0 +1,67 @@
 +CONFIG_ARM=y
 +CONFIG_ARCH_AT91=y
 +CONFIG_SYS_TEXT_BASE=0x26f00000
@@ -1099,6 +1271,7 @@ index 0000000000..2afb59b7ac
 +CONFIG_CMD_PING=y
 +CONFIG_CMD_FAT=y
 +CONFIG_CMD_FS_GENERIC=y
++CONFIG_CMD_MTDPARTS=y
 +CONFIG_MTDIDS_DEFAULT="nand0=atmel_nand"
 +CONFIG_CMD_UBI=y
 +CONFIG_OF_CONTROL=y
@@ -1135,10 +1308,10 @@ index 0000000000..2afb59b7ac
 +CONFIG_SPL_OF_LIBFDT=y
 diff --git a/configs/lorix_one_256_nandflash_defconfig b/configs/lorix_one_256_nandflash_defconfig
 new file mode 100644
-index 0000000000..783f9b4e7b
+index 0000000000..52e950fb28
 --- /dev/null
 +++ b/configs/lorix_one_256_nandflash_defconfig
-@@ -0,0 +1,65 @@
+@@ -0,0 +1,66 @@
 +CONFIG_ARM=y
 +CONFIG_ARCH_AT91=y
 +CONFIG_SYS_TEXT_BASE=0x26f00000
@@ -1171,6 +1344,7 @@ index 0000000000..783f9b4e7b
 +CONFIG_CMD_PING=y
 +CONFIG_CMD_FAT=y
 +CONFIG_CMD_FS_GENERIC=y
++CONFIG_CMD_MTDPARTS=y
 +CONFIG_MTDIDS_DEFAULT="nand0=atmel_nand"
 +CONFIG_MTDPARTS_DEFAULT="mtdparts=atmel_nand:256k(bootstrap)ro,768k(uboot)ro,512k(uboot-env),-(ubi)"
 +CONFIG_CMD_UBI=y
@@ -1206,10 +1380,10 @@ index 0000000000..783f9b4e7b
 +CONFIG_SPL_OF_LIBFDT=y
 diff --git a/configs/lorix_one_512_mmc_defconfig b/configs/lorix_one_512_mmc_defconfig
 new file mode 100644
-index 0000000000..30df66b808
+index 0000000000..fe8f3d6b5b
 --- /dev/null
 +++ b/configs/lorix_one_512_mmc_defconfig
-@@ -0,0 +1,66 @@
+@@ -0,0 +1,67 @@
 +CONFIG_ARM=y
 +CONFIG_ARCH_AT91=y
 +CONFIG_SYS_TEXT_BASE=0x26f00000
@@ -1242,6 +1416,7 @@ index 0000000000..30df66b808
 +CONFIG_CMD_PING=y
 +CONFIG_CMD_FAT=y
 +CONFIG_CMD_FS_GENERIC=y
++CONFIG_CMD_MTDPARTS=y
 +CONFIG_MTDIDS_DEFAULT="nand0=atmel_nand"
 +CONFIG_CMD_UBI=y
 +CONFIG_OF_CONTROL=y
@@ -1278,10 +1453,10 @@ index 0000000000..30df66b808
 +CONFIG_SPL_OF_LIBFDT=y
 diff --git a/configs/lorix_one_512_nandflash_defconfig b/configs/lorix_one_512_nandflash_defconfig
 new file mode 100644
-index 0000000000..19b775a13a
+index 0000000000..aab0d5f6d4
 --- /dev/null
 +++ b/configs/lorix_one_512_nandflash_defconfig
-@@ -0,0 +1,65 @@
+@@ -0,0 +1,66 @@
 +CONFIG_ARM=y
 +CONFIG_ARCH_AT91=y
 +CONFIG_SYS_TEXT_BASE=0x26f00000
@@ -1314,6 +1489,7 @@ index 0000000000..19b775a13a
 +CONFIG_CMD_PING=y
 +CONFIG_CMD_FAT=y
 +CONFIG_CMD_FS_GENERIC=y
++CONFIG_CMD_MTDPARTS=y
 +CONFIG_MTDIDS_DEFAULT="nand0=atmel_nand"
 +CONFIG_MTDPARTS_DEFAULT="mtdparts=atmel_nand:256k(bootstrap)ro,768k(uboot)ro,512k(uboot-env),-(ubi)"
 +CONFIG_CMD_UBI=y
@@ -1347,11 +1523,34 @@ index 0000000000..19b775a13a
 +CONFIG_ATMEL_PIT_TIMER=y
 +CONFIG_OF_LIBFDT_OVERLAY=y
 +CONFIG_SPL_OF_LIBFDT=y
+diff --git a/include/common.h b/include/common.h
+index 2c21dee850..51be6acb8f 100644
+--- a/include/common.h
++++ b/include/common.h
+@@ -217,6 +217,18 @@ int env_get_yesno(const char *var);
+  */
+ int env_set(const char *varname, const char *value);
+ 
++/**
++ * env_set_force() - set an environment variable with force flag
++ *
++ * This sets or deletes the value of an environment variable. For setting the
++ * value the variable is created if it does not already exist.
++ *
++ * @varname: Variable to adjust
++ * @value: Value to set for the variable, or NULL or "" to delete the variable
++ * @return 0 if OK, 1 on error
++ */
++int env_set_force(const char *varname, const char *value);
++
+ /**
+  * env_set_ulong() - set an environment variable to an integer
+  *
 diff --git a/include/configs/at91-sama5_common.h b/include/configs/at91-sama5_common.h
-index 30c6cd47ca..9c295d0dc7 100644
+index fc46540a10..b87629bb70 100644
 --- a/include/configs/at91-sama5_common.h
 +++ b/include/configs/at91-sama5_common.h
-@@ -46,33 +46,41 @@
+@@ -46,12 +46,14 @@
  #define CONFIG_ENV_SIZE		0x4000
  #endif
  
@@ -1366,23 +1565,20 @@ index 30c6cd47ca..9c295d0dc7 100644
  
  #else
  
- #ifdef CONFIG_NAND_BOOT
+@@ -59,23 +61,32 @@
  /* u-boot env in nand flash */
--#define CONFIG_ENV_OFFSET		0x140000
-+#define CONFIG_ENV_OFFSET			0x140000
-+#define CONFIG_ENV_SIZE				(128 * 1024) 			/* 128KiB */
+ #define CONFIG_ENV_OFFSET		0x140000
  #define CONFIG_ENV_OFFSET_REDUND	0x100000
 -#define CONFIG_ENV_SIZE			0x20000
--#define CONFIG_BOOTCOMMAND		"nand read 0x21000000 0x180000 0x80000;"	\
--					"nand read 0x22000000 0x200000 0x600000;"	\
--					"bootz 0x22000000 - 0x21000000"
++#define CONFIG_ENV_SIZE			(128 * 1024)	/* 128KiB */
 +#define CONFIG_ENV_SIZE_REDUND		(CONFIG_ENV_SIZE)
-+#define CONFIG_ENV_RANGE			(2 * CONFIG_ENV_SIZE)	/* Bad block handling */
++#define CONFIG_ENV_RANGE		(2 * CONFIG_ENV_SIZE)	/* Bad block handling */
 +#ifndef CONFIG_BOOTCOMMAND
-+#define CONFIG_BOOTCOMMAND			"nand read 0x21000000 0x180000 0x80000;"	\
-+									"nand read 0x22000000 0x200000 0x600000;"	\
-+									"bootz 0x22000000 - 0x21000000"
+ #define CONFIG_BOOTCOMMAND		"nand read 0x21000000 0x180000 0x80000;"	\
+ 					"nand read 0x22000000 0x200000 0x600000;"	\
+ 					"bootz 0x22000000 - 0x21000000"
 +#endif
++
  #elif CONFIG_SPI_BOOT
  /* u-boot env in serial flash, by default is bus 0 and cs 0 */
  #define CONFIG_ENV_OFFSET		0x6000
@@ -1393,17 +1589,31 @@ index 30c6cd47ca..9c295d0dc7 100644
  					"sf read 0x21000000 0x60000 0xc000; "	\
  					"sf read 0x22000000 0x6c000 0x394000; "	\
  					"bootz 0x22000000 - 0x21000000"
- #endif
 +#endif
++
+ #elif CONFIG_QSPI_BOOT
+ #define CONFIG_ENV_OFFSET		0x140000
+ #define CONFIG_ENV_SIZE			0x20000
+ #define CONFIG_ENV_SECT_SIZE		0x1000
++#ifndef CONFIG_BOOTCOMMAND
+ #define CONFIG_BOOTCOMMAND		"sf probe 0; "					\
+ 					"sf read 0x21000000 0x180000 0x80000; "		\
+ 					"sf read 0x22000000 0x200000 0x600000; "	\
+@@ -84,6 +95,8 @@
  
  #endif
+ 
++#endif
++
+ /* Size of malloc() pool */
+ #define CONFIG_SYS_MALLOC_LEN		(4 * 1024 * 1024)
  
 diff --git a/include/configs/lorix-one-256.h b/include/configs/lorix-one-256.h
 new file mode 100644
-index 0000000000..72f2d4ec12
+index 0000000000..2cb9cfe532
 --- /dev/null
 +++ b/include/configs/lorix-one-256.h
-@@ -0,0 +1,93 @@
+@@ -0,0 +1,92 @@
 +/* SPDX-License-Identifier: GPL-2.0+ */
 +/*
 + * Based on configuration settings for the SAMA5D4 Xplained ultra board.
@@ -1459,7 +1669,7 @@ index 0000000000..72f2d4ec12
 +
 +/* SPL */
 +#define CONFIG_SPL_TEXT_BASE		0x200000
-+#define CONFIG_SPL_MAX_SIZE			0x18000
++#define CONFIG_SPL_MAX_SIZE		0x18000
 +#define CONFIG_SPL_BSS_START_ADDR	0x20000000
 +#define CONFIG_SPL_BSS_MAX_SIZE		0x80000
 +#define CONFIG_SYS_SPL_MALLOC_START	0x20080000
@@ -1480,7 +1690,7 @@ index 0000000000..72f2d4ec12
 +#define CONFIG_SPL_NAND_BASE
 +#endif
 +
-+#define CONFIG_PMECC_CAP				4
++#define CONFIG_PMECC_CAP			4
 +#define CONFIG_PMECC_SECTOR_SIZE		512
 +#define CONFIG_SYS_NAND_U_BOOT_OFFS		0x40000
 +#define CONFIG_SYS_NAND_5_ADDR_CYCLE
@@ -1488,21 +1698,20 @@ index 0000000000..72f2d4ec12
 +#define CONFIG_SYS_NAND_PAGE_COUNT		64
 +#define CONFIG_SYS_NAND_OOBSIZE			64
 +#define CONFIG_SYS_NAND_BLOCK_SIZE		0x20000
-+#define CONFIG_SYS_NAND_BAD_BLOCK_POS	0x0
++#define CONFIG_SYS_NAND_BAD_BLOCK_POS		0x0
 +#define CONFIG_SYS_NAND_USE_FLASH_BBT
 +#define CONFIG_SPL_GENERATE_ATMEL_PMECC_HEADER
 +
 +/* Watchdog support */
-+#define CONFIG_AT91SAM9_WATCHDOG
 +#define CONFIG_HW_WATCHDOG
 +
 +#endif /* __CONFIG_H */
 diff --git a/include/configs/lorix-one-512.h b/include/configs/lorix-one-512.h
 new file mode 100644
-index 0000000000..c267d40a94
+index 0000000000..82ad7c5b71
 --- /dev/null
 +++ b/include/configs/lorix-one-512.h
-@@ -0,0 +1,93 @@
+@@ -0,0 +1,92 @@
 +/* SPDX-License-Identifier: GPL-2.0+ */
 +/*
 + * Based on configuration settings for the SAMA5D4 Xplained ultra board.
@@ -1558,7 +1767,7 @@ index 0000000000..c267d40a94
 +
 +/* SPL */
 +#define CONFIG_SPL_TEXT_BASE		0x200000
-+#define CONFIG_SPL_MAX_SIZE			0x18000
++#define CONFIG_SPL_MAX_SIZE		0x18000
 +#define CONFIG_SPL_BSS_START_ADDR	0x20000000
 +#define CONFIG_SPL_BSS_MAX_SIZE		0x80000
 +#define CONFIG_SYS_SPL_MALLOC_START	0x20080000
@@ -1579,7 +1788,7 @@ index 0000000000..c267d40a94
 +#define CONFIG_SPL_NAND_BASE
 +#endif
 +
-+#define CONFIG_PMECC_CAP				8
++#define CONFIG_PMECC_CAP			8
 +#define CONFIG_PMECC_SECTOR_SIZE		512
 +#define CONFIG_SYS_NAND_U_BOOT_OFFS		0x40000
 +#define CONFIG_SYS_NAND_5_ADDR_CYCLE
@@ -1587,15 +1796,14 @@ index 0000000000..c267d40a94
 +#define CONFIG_SYS_NAND_PAGE_COUNT		64
 +#define CONFIG_SYS_NAND_OOBSIZE			224
 +#define CONFIG_SYS_NAND_BLOCK_SIZE		0x40000
-+#define CONFIG_SYS_NAND_BAD_BLOCK_POS	0x0
++#define CONFIG_SYS_NAND_BAD_BLOCK_POS		0x0
 +#define CONFIG_SYS_NAND_USE_FLASH_BBT
 +#define CONFIG_SPL_GENERATE_ATMEL_PMECC_HEADER
 +
 +/* Watchdog support */
-+#define CONFIG_AT91SAM9_WATCHDOG
 +#define CONFIG_HW_WATCHDOG
 +
 +#endif /* __CONFIG_H */
 -- 
-2.17.1
+2.25.1
 

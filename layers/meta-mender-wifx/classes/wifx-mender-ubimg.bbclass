@@ -1,3 +1,6 @@
+# Copyright (c) 2022, Wifx Sarl <info@iot.wifx.net>
+# Based on meta-mender-core
+
 # Class that creates an UBI image with an Mender layout
 
 # The UBI volume scheme is:
@@ -10,7 +13,7 @@
 inherit image
 inherit image_types
 
-do_image_ubimg[depends] += "mtd-utils-native:do_populate_sysroot rsync-native:do_populate_sysroot"
+do_image_ubimg[depends] += "mtd-utils-native:do_populate_sysroot"
 
 IMAGE_CMD_ubimg () {
     set -e -x
@@ -37,20 +40,6 @@ IMAGE_CMD_ubimg () {
 
     if [ "${MENDER_BOOT_PART_SIZE_MB}" != "0" ]; then
         ubimg_fatal "Boot partition is not supported for ubimg. MENDER_BOOT_PART_SIZE_MB should be set to 0."
-    fi
-
-    if ${@bb.utils.contains("DISTRO_FEATURES", "mender-uboot", "true", "false", d)}; then
-        # U-Boot doesn't allow putting both of the redundant environments on the
-        # same volume, so we must split it and put each half on a separate volume.
-        local uboot_env_vol_size=$(expr $(stat -c %s ${DEPLOY_DIR_IMAGE}/uboot.env) / 2)
-        # Make sure it is divisible by the erase block.
-        local alignment=${MENDER_PARTITION_ALIGNMENT}
-        if [ $(expr $uboot_env_vol_size % $alignment || true) -ne 0 ]; then
-            bbfatal "U-Boot environment size is not an even multiple of MENDER_PARTITION_ALIGNMENT ($alignment)."
-        fi
-
-        dd if=${DEPLOY_DIR_IMAGE}/uboot.env of=${WORKDIR}/ubimg-uboot-env-1 bs=$uboot_env_vol_size count=1
-        dd if=${DEPLOY_DIR_IMAGE}/uboot.env of=${WORKDIR}/ubimg-uboot-env-2 bs=$uboot_env_vol_size skip=1 count=1
     fi
 
     cat > ${WORKDIR}/ubimg-${IMAGE_NAME}.cfg <<EOF

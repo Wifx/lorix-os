@@ -1,20 +1,22 @@
-From 42e287f1491bcdbaaa5ebe069761748b06c442c3 Mon Sep 17 00:00:00 2001
+From 139d913efd5bf136df626fe11422818f38267733 Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
-Date: Thu, 22 Jul 2021 22:09:46 +0200
-Subject: [PATCH] Add Wifx L1 machine support
+Date: Mon, 25 Jul 2022 18:14:47 +0200
+Subject: [PATCH 2/2] Add base support for Wifx L1 machine
 
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
 ---
  arch/arm/dts/Makefile          |   3 +
  arch/arm/dts/l1.dts            | 221 ++++++++++++++++++++++++++++++++
  arch/arm/mach-at91/Kconfig     |   8 ++
+ board/wifx/Kconfig             |   1 +
  board/wifx/l1/Kconfig          |  12 ++
  board/wifx/l1/MAINTAINERS      |   7 ++
  board/wifx/l1/Makefile         |   8 ++
  board/wifx/l1/l1.c             | 222 +++++++++++++++++++++++++++++++++
- configs/l1_mmc_defconfig       |  66 ++++++++++
- configs/l1_nandflash_defconfig |  65 ++++++++++
- include/configs/l1.h           |  92 ++++++++++++++
- 10 files changed, 704 insertions(+)
+ configs/l1_mmc_defconfig       |  67 ++++++++++
+ configs/l1_nandflash_defconfig |  66 ++++++++++
+ include/configs/l1.h           |  91 ++++++++++++++
+ 11 files changed, 706 insertions(+)
  create mode 100644 arch/arm/dts/l1.dts
  create mode 100644 board/wifx/l1/Kconfig
  create mode 100644 board/wifx/l1/MAINTAINERS
@@ -25,10 +27,10 @@ Subject: [PATCH] Add Wifx L1 machine support
  create mode 100644 include/configs/l1.h
 
 diff --git a/arch/arm/dts/Makefile b/arch/arm/dts/Makefile
-index 7d70467353..fcc16e4685 100644
+index a8ed93b091..cafa286eb1 100644
 --- a/arch/arm/dts/Makefile
 +++ b/arch/arm/dts/Makefile
-@@ -538,6 +538,9 @@ dtb-$(CONFIG_TARGET_LORIX_ONE_256) += \
+@@ -674,6 +674,9 @@ dtb-$(CONFIG_TARGET_LORIX_ONE_256) += \
  dtb-$(CONFIG_TARGET_LORIX_ONE_512) += \
  	lorix-one-512.dtb
  
@@ -266,12 +268,12 @@ index 0000000000..231d1a7cd0
 +	};
 +};
 diff --git a/arch/arm/mach-at91/Kconfig b/arch/arm/mach-at91/Kconfig
-index 18648fb5f4..52b509c268 100644
+index f028265537..baf78b4209 100644
 --- a/arch/arm/mach-at91/Kconfig
 +++ b/arch/arm/mach-at91/Kconfig
-@@ -213,6 +213,13 @@ config TARGET_LORIX_ONE_512
- 	select SAMA5D4
+@@ -263,6 +263,14 @@ config TARGET_LORIX_ONE_512
  	select SUPPORT_SPL
+ 	select WDT_LEGACY_AT91
  
 +config TARGET_L1
 +	bool "Wifx L1"
@@ -279,18 +281,20 @@ index 18648fb5f4..52b509c268 100644
 +	select BOARD_LATE_INIT
 +	select SAMA5D4
 +	select SUPPORT_SPL
++	select WDT_LEGACY_AT91
 +
  config TARGET_MEESC
  	bool "Support meesc"
  	select AT91SAM9263
-@@ -307,6 +314,7 @@ source "board/laird/wb45n/Kconfig"
- source "board/laird/wb50n/Kconfig"
+diff --git a/board/wifx/Kconfig b/board/wifx/Kconfig
+index 6d05946c8f..c2596ccc52 100644
+--- a/board/wifx/Kconfig
++++ b/board/wifx/Kconfig
+@@ -8,3 +8,4 @@ config AT91_HW_WDT_TIMEOUT
+ 
  source "board/wifx/lorix-one-256/Kconfig"
  source "board/wifx/lorix-one-512/Kconfig"
 +source "board/wifx/l1/Kconfig"
- 
- config SPL_LDSCRIPT
- 	default "arch/arm/mach-at91/arm926ejs/u-boot-spl.lds" if CPU_ARM926EJS
 diff --git a/board/wifx/l1/Kconfig b/board/wifx/l1/Kconfig
 new file mode 100644
 index 0000000000..6134d16cf0
@@ -338,7 +342,7 @@ index 0000000000..8bf2a5ff55
 +obj-y += l1.o
 diff --git a/board/wifx/l1/l1.c b/board/wifx/l1/l1.c
 new file mode 100644
-index 0000000000..fa961a3134
+index 0000000000..7bc8bb85a2
 --- /dev/null
 +++ b/board/wifx/l1/l1.c
 @@ -0,0 +1,222 @@
@@ -467,7 +471,7 @@ index 0000000000..fa961a3134
 +	/* adress of boot parameters */
 +	gd->bd->bi_boot_params = CONFIG_SYS_SDRAM_BASE + 0x100;
 +
-+#ifdef CONFIG_AT91SAM9_WATCHDOG
++#ifdef CONFIG_WDT_LEGACY_AT91
 +	hw_watchdog_init();
 +#endif
 +#ifdef CONFIG_NAND_ATMEL
@@ -566,10 +570,10 @@ index 0000000000..fa961a3134
 +#endif
 diff --git a/configs/l1_mmc_defconfig b/configs/l1_mmc_defconfig
 new file mode 100644
-index 0000000000..0cfdc91750
+index 0000000000..0ae97079a6
 --- /dev/null
 +++ b/configs/l1_mmc_defconfig
-@@ -0,0 +1,66 @@
+@@ -0,0 +1,67 @@
 +CONFIG_ARM=y
 +CONFIG_ARCH_AT91=y
 +CONFIG_SYS_TEXT_BASE=0x26f00000
@@ -602,6 +606,7 @@ index 0000000000..0cfdc91750
 +CONFIG_CMD_PING=y
 +CONFIG_CMD_FAT=y
 +CONFIG_CMD_FS_GENERIC=y
++CONFIG_CMD_MTDPARTS=y
 +CONFIG_MTDIDS_DEFAULT="nand0=atmel_nand"
 +CONFIG_CMD_UBI=y
 +CONFIG_OF_CONTROL=y
@@ -638,10 +643,10 @@ index 0000000000..0cfdc91750
 +CONFIG_SPL_OF_LIBFDT=y
 diff --git a/configs/l1_nandflash_defconfig b/configs/l1_nandflash_defconfig
 new file mode 100644
-index 0000000000..727064e42d
+index 0000000000..72b1fd2f13
 --- /dev/null
 +++ b/configs/l1_nandflash_defconfig
-@@ -0,0 +1,65 @@
+@@ -0,0 +1,66 @@
 +CONFIG_ARM=y
 +CONFIG_ARCH_AT91=y
 +CONFIG_SYS_TEXT_BASE=0x26f00000
@@ -674,6 +679,7 @@ index 0000000000..727064e42d
 +CONFIG_CMD_PING=y
 +CONFIG_CMD_FAT=y
 +CONFIG_CMD_FS_GENERIC=y
++CONFIG_CMD_MTDPARTS=y
 +CONFIG_MTDIDS_DEFAULT="nand0=atmel_nand"
 +CONFIG_MTDPARTS_DEFAULT="mtdparts=atmel_nand:256k(bootstrap)ro,768k(uboot)ro,512k(uboot-env),-(ubi)"
 +CONFIG_CMD_UBI=y
@@ -709,10 +715,10 @@ index 0000000000..727064e42d
 +CONFIG_SPL_OF_LIBFDT=y
 diff --git a/include/configs/l1.h b/include/configs/l1.h
 new file mode 100644
-index 0000000000..af961cb71f
+index 0000000000..677ba820a4
 --- /dev/null
 +++ b/include/configs/l1.h
-@@ -0,0 +1,92 @@
+@@ -0,0 +1,91 @@
 +/* SPDX-License-Identifier: GPL-2.0+ */
 +/*
 + * Based on configuration settings for the SAMA5D4 Xplained ultra board.
@@ -767,7 +773,7 @@ index 0000000000..af961cb71f
 +
 +/* SPL */
 +#define CONFIG_SPL_TEXT_BASE		0x200000
-+#define CONFIG_SPL_MAX_SIZE			0x18000
++#define CONFIG_SPL_MAX_SIZE		0x18000
 +#define CONFIG_SPL_BSS_START_ADDR	0x20000000
 +#define CONFIG_SPL_BSS_MAX_SIZE		0x80000
 +#define CONFIG_SYS_SPL_MALLOC_START	0x20080000
@@ -788,7 +794,7 @@ index 0000000000..af961cb71f
 +#define CONFIG_SPL_NAND_BASE
 +#endif
 +
-+#define CONFIG_PMECC_CAP				4
++#define CONFIG_PMECC_CAP			4
 +#define CONFIG_PMECC_SECTOR_SIZE		512
 +#define CONFIG_SYS_NAND_U_BOOT_OFFS		0x40000
 +#define CONFIG_SYS_NAND_5_ADDR_CYCLE
@@ -796,12 +802,11 @@ index 0000000000..af961cb71f
 +#define CONFIG_SYS_NAND_PAGE_COUNT		64
 +#define CONFIG_SYS_NAND_OOBSIZE			64
 +#define CONFIG_SYS_NAND_BLOCK_SIZE		0x20000
-+#define CONFIG_SYS_NAND_BAD_BLOCK_POS	0x0
++#define CONFIG_SYS_NAND_BAD_BLOCK_POS		0x0
 +#define CONFIG_SYS_NAND_USE_FLASH_BBT
 +#define CONFIG_SPL_GENERATE_ATMEL_PMECC_HEADER
 +
 +/* Watchdog support */
-+#define CONFIG_AT91SAM9_WATCHDOG
 +#define CONFIG_HW_WATCHDOG
 +
 +#endif /* __CONFIG_H */

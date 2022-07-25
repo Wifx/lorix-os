@@ -11,10 +11,9 @@ IMAGE_FSTYPES += "ubimg wimg tar.bz2"
 
 # Preferred providers
 PREFERRED_PROVIDER_virtual/firststage_sama5d4-wifx = "at91bootstrap"
-PREFERRED_PROVIDER_virtual/bootloader_sama5 = "u-boot-sama5d4-wifx"
-PREFERRED_PROVIDER_u-boot_sama5 = "u-boot-sama5d4-wifx"
+PREFERRED_PROVIDER_virtual/bootloader_sama5 = "u-boot-at91"
+PREFERRED_PROVIDER_u-boot_sama5 = "u-boot-at91"
 PREFERRED_PROVIDER_virtual/kernel_sama5d4-wifx = "linux-at91"
-PREFERRED_PROVIDER_u-boot-fw-utils_sama5d4-wifx = "u-boot-sama5d4-wifx-fw-utils"
 PREFERRED_PROVIDER_u-boot-mkenvimage-native = "u-boot-mkenvimage-native"
 PREFERRED_VERSION_linux-at91_sama5d4-wifx ?= "5.4%"
 
@@ -27,6 +26,7 @@ UBOOT_MACHINE ?= "${@'${MACHINE}'.replace('-', '_')}_nandflash_config"
 UBOOT_ENTRYPOINT = "0x20008000"
 UBOOT_LOADADDRESS = "0x20008000"
 UBOOT_ENV_SIZE = "0x20000"
+UBOOT_ENV_SECTOR_COUNT = "2"
 
 # Mender update system specific variables
 MENDER_MTDIDS = "nand0=atmel_nand"
@@ -35,6 +35,11 @@ MENDER_BOOT_PART_SIZE_MB = "0"
 MENDER_RESERVED_SPACE_BOOTLOADER_DATA = "0x180000"
 MENDER_UBOOT_ENV_STORAGE_DEVICE_OFFSET_1 = "0x140000"
 MENDER_UBOOT_ENV_STORAGE_DEVICE_OFFSET_2 = "0x100000"
+MENDER_UBOOT_ENV_STORAGE_DEVICE_1 = "mtd2"
+MENDER_UBOOT_ENV_STORAGE_DEVICE_2 = "mtd2"
+MENDER_UBOOT_ENV_STORAGE_PARTITION_OFFSET_1 = "0x00000"
+MENDER_UBOOT_ENV_STORAGE_PARTITION_OFFSET_2 = "0x40000"
+BOOTENV_SIZE = "${UBOOT_ENV_SIZE}"
 
 # used by sysvinit_2
 SERIAL_CONSOLES = "115200;ttyS0 115200;ttyGS0"

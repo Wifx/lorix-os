@@ -1,0 +1,51 @@
+From 7c107c010b486c385cbe3c0f70b8f41def8ebf64 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Mon, 25 Jul 2022 15:15:49 +0200
+Subject: [PATCH 3/3] Add mender support for the Wifx L1 machine
+
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
+---
+ include/configs/l1.h | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/include/configs/l1.h b/include/configs/l1.h
+index 677ba820a4..f0328fc726 100644
+--- a/include/configs/l1.h
++++ b/include/configs/l1.h
+@@ -36,6 +36,9 @@
+ #define CONFIG_SF_DEFAULT_SPEED		30000000
+ #endif
+ 
++/* Environment organization */
++#define CONFIG_SYS_REDUNDAND_ENVIRONMENT
++
+ /* NAND flash */
+ #ifdef CONFIG_CMD_NAND
+ #define CONFIG_SYS_MAX_NAND_DEVICE	1
+@@ -50,6 +53,14 @@
+ #define CONFIG_ATMEL_NAND_HW_PMECC
+ #endif
+ 
++#ifndef CONFIG_EXTRA_ENV_SETTINGS
++#define CONFIG_EXTRA_ENV_SETTINGS \
++	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" 		\
++	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" 	\
++	"kernel_addr_r=0x22000000\0" 			\
++	"fdt_addr_r=0x21000000\0"
++#endif
++
+ /* SPL */
+ #define CONFIG_SPL_TEXT_BASE		0x200000
+ #define CONFIG_SPL_MAX_SIZE		0x18000
+@@ -88,4 +99,8 @@
+ /* Watchdog support */
+ #define CONFIG_HW_WATCHDOG
+ 
++/* Mender integration */
++#define CONFIG_BOOTCOUNT_LIMIT
++#define CONFIG_BOOTCOUNT_ENV
++
+ #endif /* __CONFIG_H */
+-- 
+2.25.1
+

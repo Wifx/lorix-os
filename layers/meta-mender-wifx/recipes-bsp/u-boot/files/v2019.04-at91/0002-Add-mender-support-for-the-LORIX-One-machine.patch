@@ -1,31 +1,29 @@
-From 734c75fc06e9a153400ffb5a52fe9132cf9c3671 Mon Sep 17 00:00:00 2001
+From 4e47b21be78eaf5135182c382335bcce7e29d8bc Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
-Date: Mon, 11 May 2020 20:37:11 +0200
-Subject: [PATCH 5/5] Add mender support for lorix-one-256/512 machines
+Date: Mon, 25 Jul 2022 15:15:34 +0200
+Subject: [PATCH 2/3] Add mender support for the LORIX One machine
 
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
 ---
- include/configs/at91-sama5_common.h |  1 -
- include/configs/lorix-one-256.h     | 12 ++++++++++++
- include/configs/lorix-one-512.h     | 12 ++++++++++++
- 3 files changed, 24 insertions(+), 1 deletion(-)
+ include/configs/lorix-one-256.h | 15 +++++++++++++++
+ include/configs/lorix-one-512.h | 15 +++++++++++++++
+ 2 files changed, 30 insertions(+)
 
-diff --git a/include/configs/at91-sama5_common.h b/include/configs/at91-sama5_common.h
-index 9c295d0dc7..14ec2f3bd3 100644
---- a/include/configs/at91-sama5_common.h
-+++ b/include/configs/at91-sama5_common.h
-@@ -81,7 +81,6 @@
- 					"bootz 0x22000000 - 0x21000000"
- #endif
- #endif
--
- #endif
- 
- /* Size of malloc() pool */
 diff --git a/include/configs/lorix-one-256.h b/include/configs/lorix-one-256.h
-index 72f2d4ec12..4980442d23 100644
+index 2cb9cfe532..07ec7bd561 100644
 --- a/include/configs/lorix-one-256.h
 +++ b/include/configs/lorix-one-256.h
-@@ -51,6 +51,14 @@
+@@ -37,6 +37,9 @@
+ #define CONFIG_SF_DEFAULT_SPEED		30000000
+ #endif
+ 
++/* Environment organization */
++#define CONFIG_SYS_REDUNDAND_ENVIRONMENT
++
+ /* NAND flash */
+ #ifdef CONFIG_CMD_NAND
+ #define CONFIG_SYS_MAX_NAND_DEVICE	1
+@@ -51,6 +54,14 @@
  #define CONFIG_ATMEL_NAND_HW_PMECC
  #endif
  
@@ -33,15 +31,15 @@ index 72f2d4ec12..4980442d23 100644
 +#define CONFIG_EXTRA_ENV_SETTINGS \
 +	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" 		\
 +	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" 	\
-+	"kernel_addr_r=0x22000000\0" 				\
++	"kernel_addr_r=0x22000000\0" 			\
 +	"fdt_addr_r=0x21000000\0"
 +#endif
 +
  /* SPL */
  #define CONFIG_SPL_TEXT_BASE		0x200000
- #define CONFIG_SPL_MAX_SIZE			0x18000
-@@ -90,4 +98,8 @@
- #define CONFIG_AT91SAM9_WATCHDOG
+ #define CONFIG_SPL_MAX_SIZE		0x18000
+@@ -89,4 +100,8 @@
+ /* Watchdog support */
  #define CONFIG_HW_WATCHDOG
  
 +/* Mender integration */
@@ -50,10 +48,20 @@ index 72f2d4ec12..4980442d23 100644
 +
  #endif /* __CONFIG_H */
 diff --git a/include/configs/lorix-one-512.h b/include/configs/lorix-one-512.h
-index c267d40a94..50b600d4d8 100644
+index 82ad7c5b71..9b46d651de 100644
 --- a/include/configs/lorix-one-512.h
 +++ b/include/configs/lorix-one-512.h
-@@ -51,6 +51,14 @@
+@@ -37,6 +37,9 @@
+ #define CONFIG_SF_DEFAULT_SPEED		30000000
+ #endif
+ 
++/* Environment organization */
++#define CONFIG_SYS_REDUNDAND_ENVIRONMENT
++
+ /* NAND flash */
+ #ifdef CONFIG_CMD_NAND
+ #define CONFIG_SYS_MAX_NAND_DEVICE	1
+@@ -51,6 +54,14 @@
  #define CONFIG_ATMEL_NAND_HW_PMECC
  #endif
  
@@ -61,15 +69,15 @@ index c267d40a94..50b600d4d8 100644
 +#define CONFIG_EXTRA_ENV_SETTINGS \
 +	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" 		\
 +	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" 	\
-+	"kernel_addr_r=0x22000000\0" 				\
++	"kernel_addr_r=0x22000000\0" 			\
 +	"fdt_addr_r=0x21000000\0"
 +#endif
 +
  /* SPL */
  #define CONFIG_SPL_TEXT_BASE		0x200000
- #define CONFIG_SPL_MAX_SIZE			0x18000
-@@ -90,4 +98,8 @@
- #define CONFIG_AT91SAM9_WATCHDOG
+ #define CONFIG_SPL_MAX_SIZE		0x18000
+@@ -89,4 +100,8 @@
+ /* Watchdog support */
  #define CONFIG_HW_WATCHDOG
  
 +/* Mender integration */
@@ -78,5 +86,5 @@ index c267d40a94..50b600d4d8 100644
 +
  #endif /* __CONFIG_H */
 -- 
-2.17.1
+2.25.1
 

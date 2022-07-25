@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Mender support based directly on meta-mender-core, meta-mender-wifx for Wifx specific overrides
+- Replace u-boot-sama5d4-wifx 2018.09 by Atmel stock u-boot-at91 2019.04
+- Replace u-boot-sama5d4-wifx-fw-utils by u-boot-fw-utils-mender-auto-provided
+
 ## [1.5.0] - 2022-06-08
 
 ### Added
