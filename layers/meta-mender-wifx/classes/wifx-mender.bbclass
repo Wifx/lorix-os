@@ -4,6 +4,9 @@
 # We basically configure the build with full UBI feature of Mender
 inherit mender-full-ubi
 
+# Make mender feature globally visible
+DISTRO_FEATURES_append = " mender"
+
 # systemd is not desired as we use OpenRC
 MENDER_FEATURES_DISABLE_append = " \
     mender-systemd \

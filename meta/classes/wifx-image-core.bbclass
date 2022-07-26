@@ -9,8 +9,10 @@ IMAGE_FEATURES += " package-management"
 
 # Don't use default CORE_IMAGE_BASE_INSTALL for IMAGE_INSTALL
 IMAGE_INSTALL = " \
-    ${CORE_IMAGE_EXTRA_INSTALL} \
     packagegroup-os \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'mender', 'mender-migrations', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'mender', 'mender-state-scripts-base', '', d)} \
+    ${CORE_IMAGE_EXTRA_INSTALL} \
 "
 
 PACKAGE_EXCLUDE += " \
