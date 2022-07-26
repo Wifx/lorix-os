@@ -1,11 +1,9 @@
 [submodule "meta-openembedded"]
 	path = layers/meta-openembedded
 	url = git://git.openembedded.org/meta-openembedded
-	branch = zeus
 [submodule "poky"]
 	path = poky
 	url = https://github.com/Wifx/poky.git
-	branch = zeus
 [submodule "meta-mender"]
 	path = layers/meta-mender
 	url = https://github.com/mendersoftware/meta-mender.git
@@ -18,7 +16,6 @@
 [submodule "meta-rust-bin"]
 	path = layers/meta-rust-bin
 	url = https://github.com/rust-embedded/meta-rust-bin.git
-	branch = rust-1.56.1
 [submodule "meta-clang"]
 	path = layers/meta-clang
 	url = https://github.com/kraj/meta-clang.git
