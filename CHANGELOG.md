@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Revert protobuf-c to default from oe (1.3.3)
 - Revert nodejs to default from oe (12.21.0 -> 12.22.2)
 - Revert opkg-utils to default from Poky (0.4.2)
+- Update mender-client to 3.3.0 with wifx modifications
 
 ## [1.5.0] - 2022-06-08
 
