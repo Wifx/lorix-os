@@ -9,8 +9,6 @@ POKY_DEFAULT_EXTRA_RRECOMMENDS = "kernel-module-af-packet"
 
 DISTRO_FEATURES ?= "${DISTRO_FEATURES_DEFAULT} ${DISTRO_FEATURES_LIBC} ${POKY_DEFAULT_DISTRO_FEATURES}"
 
-PREFERRED_VERSION_linux-yocto ?= "4.14%"
-
 PREFERRED_VERSION_openssl ?= "1.1.%"
 PREFERRED_VERSION_openssl-native ?= "1.1.%"
 PREFERRED_VERSION_nativesdk-openssl ?= "1.1.%"
@@ -59,25 +57,28 @@ CONNECTIVITY_CHECK_URIS ?= "https://www.example.com/"
 SANITY_TESTED_DISTROS ?= " \
             poky-2.7 \n \
             poky-3.0 \n \
+            poky-3.1 \n \
             ubuntu-16.04 \n \
             ubuntu-18.04 \n \
             ubuntu-19.04 \n \
-            fedora-28 \n \
-            fedora-29 \n \
+            ubuntu-20.04 \n \
             fedora-30 \n \
+            fedora-31 \n \
+            fedora-32 \n \
+            fedora-33 \n \
+            fedora-34 \n \
+            fedora-35 \n \
             centos-7 \n \
+            centos-8 \n \
             debian-8 \n \
             debian-9 \n \
             debian-10 \n \
+            debian-11 \n \
             opensuseleap-15.1 \n \
+            opensuseleap-15.2 \n \
+            opensuseleap-15.3 \n \
+            almalinux-8.5 \n \
             "
-#
-# OELAYOUT_ABI allows us to notify users when the format of TMPDIR changes in
-# an incompatible way. Such changes should usually be detailed in the commit
-# that breaks the format and have been previously discussed on the mailing list
-# with general agreement from the core team.
-#
-OELAYOUT_ABI = "12"
 
 # add poky sanity bbclass
 INHERIT += "poky-sanity"
@@ -94,3 +95,8 @@ require conf/distro/include/no-static-libs.inc
 require conf/distro/include/yocto-uninative.inc
 require conf/distro/include/security_flags.inc
 INHERIT += "uninative"
+
+INHERIT += "reproducible_build"
+
+BB_SIGNATURE_HANDLER ?= "OEEquivHash"
+BB_HASHSERVE ??= "auto"
