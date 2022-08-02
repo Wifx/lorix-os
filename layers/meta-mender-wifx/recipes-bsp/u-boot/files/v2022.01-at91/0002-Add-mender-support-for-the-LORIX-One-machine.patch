@@ -1,0 +1,70 @@
+From 6e70876af422f0f8861da8bf14c1addeeb6a2b8a Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Mon, 25 Jul 2022 15:15:34 +0200
+Subject: [PATCH 2/3] Add mender support for the LORIX One machine
+
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
+---
+ include/configs/lorix-one-256.h | 12 ++++++++++++
+ include/configs/lorix-one-512.h | 12 ++++++++++++
+ 2 files changed, 24 insertions(+)
+
+diff --git a/include/configs/lorix-one-256.h b/include/configs/lorix-one-256.h
+index e342be2174..750485f639 100644
+--- a/include/configs/lorix-one-256.h
++++ b/include/configs/lorix-one-256.h
+@@ -38,6 +38,14 @@
+ #define CONFIG_SYS_NAND_MASK_CLE	(1 << 22)
+ #endif
+ 
++#ifndef CONFIG_EXTRA_ENV_SETTINGS
++#define CONFIG_EXTRA_ENV_SETTINGS \
++	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" 		\
++	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" 	\
++	"kernel_addr_r=0x22000000\0" 			\
++	"fdt_addr_r=0x21000000\0"
++#endif
++
+ /* SPL */
+ #define CONFIG_SPL_MAX_SIZE		0x18000
+ #define CONFIG_SPL_BSS_START_ADDR	0x20000000
+@@ -54,4 +62,8 @@
+ /* Watchdog support */
+ #define CONFIG_HW_WATCHDOG
+ 
++/* Mender integration */
++#define CONFIG_BOOTCOUNT_LIMIT
++#define CONFIG_BOOTCOUNT_ENV
++
+ #endif /* __CONFIG_H */
+diff --git a/include/configs/lorix-one-512.h b/include/configs/lorix-one-512.h
+index e848ee22e3..7d6b7a8c75 100644
+--- a/include/configs/lorix-one-512.h
++++ b/include/configs/lorix-one-512.h
+@@ -38,6 +38,14 @@
+ #define CONFIG_SYS_NAND_MASK_CLE	(1 << 22)
+ #endif
+ 
++#ifndef CONFIG_EXTRA_ENV_SETTINGS
++#define CONFIG_EXTRA_ENV_SETTINGS \
++	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" 		\
++	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" 	\
++	"kernel_addr_r=0x22000000\0" 			\
++	"fdt_addr_r=0x21000000\0"
++#endif
++
+ /* SPL */
+ #define CONFIG_SPL_MAX_SIZE		0x18000
+ #define CONFIG_SPL_BSS_START_ADDR	0x20000000
+@@ -54,4 +62,8 @@
+ /* Watchdog support */
+ #define CONFIG_HW_WATCHDOG
+ 
++/* Mender integration */
++#define CONFIG_BOOTCOUNT_LIMIT
++#define CONFIG_BOOTCOUNT_ENV
++
+ #endif /* __CONFIG_H */
+-- 
+2.25.1
+

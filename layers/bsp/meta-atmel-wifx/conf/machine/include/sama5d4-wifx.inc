@@ -13,6 +13,7 @@ IMAGE_FSTYPES += "ubimg wimg tar.bz2"
 PREFERRED_PROVIDER_virtual/firststage_sama5 = "at91bootstrap"
 PREFERRED_PROVIDER_virtual/bootloader_sama5 = "u-boot-at91"
 PREFERRED_PROVIDER_u-boot_sama5 = "u-boot-at91"
+PREFERRED_PROVIDER_u-boot-env_sama5 = "u-boot-at91"
 
 # Avoid using new at91boostrap v4 which is completely different
 PREFERRED_VERSION_at91bootstrap_sama5 = "3.%"
@@ -27,6 +28,8 @@ UBOOT_ENTRYPOINT = "0x20008000"
 UBOOT_LOADADDRESS = "0x20008000"
 UBOOT_ENV_SIZE = "0x20000"
 UBOOT_ENV_SECTOR_COUNT = "2"
+# U-Boot env needs to be built with redunb feature
+MKENVIMAGE_EXTRA_ARGS = " -r "
 
 # Mender update system specific variables
 MENDER_MTDIDS = "nand0=atmel_nand"
@@ -55,6 +58,3 @@ MACHINE_ESSENTIAL_EXTRA_RDEPENDS += "kernel-modules"
 
 # make sure that kernel and devicetree are installed
 IMAGE_INSTALL_append = " kernel-devicetree kernel-image-zimage"
-
-# Remove unused dependency which makes the build fail during the do_fetch
-EXTRA_IMAGEDEPENDS_remove = "sam-ba-native"

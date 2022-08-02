@@ -1,4 +1,4 @@
-From f22550b5f1e7687ea3e60c047ebd480ee46905b9 Mon Sep 17 00:00:00 2001
+From 8a2daca867a8e8860f7a0adc4c5554f8ee6972b7 Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
 Date: Mon, 25 Jul 2022 18:13:52 +0200
 Subject: [PATCH 1/2] Add base support for Wifx LORIX One machine
@@ -8,30 +8,30 @@ Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
  arch/arm/dts/Makefile                     |   6 +
  arch/arm/dts/lorix-one-256.dts            |  82 ++++++++
  arch/arm/dts/lorix-one-512.dts            |  82 ++++++++
- arch/arm/dts/lorix-one-base.dtsi          | 163 ++++++++++++++++
+ arch/arm/dts/lorix-one-base.dtsi          | 163 +++++++++++++++
  arch/arm/mach-at91/Kconfig                |  17 ++
  board/wifx/Kconfig                        |  10 +
  board/wifx/common/Makefile                |  10 +
  board/wifx/common/at91sam9_wdt.c          |  80 ++++++++
- board/wifx/common/mac_eeprom.c            |  64 ++++++
+ board/wifx/common/mac_eeprom.c            |  69 +++++++
  board/wifx/lorix-one-256/Kconfig          |  12 ++
  board/wifx/lorix-one-256/MAINTAINERS      |   7 +
  board/wifx/lorix-one-256/Makefile         |   8 +
- board/wifx/lorix-one-256/lorix-one-256.c  | 228 ++++++++++++++++++++++
+ board/wifx/lorix-one-256/lorix-one-256.c  | 230 ++++++++++++++++++++++
  board/wifx/lorix-one-512/Kconfig          |  12 ++
  board/wifx/lorix-one-512/MAINTAINERS      |   7 +
  board/wifx/lorix-one-512/Makefile         |   8 +
- board/wifx/lorix-one-512/lorix-one-512.c  | 228 ++++++++++++++++++++++
+ board/wifx/lorix-one-512/lorix-one-512.c  | 230 ++++++++++++++++++++++
  cmd/nvedit.c                              |  16 +-
- configs/lorix_one_256_mmc_defconfig       |  67 +++++++
- configs/lorix_one_256_nandflash_defconfig |  66 +++++++
- configs/lorix_one_512_mmc_defconfig       |  67 +++++++
- configs/lorix_one_512_nandflash_defconfig |  66 +++++++
- include/common.h                          |  12 ++
- include/configs/at91-sama5_common.h       |  15 +-
- include/configs/lorix-one-256.h           |  92 +++++++++
- include/configs/lorix-one-512.h           |  92 +++++++++
- 26 files changed, 1513 insertions(+), 4 deletions(-)
+ configs/lorix_one_256_mmc_defconfig       |  77 ++++++++
+ configs/lorix_one_256_nandflash_defconfig |  94 +++++++++
+ configs/lorix_one_512_mmc_defconfig       |  77 ++++++++
+ configs/lorix_one_512_nandflash_defconfig |  94 +++++++++
+ include/configs/at91-sama5_common.h       |  12 +-
+ include/configs/lorix-one-256.h           |  57 ++++++
+ include/configs/lorix-one-512.h           |  57 ++++++
+ include/env.h                             |  12 ++
+ 26 files changed, 1525 insertions(+), 4 deletions(-)
  create mode 100644 arch/arm/dts/lorix-one-256.dts
  create mode 100644 arch/arm/dts/lorix-one-512.dts
  create mode 100644 arch/arm/dts/lorix-one-base.dtsi
@@ -55,10 +55,10 @@ Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
  create mode 100644 include/configs/lorix-one-512.h
 
 diff --git a/arch/arm/dts/Makefile b/arch/arm/dts/Makefile
-index 2b2fa66f9d..a8ed93b091 100644
+index b6fd672567..e62592a727 100644
 --- a/arch/arm/dts/Makefile
 +++ b/arch/arm/dts/Makefile
-@@ -668,6 +668,12 @@ dtb-$(CONFIG_TARGET_SAMA5D4EK) += \
+@@ -1062,6 +1062,12 @@ dtb-$(CONFIG_TARGET_SAMA5D4EK) += \
  dtb-$(CONFIG_TARGET_SAMA5D4_XPLAINED) += \
  	at91-sama5d4_xplained.dtb
  
@@ -418,10 +418,10 @@ index 0000000000..a039941c89
 +	};
 +};
 diff --git a/arch/arm/mach-at91/Kconfig b/arch/arm/mach-at91/Kconfig
-index 85524004f9..f028265537 100644
+index f473a2bac9..82e84030f6 100644
 --- a/arch/arm/mach-at91/Kconfig
 +++ b/arch/arm/mach-at91/Kconfig
-@@ -247,6 +247,22 @@ config TARGET_SAMA5D4EK
+@@ -243,6 +243,22 @@ config TARGET_SAMA5D4EK
  	select SAMA5D4
  	select SUPPORT_SPL
  
@@ -444,10 +444,10 @@ index 85524004f9..f028265537 100644
  config TARGET_MEESC
  	bool "Support meesc"
  	select AT91SAM9263
-@@ -348,6 +364,7 @@ source "board/siemens/taurus/Kconfig"
+@@ -337,6 +353,7 @@ source "board/ronetix/pm9g45/Kconfig"
+ source "board/siemens/corvus/Kconfig"
+ source "board/siemens/taurus/Kconfig"
  source "board/siemens/smartweb/Kconfig"
- source "board/laird/wb45n/Kconfig"
- source "board/laird/wb50n/Kconfig"
 +source "board/wifx/Kconfig"
  
  config SPL_LDSCRIPT
@@ -572,10 +572,10 @@ index 0000000000..fca2849918
 +}
 diff --git a/board/wifx/common/mac_eeprom.c b/board/wifx/common/mac_eeprom.c
 new file mode 100644
-index 0000000000..76b6923c8f
+index 0000000000..92636b8be1
 --- /dev/null
 +++ b/board/wifx/common/mac_eeprom.c
-@@ -0,0 +1,64 @@
+@@ -0,0 +1,69 @@
 +// SPDX-License-Identifier: GPL-2.0+
 +/*
 + * Copyright (C) 2017 Microchip
@@ -586,9 +586,14 @@ index 0000000000..76b6923c8f
 +
 +#include <common.h>
 +#include <dm.h>
-+#include <environment.h>
++#include <eeprom.h>
++#include <env.h>
 +#include <i2c_eeprom.h>
++#include <net.h>
 +#include <netdev.h>
++
++#define ARP_HLEN 6 /* Length of hardware address */
++#define ARP_HLEN_ASCII (ARP_HLEN * 2) + (ARP_HLEN - 1) /* with separators */
 +
 +int at91_set_ethaddr(int offset)
 +{
@@ -687,10 +692,10 @@ index 0000000000..7dea4fe121
 +obj-y += lorix-one-256.o
 diff --git a/board/wifx/lorix-one-256/lorix-one-256.c b/board/wifx/lorix-one-256/lorix-one-256.c
 new file mode 100644
-index 0000000000..4c8e1e94f2
+index 0000000000..5ae3373a40
 --- /dev/null
 +++ b/board/wifx/lorix-one-256/lorix-one-256.c
-@@ -0,0 +1,228 @@
+@@ -0,0 +1,230 @@
 +// SPDX-License-Identifier: GPL-2.0+
 +/*
 + * Board file for the LORIX One (256MB) platform
@@ -702,6 +707,8 @@ index 0000000000..4c8e1e94f2
 + */
 +
 +#include <common.h>
++#include <init.h>
++#include <asm/global_data.h>
 +#include <asm/io.h>
 +#include <asm/arch/at91_common.h>
 +#include <asm/arch/at91_rstc.h>
@@ -966,10 +973,10 @@ index 0000000000..28b9536ec0
 +obj-y += lorix-one-512.o
 diff --git a/board/wifx/lorix-one-512/lorix-one-512.c b/board/wifx/lorix-one-512/lorix-one-512.c
 new file mode 100644
-index 0000000000..6cef656dcd
+index 0000000000..0041710af1
 --- /dev/null
 +++ b/board/wifx/lorix-one-512/lorix-one-512.c
-@@ -0,0 +1,228 @@
+@@ -0,0 +1,230 @@
 +// SPDX-License-Identifier: GPL-2.0+
 +/*
 + * Board file for the LORIX One (512MB) platform
@@ -981,6 +988,8 @@ index 0000000000..6cef656dcd
 + */
 +
 +#include <common.h>
++#include <init.h>
++#include <asm/global_data.h>
 +#include <asm/io.h>
 +#include <asm/arch/at91_common.h>
 +#include <asm/arch/at91_rstc.h>
@@ -1199,10 +1208,10 @@ index 0000000000..6cef656dcd
 +}
 +#endif
 diff --git a/cmd/nvedit.c b/cmd/nvedit.c
-index 24a6cf7824..1f2241f0e2 100644
+index 3bb6e764c0..f26c9ab3db 100644
 --- a/cmd/nvedit.c
 +++ b/cmd/nvedit.c
-@@ -292,7 +292,7 @@ static int _do_env_set(int flag, int argc, char * const argv[], int env_flag)
+@@ -304,7 +304,7 @@ static int _do_env_set(int flag, int argc, char *const argv[], int env_flag)
  	return 0;
  }
  
@@ -1211,7 +1220,7 @@ index 24a6cf7824..1f2241f0e2 100644
  {
  	const char * const argv[4] = { "setenv", varname, varvalue, NULL };
  
-@@ -301,9 +301,19 @@ int env_set(const char *varname, const char *varvalue)
+@@ -313,9 +313,19 @@ int env_set(const char *varname, const char *varvalue)
  		return 1;
  
  	if (varvalue == NULL || varvalue[0] == '\0')
@@ -1232,169 +1241,37 @@ index 24a6cf7824..1f2241f0e2 100644
 +	return env_set_generic(varname, varvalue, H_PROGRAMMATIC | H_FORCE);
  }
  
- /**
+ #ifndef CONFIG_SPL_BUILD
 diff --git a/configs/lorix_one_256_mmc_defconfig b/configs/lorix_one_256_mmc_defconfig
 new file mode 100644
-index 0000000000..04593ca6b7
+index 0000000000..48f277d4ba
 --- /dev/null
 +++ b/configs/lorix_one_256_mmc_defconfig
-@@ -0,0 +1,67 @@
+@@ -0,0 +1,77 @@
 +CONFIG_ARM=y
++CONFIG_SKIP_LOWLEVEL_INIT=y
++CONFIG_ARCH_CPU_INIT=y
 +CONFIG_ARCH_AT91=y
 +CONFIG_SYS_TEXT_BASE=0x26f00000
++CONFIG_SYS_MALLOC_F_LEN=0x2000
 +CONFIG_TARGET_LORIX_ONE_256=y
-+CONFIG_SYS_MALLOC_F_LEN=0x2000
-+CONFIG_DEBUG_UART_BOARD_INIT=y
-+CONFIG_DEBUG_UART_BASE=0xfc00c000
-+CONFIG_DEBUG_UART_CLOCK=100000000
-+CONFIG_DEBUG_UART=y
-+CONFIG_ENV_VARS_UBOOT_CONFIG=y
++CONFIG_SPL_GPIO=y
++CONFIG_SPL_LIBCOMMON_SUPPORT=y
++CONFIG_SPL_LIBGENERIC_SUPPORT=y
 +CONFIG_NR_DRAM_BANKS=1
-+CONFIG_FIT=y
-+CONFIG_SD_BOOT=y
-+CONFIG_BOOTDELAY=1
-+CONFIG_USE_BOOTARGS=y
-+CONFIG_BOOTARGS="console=ttyS0,115200 earlyprintk cma=0 root=/dev/mmcblk0p2 rw rootwait"
-+CONFIG_USE_BOOTCOMMAND=y
-+CONFIG_BOOTCOMMAND="fatload mmc 0:1 0x21000000 lorix-one-256.dtb;fatload mmc 0:1 0x22000000 zImage;bootz 0x22000000 - 0x21000000"
-+CONFIG_CONSOLE_MUX=y
-+CONFIG_MISC_INIT_R=y
-+# CONFIG_DISPLAY_BOARDINFO is not set
-+CONFIG_HUSH_PARSER=y
-+CONFIG_CMD_BOOTZ=y
-+# CONFIG_CMD_IMI is not set
-+# CONFIG_CMD_FLASH is not set
-+# CONFIG_CMD_LOADS is not set
-+CONFIG_CMD_MMC=y
-+CONFIG_CMD_NAND=y
-+CONFIG_CMD_DHCP=y
-+CONFIG_CMD_PING=y
-+CONFIG_CMD_FAT=y
-+CONFIG_CMD_FS_GENERIC=y
-+CONFIG_CMD_MTDPARTS=y
-+CONFIG_MTDIDS_DEFAULT="nand0=atmel_nand"
-+CONFIG_CMD_UBI=y
-+CONFIG_OF_CONTROL=y
-+CONFIG_DEFAULT_DEVICE_TREE="lorix-one-256"
-+CONFIG_ENV_IS_IN_FAT=y
-+CONFIG_ENV_FAT_FILE="u-boot.env"
-+CONFIG_DM=y
-+CONFIG_CLK=y
-+CONFIG_CLK_AT91=y
-+CONFIG_AT91_UTMI=y
-+CONFIG_AT91_H32MX=y
 +CONFIG_DM_GPIO=y
-+CONFIG_AT91_GPIO=y
-+CONFIG_DM_I2C=y
-+CONFIG_SYS_I2C_AT91=y
-+CONFIG_I2C_EEPROM=y
-+CONFIG_DM_MMC=y
-+CONFIG_GENERIC_ATMEL_MCI=y
-+CONFIG_NAND=y
-+CONFIG_NAND_ATMEL=y
-+CONFIG_DM_ETH=y
-+CONFIG_MACB=y
-+CONFIG_PINCTRL=y
-+CONFIG_PINCTRL_AT91=y
-+CONFIG_DM_SERIAL=y
-+CONFIG_DEBUG_UART_ATMEL=y
-+CONFIG_DEBUG_UART_ANNOUNCE=y
-+CONFIG_ATMEL_USART=y
-+CONFIG_SPI=y
-+CONFIG_DM_SPI=y
-+CONFIG_TIMER=y
-+CONFIG_ATMEL_PIT_TIMER=y
-+CONFIG_OF_LIBFDT_OVERLAY=y
-+CONFIG_SPL_OF_LIBFDT=y
-diff --git a/configs/lorix_one_256_nandflash_defconfig b/configs/lorix_one_256_nandflash_defconfig
-new file mode 100644
-index 0000000000..52e950fb28
---- /dev/null
-+++ b/configs/lorix_one_256_nandflash_defconfig
-@@ -0,0 +1,66 @@
-+CONFIG_ARM=y
-+CONFIG_ARCH_AT91=y
-+CONFIG_SYS_TEXT_BASE=0x26f00000
-+CONFIG_TARGET_LORIX_ONE_256=y
-+CONFIG_SYS_MALLOC_F_LEN=0x2000
-+CONFIG_DEBUG_UART_BOARD_INIT=y
-+CONFIG_DEBUG_UART_BASE=0xfc00c000
-+CONFIG_DEBUG_UART_CLOCK=100000000
-+CONFIG_DEBUG_UART=y
-+CONFIG_ENV_VARS_UBOOT_CONFIG=y
-+CONFIG_NR_DRAM_BANKS=1
-+CONFIG_FIT=y
-+CONFIG_NAND_BOOT=y
-+CONFIG_BOOTDELAY=1
-+CONFIG_USE_BOOTARGS=y
-+CONFIG_BOOTARGS="console=ttyS0,115200 earlyprintk cma=0 mtdparts=atmel_nand:256k(bootstrap)ro,768k(uboot)ro,512k(uboot-env),-(ubi) rootfstype=ubifs ubi.mtd=3 root=ubi0:rootfs"
-+CONFIG_USE_BOOTCOMMAND=y
-+CONFIG_BOOTCOMMAND="ubi part ubi;ubifsmount ubi0:rootfs;ubifsload 0x21000000 /boot/lorix-one-256.dtb;ubifsload 0x22000000 /boot/zImage;bootz 0x22000000 - 0x21000000"
-+CONFIG_CONSOLE_MUX=y
-+CONFIG_MISC_INIT_R=y
-+# CONFIG_DISPLAY_BOARDINFO is not set
-+CONFIG_HUSH_PARSER=y
-+CONFIG_CMD_BOOTZ=y
-+# CONFIG_CMD_IMI is not set
-+# CONFIG_CMD_FLASH is not set
-+# CONFIG_CMD_LOADS is not set
-+CONFIG_CMD_MMC=y
-+CONFIG_CMD_NAND=y
-+CONFIG_CMD_DHCP=y
-+CONFIG_CMD_PING=y
-+CONFIG_CMD_FAT=y
-+CONFIG_CMD_FS_GENERIC=y
-+CONFIG_CMD_MTDPARTS=y
-+CONFIG_MTDIDS_DEFAULT="nand0=atmel_nand"
-+CONFIG_MTDPARTS_DEFAULT="mtdparts=atmel_nand:256k(bootstrap)ro,768k(uboot)ro,512k(uboot-env),-(ubi)"
-+CONFIG_CMD_UBI=y
-+CONFIG_OF_CONTROL=y
 +CONFIG_DEFAULT_DEVICE_TREE="lorix-one-256"
-+CONFIG_ENV_IS_IN_NAND=y
-+CONFIG_DM=y
-+CONFIG_CLK=y
-+CONFIG_CLK_AT91=y
-+CONFIG_AT91_UTMI=y
-+CONFIG_AT91_H32MX=y
-+CONFIG_DM_GPIO=y
-+CONFIG_AT91_GPIO=y
-+CONFIG_DM_I2C=y
-+CONFIG_SYS_I2C_AT91=y
-+CONFIG_I2C_EEPROM=y
-+CONFIG_DM_MMC=y
-+CONFIG_GENERIC_ATMEL_MCI=y
-+CONFIG_NAND_ATMEL=y
-+CONFIG_DM_ETH=y
-+CONFIG_MACB=y
-+CONFIG_PINCTRL=y
-+CONFIG_PINCTRL_AT91=y
-+CONFIG_DM_SERIAL=y
-+CONFIG_DEBUG_UART_ATMEL=y
-+CONFIG_DEBUG_UART_ANNOUNCE=y
-+CONFIG_ATMEL_USART=y
-+CONFIG_SPI=y
-+CONFIG_DM_SPI=y
-+CONFIG_TIMER=y
-+CONFIG_ATMEL_PIT_TIMER=y
-+CONFIG_OF_LIBFDT_OVERLAY=y
-+CONFIG_SPL_OF_LIBFDT=y
-diff --git a/configs/lorix_one_512_mmc_defconfig b/configs/lorix_one_512_mmc_defconfig
-new file mode 100644
-index 0000000000..fe8f3d6b5b
---- /dev/null
-+++ b/configs/lorix_one_512_mmc_defconfig
-@@ -0,0 +1,67 @@
-+CONFIG_ARM=y
-+CONFIG_ARCH_AT91=y
-+CONFIG_SYS_TEXT_BASE=0x26f00000
-+CONFIG_TARGET_LORIX_ONE_512=y
-+CONFIG_SYS_MALLOC_F_LEN=0x2000
++CONFIG_SPL_TEXT_BASE=0x200000
++CONFIG_SPL_SERIAL=y
++CONFIG_SPL_DRIVERS_MISC=y
++CONFIG_SPL=y
 +CONFIG_DEBUG_UART_BOARD_INIT=y
 +CONFIG_DEBUG_UART_BASE=0xfc00c000
 +CONFIG_DEBUG_UART_CLOCK=100000000
++CONFIG_BUILD_TARGET="u-boot-with-spl.bin"
 +CONFIG_DEBUG_UART=y
 +CONFIG_ENV_VARS_UBOOT_CONFIG=y
-+CONFIG_NR_DRAM_BANKS=1
++CONFIG_SYS_LOAD_ADDR=0x22000000
 +CONFIG_FIT=y
 +CONFIG_SD_BOOT=y
 +CONFIG_BOOTDELAY=1
@@ -1402,91 +1279,103 @@ index 0000000000..fe8f3d6b5b
 +CONFIG_BOOTARGS="console=ttyS0,115200 earlyprintk cma=0 root=/dev/mmcblk0p2 rw rootwait"
 +CONFIG_USE_BOOTCOMMAND=y
 +CONFIG_BOOTCOMMAND="fatload mmc 0:1 0x21000000 lorix-one-512.dtb;fatload mmc 0:1 0x22000000 zImage;bootz 0x22000000 - 0x21000000"
-+CONFIG_CONSOLE_MUX=y
-+CONFIG_MISC_INIT_R=y
 +# CONFIG_DISPLAY_BOARDINFO is not set
++CONFIG_MISC_INIT_R=y
 +CONFIG_HUSH_PARSER=y
 +CONFIG_CMD_BOOTZ=y
-+# CONFIG_CMD_IMI is not set
-+# CONFIG_CMD_FLASH is not set
 +# CONFIG_CMD_LOADS is not set
 +CONFIG_CMD_MMC=y
-+CONFIG_CMD_NAND=y
-+CONFIG_CMD_DHCP=y
-+CONFIG_CMD_PING=y
++# CONFIG_CMD_BOOTP is not set
++# CONFIG_CMD_TFTPBOOT is not set
++# CONFIG_CMD_NFS is not set
 +CONFIG_CMD_FAT=y
 +CONFIG_CMD_FS_GENERIC=y
-+CONFIG_CMD_MTDPARTS=y
-+CONFIG_MTDIDS_DEFAULT="nand0=atmel_nand"
-+CONFIG_CMD_UBI=y
 +CONFIG_OF_CONTROL=y
-+CONFIG_DEFAULT_DEVICE_TREE="lorix-one-512"
++CONFIG_SPL_OF_CONTROL=y
++CONFIG_OF_SPL_REMOVE_PROPS="interrupts interrupt-parent dma-names dmas"
 +CONFIG_ENV_IS_IN_FAT=y
++CONFIG_SYS_REDUNDAND_ENVIRONMENT=y
 +CONFIG_ENV_FAT_FILE="u-boot.env"
++CONFIG_SYS_RELOC_GD_ENV_ADDR=y
 +CONFIG_DM=y
++CONFIG_SPL_DM=y
 +CONFIG_CLK=y
++CONFIG_SPL_CLK=y
 +CONFIG_CLK_AT91=y
 +CONFIG_AT91_UTMI=y
 +CONFIG_AT91_H32MX=y
-+CONFIG_DM_GPIO=y
 +CONFIG_AT91_GPIO=y
 +CONFIG_DM_I2C=y
 +CONFIG_SYS_I2C_AT91=y
 +CONFIG_I2C_EEPROM=y
-+CONFIG_DM_MMC=y
 +CONFIG_GENERIC_ATMEL_MCI=y
-+CONFIG_NAND=y
-+CONFIG_NAND_ATMEL=y
++CONFIG_MTD_UBI=y
 +CONFIG_DM_ETH=y
 +CONFIG_MACB=y
 +CONFIG_PINCTRL=y
++CONFIG_SPL_PINCTRL=y
 +CONFIG_PINCTRL_AT91=y
 +CONFIG_DM_SERIAL=y
-+CONFIG_DEBUG_UART_ATMEL=y
 +CONFIG_DEBUG_UART_ANNOUNCE=y
 +CONFIG_ATMEL_USART=y
 +CONFIG_SPI=y
 +CONFIG_DM_SPI=y
 +CONFIG_TIMER=y
++CONFIG_SPL_TIMER=y
 +CONFIG_ATMEL_PIT_TIMER=y
++CONFIG_LZO=y
 +CONFIG_OF_LIBFDT_OVERLAY=y
-+CONFIG_SPL_OF_LIBFDT=y
-diff --git a/configs/lorix_one_512_nandflash_defconfig b/configs/lorix_one_512_nandflash_defconfig
+diff --git a/configs/lorix_one_256_nandflash_defconfig b/configs/lorix_one_256_nandflash_defconfig
 new file mode 100644
-index 0000000000..aab0d5f6d4
+index 0000000000..702ccb8097
 --- /dev/null
-+++ b/configs/lorix_one_512_nandflash_defconfig
-@@ -0,0 +1,66 @@
++++ b/configs/lorix_one_256_nandflash_defconfig
+@@ -0,0 +1,94 @@
 +CONFIG_ARM=y
++CONFIG_SKIP_LOWLEVEL_INIT=y
++CONFIG_ARCH_CPU_INIT=y
 +CONFIG_ARCH_AT91=y
 +CONFIG_SYS_TEXT_BASE=0x26f00000
-+CONFIG_TARGET_LORIX_ONE_512=y
 +CONFIG_SYS_MALLOC_F_LEN=0x2000
++CONFIG_TARGET_LORIX_ONE_256=y
++CONFIG_SPL_GPIO=y
++CONFIG_SPL_LIBCOMMON_SUPPORT=y
++CONFIG_SPL_LIBGENERIC_SUPPORT=y
++CONFIG_NR_DRAM_BANKS=1
++CONFIG_DM_GPIO=y
++CONFIG_DEFAULT_DEVICE_TREE="lorix-one-256"
++CONFIG_SPL_TEXT_BASE=0x200000
++CONFIG_SPL_SERIAL=y
++CONFIG_SPL_DRIVERS_MISC=y
++CONFIG_SPL=y
 +CONFIG_DEBUG_UART_BOARD_INIT=y
 +CONFIG_DEBUG_UART_BASE=0xfc00c000
 +CONFIG_DEBUG_UART_CLOCK=100000000
++CONFIG_ENV_OFFSET_REDUND=0x100000
 +CONFIG_DEBUG_UART=y
 +CONFIG_ENV_VARS_UBOOT_CONFIG=y
-+CONFIG_NR_DRAM_BANKS=1
++CONFIG_SYS_LOAD_ADDR=0x22000000
 +CONFIG_FIT=y
 +CONFIG_NAND_BOOT=y
 +CONFIG_BOOTDELAY=1
 +CONFIG_USE_BOOTARGS=y
 +CONFIG_BOOTARGS="console=ttyS0,115200 earlyprintk cma=0 mtdparts=atmel_nand:256k(bootstrap)ro,768k(uboot)ro,512k(uboot-env),-(ubi) rootfstype=ubifs ubi.mtd=3 root=ubi0:rootfs"
 +CONFIG_USE_BOOTCOMMAND=y
-+CONFIG_BOOTCOMMAND="ubi part ubi;ubifsmount ubi0:rootfs;ubifsload 0x21000000 /boot/lorix-one-512.dtb;ubifsload 0x22000000 /boot/zImage;bootz 0x22000000 - 0x21000000"
-+CONFIG_CONSOLE_MUX=y
-+CONFIG_MISC_INIT_R=y
++CONFIG_BOOTCOMMAND="ubi part ubi;ubifsmount ubi0:rootfs;ubifsload 0x21000000 /boot/lorix-one-256.dtb;ubifsload 0x22000000 /boot/zImage;bootz 0x22000000 - 0x21000000"
 +# CONFIG_DISPLAY_BOARDINFO is not set
++CONFIG_MISC_INIT_R=y
++CONFIG_SPL_NAND_SUPPORT=y
++CONFIG_SPL_NAND_DRIVERS=y
++CONFIG_SPL_NAND_BASE=y
 +CONFIG_HUSH_PARSER=y
 +CONFIG_CMD_BOOTZ=y
-+# CONFIG_CMD_IMI is not set
 +# CONFIG_CMD_FLASH is not set
 +# CONFIG_CMD_LOADS is not set
 +CONFIG_CMD_MMC=y
 +CONFIG_CMD_NAND=y
-+CONFIG_CMD_DHCP=y
-+CONFIG_CMD_PING=y
++# CONFIG_CMD_BOOTP is not set
++# CONFIG_CMD_TFTPBOOT is not set
++# CONFIG_CMD_NFS is not set
 +CONFIG_CMD_FAT=y
 +CONFIG_CMD_FS_GENERIC=y
 +CONFIG_CMD_MTDPARTS=y
@@ -1494,66 +1383,239 @@ index 0000000000..aab0d5f6d4
 +CONFIG_MTDPARTS_DEFAULT="mtdparts=atmel_nand:256k(bootstrap)ro,768k(uboot)ro,512k(uboot-env),-(ubi)"
 +CONFIG_CMD_UBI=y
 +CONFIG_OF_CONTROL=y
-+CONFIG_DEFAULT_DEVICE_TREE="lorix-one-512"
++CONFIG_SPL_OF_CONTROL=y
++CONFIG_OF_SPL_REMOVE_PROPS="interrupts interrupt-parent dma-names dmas"
 +CONFIG_ENV_IS_IN_NAND=y
++CONFIG_SYS_REDUNDAND_ENVIRONMENT=y
++CONFIG_SYS_RELOC_GD_ENV_ADDR=y
 +CONFIG_DM=y
++CONFIG_SPL_DM=y
 +CONFIG_CLK=y
++CONFIG_SPL_CLK=y
 +CONFIG_CLK_AT91=y
 +CONFIG_AT91_UTMI=y
 +CONFIG_AT91_H32MX=y
-+CONFIG_DM_GPIO=y
 +CONFIG_AT91_GPIO=y
 +CONFIG_DM_I2C=y
 +CONFIG_SYS_I2C_AT91=y
 +CONFIG_I2C_EEPROM=y
-+CONFIG_DM_MMC=y
 +CONFIG_GENERIC_ATMEL_MCI=y
++CONFIG_MTD=y
 +CONFIG_NAND_ATMEL=y
++CONFIG_PMECC_CAP=4
++CONFIG_SPL_GENERATE_ATMEL_PMECC_HEADER=y
++CONFIG_SYS_NAND_BLOCK_SIZE=0x20000
++CONFIG_SYS_NAND_ONFI_DETECTION=y
++CONFIG_SYS_NAND_PAGE_COUNT=0x40
++CONFIG_SYS_NAND_PAGE_SIZE=0x800
++CONFIG_SYS_NAND_OOBSIZE=0x40
++CONFIG_SYS_NAND_U_BOOT_LOCATIONS=y
++CONFIG_SYS_NAND_U_BOOT_OFFS=0x40000
 +CONFIG_DM_ETH=y
 +CONFIG_MACB=y
 +CONFIG_PINCTRL=y
++CONFIG_SPL_PINCTRL=y
 +CONFIG_PINCTRL_AT91=y
 +CONFIG_DM_SERIAL=y
-+CONFIG_DEBUG_UART_ATMEL=y
 +CONFIG_DEBUG_UART_ANNOUNCE=y
 +CONFIG_ATMEL_USART=y
 +CONFIG_SPI=y
 +CONFIG_DM_SPI=y
 +CONFIG_TIMER=y
++CONFIG_SPL_TIMER=y
 +CONFIG_ATMEL_PIT_TIMER=y
 +CONFIG_OF_LIBFDT_OVERLAY=y
-+CONFIG_SPL_OF_LIBFDT=y
-diff --git a/include/common.h b/include/common.h
-index 2c21dee850..51be6acb8f 100644
---- a/include/common.h
-+++ b/include/common.h
-@@ -217,6 +217,18 @@ int env_get_yesno(const char *var);
-  */
- int env_set(const char *varname, const char *value);
- 
-+/**
-+ * env_set_force() - set an environment variable with force flag
-+ *
-+ * This sets or deletes the value of an environment variable. For setting the
-+ * value the variable is created if it does not already exist.
-+ *
-+ * @varname: Variable to adjust
-+ * @value: Value to set for the variable, or NULL or "" to delete the variable
-+ * @return 0 if OK, 1 on error
-+ */
-+int env_set_force(const char *varname, const char *value);
-+
- /**
-  * env_set_ulong() - set an environment variable to an integer
-  *
+diff --git a/configs/lorix_one_512_mmc_defconfig b/configs/lorix_one_512_mmc_defconfig
+new file mode 100644
+index 0000000000..84e65271d8
+--- /dev/null
++++ b/configs/lorix_one_512_mmc_defconfig
+@@ -0,0 +1,77 @@
++CONFIG_ARM=y
++CONFIG_SKIP_LOWLEVEL_INIT=y
++CONFIG_ARCH_CPU_INIT=y
++CONFIG_ARCH_AT91=y
++CONFIG_SYS_TEXT_BASE=0x26f00000
++CONFIG_SYS_MALLOC_F_LEN=0x2000
++CONFIG_TARGET_LORIX_ONE_512=y
++CONFIG_SPL_GPIO=y
++CONFIG_SPL_LIBCOMMON_SUPPORT=y
++CONFIG_SPL_LIBGENERIC_SUPPORT=y
++CONFIG_NR_DRAM_BANKS=1
++CONFIG_DM_GPIO=y
++CONFIG_DEFAULT_DEVICE_TREE="lorix-one-512"
++CONFIG_SPL_TEXT_BASE=0x200000
++CONFIG_SPL_SERIAL=y
++CONFIG_SPL_DRIVERS_MISC=y
++CONFIG_SPL=y
++CONFIG_DEBUG_UART_BOARD_INIT=y
++CONFIG_DEBUG_UART_BASE=0xfc00c000
++CONFIG_DEBUG_UART_CLOCK=100000000
++CONFIG_BUILD_TARGET="u-boot-with-spl.bin"
++CONFIG_DEBUG_UART=y
++CONFIG_ENV_VARS_UBOOT_CONFIG=y
++CONFIG_SYS_LOAD_ADDR=0x22000000
++CONFIG_FIT=y
++CONFIG_SD_BOOT=y
++CONFIG_BOOTDELAY=1
++CONFIG_USE_BOOTARGS=y
++CONFIG_BOOTARGS="console=ttyS0,115200 earlyprintk cma=0 root=/dev/mmcblk0p2 rw rootwait"
++CONFIG_USE_BOOTCOMMAND=y
++CONFIG_BOOTCOMMAND="fatload mmc 0:1 0x21000000 lorix-one-512.dtb;fatload mmc 0:1 0x22000000 zImage;bootz 0x22000000 - 0x21000000"
++# CONFIG_DISPLAY_BOARDINFO is not set
++CONFIG_MISC_INIT_R=y
++CONFIG_HUSH_PARSER=y
++CONFIG_CMD_BOOTZ=y
++# CONFIG_CMD_LOADS is not set
++CONFIG_CMD_MMC=y
++# CONFIG_CMD_BOOTP is not set
++# CONFIG_CMD_TFTPBOOT is not set
++# CONFIG_CMD_NFS is not set
++CONFIG_CMD_FAT=y
++CONFIG_CMD_FS_GENERIC=y
++CONFIG_OF_CONTROL=y
++CONFIG_SPL_OF_CONTROL=y
++CONFIG_OF_SPL_REMOVE_PROPS="interrupts interrupt-parent dma-names dmas"
++CONFIG_ENV_IS_IN_FAT=y
++CONFIG_SYS_REDUNDAND_ENVIRONMENT=y
++CONFIG_ENV_FAT_FILE="u-boot.env"
++CONFIG_SYS_RELOC_GD_ENV_ADDR=y
++CONFIG_DM=y
++CONFIG_SPL_DM=y
++CONFIG_CLK=y
++CONFIG_SPL_CLK=y
++CONFIG_CLK_AT91=y
++CONFIG_AT91_UTMI=y
++CONFIG_AT91_H32MX=y
++CONFIG_AT91_GPIO=y
++CONFIG_DM_I2C=y
++CONFIG_SYS_I2C_AT91=y
++CONFIG_I2C_EEPROM=y
++CONFIG_GENERIC_ATMEL_MCI=y
++CONFIG_MTD_UBI=y
++CONFIG_DM_ETH=y
++CONFIG_MACB=y
++CONFIG_PINCTRL=y
++CONFIG_SPL_PINCTRL=y
++CONFIG_PINCTRL_AT91=y
++CONFIG_DM_SERIAL=y
++CONFIG_DEBUG_UART_ANNOUNCE=y
++CONFIG_ATMEL_USART=y
++CONFIG_SPI=y
++CONFIG_DM_SPI=y
++CONFIG_TIMER=y
++CONFIG_SPL_TIMER=y
++CONFIG_ATMEL_PIT_TIMER=y
++CONFIG_LZO=y
++CONFIG_OF_LIBFDT_OVERLAY=y
+diff --git a/configs/lorix_one_512_nandflash_defconfig b/configs/lorix_one_512_nandflash_defconfig
+new file mode 100644
+index 0000000000..762f7d5742
+--- /dev/null
++++ b/configs/lorix_one_512_nandflash_defconfig
+@@ -0,0 +1,94 @@
++CONFIG_ARM=y
++CONFIG_SKIP_LOWLEVEL_INIT=y
++CONFIG_ARCH_CPU_INIT=y
++CONFIG_ARCH_AT91=y
++CONFIG_SYS_TEXT_BASE=0x26f00000
++CONFIG_SYS_MALLOC_F_LEN=0x2000
++CONFIG_TARGET_LORIX_ONE_512=y
++CONFIG_SPL_GPIO=y
++CONFIG_SPL_LIBCOMMON_SUPPORT=y
++CONFIG_SPL_LIBGENERIC_SUPPORT=y
++CONFIG_NR_DRAM_BANKS=1
++CONFIG_DM_GPIO=y
++CONFIG_DEFAULT_DEVICE_TREE="lorix-one-512"
++CONFIG_SPL_TEXT_BASE=0x200000
++CONFIG_SPL_SERIAL=y
++CONFIG_SPL_DRIVERS_MISC=y
++CONFIG_SPL=y
++CONFIG_DEBUG_UART_BOARD_INIT=y
++CONFIG_DEBUG_UART_BASE=0xfc00c000
++CONFIG_DEBUG_UART_CLOCK=100000000
++CONFIG_ENV_OFFSET_REDUND=0x100000
++CONFIG_DEBUG_UART=y
++CONFIG_ENV_VARS_UBOOT_CONFIG=y
++CONFIG_SYS_LOAD_ADDR=0x22000000
++CONFIG_FIT=y
++CONFIG_NAND_BOOT=y
++CONFIG_BOOTDELAY=1
++CONFIG_USE_BOOTARGS=y
++CONFIG_BOOTARGS="console=ttyS0,115200 earlyprintk cma=0 mtdparts=atmel_nand:256k(bootstrap)ro,768k(uboot)ro,512k(uboot-env),-(ubi) rootfstype=ubifs ubi.mtd=3 root=ubi0:rootfs"
++CONFIG_USE_BOOTCOMMAND=y
++CONFIG_BOOTCOMMAND="ubi part ubi;ubifsmount ubi0:rootfs;ubifsload 0x21000000 /boot/lorix-one-512.dtb;ubifsload 0x22000000 /boot/zImage;bootz 0x22000000 - 0x21000000"
++# CONFIG_DISPLAY_BOARDINFO is not set
++CONFIG_MISC_INIT_R=y
++CONFIG_SPL_NAND_SUPPORT=y
++CONFIG_SPL_NAND_DRIVERS=y
++CONFIG_SPL_NAND_BASE=y
++CONFIG_HUSH_PARSER=y
++CONFIG_CMD_BOOTZ=y
++# CONFIG_CMD_FLASH is not set
++# CONFIG_CMD_LOADS is not set
++CONFIG_CMD_MMC=y
++CONFIG_CMD_NAND=y
++# CONFIG_CMD_BOOTP is not set
++# CONFIG_CMD_TFTPBOOT is not set
++# CONFIG_CMD_NFS is not set
++CONFIG_CMD_FAT=y
++CONFIG_CMD_FS_GENERIC=y
++CONFIG_CMD_MTDPARTS=y
++CONFIG_MTDIDS_DEFAULT="nand0=atmel_nand"
++CONFIG_MTDPARTS_DEFAULT="mtdparts=atmel_nand:256k(bootstrap)ro,768k(uboot)ro,512k(uboot-env),-(ubi)"
++CONFIG_CMD_UBI=y
++CONFIG_OF_CONTROL=y
++CONFIG_SPL_OF_CONTROL=y
++CONFIG_OF_SPL_REMOVE_PROPS="interrupts interrupt-parent dma-names dmas"
++CONFIG_ENV_IS_IN_NAND=y
++CONFIG_SYS_REDUNDAND_ENVIRONMENT=y
++CONFIG_SYS_RELOC_GD_ENV_ADDR=y
++CONFIG_DM=y
++CONFIG_SPL_DM=y
++CONFIG_CLK=y
++CONFIG_SPL_CLK=y
++CONFIG_CLK_AT91=y
++CONFIG_AT91_UTMI=y
++CONFIG_AT91_H32MX=y
++CONFIG_AT91_GPIO=y
++CONFIG_DM_I2C=y
++CONFIG_SYS_I2C_AT91=y
++CONFIG_I2C_EEPROM=y
++CONFIG_GENERIC_ATMEL_MCI=y
++CONFIG_MTD=y
++CONFIG_NAND_ATMEL=y
++CONFIG_PMECC_CAP=8
++CONFIG_SPL_GENERATE_ATMEL_PMECC_HEADER=y
++CONFIG_SYS_NAND_BLOCK_SIZE=0x40000
++CONFIG_SYS_NAND_ONFI_DETECTION=y
++CONFIG_SYS_NAND_PAGE_COUNT=0x40
++CONFIG_SYS_NAND_PAGE_SIZE=0x1000
++CONFIG_SYS_NAND_OOBSIZE=0xe0
++CONFIG_SYS_NAND_U_BOOT_LOCATIONS=y
++CONFIG_SYS_NAND_U_BOOT_OFFS=0x40000
++CONFIG_DM_ETH=y
++CONFIG_MACB=y
++CONFIG_PINCTRL=y
++CONFIG_SPL_PINCTRL=y
++CONFIG_PINCTRL_AT91=y
++CONFIG_DM_SERIAL=y
++CONFIG_DEBUG_UART_ANNOUNCE=y
++CONFIG_ATMEL_USART=y
++CONFIG_SPI=y
++CONFIG_DM_SPI=y
++CONFIG_TIMER=y
++CONFIG_SPL_TIMER=y
++CONFIG_ATMEL_PIT_TIMER=y
++CONFIG_OF_LIBFDT_OVERLAY=y
 diff --git a/include/configs/at91-sama5_common.h b/include/configs/at91-sama5_common.h
-index fc46540a10..b87629bb70 100644
+index 9a73e3afca..bf12f8c400 100644
 --- a/include/configs/at91-sama5_common.h
 +++ b/include/configs/at91-sama5_common.h
-@@ -46,12 +46,14 @@
- #define CONFIG_ENV_SIZE		0x4000
- #endif
+@@ -21,31 +21,41 @@
+ #define CONFIG_BOOTP_BOOTFILESIZE
  
+ #ifdef CONFIG_SD_BOOT
 +#ifndef CONFIG_BOOTCOMMAND
  #define CONFIG_BOOTCOMMAND	"if test ! -n ${dtb_name}; then "	\
  				    "setenv dtb_name at91-${board_name}.dtb; " \
@@ -1561,59 +1623,44 @@ index fc46540a10..b87629bb70 100644
  				"fatload mmc 0:1 0x21000000 ${dtb_name}; " \
  				"fatload mmc 0:1 0x22000000 zImage; "	\
  				"bootz 0x22000000 - 0x21000000"
-+#endif
++#endif /* CONFIG_BOOTCOMMAND */
  
  #else
  
-@@ -59,23 +61,32 @@
+ #ifdef CONFIG_NAND_BOOT
  /* u-boot env in nand flash */
- #define CONFIG_ENV_OFFSET		0x140000
- #define CONFIG_ENV_OFFSET_REDUND	0x100000
--#define CONFIG_ENV_SIZE			0x20000
-+#define CONFIG_ENV_SIZE			(128 * 1024)	/* 128KiB */
-+#define CONFIG_ENV_SIZE_REDUND		(CONFIG_ENV_SIZE)
-+#define CONFIG_ENV_RANGE		(2 * CONFIG_ENV_SIZE)	/* Bad block handling */
 +#ifndef CONFIG_BOOTCOMMAND
  #define CONFIG_BOOTCOMMAND		"nand read 0x21000000 0x180000 0x80000;"	\
  					"nand read 0x22000000 0x200000 0x600000;"	\
  					"bootz 0x22000000 - 0x21000000"
-+#endif
++#endif /* CONFIG_BOOTCOMMAND */
 +
  #elif CONFIG_SPI_BOOT
- /* u-boot env in serial flash, by default is bus 0 and cs 0 */
- #define CONFIG_ENV_OFFSET		0x6000
- #define CONFIG_ENV_SIZE			0x2000
- #define CONFIG_ENV_SECT_SIZE		0x1000
+-/* u-boot env in serial flash, by default is bus 0 and cs 0 */
 +#ifndef CONFIG_BOOTCOMMAND
  #define CONFIG_BOOTCOMMAND		"sf probe 0; "				\
  					"sf read 0x21000000 0x60000 0xc000; "	\
  					"sf read 0x22000000 0x6c000 0x394000; "	\
  					"bootz 0x22000000 - 0x21000000"
-+#endif
++#endif /* CONFIG_BOOTCOMMAND */
 +
  #elif CONFIG_QSPI_BOOT
- #define CONFIG_ENV_OFFSET		0x140000
- #define CONFIG_ENV_SIZE			0x20000
- #define CONFIG_ENV_SECT_SIZE		0x1000
 +#ifndef CONFIG_BOOTCOMMAND
  #define CONFIG_BOOTCOMMAND		"sf probe 0; "					\
  					"sf read 0x21000000 0x180000 0x80000; "		\
  					"sf read 0x22000000 0x200000 0x600000; "	\
-@@ -84,6 +95,8 @@
- 
+ 					"bootz 0x22000000 - 0x21000000"
++#endif /* CONFIG_BOOTCOMMAND */
++
  #endif
  
-+#endif
-+
- /* Size of malloc() pool */
- #define CONFIG_SYS_MALLOC_LEN		(4 * 1024 * 1024)
- 
+ #endif
 diff --git a/include/configs/lorix-one-256.h b/include/configs/lorix-one-256.h
 new file mode 100644
-index 0000000000..2cb9cfe532
+index 0000000000..e342be2174
 --- /dev/null
 +++ b/include/configs/lorix-one-256.h
-@@ -0,0 +1,92 @@
+@@ -0,0 +1,57 @@
 +/* SPDX-License-Identifier: GPL-2.0+ */
 +/*
 + * Based on configuration settings for the SAMA5D4 Xplained ultra board.
@@ -1636,9 +1683,6 @@ index 0000000000..2cb9cfe532
 +/* SDRAM */
 +#define CONFIG_SYS_SDRAM_BASE		0x20000000
 +#define CONFIG_SYS_SDRAM_SIZE		SZ_128M
-+#define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE
-+#define CONFIG_SYS_MEMTEST_END		\
-+	(CONFIG_SYS_MEMTEST_START + CONFIG_SYS_SDRAM_SIZE - SZ_32M)
 +
 +#ifdef CONFIG_SPL_BUILD
 +#define CONFIG_SYS_INIT_SP_ADDR		0x218000
@@ -1647,28 +1691,17 @@ index 0000000000..2cb9cfe532
 +	(CONFIG_SYS_SDRAM_BASE + 16 * 1024 - GENERATED_GBL_DATA_SIZE)
 +#endif
 +
-+#define CONFIG_SYS_LOAD_ADDR		0x22000000 /* load address */
-+
-+#ifdef CONFIG_CMD_SF
-+#define CONFIG_SF_DEFAULT_SPEED		30000000
-+#endif
-+
 +/* NAND flash */
 +#ifdef CONFIG_CMD_NAND
 +#define CONFIG_SYS_MAX_NAND_DEVICE	1
-+#define CONFIG_SYS_NAND_BASE		ATMEL_BASE_CS3
++#define CONFIG_SYS_NAND_BASE		0x80000000
 +/* our ALE is AD21 */
 +#define CONFIG_SYS_NAND_MASK_ALE	(1 << 21)
 +/* our CLE is AD22 */
 +#define CONFIG_SYS_NAND_MASK_CLE	(1 << 22)
-+#define CONFIG_SYS_NAND_ONFI_DETECTION
-+/* PMECC & PMERRLOC */
-+#define CONFIG_ATMEL_NAND_HWECC
-+#define CONFIG_ATMEL_NAND_HW_PMECC
 +#endif
 +
 +/* SPL */
-+#define CONFIG_SPL_TEXT_BASE		0x200000
 +#define CONFIG_SPL_MAX_SIZE		0x18000
 +#define CONFIG_SPL_BSS_START_ADDR	0x20000000
 +#define CONFIG_SPL_BSS_MAX_SIZE		0x80000
@@ -1678,29 +1711,8 @@ index 0000000000..2cb9cfe532
 +#define CONFIG_SYS_MONITOR_LEN		(512 << 10)
 +
 +#ifdef CONFIG_SD_BOOT
-+#define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION	1
 +#define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME		"u-boot.img"
-+
-+#elif CONFIG_SYS_USE_NANDFLASH
-+#elif CONFIG_SPI_BOOT
-+#define CONFIG_SYS_SPI_U_BOOT_OFFS		0x10000
-+
-+#elif CONFIG_NAND_BOOT
-+#define CONFIG_SPL_NAND_DRIVERS
-+#define CONFIG_SPL_NAND_BASE
 +#endif
-+
-+#define CONFIG_PMECC_CAP			4
-+#define CONFIG_PMECC_SECTOR_SIZE		512
-+#define CONFIG_SYS_NAND_U_BOOT_OFFS		0x40000
-+#define CONFIG_SYS_NAND_5_ADDR_CYCLE
-+#define CONFIG_SYS_NAND_PAGE_SIZE		0x0800
-+#define CONFIG_SYS_NAND_PAGE_COUNT		64
-+#define CONFIG_SYS_NAND_OOBSIZE			64
-+#define CONFIG_SYS_NAND_BLOCK_SIZE		0x20000
-+#define CONFIG_SYS_NAND_BAD_BLOCK_POS		0x0
-+#define CONFIG_SYS_NAND_USE_FLASH_BBT
-+#define CONFIG_SPL_GENERATE_ATMEL_PMECC_HEADER
 +
 +/* Watchdog support */
 +#define CONFIG_HW_WATCHDOG
@@ -1708,10 +1720,10 @@ index 0000000000..2cb9cfe532
 +#endif /* __CONFIG_H */
 diff --git a/include/configs/lorix-one-512.h b/include/configs/lorix-one-512.h
 new file mode 100644
-index 0000000000..82ad7c5b71
+index 0000000000..e848ee22e3
 --- /dev/null
 +++ b/include/configs/lorix-one-512.h
-@@ -0,0 +1,92 @@
+@@ -0,0 +1,57 @@
 +/* SPDX-License-Identifier: GPL-2.0+ */
 +/*
 + * Based on configuration settings for the SAMA5D4 Xplained ultra board.
@@ -1734,9 +1746,6 @@ index 0000000000..82ad7c5b71
 +/* SDRAM */
 +#define CONFIG_SYS_SDRAM_BASE		0x20000000
 +#define CONFIG_SYS_SDRAM_SIZE		SZ_128M
-+#define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE
-+#define CONFIG_SYS_MEMTEST_END		\
-+	(CONFIG_SYS_MEMTEST_START + CONFIG_SYS_SDRAM_SIZE - SZ_32M)
 +
 +#ifdef CONFIG_SPL_BUILD
 +#define CONFIG_SYS_INIT_SP_ADDR		0x218000
@@ -1745,28 +1754,17 @@ index 0000000000..82ad7c5b71
 +	(CONFIG_SYS_SDRAM_BASE + 16 * 1024 - GENERATED_GBL_DATA_SIZE)
 +#endif
 +
-+#define CONFIG_SYS_LOAD_ADDR		0x22000000 /* load address */
-+
-+#ifdef CONFIG_CMD_SF
-+#define CONFIG_SF_DEFAULT_SPEED		30000000
-+#endif
-+
 +/* NAND flash */
 +#ifdef CONFIG_CMD_NAND
 +#define CONFIG_SYS_MAX_NAND_DEVICE	1
-+#define CONFIG_SYS_NAND_BASE		ATMEL_BASE_CS3
++#define CONFIG_SYS_NAND_BASE		0x80000000
 +/* our ALE is AD21 */
 +#define CONFIG_SYS_NAND_MASK_ALE	(1 << 21)
 +/* our CLE is AD22 */
 +#define CONFIG_SYS_NAND_MASK_CLE	(1 << 22)
-+#define CONFIG_SYS_NAND_ONFI_DETECTION
-+/* PMECC & PMERRLOC */
-+#define CONFIG_ATMEL_NAND_HWECC
-+#define CONFIG_ATMEL_NAND_HW_PMECC
 +#endif
 +
 +/* SPL */
-+#define CONFIG_SPL_TEXT_BASE		0x200000
 +#define CONFIG_SPL_MAX_SIZE		0x18000
 +#define CONFIG_SPL_BSS_START_ADDR	0x20000000
 +#define CONFIG_SPL_BSS_MAX_SIZE		0x80000
@@ -1776,34 +1774,36 @@ index 0000000000..82ad7c5b71
 +#define CONFIG_SYS_MONITOR_LEN		(512 << 10)
 +
 +#ifdef CONFIG_SD_BOOT
-+#define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION	1
 +#define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME		"u-boot.img"
-+
-+#elif CONFIG_SYS_USE_NANDFLASH
-+#elif CONFIG_SPI_BOOT
-+#define CONFIG_SYS_SPI_U_BOOT_OFFS		0x10000
-+
-+#elif CONFIG_NAND_BOOT
-+#define CONFIG_SPL_NAND_DRIVERS
-+#define CONFIG_SPL_NAND_BASE
 +#endif
-+
-+#define CONFIG_PMECC_CAP			8
-+#define CONFIG_PMECC_SECTOR_SIZE		512
-+#define CONFIG_SYS_NAND_U_BOOT_OFFS		0x40000
-+#define CONFIG_SYS_NAND_5_ADDR_CYCLE
-+#define CONFIG_SYS_NAND_PAGE_SIZE		0x1000
-+#define CONFIG_SYS_NAND_PAGE_COUNT		64
-+#define CONFIG_SYS_NAND_OOBSIZE			224
-+#define CONFIG_SYS_NAND_BLOCK_SIZE		0x40000
-+#define CONFIG_SYS_NAND_BAD_BLOCK_POS		0x0
-+#define CONFIG_SYS_NAND_USE_FLASH_BBT
-+#define CONFIG_SPL_GENERATE_ATMEL_PMECC_HEADER
 +
 +/* Watchdog support */
 +#define CONFIG_HW_WATCHDOG
 +
 +#endif /* __CONFIG_H */
+diff --git a/include/env.h b/include/env.h
+index ee5e30d036..f38a7815d4 100644
+--- a/include/env.h
++++ b/include/env.h
+@@ -145,6 +145,18 @@ int env_get_yesno(const char *var);
+  */
+ int env_set(const char *varname, const char *value);
+ 
++/**
++ * env_set_force() - set an environment variable with force flag
++ *
++ * This sets or deletes the value of an environment variable. For setting the
++ * value the variable is created if it does not already exist.
++ *
++ * @varname: Variable to adjust
++ * @value: Value to set for the variable, or NULL or "" to delete the variable
++ * @return 0 if OK, 1 on error
++ */
++int env_set_force(const char *varname, const char *value);
++
+ /**
+  * env_get_ulong() - Return an environment variable as an integer value
+  *
 -- 
 2.25.1
 

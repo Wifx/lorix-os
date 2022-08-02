@@ -1,6 +1,6 @@
-From 139d913efd5bf136df626fe11422818f38267733 Mon Sep 17 00:00:00 2001
+From e39f877e23862c4df79341a3643e7d206b02c6e1 Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
-Date: Mon, 25 Jul 2022 18:14:47 +0200
+Date: Wed, 27 Jul 2022 12:04:45 +0200
 Subject: [PATCH 2/2] Add base support for Wifx L1 machine
 
 Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
@@ -12,11 +12,11 @@ Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
  board/wifx/l1/Kconfig          |  12 ++
  board/wifx/l1/MAINTAINERS      |   7 ++
  board/wifx/l1/Makefile         |   8 ++
- board/wifx/l1/l1.c             | 222 +++++++++++++++++++++++++++++++++
- configs/l1_mmc_defconfig       |  67 ++++++++++
- configs/l1_nandflash_defconfig |  66 ++++++++++
- include/configs/l1.h           |  91 ++++++++++++++
- 11 files changed, 706 insertions(+)
+ board/wifx/l1/l1.c             | 224 +++++++++++++++++++++++++++++++++
+ configs/l1_mmc_defconfig       |  77 ++++++++++++
+ configs/l1_nandflash_defconfig |  94 ++++++++++++++
+ include/configs/l1.h           |  56 +++++++++
+ 11 files changed, 711 insertions(+)
  create mode 100644 arch/arm/dts/l1.dts
  create mode 100644 board/wifx/l1/Kconfig
  create mode 100644 board/wifx/l1/MAINTAINERS
@@ -27,10 +27,10 @@ Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
  create mode 100644 include/configs/l1.h
 
 diff --git a/arch/arm/dts/Makefile b/arch/arm/dts/Makefile
-index a8ed93b091..cafa286eb1 100644
+index e62592a727..a92943eced 100644
 --- a/arch/arm/dts/Makefile
 +++ b/arch/arm/dts/Makefile
-@@ -674,6 +674,9 @@ dtb-$(CONFIG_TARGET_LORIX_ONE_256) += \
+@@ -1068,6 +1068,9 @@ dtb-$(CONFIG_TARGET_LORIX_ONE_256) += \
  dtb-$(CONFIG_TARGET_LORIX_ONE_512) += \
  	lorix-one-512.dtb
  
@@ -268,10 +268,10 @@ index 0000000000..231d1a7cd0
 +	};
 +};
 diff --git a/arch/arm/mach-at91/Kconfig b/arch/arm/mach-at91/Kconfig
-index f028265537..baf78b4209 100644
+index 82e84030f6..8f8aeebbc4 100644
 --- a/arch/arm/mach-at91/Kconfig
 +++ b/arch/arm/mach-at91/Kconfig
-@@ -263,6 +263,14 @@ config TARGET_LORIX_ONE_512
+@@ -259,6 +259,14 @@ config TARGET_LORIX_ONE_512
  	select SUPPORT_SPL
  	select WDT_LEGACY_AT91
  
@@ -342,10 +342,10 @@ index 0000000000..8bf2a5ff55
 +obj-y += l1.o
 diff --git a/board/wifx/l1/l1.c b/board/wifx/l1/l1.c
 new file mode 100644
-index 0000000000..7bc8bb85a2
+index 0000000000..127be2e71d
 --- /dev/null
 +++ b/board/wifx/l1/l1.c
-@@ -0,0 +1,222 @@
+@@ -0,0 +1,224 @@
 +// SPDX-License-Identifier: GPL-2.0+
 +/*
 + * Board file for the LX One/LX One Plus platform
@@ -357,6 +357,8 @@ index 0000000000..7bc8bb85a2
 + */
 +
 +#include <common.h>
++#include <init.h>
++#include <asm/global_data.h>
 +#include <asm/io.h>
 +#include <asm/arch/at91_common.h>
 +#include <asm/arch/at91_rstc.h>
@@ -570,21 +572,34 @@ index 0000000000..7bc8bb85a2
 +#endif
 diff --git a/configs/l1_mmc_defconfig b/configs/l1_mmc_defconfig
 new file mode 100644
-index 0000000000..0ae97079a6
+index 0000000000..8c7fc6def2
 --- /dev/null
 +++ b/configs/l1_mmc_defconfig
-@@ -0,0 +1,67 @@
+@@ -0,0 +1,77 @@
 +CONFIG_ARM=y
++CONFIG_SKIP_LOWLEVEL_INIT=y
++CONFIG_ARCH_CPU_INIT=y
 +CONFIG_ARCH_AT91=y
 +CONFIG_SYS_TEXT_BASE=0x26f00000
-+CONFIG_TARGET_L1=y
 +CONFIG_SYS_MALLOC_F_LEN=0x2000
++CONFIG_TARGET_L1=y
++CONFIG_SPL_GPIO=y
++CONFIG_SPL_LIBCOMMON_SUPPORT=y
++CONFIG_SPL_LIBGENERIC_SUPPORT=y
++CONFIG_NR_DRAM_BANKS=1
++CONFIG_DM_GPIO=y
++CONFIG_DEFAULT_DEVICE_TREE="l1"
++CONFIG_SPL_TEXT_BASE=0x200000
++CONFIG_SPL_SERIAL=y
++CONFIG_SPL_DRIVERS_MISC=y
++CONFIG_SPL=y
 +CONFIG_DEBUG_UART_BOARD_INIT=y
 +CONFIG_DEBUG_UART_BASE=0xfc00c000
 +CONFIG_DEBUG_UART_CLOCK=100000000
++CONFIG_BUILD_TARGET="u-boot-with-spl.bin"
 +CONFIG_DEBUG_UART=y
 +CONFIG_ENV_VARS_UBOOT_CONFIG=y
-+CONFIG_NR_DRAM_BANKS=1
++CONFIG_SYS_LOAD_ADDR=0x22000000
 +CONFIG_FIT=y
 +CONFIG_SD_BOOT=y
 +CONFIG_BOOTDELAY=1
@@ -592,72 +607,82 @@ index 0000000000..0ae97079a6
 +CONFIG_BOOTARGS="console=ttyS0,115200 earlyprintk cma=0 root=/dev/mmcblk0p2 rw rootwait"
 +CONFIG_USE_BOOTCOMMAND=y
 +CONFIG_BOOTCOMMAND="fatload mmc 0:1 0x21000000 l1.dtb;fatload mmc 0:1 0x22000000 zImage;bootz 0x22000000 - 0x21000000"
-+CONFIG_CONSOLE_MUX=y
-+CONFIG_MISC_INIT_R=y
 +# CONFIG_DISPLAY_BOARDINFO is not set
++CONFIG_MISC_INIT_R=y
 +CONFIG_HUSH_PARSER=y
 +CONFIG_CMD_BOOTZ=y
-+# CONFIG_CMD_IMI is not set
-+# CONFIG_CMD_FLASH is not set
 +# CONFIG_CMD_LOADS is not set
 +CONFIG_CMD_MMC=y
-+CONFIG_CMD_NAND=y
-+CONFIG_CMD_DHCP=y
-+CONFIG_CMD_PING=y
++# CONFIG_CMD_BOOTP is not set
++# CONFIG_CMD_TFTPBOOT is not set
++# CONFIG_CMD_NFS is not set
 +CONFIG_CMD_FAT=y
 +CONFIG_CMD_FS_GENERIC=y
-+CONFIG_CMD_MTDPARTS=y
-+CONFIG_MTDIDS_DEFAULT="nand0=atmel_nand"
-+CONFIG_CMD_UBI=y
 +CONFIG_OF_CONTROL=y
-+CONFIG_DEFAULT_DEVICE_TREE="l1"
++CONFIG_SPL_OF_CONTROL=y
++CONFIG_OF_SPL_REMOVE_PROPS="interrupts interrupt-parent dma-names dmas"
 +CONFIG_ENV_IS_IN_FAT=y
++CONFIG_SYS_REDUNDAND_ENVIRONMENT=y
 +CONFIG_ENV_FAT_FILE="u-boot.env"
++CONFIG_SYS_RELOC_GD_ENV_ADDR=y
 +CONFIG_DM=y
++CONFIG_SPL_DM=y
 +CONFIG_CLK=y
++CONFIG_SPL_CLK=y
 +CONFIG_CLK_AT91=y
 +CONFIG_AT91_UTMI=y
 +CONFIG_AT91_H32MX=y
-+CONFIG_DM_GPIO=y
 +CONFIG_AT91_GPIO=y
 +CONFIG_DM_I2C=y
 +CONFIG_SYS_I2C_AT91=y
 +CONFIG_I2C_EEPROM=y
-+CONFIG_DM_MMC=y
 +CONFIG_GENERIC_ATMEL_MCI=y
-+CONFIG_NAND=y
-+CONFIG_NAND_ATMEL=y
++CONFIG_MTD_UBI=y
 +CONFIG_DM_ETH=y
 +CONFIG_MACB=y
 +CONFIG_PINCTRL=y
++CONFIG_SPL_PINCTRL=y
 +CONFIG_PINCTRL_AT91=y
 +CONFIG_DM_SERIAL=y
-+CONFIG_DEBUG_UART_ATMEL=y
 +CONFIG_DEBUG_UART_ANNOUNCE=y
 +CONFIG_ATMEL_USART=y
 +CONFIG_SPI=y
 +CONFIG_DM_SPI=y
 +CONFIG_TIMER=y
++CONFIG_SPL_TIMER=y
 +CONFIG_ATMEL_PIT_TIMER=y
++CONFIG_LZO=y
 +CONFIG_OF_LIBFDT_OVERLAY=y
-+CONFIG_SPL_OF_LIBFDT=y
 diff --git a/configs/l1_nandflash_defconfig b/configs/l1_nandflash_defconfig
 new file mode 100644
-index 0000000000..72b1fd2f13
+index 0000000000..764d9e56f0
 --- /dev/null
 +++ b/configs/l1_nandflash_defconfig
-@@ -0,0 +1,66 @@
+@@ -0,0 +1,94 @@
 +CONFIG_ARM=y
++CONFIG_SKIP_LOWLEVEL_INIT=y
++CONFIG_ARCH_CPU_INIT=y
 +CONFIG_ARCH_AT91=y
 +CONFIG_SYS_TEXT_BASE=0x26f00000
-+CONFIG_TARGET_L1=y
 +CONFIG_SYS_MALLOC_F_LEN=0x2000
++CONFIG_TARGET_L1=y
++CONFIG_SPL_GPIO=y
++CONFIG_SPL_LIBCOMMON_SUPPORT=y
++CONFIG_SPL_LIBGENERIC_SUPPORT=y
++CONFIG_NR_DRAM_BANKS=1
++CONFIG_DM_GPIO=y
++CONFIG_DEFAULT_DEVICE_TREE="l1"
++CONFIG_SPL_TEXT_BASE=0x200000
++CONFIG_SPL_SERIAL=y
++CONFIG_SPL_DRIVERS_MISC=y
++CONFIG_SPL=y
 +CONFIG_DEBUG_UART_BOARD_INIT=y
 +CONFIG_DEBUG_UART_BASE=0xfc00c000
 +CONFIG_DEBUG_UART_CLOCK=100000000
++CONFIG_ENV_OFFSET_REDUND=0x100000
 +CONFIG_DEBUG_UART=y
 +CONFIG_ENV_VARS_UBOOT_CONFIG=y
-+CONFIG_NR_DRAM_BANKS=1
++CONFIG_SYS_LOAD_ADDR=0x22000000
 +CONFIG_FIT=y
 +CONFIG_NAND_BOOT=y
 +CONFIG_BOOTDELAY=1
@@ -665,18 +690,20 @@ index 0000000000..72b1fd2f13
 +CONFIG_BOOTARGS="console=ttyS0,115200 earlyprintk cma=0 mtdparts=atmel_nand:256k(bootstrap)ro,768k(uboot)ro,512k(uboot-env),-(ubi) rootfstype=ubifs ubi.mtd=3 root=ubi0:rootfs"
 +CONFIG_USE_BOOTCOMMAND=y
 +CONFIG_BOOTCOMMAND="ubi part ubi;ubifsmount ubi0:rootfs;ubifsload 0x21000000 /boot/l1.dtb;ubifsload 0x22000000 /boot/zImage;bootz 0x22000000 - 0x21000000"
-+CONFIG_CONSOLE_MUX=y
-+CONFIG_MISC_INIT_R=y
 +# CONFIG_DISPLAY_BOARDINFO is not set
++CONFIG_MISC_INIT_R=y
++CONFIG_SPL_NAND_SUPPORT=y
++CONFIG_SPL_NAND_DRIVERS=y
++CONFIG_SPL_NAND_BASE=y
 +CONFIG_HUSH_PARSER=y
 +CONFIG_CMD_BOOTZ=y
-+# CONFIG_CMD_IMI is not set
 +# CONFIG_CMD_FLASH is not set
 +# CONFIG_CMD_LOADS is not set
 +CONFIG_CMD_MMC=y
 +CONFIG_CMD_NAND=y
-+CONFIG_CMD_DHCP=y
-+CONFIG_CMD_PING=y
++# CONFIG_CMD_BOOTP is not set
++# CONFIG_CMD_TFTPBOOT is not set
++# CONFIG_CMD_NFS is not set
 +CONFIG_CMD_FAT=y
 +CONFIG_CMD_FS_GENERIC=y
 +CONFIG_CMD_MTDPARTS=y
@@ -684,41 +711,54 @@ index 0000000000..72b1fd2f13
 +CONFIG_MTDPARTS_DEFAULT="mtdparts=atmel_nand:256k(bootstrap)ro,768k(uboot)ro,512k(uboot-env),-(ubi)"
 +CONFIG_CMD_UBI=y
 +CONFIG_OF_CONTROL=y
-+CONFIG_DEFAULT_DEVICE_TREE="l1"
++CONFIG_SPL_OF_CONTROL=y
++CONFIG_OF_SPL_REMOVE_PROPS="interrupts interrupt-parent dma-names dmas"
 +CONFIG_ENV_IS_IN_NAND=y
++CONFIG_SYS_REDUNDAND_ENVIRONMENT=y
++CONFIG_SYS_RELOC_GD_ENV_ADDR=y
 +CONFIG_DM=y
++CONFIG_SPL_DM=y
 +CONFIG_CLK=y
++CONFIG_SPL_CLK=y
 +CONFIG_CLK_AT91=y
 +CONFIG_AT91_UTMI=y
 +CONFIG_AT91_H32MX=y
-+CONFIG_DM_GPIO=y
 +CONFIG_AT91_GPIO=y
 +CONFIG_DM_I2C=y
 +CONFIG_SYS_I2C_AT91=y
 +CONFIG_I2C_EEPROM=y
-+CONFIG_DM_MMC=y
 +CONFIG_GENERIC_ATMEL_MCI=y
++CONFIG_MTD=y
 +CONFIG_NAND_ATMEL=y
++CONFIG_PMECC_CAP=4
++CONFIG_SPL_GENERATE_ATMEL_PMECC_HEADER=y
++CONFIG_SYS_NAND_BLOCK_SIZE=0x20000
++CONFIG_SYS_NAND_ONFI_DETECTION=y
++CONFIG_SYS_NAND_PAGE_COUNT=0x40
++CONFIG_SYS_NAND_PAGE_SIZE=0x800
++CONFIG_SYS_NAND_OOBSIZE=0x40
++CONFIG_SYS_NAND_U_BOOT_LOCATIONS=y
++CONFIG_SYS_NAND_U_BOOT_OFFS=0x40000
 +CONFIG_DM_ETH=y
 +CONFIG_MACB=y
 +CONFIG_PINCTRL=y
++CONFIG_SPL_PINCTRL=y
 +CONFIG_PINCTRL_AT91=y
 +CONFIG_DM_SERIAL=y
-+CONFIG_DEBUG_UART_ATMEL=y
 +CONFIG_DEBUG_UART_ANNOUNCE=y
 +CONFIG_ATMEL_USART=y
 +CONFIG_SPI=y
 +CONFIG_DM_SPI=y
 +CONFIG_TIMER=y
++CONFIG_SPL_TIMER=y
 +CONFIG_ATMEL_PIT_TIMER=y
 +CONFIG_OF_LIBFDT_OVERLAY=y
-+CONFIG_SPL_OF_LIBFDT=y
 diff --git a/include/configs/l1.h b/include/configs/l1.h
 new file mode 100644
-index 0000000000..677ba820a4
+index 0000000000..eaacee9296
 --- /dev/null
 +++ b/include/configs/l1.h
-@@ -0,0 +1,91 @@
+@@ -0,0 +1,56 @@
 +/* SPDX-License-Identifier: GPL-2.0+ */
 +/*
 + * Based on configuration settings for the SAMA5D4 Xplained ultra board.
@@ -740,9 +780,6 @@ index 0000000000..677ba820a4
 +/* SDRAM */
 +#define CONFIG_SYS_SDRAM_BASE		0x20000000
 +#define CONFIG_SYS_SDRAM_SIZE		SZ_256M
-+#define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE
-+#define CONFIG_SYS_MEMTEST_END		\
-+	(CONFIG_SYS_MEMTEST_START + CONFIG_SYS_SDRAM_SIZE - SZ_32M)
 +
 +#ifdef CONFIG_SPL_BUILD
 +#define CONFIG_SYS_INIT_SP_ADDR		0x218000
@@ -751,28 +788,17 @@ index 0000000000..677ba820a4
 +	(CONFIG_SYS_SDRAM_BASE + 16 * 1024 - GENERATED_GBL_DATA_SIZE)
 +#endif
 +
-+#define CONFIG_SYS_LOAD_ADDR		0x22000000 /* load address */
-+
-+#ifdef CONFIG_CMD_SF
-+#define CONFIG_SF_DEFAULT_SPEED		30000000
-+#endif
-+
 +/* NAND flash */
 +#ifdef CONFIG_CMD_NAND
 +#define CONFIG_SYS_MAX_NAND_DEVICE	1
-+#define CONFIG_SYS_NAND_BASE		ATMEL_BASE_CS3
++#define CONFIG_SYS_NAND_BASE		0x80000000
 +/* our ALE is AD21 */
 +#define CONFIG_SYS_NAND_MASK_ALE	(1 << 21)
 +/* our CLE is AD22 */
 +#define CONFIG_SYS_NAND_MASK_CLE	(1 << 22)
-+#define CONFIG_SYS_NAND_ONFI_DETECTION
-+/* PMECC & PMERRLOC */
-+#define CONFIG_ATMEL_NAND_HWECC
-+#define CONFIG_ATMEL_NAND_HW_PMECC
 +#endif
 +
 +/* SPL */
-+#define CONFIG_SPL_TEXT_BASE		0x200000
 +#define CONFIG_SPL_MAX_SIZE		0x18000
 +#define CONFIG_SPL_BSS_START_ADDR	0x20000000
 +#define CONFIG_SPL_BSS_MAX_SIZE		0x80000
@@ -782,29 +808,8 @@ index 0000000000..677ba820a4
 +#define CONFIG_SYS_MONITOR_LEN		(512 << 10)
 +
 +#ifdef CONFIG_SD_BOOT
-+#define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION	1
 +#define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME		"u-boot.img"
-+
-+#elif CONFIG_SYS_USE_NANDFLASH
-+#elif CONFIG_SPI_BOOT
-+#define CONFIG_SYS_SPI_U_BOOT_OFFS		0x10000
-+
-+#elif CONFIG_NAND_BOOT
-+#define CONFIG_SPL_NAND_DRIVERS
-+#define CONFIG_SPL_NAND_BASE
 +#endif
-+
-+#define CONFIG_PMECC_CAP			4
-+#define CONFIG_PMECC_SECTOR_SIZE		512
-+#define CONFIG_SYS_NAND_U_BOOT_OFFS		0x40000
-+#define CONFIG_SYS_NAND_5_ADDR_CYCLE
-+#define CONFIG_SYS_NAND_PAGE_SIZE		0x0800
-+#define CONFIG_SYS_NAND_PAGE_COUNT		64
-+#define CONFIG_SYS_NAND_OOBSIZE			64
-+#define CONFIG_SYS_NAND_BLOCK_SIZE		0x20000
-+#define CONFIG_SYS_NAND_BAD_BLOCK_POS		0x0
-+#define CONFIG_SYS_NAND_USE_FLASH_BBT
-+#define CONFIG_SPL_GENERATE_ATMEL_PMECC_HEADER
 +
 +/* Watchdog support */
 +#define CONFIG_HW_WATCHDOG

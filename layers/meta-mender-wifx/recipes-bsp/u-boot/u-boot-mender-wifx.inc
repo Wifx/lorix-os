@@ -1,7 +1,7 @@
 # Copyright (c) 2022, Wifx Sarl <info@iot.wifx.net>
 # All rights reserved.
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/files/:${THISDIR}/files/v2019.04-at91/:"
+FILESEXTRAPATHS_prepend := "${THISDIR}/files:${THISDIR}/files/v2022.01-at91:"
 
 # The generic patch from Mender generates a warning. We replace it by our own
 # which patches exactly the same things without warning.

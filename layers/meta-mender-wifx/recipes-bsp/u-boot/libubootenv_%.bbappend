@@ -1,8 +1,6 @@
 # Copyright (c) 2022, Wifx Sarl <info@iot.wifx.net>
 # All rights reserved.
 
-require u-boot-mender-wifx-common.inc
-
 FILES_${PN}_remove_mender-uboot = " /data/u-boot/fw_env.config"
 
 do_install_append_mender-uboot() {
