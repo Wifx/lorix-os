@@ -19,6 +19,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-528] Update mender-artifact from 3.5.2 to 3.7.0
 - Update at91bootstrap to 3.10.2
 - Update u-boot-at91 to 2022.01
+- Revert pciutils to default from Poky (3.6.2 -> 3.6.4)
+- Revert networkmanager-openvpn to default from oe (1.8.12)
+- Revert libuv to default from oe (1.32.0 -> 1.36.0)
+- Revert monit to default from oe (5.25.2 -> 5.26.0)
+- Revert mbedtls to default from oe (2.16.2 -> 2.16.6)
+- Revert curl to default from Poky (7.66.0 -> 7.69.1)
+- Revert acl to default from Poky (2.2.52 -> 2.2.53)
+- Revert attr to default from Poky (2.4.47 -> 2.4.48)
+- Revert ca-certificate to default from Poky (20211016)
+- Revert sudo to default from Poky (1.8.31 -> 1.8.32)
+- Revert libidn2 to default from Poky (2.2.0 -> 2.3.0)
+- Revert iputils to default from Poky (s20190709)
+- Revert iptables to default from Poky (1.8.4)
+- Revert ethtool to default from Poky (5.4)
+- Revert protobuf-c to default from oe (1.3.3)
+- Revert nodejs to default from oe (12.21.0 -> 12.22.2)
+- Revert opkg-utils to default from Poky (0.4.2)
 
 ## [1.5.0] - 2022-06-08
 
