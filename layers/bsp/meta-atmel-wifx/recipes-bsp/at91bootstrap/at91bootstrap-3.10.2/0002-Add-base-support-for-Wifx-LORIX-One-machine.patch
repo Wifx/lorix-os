@@ -1,8 +1,9 @@
-From da0f8abe8b6511c7e0d35b9eefd06356ac8c6a69 Mon Sep 17 00:00:00 2001
+From 76385c8402bfbcb846e0cb1121c19c112f7d9d27 Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
-Date: Mon, 11 May 2020 12:01:38 +0200
-Subject: [PATCH 2/3] Add LORIX One support
+Date: Thu, 28 Jul 2022 13:51:04 +0200
+Subject: [PATCH 2/3] Add base support for Wifx LORIX One machine
 
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
 ---
  contrib/board/Config.in.board                 |   2 +
  contrib/board/Config.in.boardname             |   2 +
@@ -11,25 +12,25 @@ Subject: [PATCH 2/3] Add LORIX One support
  .../wifx/lorix_one_256/Config.in.boardname    |   2 +
  .../wifx/lorix_one_256/Config.in.linux_arg    |   3 +
  contrib/board/wifx/lorix_one_256/board.mk     |   2 +
- .../board/wifx/lorix_one_256/lorix_one_256.c  | 745 ++++++++++++++++++
- .../board/wifx/lorix_one_256/lorix_one_256.h  |  97 +++
- .../lorix_one_256_nf_uboot_defconfig          |   9 +
- .../lorix_one_256_sd_uboot_defconfig          |   9 +
+ .../board/wifx/lorix_one_256/lorix_one_256.c  | 747 ++++++++++++++++++
+ .../board/wifx/lorix_one_256/lorix_one_256.h  |  96 +++
+ .../lorix_one_256_nf_uboot_defconfig          |   8 +
+ .../lorix_one_256_sd_uboot_defconfig          |   8 +
  .../board/wifx/lorix_one_512/Config.in.board  |  16 +
  .../wifx/lorix_one_512/Config.in.boardname    |   2 +
  .../wifx/lorix_one_512/Config.in.linux_arg    |   3 +
  contrib/board/wifx/lorix_one_512/board.mk     |   2 +
- .../board/wifx/lorix_one_512/lorix_one_512.c  | 745 ++++++++++++++++++
- .../board/wifx/lorix_one_512/lorix_one_512.h  |  97 +++
- .../lorix_one_512_nf_uboot_defconfig          |   9 +
- .../lorix_one_512_sd_uboot_defconfig          |   9 +
+ .../board/wifx/lorix_one_512/lorix_one_512.c  | 747 ++++++++++++++++++
+ .../board/wifx/lorix_one_512/lorix_one_512.h  |  96 +++
+ .../lorix_one_512_nf_uboot_defconfig          |   8 +
+ .../lorix_one_512_sd_uboot_defconfig          |   8 +
  contrib/include/contrib_board.h               |   8 +
  driver/at91_twi.c                             |   2 +
  driver/board_hw_info.c                        |  40 +
  include/board_hw_info.h                       |   3 +
  include/twi.h                                 |   1 +
  scripts/addpmecchead.py                       |   6 +-
- 25 files changed, 1831 insertions(+), 1 deletion(-)
+ 25 files changed, 1829 insertions(+), 1 deletion(-)
  create mode 100644 contrib/board/wifx/lorix_one_256/Config.in.board
  create mode 100644 contrib/board/wifx/lorix_one_256/Config.in.boardname
  create mode 100644 contrib/board/wifx/lorix_one_256/Config.in.linux_arg
@@ -48,7 +49,7 @@ Subject: [PATCH 2/3] Add LORIX One support
  create mode 100644 contrib/board/wifx/lorix_one_512/lorix_one_512_sd_uboot_defconfig
 
 diff --git a/contrib/board/Config.in.board b/contrib/board/Config.in.board
-index 7e6eb97..c73cc73 100644
+index 7e6eb972..c73cc73e 100644
 --- a/contrib/board/Config.in.board
 +++ b/contrib/board/Config.in.board
 @@ -10,3 +10,5 @@ source "contrib/board/corewind/core9g25/Config.in.board"
@@ -58,7 +59,7 @@ index 7e6eb97..c73cc73 100644
 +source "contrib/board/wifx/lorix_one_256/Config.in.board"
 +source "contrib/board/wifx/lorix_one_512/Config.in.board"
 diff --git a/contrib/board/Config.in.boardname b/contrib/board/Config.in.boardname
-index 123ec74..bb11763 100644
+index 123ec74a..bb11763f 100644
 --- a/contrib/board/Config.in.boardname
 +++ b/contrib/board/Config.in.boardname
 @@ -10,3 +10,5 @@ source "contrib/board/corewind/core9g25/Config.in.boardname"
@@ -68,7 +69,7 @@ index 123ec74..bb11763 100644
 +source "contrib/board/wifx/lorix_one_256/Config.in.boardname"
 +source "contrib/board/wifx/lorix_one_512/Config.in.boardname"
 diff --git a/contrib/board/Config.in.linux_arg b/contrib/board/Config.in.linux_arg
-index c29954d..16aa04e 100644
+index c29954df..16aa04e3 100644
 --- a/contrib/board/Config.in.linux_arg
 +++ b/contrib/board/Config.in.linux_arg
 @@ -10,3 +10,5 @@ source "contrib/board/corewind/core9g25/Config.in.linux_arg"
@@ -79,46 +80,46 @@ index c29954d..16aa04e 100644
 +source "contrib/board/wifx/lorix_one_512/Config.in.linux_arg"
 diff --git a/contrib/board/wifx/lorix_one_256/Config.in.board b/contrib/board/wifx/lorix_one_256/Config.in.board
 new file mode 100644
-index 0000000..7cf9f3c
+index 00000000..48a538c9
 --- /dev/null
 +++ b/contrib/board/wifx/lorix_one_256/Config.in.board
 @@ -0,0 +1,16 @@
-+config CONFIG_LORIX_ONE_256
++config LORIX_ONE_256
 +	bool "lorix_one_256"
 +	select SAMA5D4
-+	select CONFIG_CPU_V7
-+	select CONFIG_DDRC
++	select CPU_V7
++	select DDRC
 +	select ALLOW_NANDFLASH
 +	select ALLOW_SDCARD
 +	select ALLOW_CPU_CLK_600MHZ
 +	select ALLOW_CRYSTAL_12_000MHZ
-+	select CONFIG_HAS_EEPROM
-+	select CONFIG_HAS_PMIC_ACT8865
-+	select CONFIG_SUPPORT_PM
-+	select CONFIG_HAS_EHT0_PHY
++	select HAS_EEPROM
++	select HAS_PMIC_ACT8865
++	select SUPPORT_PM
++	select HAS_EHT0_PHY
 +	select SUPPORT_BUS_SPEED_200MHZ
 +	help
-+	  Use the LORIX One LoRa gateway board (256MB NAND version)
++	  Use the Wifx LORIX One LoRa gateway board (256MB NAND version)
 diff --git a/contrib/board/wifx/lorix_one_256/Config.in.boardname b/contrib/board/wifx/lorix_one_256/Config.in.boardname
 new file mode 100644
-index 0000000..779e43c
+index 00000000..0ea5dffe
 --- /dev/null
 +++ b/contrib/board/wifx/lorix_one_256/Config.in.boardname
 @@ -0,0 +1,2 @@
-+config CONFIG_BOARDNAME
-+	default "lorix_one_256" if CONFIG_LORIX_ONE_256
++config BOARDNAME
++	default "lorix_one_256" if LORIX_ONE_256
 diff --git a/contrib/board/wifx/lorix_one_256/Config.in.linux_arg b/contrib/board/wifx/lorix_one_256/Config.in.linux_arg
 new file mode 100644
-index 0000000..061762d
+index 00000000..2aed4b17
 --- /dev/null
 +++ b/contrib/board/wifx/lorix_one_256/Config.in.linux_arg
 @@ -0,0 +1,3 @@
-+config CONFIG_LINUX_KERNEL_ARG_STRING
-+	default "console=ttyS0,115200 mtdparts=atmel_nand:8M(bootstrap/kernel)ro,-(rootfs) rw rootfstype=ubifs ubi.mtd=1 root=ubi0:rootfs" if CONFIG_LORIX_ONE_256 && !CONFIG_SDCARD
-+	default "console=ttyS0,115200 root=/dev/mmcblk0p2 rootdelay=2" if CONFIG_LORIX_ONE_256 && CONFIG_SDCARD
++config LINUX_KERNEL_ARG_STRING
++	default "console=ttyS0,115200 mtdparts=atmel_nand:8M(bootstrap/kernel)ro,-(rootfs) rw rootfstype=ubifs ubi.mtd=1 root=ubi0:rootfs" if LORIX_ONE_256 && !SDCARD
++	default "console=ttyS0,115200 root=/dev/mmcblk0p2 rootdelay=2" if LORIX_ONE_256 && SDCARD
 diff --git a/contrib/board/wifx/lorix_one_256/board.mk b/contrib/board/wifx/lorix_one_256/board.mk
 new file mode 100644
-index 0000000..8976886
+index 00000000..8976886e
 --- /dev/null
 +++ b/contrib/board/wifx/lorix_one_256/board.mk
 @@ -0,0 +1,2 @@
@@ -126,16 +127,15 @@ index 0000000..8976886
 +ASFLAGS += -DCONFIG_LORIX_ONE_256
 diff --git a/contrib/board/wifx/lorix_one_256/lorix_one_256.c b/contrib/board/wifx/lorix_one_256/lorix_one_256.c
 new file mode 100644
-index 0000000..bf346f1
+index 00000000..334c567b
 --- /dev/null
 +++ b/contrib/board/wifx/lorix_one_256/lorix_one_256.c
-@@ -0,0 +1,745 @@
+@@ -0,0 +1,747 @@
 +/* ----------------------------------------------------------------------------
 + *         ATMEL Microcontroller Software Support
 + * ----------------------------------------------------------------------------
 + * Copyright (c) 2014, Atmel Corporation
-+ * Copyright (c) 2016-2020, Wifx Sàrl
-+ *                          Yannick Lanz <yannick.lanz@wifx.net>
++ * Copyright (c) 2016, Wifx Sarl <info@iot.wifx.net>
 + *
 + * All rights reserved.
 + *
@@ -193,8 +193,8 @@ index 0000000..bf346f1
 +	};
 +
 +	pio_configure(dbgu_pins);
-+	pmc_enable_periph_clock(AT91C_ID_PIOE);
-+	pmc_enable_periph_clock(AT91C_ID_USART3);
++	pmc_enable_periph_clock(AT91C_ID_PIOE, PMC_PERIPH_CLK_DIVIDER_NA);
++	pmc_enable_periph_clock(AT91C_ID_USART3, PMC_PERIPH_CLK_DIVIDER_NA);
 +}
 +
 +static void initialize_dbgu(void)
@@ -203,7 +203,7 @@ index 0000000..bf346f1
 +
 +	at91_dbgu_hw_init();
 +
-+	if (pmc_check_mck_h32mxdiv())
++	if (pmc_mck_check_h32mxdiv())
 +		usart_init(BAUDRATE(MASTER_CLOCK / 2, baudrate));
 +	else
 +		usart_init(BAUDRATE(MASTER_CLOCK, baudrate));
@@ -261,7 +261,7 @@ index 0000000..bf346f1
 +	ddramc_reg_config(&ddramc_reg);
 +
 +	/* enable ddr2 clock */
-+	pmc_enable_periph_clock(AT91C_ID_MPDDRC);
++	pmc_enable_periph_clock(AT91C_ID_MPDDRC, PMC_PERIPH_CLK_DIVIDER_NA);
 +	pmc_enable_system_clock(AT91C_PMC_DDR);
 +
 +	/* configure Shift Sampling Point of Data */
@@ -529,10 +529,10 @@ index 0000000..bf346f1
 +		{(char *)0, 0, 0, PIO_DEFAULT, PIO_PERIPH_A},
 +	};
 +
-+	pmc_enable_periph_clock(AT91C_ID_PIOA);
++	pmc_enable_periph_clock(AT91C_ID_PIOA, PMC_PERIPH_CLK_DIVIDER_NA);
 +	pio_configure(twi_pins);
 +
-+	pmc_enable_periph_clock(AT91C_ID_TWI0);
++	pmc_enable_periph_clock(AT91C_ID_TWI0, PMC_PERIPH_CLK_DIVIDER_NA);
 +
 +	return base_addr;
 +}
@@ -552,10 +552,10 @@ index 0000000..bf346f1
 +		{(char *)0, 0, 0, PIO_DEFAULT, PIO_PERIPH_A},
 +	};
 +
-+	pmc_enable_periph_clock(AT91C_ID_PIOB);
++	pmc_enable_periph_clock(AT91C_ID_PIOB, PMC_PERIPH_CLK_DIVIDER_NA);
 +	pio_configure(twi_pins);
 +
-+	pmc_enable_periph_clock(AT91C_ID_TWI2);
++	pmc_enable_periph_clock(AT91C_ID_TWI2, PMC_PERIPH_CLK_DIVIDER_NA);
 +
 +	return base_addr;
 +}
@@ -570,10 +570,10 @@ index 0000000..bf346f1
 +		{(char *)0, 0, 0, PIO_DEFAULT, PIO_PERIPH_A},
 +	};
 +
-+	pmc_enable_periph_clock(AT91C_ID_PIOC);
++	pmc_enable_periph_clock(AT91C_ID_PIOC, PMC_PERIPH_CLK_DIVIDER_NA);
 +	pio_configure(twi_pins);
 +
-+	pmc_enable_periph_clock(AT91C_ID_TWI3);
++	pmc_enable_periph_clock(AT91C_ID_TWI3, PMC_PERIPH_CLK_DIVIDER_NA);
 +
 +	return base_addr;
 +}
@@ -627,7 +627,7 @@ index 0000000..bf346f1
 +	 */
 +	pmc_enable_system_clock(AT91C_PMC_SMDCK);
 +	pmc_set_smd_clock_divider(AT91C_PMC_SMDDIV);
-+	pmc_enable_periph_clock(AT91C_ID_SMD);
++	pmc_enable_periph_clock(AT91C_ID_SMD, PMC_PERIPH_CLK_DIVIDER_NA);
 +	writel(0xF, (0x0C + AT91C_BASE_SMD));
 +	pmc_disable_periph_clock(AT91C_ID_SMD);
 +	pmc_disable_system_clock(AT91C_PMC_SMDCK);
@@ -646,9 +646,9 @@ index 0000000..bf346f1
 +	};
 +
 +	pio_configure(macb_pins);
-+	pmc_enable_periph_clock(AT91C_ID_PIOB);
++	pmc_enable_periph_clock(AT91C_ID_PIOB, PMC_PERIPH_CLK_DIVIDER_NA);
 +
-+	pmc_enable_periph_clock(AT91C_ID_GMAC);
++	pmc_enable_periph_clock(AT91C_ID_GMAC, PMC_PERIPH_CLK_DIVIDER_NA);
 +
 +	return base_addr;
 +}
@@ -674,7 +674,8 @@ index 0000000..bf346f1
 +	 */
 +
 +	/* Switch PCK/MCK on Main clock output */
-+	pmc_cfg_mck(BOARD_PRESCALER_MAIN_CLOCK);
++	pmc_mck_cfg_set(0, BOARD_PRESCALER_MAIN_CLOCK,
++			AT91C_PMC_PLLADIV2 | AT91C_PMC_MDIV | AT91C_PMC_CSS);
 +
 +	/* Configure PLLA = MOSC * (PLL_MULA + 1) / PLL_DIVA */
 +	pmc_cfg_plla(PLLA_SETTINGS);
@@ -684,7 +685,9 @@ index 0000000..bf346f1
 +	pmc_init_pll(0);
 +
 +	/* Switch MCK on PLLA output */
-+	pmc_cfg_mck(BOARD_PRESCALER_PLLA);
++	pmc_mck_cfg_set(0, BOARD_PRESCALER_PLLA,
++			AT91C_PMC_H32MXDIV | AT91C_PMC_PLLADIV2 |
++			AT91C_PMC_MDIV | AT91C_PMC_CSS);
 +
 +	/* Enable External Reset */
 +	writel(AT91C_RSTC_KEY_UNLOCK | AT91C_RSTC_URSTEN,
@@ -756,8 +759,8 @@ index 0000000..bf346f1
 +	/* Configure the PIO controller */
 +	pio_configure(pioe_pins);
 +
-+	pmc_enable_periph_clock(AT91C_ID_PIOB);
-+	pmc_enable_periph_clock(AT91C_ID_PIOE);
++	pmc_enable_periph_clock(AT91C_ID_PIOB, PMC_PERIPH_CLK_DIVIDER_NA);
++	pmc_enable_periph_clock(AT91C_ID_PIOE, PMC_PERIPH_CLK_DIVIDER_NA);
 +}
 +#endif /* #ifdef CONFIG_HW_INIT */
 +
@@ -784,8 +787,8 @@ index 0000000..bf346f1
 +
 +	/* Configure the PIO controller */
 +	pio_configure(mci_pins);
-+	pmc_enable_periph_clock(AT91C_ID_PIOE);
-+	pmc_enable_periph_clock(AT91C_ID_HSMCI1);
++	pmc_enable_periph_clock(AT91C_ID_PIOE, PMC_PERIPH_CLK_DIVIDER_NA);
++	pmc_enable_periph_clock(AT91C_ID_HSMCI1, PMC_PERIPH_CLK_DIVIDER_NA);
 +}
 +#endif /* #ifdef CONFIG_SDCARD */
 +
@@ -817,10 +820,10 @@ index 0000000..bf346f1
 +
 +	/* Configure the nand controller pins*/
 +	pio_configure(nand_pins);
-+	pmc_enable_periph_clock(AT91C_ID_PIOC);
++	pmc_enable_periph_clock(AT91C_ID_PIOC, PMC_PERIPH_CLK_DIVIDER_NA);
 +
 +	/* Enable the clock */
-+	pmc_enable_periph_clock(AT91C_ID_HSMC);
++	pmc_enable_periph_clock(AT91C_ID_HSMC, PMC_PERIPH_CLK_DIVIDER_NA);
 +
 +	/* EBI Configuration Register */
 +	writel((AT91C_EBICFG_DRIVE0_HIGH
@@ -877,16 +880,15 @@ index 0000000..bf346f1
 +#endif
 diff --git a/contrib/board/wifx/lorix_one_256/lorix_one_256.h b/contrib/board/wifx/lorix_one_256/lorix_one_256.h
 new file mode 100644
-index 0000000..c35f716
+index 00000000..3766e612
 --- /dev/null
 +++ b/contrib/board/wifx/lorix_one_256/lorix_one_256.h
-@@ -0,0 +1,97 @@
+@@ -0,0 +1,96 @@
 +/* ----------------------------------------------------------------------------
 + *         ATMEL Microcontroller Software Support
 + * ----------------------------------------------------------------------------
 + * Copyright (c) 2014, Atmel Corporation
-+ * Copyright (c) 2016-2020, Wifx Sàrl
-+ *                          Yannick Lanz <yannick.lanz@wifx.net>
++ * Copyright (c) 2016, Wifx Sarl <info@iot.wifx.net>
 + *
 + * All rights reserved.
 + *
@@ -980,12 +982,11 @@ index 0000000..c35f716
 +#endif /* __LORIX_ONE_256_H__ */
 diff --git a/contrib/board/wifx/lorix_one_256/lorix_one_256_nf_uboot_defconfig b/contrib/board/wifx/lorix_one_256/lorix_one_256_nf_uboot_defconfig
 new file mode 100644
-index 0000000..e06e5bc
+index 00000000..467d45aa
 --- /dev/null
 +++ b/contrib/board/wifx/lorix_one_256/lorix_one_256_nf_uboot_defconfig
-@@ -0,0 +1,9 @@
+@@ -0,0 +1,8 @@
 +CONFIG_LORIX_ONE_256=y
-+CONFIG_CPU_CLK_600MHZ=y
 +CONFIG_RAM_128MB=y
 +CONFIG_IMG_SIZE="0x000C0000"
 +CONFIG_DEBUG=y
@@ -995,12 +996,11 @@ index 0000000..e06e5bc
 +# CONFIG_DISABLE_ACT8865_I2C is not set
 diff --git a/contrib/board/wifx/lorix_one_256/lorix_one_256_sd_uboot_defconfig b/contrib/board/wifx/lorix_one_256/lorix_one_256_sd_uboot_defconfig
 new file mode 100644
-index 0000000..225c32d
+index 00000000..8cc3604b
 --- /dev/null
 +++ b/contrib/board/wifx/lorix_one_256/lorix_one_256_sd_uboot_defconfig
-@@ -0,0 +1,9 @@
+@@ -0,0 +1,8 @@
 +CONFIG_LORIX_ONE_256=y
-+CONFIG_CPU_CLK_600MHZ=y
 +CONFIG_RAM_128MB=y
 +CONFIG_SDCARD=y
 +CONFIG_DEBUG=y
@@ -1010,46 +1010,46 @@ index 0000000..225c32d
 +# CONFIG_DISABLE_ACT8865_I2C is not set
 diff --git a/contrib/board/wifx/lorix_one_512/Config.in.board b/contrib/board/wifx/lorix_one_512/Config.in.board
 new file mode 100644
-index 0000000..f1b7062
+index 00000000..40798706
 --- /dev/null
 +++ b/contrib/board/wifx/lorix_one_512/Config.in.board
 @@ -0,0 +1,16 @@
-+config CONFIG_LORIX_ONE_512
++config LORIX_ONE_512
 +	bool "lorix_one_512"
 +	select SAMA5D4
-+	select CONFIG_CPU_V7
-+	select CONFIG_DDRC
++	select CPU_V7
++	select DDRC
 +	select ALLOW_NANDFLASH
 +	select ALLOW_SDCARD
 +	select ALLOW_CPU_CLK_600MHZ
 +	select ALLOW_CRYSTAL_12_000MHZ
-+	select CONFIG_HAS_EEPROM
-+	select CONFIG_HAS_PMIC_ACT8865
-+	select CONFIG_SUPPORT_PM
-+	select CONFIG_HAS_EHT0_PHY
++	select HAS_EEPROM
++	select HAS_PMIC_ACT8865
++	select SUPPORT_PM
++	select HAS_EHT0_PHY
 +	select SUPPORT_BUS_SPEED_200MHZ
 +	help
-+	  Use the LORIX One LoRa gateway board (512MB NAND version)
++	  Use the Wifx LORIX One LoRa gateway board (512MB NAND version)
 diff --git a/contrib/board/wifx/lorix_one_512/Config.in.boardname b/contrib/board/wifx/lorix_one_512/Config.in.boardname
 new file mode 100644
-index 0000000..f9090f5
+index 00000000..f938d5d0
 --- /dev/null
 +++ b/contrib/board/wifx/lorix_one_512/Config.in.boardname
 @@ -0,0 +1,2 @@
-+config CONFIG_BOARDNAME
-+	default "lorix_one_512" if CONFIG_LORIX_ONE_512
++config BOARDNAME
++	default "lorix_one_512" if LORIX_ONE_512
 diff --git a/contrib/board/wifx/lorix_one_512/Config.in.linux_arg b/contrib/board/wifx/lorix_one_512/Config.in.linux_arg
 new file mode 100644
-index 0000000..6af3f2c
+index 00000000..c575cc37
 --- /dev/null
 +++ b/contrib/board/wifx/lorix_one_512/Config.in.linux_arg
 @@ -0,0 +1,3 @@
-+config CONFIG_LINUX_KERNEL_ARG_STRING
-+	default "console=ttyS0,115200 mtdparts=atmel_nand:8M(bootstrap/kernel)ro,-(rootfs) rw rootfstype=ubifs ubi.mtd=1 root=ubi0:rootfs" if CONFIG_LORIX_ONE_512 && !CONFIG_SDCARD
-+	default "console=ttyS0,115200 root=/dev/mmcblk0p2 rootdelay=2" if CONFIG_LORIX_ONE_512 && CONFIG_SDCARD
++config LINUX_KERNEL_ARG_STRING
++	default "console=ttyS0,115200 mtdparts=atmel_nand:8M(bootstrap/kernel)ro,-(rootfs) rw rootfstype=ubifs ubi.mtd=1 root=ubi0:rootfs" if LORIX_ONE_512 && !SDCARD
++	default "console=ttyS0,115200 root=/dev/mmcblk0p2 rootdelay=2" if LORIX_ONE_512 && SDCARD
 diff --git a/contrib/board/wifx/lorix_one_512/board.mk b/contrib/board/wifx/lorix_one_512/board.mk
 new file mode 100644
-index 0000000..e549285
+index 00000000..e5492857
 --- /dev/null
 +++ b/contrib/board/wifx/lorix_one_512/board.mk
 @@ -0,0 +1,2 @@
@@ -1057,16 +1057,15 @@ index 0000000..e549285
 +ASFLAGS += -DCONFIG_LORIX_ONE_512
 diff --git a/contrib/board/wifx/lorix_one_512/lorix_one_512.c b/contrib/board/wifx/lorix_one_512/lorix_one_512.c
 new file mode 100644
-index 0000000..191d09c
+index 00000000..8103e778
 --- /dev/null
 +++ b/contrib/board/wifx/lorix_one_512/lorix_one_512.c
-@@ -0,0 +1,745 @@
+@@ -0,0 +1,747 @@
 +/* ----------------------------------------------------------------------------
 + *         ATMEL Microcontroller Software Support
 + * ----------------------------------------------------------------------------
 + * Copyright (c) 2014, Atmel Corporation
-+ * Copyright (c) 2016-2020, Wifx Sàrl
-+ *                          Yannick Lanz <yannick.lanz@wifx.net>
++ * Copyright (c) 2016, Wifx Sarl <info@iot.wifx.net>
 + *
 + * All rights reserved.
 + *
@@ -1124,8 +1123,8 @@ index 0000000..191d09c
 +	};
 +
 +	pio_configure(dbgu_pins);
-+	pmc_enable_periph_clock(AT91C_ID_PIOE);
-+	pmc_enable_periph_clock(AT91C_ID_USART3);
++	pmc_enable_periph_clock(AT91C_ID_PIOE, PMC_PERIPH_CLK_DIVIDER_NA);
++	pmc_enable_periph_clock(AT91C_ID_USART3, PMC_PERIPH_CLK_DIVIDER_NA);
 +}
 +
 +static void initialize_dbgu(void)
@@ -1134,7 +1133,7 @@ index 0000000..191d09c
 +
 +	at91_dbgu_hw_init();
 +
-+	if (pmc_check_mck_h32mxdiv())
++	if (pmc_mck_check_h32mxdiv())
 +		usart_init(BAUDRATE(MASTER_CLOCK / 2, baudrate));
 +	else
 +		usart_init(BAUDRATE(MASTER_CLOCK, baudrate));
@@ -1192,7 +1191,7 @@ index 0000000..191d09c
 +	ddramc_reg_config(&ddramc_reg);
 +
 +	/* enable ddr2 clock */
-+	pmc_enable_periph_clock(AT91C_ID_MPDDRC);
++	pmc_enable_periph_clock(AT91C_ID_MPDDRC, PMC_PERIPH_CLK_DIVIDER_NA);
 +	pmc_enable_system_clock(AT91C_PMC_DDR);
 +
 +	/* configure Shift Sampling Point of Data */
@@ -1460,10 +1459,10 @@ index 0000000..191d09c
 +		{(char *)0, 0, 0, PIO_DEFAULT, PIO_PERIPH_A},
 +	};
 +
-+	pmc_enable_periph_clock(AT91C_ID_PIOA);
++	pmc_enable_periph_clock(AT91C_ID_PIOA, PMC_PERIPH_CLK_DIVIDER_NA);
 +	pio_configure(twi_pins);
 +
-+	pmc_enable_periph_clock(AT91C_ID_TWI0);
++	pmc_enable_periph_clock(AT91C_ID_TWI0, PMC_PERIPH_CLK_DIVIDER_NA);
 +
 +	return base_addr;
 +}
@@ -1483,10 +1482,10 @@ index 0000000..191d09c
 +		{(char *)0, 0, 0, PIO_DEFAULT, PIO_PERIPH_A},
 +	};
 +
-+	pmc_enable_periph_clock(AT91C_ID_PIOB);
++	pmc_enable_periph_clock(AT91C_ID_PIOB, PMC_PERIPH_CLK_DIVIDER_NA);
 +	pio_configure(twi_pins);
 +
-+	pmc_enable_periph_clock(AT91C_ID_TWI2);
++	pmc_enable_periph_clock(AT91C_ID_TWI2, PMC_PERIPH_CLK_DIVIDER_NA);
 +
 +	return base_addr;
 +}
@@ -1501,10 +1500,10 @@ index 0000000..191d09c
 +		{(char *)0, 0, 0, PIO_DEFAULT, PIO_PERIPH_A},
 +	};
 +
-+	pmc_enable_periph_clock(AT91C_ID_PIOC);
++	pmc_enable_periph_clock(AT91C_ID_PIOC, PMC_PERIPH_CLK_DIVIDER_NA);
 +	pio_configure(twi_pins);
 +
-+	pmc_enable_periph_clock(AT91C_ID_TWI3);
++	pmc_enable_periph_clock(AT91C_ID_TWI3, PMC_PERIPH_CLK_DIVIDER_NA);
 +
 +	return base_addr;
 +}
@@ -1558,7 +1557,7 @@ index 0000000..191d09c
 +	 */
 +	pmc_enable_system_clock(AT91C_PMC_SMDCK);
 +	pmc_set_smd_clock_divider(AT91C_PMC_SMDDIV);
-+	pmc_enable_periph_clock(AT91C_ID_SMD);
++	pmc_enable_periph_clock(AT91C_ID_SMD, PMC_PERIPH_CLK_DIVIDER_NA);
 +	writel(0xF, (0x0C + AT91C_BASE_SMD));
 +	pmc_disable_periph_clock(AT91C_ID_SMD);
 +	pmc_disable_system_clock(AT91C_PMC_SMDCK);
@@ -1577,9 +1576,9 @@ index 0000000..191d09c
 +	};
 +
 +	pio_configure(macb_pins);
-+	pmc_enable_periph_clock(AT91C_ID_PIOB);
++	pmc_enable_periph_clock(AT91C_ID_PIOB, PMC_PERIPH_CLK_DIVIDER_NA);
 +
-+	pmc_enable_periph_clock(AT91C_ID_GMAC);
++	pmc_enable_periph_clock(AT91C_ID_GMAC, PMC_PERIPH_CLK_DIVIDER_NA);
 +
 +	return base_addr;
 +}
@@ -1605,7 +1604,8 @@ index 0000000..191d09c
 +	 */
 +
 +	/* Switch PCK/MCK on Main clock output */
-+	pmc_cfg_mck(BOARD_PRESCALER_MAIN_CLOCK);
++	pmc_mck_cfg_set(0, BOARD_PRESCALER_MAIN_CLOCK,
++			AT91C_PMC_PLLADIV2 | AT91C_PMC_MDIV | AT91C_PMC_CSS);
 +
 +	/* Configure PLLA = MOSC * (PLL_MULA + 1) / PLL_DIVA */
 +	pmc_cfg_plla(PLLA_SETTINGS);
@@ -1615,7 +1615,9 @@ index 0000000..191d09c
 +	pmc_init_pll(0);
 +
 +	/* Switch MCK on PLLA output */
-+	pmc_cfg_mck(BOARD_PRESCALER_PLLA);
++	pmc_mck_cfg_set(0, BOARD_PRESCALER_PLLA,
++			AT91C_PMC_H32MXDIV | AT91C_PMC_PLLADIV2 |
++			AT91C_PMC_MDIV | AT91C_PMC_CSS);
 +
 +	/* Enable External Reset */
 +	writel(AT91C_RSTC_KEY_UNLOCK | AT91C_RSTC_URSTEN,
@@ -1687,8 +1689,8 @@ index 0000000..191d09c
 +	/* Configure the PIO controller */
 +	pio_configure(pioe_pins);
 +
-+	pmc_enable_periph_clock(AT91C_ID_PIOB);
-+	pmc_enable_periph_clock(AT91C_ID_PIOE);
++	pmc_enable_periph_clock(AT91C_ID_PIOB, PMC_PERIPH_CLK_DIVIDER_NA);
++	pmc_enable_periph_clock(AT91C_ID_PIOE, PMC_PERIPH_CLK_DIVIDER_NA);
 +}
 +#endif /* #ifdef CONFIG_HW_INIT */
 +
@@ -1715,8 +1717,8 @@ index 0000000..191d09c
 +
 +	/* Configure the PIO controller */
 +	pio_configure(mci_pins);
-+	pmc_enable_periph_clock(AT91C_ID_PIOE);
-+	pmc_enable_periph_clock(AT91C_ID_HSMCI1);
++	pmc_enable_periph_clock(AT91C_ID_PIOE, PMC_PERIPH_CLK_DIVIDER_NA);
++	pmc_enable_periph_clock(AT91C_ID_HSMCI1, PMC_PERIPH_CLK_DIVIDER_NA);
 +}
 +#endif /* #ifdef CONFIG_SDCARD */
 +
@@ -1748,10 +1750,10 @@ index 0000000..191d09c
 +
 +	/* Configure the nand controller pins*/
 +	pio_configure(nand_pins);
-+	pmc_enable_periph_clock(AT91C_ID_PIOC);
++	pmc_enable_periph_clock(AT91C_ID_PIOC, PMC_PERIPH_CLK_DIVIDER_NA);
 +
 +	/* Enable the clock */
-+	pmc_enable_periph_clock(AT91C_ID_HSMC);
++	pmc_enable_periph_clock(AT91C_ID_HSMC, PMC_PERIPH_CLK_DIVIDER_NA);
 +
 +	/* EBI Configuration Register */
 +	writel((AT91C_EBICFG_DRIVE0_HIGH
@@ -1808,16 +1810,15 @@ index 0000000..191d09c
 +#endif
 diff --git a/contrib/board/wifx/lorix_one_512/lorix_one_512.h b/contrib/board/wifx/lorix_one_512/lorix_one_512.h
 new file mode 100644
-index 0000000..18f1f41
+index 00000000..24535637
 --- /dev/null
 +++ b/contrib/board/wifx/lorix_one_512/lorix_one_512.h
-@@ -0,0 +1,97 @@
+@@ -0,0 +1,96 @@
 +/* ----------------------------------------------------------------------------
 + *         ATMEL Microcontroller Software Support
 + * ----------------------------------------------------------------------------
 + * Copyright (c) 2014, Atmel Corporation
-+ * Copyright (c) 2016-2020, Wifx Sàrl
-+ *                          Yannick Lanz <yannick.lanz@wifx.net>
++ * Copyright (c) 2016, Wifx Sarl <info@iot.wifx.net>
 + *
 + * All rights reserved.
 + *
@@ -1911,12 +1912,11 @@ index 0000000..18f1f41
 +#endif /* __LORIX_ONE_512_H__ */
 diff --git a/contrib/board/wifx/lorix_one_512/lorix_one_512_nf_uboot_defconfig b/contrib/board/wifx/lorix_one_512/lorix_one_512_nf_uboot_defconfig
 new file mode 100644
-index 0000000..2e1394f
+index 00000000..6f228a0b
 --- /dev/null
 +++ b/contrib/board/wifx/lorix_one_512/lorix_one_512_nf_uboot_defconfig
-@@ -0,0 +1,9 @@
+@@ -0,0 +1,8 @@
 +CONFIG_LORIX_ONE_512=y
-+CONFIG_CPU_CLK_600MHZ=y
 +CONFIG_RAM_128MB=y
 +CONFIG_IMG_SIZE="0x000C0000"
 +CONFIG_DEBUG=y
@@ -1926,12 +1926,11 @@ index 0000000..2e1394f
 +# CONFIG_DISABLE_ACT8865_I2C is not set
 diff --git a/contrib/board/wifx/lorix_one_512/lorix_one_512_sd_uboot_defconfig b/contrib/board/wifx/lorix_one_512/lorix_one_512_sd_uboot_defconfig
 new file mode 100644
-index 0000000..2a3dbfc
+index 00000000..4b2029e3
 --- /dev/null
 +++ b/contrib/board/wifx/lorix_one_512/lorix_one_512_sd_uboot_defconfig
-@@ -0,0 +1,9 @@
+@@ -0,0 +1,8 @@
 +CONFIG_LORIX_ONE_512=y
-+CONFIG_CPU_CLK_600MHZ=y
 +CONFIG_RAM_128MB=y
 +CONFIG_SDCARD=y
 +CONFIG_DEBUG=y
@@ -1940,7 +1939,7 @@ index 0000000..2a3dbfc
 +CONFIG_ACT8865_SET_VOLTAGE=y
 +# CONFIG_DISABLE_ACT8865_I2C is not set
 diff --git a/contrib/include/contrib_board.h b/contrib/include/contrib_board.h
-index 6579b72..3ef4ab7 100644
+index 6579b726..3ef4ab70 100644
 --- a/contrib/include/contrib_board.h
 +++ b/contrib/include/contrib_board.h
 @@ -65,4 +65,12 @@
@@ -1957,7 +1956,7 @@ index 6579b72..3ef4ab7 100644
 +
  #endif
 diff --git a/driver/at91_twi.c b/driver/at91_twi.c
-index cf65231..b3eabdc 100644
+index 28931ad9..c14a63a1 100644
 --- a/driver/at91_twi.c
 +++ b/driver/at91_twi.c
 @@ -52,6 +52,7 @@ unsigned char hdmi_twi_bus;
@@ -1968,16 +1967,16 @@ index cf65231..b3eabdc 100644
  
  #define AT91_MAX_TWI_SUPPORTED		16
  
-@@ -289,6 +290,7 @@ void twi_bus_init(unsigned int (*at91_twi_hw_init)(void))
+@@ -289,6 +290,7 @@ int twi_bus_init(unsigned int (*at91_twi_hw_init)(void))
  	wm8904_twi_bus	= 0xff;
  	act8865_twi_bus	= 0xff;
  	at24xx_twi_bus	= 0xff;
 +	attiny_twi_bus	= 0xff;
  
  	twi_init_done = 1;
- }
+ 
 diff --git a/driver/board_hw_info.c b/driver/board_hw_info.c
-index 92da730..72d710a 100644
+index 38331d2e..f852a088 100644
 --- a/driver/board_hw_info.c
 +++ b/driver/board_hw_info.c
 @@ -485,6 +485,22 @@ static unsigned int set_default_sn(void)
@@ -1985,21 +1984,21 @@ index 92da730..72d710a 100644
  	board_id_ek = BOARD_ID_SAMA5D2_ICP;
  	vendor_ek = VENDOR_MCHIP_RFO;
 +#elif defined(CONFIG_LORIX_ONE_256)
-+    /*
-+     * LORIX One (256MB NAND version)
-+     * Display Module: no
-+     * EK Module: LORIX_ONE_256, WIFX
-+     */
-+    board_id_ek = BOARD_ID_LORIX_ONE_256;
-+    vendor_cm = VENDOR_WIFX;
++	/*
++	* Wifx LORIX One (256MB NAND version)
++	* Display Module: no
++	* EK Module: LORIX_ONE_256, WIFX
++	*/
++	board_id_ek = BOARD_ID_LORIX_ONE_256;
++	vendor_cm = VENDOR_WIFX;
 +#elif defined(CONFIG_LORIX_ONE_512)
-+    /*
-+     * LORIX One (512MB NAND version)
-+     * Display Module: no
-+     * EK Module: LORIX_ONE_512, WIFX
-+     */
-+    board_id_ek = BOARD_ID_LORIX_ONE_512;
-+    vendor_cm = VENDOR_WIFX;
++	/*
++	* Wifx LORIX One (512MB NAND version)
++	* Display Module: no
++	* EK Module: LORIX_ONE_512, WIFX
++	*/
++	board_id_ek = BOARD_ID_LORIX_ONE_512;
++	vendor_cm = VENDOR_WIFX;
  #elif defined(CONFIG_SAM9X60EK) || defined(CONFIG_SAM9X60_DDR2_SIP_EB) || defined(CONFIG_SAM9X60_SDR_SIP_EB)
  	/* sam9x60ek ; sam9x60 ddr2 sip eb and sam9x60 sdr sip eb
  	 */
@@ -2008,34 +2007,34 @@ index 92da730..72d710a 100644
  	rev_id_dm = '1';
  	rev_id_ek = '1';
 +#elif defined(CONFIG_LORIX_ONE_256)
-+    /*
-+     * LORIX One (256MB NAND version)
-+     * Display Module: 'B', '2'
-+     * EK Module: 'B','3'
-+     */
-+    rev_cm = 'A';
-+    rev_dm = 'A';
-+    rev_ek = 'A';
-+    rev_id_cm = '1';
-+    rev_id_dm = '1';
-+    rev_id_ek = '1';
++	/*
++	* Wifx LORIX One (256MB NAND version)
++	* Display Module: 'B', '2'
++	* EK Module: 'B','3'
++	*/
++	rev_cm = 'A';
++	rev_dm = 'A';
++	rev_ek = 'A';
++	rev_id_cm = '1';
++	rev_id_dm = '1';
++	rev_id_ek = '1';
 +#elif defined(CONFIG_LORIX_ONE_512)
-+    /*
-+     * LORIX One (512MB NAND version)
-+     * Display Module: 'B', '2'
-+     * EK Module: 'B','3'
-+     */
-+    rev_cm = 'A';
-+    rev_dm = 'A';
-+    rev_ek = 'A';
-+    rev_id_cm = '1';
-+    rev_id_dm = '1';
-+    rev_id_ek = '1';
++	/*
++	* Wifx LORIX One (512MB NAND version)
++	* Display Module: 'B', '2'
++	* EK Module: 'B','3'
++	*/
++	rev_cm = 'A';
++	rev_dm = 'A';
++	rev_ek = 'A';
++	rev_id_cm = '1';
++	rev_id_dm = '1';
++	rev_id_ek = '1';
  #elif defined(CONFIG_SAM9X60EK)
  	rev_cm = 'A';
  	rev_dm = 'A';
 diff --git a/include/board_hw_info.h b/include/board_hw_info.h
-index a53fce6..a41060e 100644
+index a53fce66..a41060eb 100644
 --- a/include/board_hw_info.h
 +++ b/include/board_hw_info.h
 @@ -51,6 +51,8 @@
@@ -2056,7 +2055,7 @@ index a53fce6..a41060e 100644
  #define HW_INFO_TOTAL_SIZE	0x20
  
 diff --git a/include/twi.h b/include/twi.h
-index 3e13899..01502b2 100644
+index 89fa30b5..a599fc10 100644
 --- a/include/twi.h
 +++ b/include/twi.h
 @@ -32,6 +32,7 @@ extern unsigned char hdmi_twi_bus;
@@ -2068,7 +2067,7 @@ index 3e13899..01502b2 100644
  extern unsigned int twi_init_done;
  
 diff --git a/scripts/addpmecchead.py b/scripts/addpmecchead.py
-index 6e68e02..9f90773 100755
+index ba424e8a..ed84565a 100755
 --- a/scripts/addpmecchead.py
 +++ b/scripts/addpmecchead.py
 @@ -25,8 +25,12 @@ elif sys.argv[3] == "sam9x60_sdr_sip_eb":

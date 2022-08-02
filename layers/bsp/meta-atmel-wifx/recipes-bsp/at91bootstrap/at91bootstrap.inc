@@ -3,8 +3,7 @@
 
 COMPATIBLE_MACHINE = "sama5d4-wifx"
 
-AT91BOOTSTRAP_MACHINE ??= "${@'${MACHINE}'.replace('-', '_')}"
-
+AT91BOOTSTRAP_MACHINE_sama5d4-wifx ??= "${@'${MACHINE}'.replace('-', '_')}"
 AT91BOOTSTRAP_CONFIG_sama5d4-wifx ??= "${AT91BOOTSTRAP_MACHINE}_${@bb.utils.contains("IMAGE_FEATURES", "sdcard_variant", "sd", "nf", d)}_uboot"
 AT91BOOTSTRAP_TARGET_sama5d4-wifx ??= "${AT91BOOTSTRAP_CONFIG}_defconfig"
 AT91BOOTSTRAP_LOAD_sama5d4-wifx ??= "${@bb.utils.contains("IMAGE_FEATURES", "sdcard_variant", "sdboot", "nandflashboot", d)}-uboot"
