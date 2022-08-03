@@ -19,7 +19,10 @@ jobs:
         process:
             run-mode: exec
             program-path: /opt/udp-packet-forwarder/udp-packet-forwarder
-            program-arguments: -H /etc/opt/udp-packet-forwarder/hardware/hardware_conf.json -C /etc/opt/udp-packet-forwarder/channels/channels_conf.json -c /etc/opt/udp-packet-forwarder/gateway/chirpstack-gateway-bridge
+            program-arguments: >-
+              -H /etc/opt/udp-packet-forwarder/hardware/hardware_conf.json
+              -C /etc/opt/udp-packet-forwarder/channels/channels_conf.json
+              -c /etc/opt/udp-packet-forwarder/gateway/chirpstack-gateway-bridge
             delays:
                 start: 5000
                 term: 10000

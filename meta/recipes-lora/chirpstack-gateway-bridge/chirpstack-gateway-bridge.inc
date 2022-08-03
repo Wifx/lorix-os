@@ -9,11 +9,15 @@ SRCTAG = "v${PV}"
 SRC_URI += " \
     git://github.com/brocaar/chirpstack-gateway-bridge.git;protocol=https;tag=${SRCTAG} \
     file://0001-multiple-config-files.patch \
-    file://backend_concentratord.toml \
-    file://backend_semtech-udp.toml \
-    file://filters.toml \
-    file://general.toml \
-    file://integration.toml \
+    file://10-general.toml \
+    file://20-backend_semtech-udp.toml \
+    file://20-backend_concentratord.toml \
+    file://30-integration.toml \
+    file://40-filters.toml \
+    file://50-metrics.toml \
+    file://60-metadata.toml \
+    file://70-commands.toml \
+    file://99-custom.toml \
 "
 
 inherit goarch
@@ -52,19 +56,31 @@ do_install() {
 install_configs() {
     install -m 0755 -d ${D}${CONF_DIR}
 
-    install_config general.toml                         10-general.toml
-    install_config backend_semtech-udp.toml             20-backend_semtech-udp.toml
-    install_config backend_concentratord.toml           20-backend_concentratord.toml
-    install_config integration.toml                     30-integration.toml
-    install_config filters.toml                         40-filters.toml
+    install_config 10-general.toml
+    install_config 20-backend_semtech-udp.toml
+    install_config 20-backend_concentratord.toml
+    install_config 30-integration.toml
+    install_config 40-filters.toml
+    install_config 50-metrics.toml
+    install_config 60-metadata.toml
+    install_config 70-commands.toml
+    install_config 99-custom.toml
 }
 
 install_config() {
-    if [ -z "$1" ] || [ -z "$2"]; then
+    if [ -z "$1" ]; then
         bbfatal "Usage install_config <source> [dest]"
     fi
 
-    install -m 0644 ${WORKDIR}/$1 ${D}${CONF_DIR}/$2
+    SRC_FILE=$1
+
+    if [ -z "$2" ]; then
+        DST_FILE=$1
+    else
+        DST_FILE=$2
+    fi
+
+    install -m 0644 ${WORKDIR}/$SRC_FILE ${D}${CONF_DIR}/$DST_FILE
 }
 
 

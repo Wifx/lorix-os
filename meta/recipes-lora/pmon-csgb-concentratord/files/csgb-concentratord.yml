@@ -8,7 +8,10 @@ jobs:
         process:
             run-mode: exec
             program-path: /opt/chirpstack-concentratord/chirpstack-concentratord
-            program-arguments: -c /etc/opt/chirpstack-concentratord/00-concentratord.toml -c /etc/opt/chirpstack-concentratord/10-gateway.toml -c /etc/opt/chirpstack-concentratord/channels/channels.toml
+            program-arguments: >-
+              -c /etc/opt/chirpstack-concentratord/00-concentratord.toml
+              -c /etc/opt/chirpstack-concentratord/10-gateway.toml
+              -c /etc/opt/chirpstack-concentratord/channels/channels.toml
             delays:
                 start: 3000
                 term: 1000
@@ -19,7 +22,15 @@ jobs:
         process:
             run-mode: exec
             program-path: /opt/chirpstack-gateway-bridge/chirpstack-gateway-bridge
-            program-arguments: -c /etc/opt/chirpstack-gateway-bridge/10-general.toml -c /etc/opt/chirpstack-gateway-bridge/20-backend_concentratord.toml -c /etc/opt/chirpstack-gateway-bridge/30-integration.toml -c /etc/opt/chirpstack-gateway-bridge/40-filters.toml
+            program-arguments: >-
+              -c /etc/opt/chirpstack-gateway-bridge/10-general.toml
+              -c /etc/opt/chirpstack-gateway-bridge/20-backend_concentratord.toml
+              -c /etc/opt/chirpstack-gateway-bridge/30-integration.toml
+              -c /etc/opt/chirpstack-gateway-bridge/40-filters.toml
+              -c /etc/opt/chirpstack-gateway-bridge/50-metrics.toml
+              -c /etc/opt/chirpstack-gateway-bridge/60-metadata.toml
+              -c /etc/opt/chirpstack-gateway-bridge/70-commands.toml
+              -c /etc/opt/chirpstack-gateway-bridge/99-custom.toml
             delays:
                 start: 1000
                 term: 1000

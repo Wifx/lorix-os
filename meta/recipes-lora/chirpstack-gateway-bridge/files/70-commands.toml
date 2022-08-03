@@ -1,0 +1,10 @@
+# Executable commands.
+#
+# The configured commands can be triggered by sending a message to the
+# ChirpStack Gateway Bridge.
+#[commands]
+
+  # Example:
+#  [commands.commands.reboot]
+#    max_execution_duration="1s"
+#    command="/usr/bin/reboot"

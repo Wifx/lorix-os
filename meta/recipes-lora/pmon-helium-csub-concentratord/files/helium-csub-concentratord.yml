@@ -8,7 +8,10 @@ jobs:
         process:
             run-mode: exec
             program-path: /opt/chirpstack-concentratord/chirpstack-concentratord
-            program-arguments: -c /etc/opt/chirpstack-concentratord/00-concentratord.toml -c /etc/opt/chirpstack-concentratord/10-gateway.toml -c /etc/opt/chirpstack-concentratord/channels/channels.toml
+            program-arguments: >-
+              -c /etc/opt/chirpstack-concentratord/00-concentratord.toml
+              -c /etc/opt/chirpstack-concentratord/10-gateway.toml
+              -c /etc/opt/chirpstack-concentratord/channels/channels.toml
             delays:
                 start: 5000
                 term: 5000
@@ -30,7 +33,10 @@ jobs:
         process:
             run-mode: exec
             program-path: /opt/chirpstack-udp-bridge/chirpstack-udp-bridge
-            program-arguments: -c /etc/opt/chirpstack-udp-bridge/00-concentratord.toml -c /etc/opt/chirpstack-udp-bridge/10-udp-bridge.toml -c /etc/opt/chirpstack-udp-bridge/20-servers.toml
+            program-arguments: >-
+              -c /etc/opt/chirpstack-udp-bridge/00-concentratord.toml
+              -c /etc/opt/chirpstack-udp-bridge/10-udp-bridge.toml
+              -c /etc/opt/chirpstack-udp-bridge/20-servers.toml
             delays:
                 start: 5000
                 term: 10000

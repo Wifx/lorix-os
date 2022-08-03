@@ -1,0 +1,49 @@
+# Gateway meta-data.
+#
+# The meta-data will be added to every stats message sent by the ChirpStack Gateway
+# Bridge.
+#[meta_data]
+
+  # Static.
+  #
+  # Static key (string) / value (string) meta-data.
+#  [meta_data.static]
+
+    # Example:
+    # maintainer="john.doe@acme.com"
+
+
+  # Dynamic meta-data.
+  #
+  # Dynamic meta-data is retrieved by executing external commands.
+  # This makes it possible to for example execute an external command to
+  # read the gateway temperature.
+#  [meta_data.dynamic]
+
+    # Execution interval of the commands.
+#    execution_interval="5m0s"
+
+    # Max. execution duration.
+#    max_execution_duration="5s"
+
+    # Split delimiter.
+    #
+    # When the output of a command returns multiple lines, ChirpStack Gateway Bridge
+    # assumes multiple values are returned. In this case it will split by the given delimiter
+    # to obtain the key / value of each row. The key will be prefixed with the name of the
+    # configured command.
+#    split_delimiter="="
+
+
+  # Commands to execute.
+  #
+  # The value of the stdout will be used as the key value (string).
+  # In case the command failed, it is ignored. In case the same key is defined
+  # both as static and dynamic, the dynamic value has priority (as long as the)
+  # command does not fail.
+#  [meta_data.dynamic.commands]
+
+    # Examples:
+    # uptime="/usr/bin/uptime -p"
+
+    # antenna_gain="/usr/bin/manager lora hardware antenna"

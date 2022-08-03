@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.5.1] - Unreleased
 
+### Added
+
+- [LOR-522] Add ChirpStack Gateway Bridge aditionnal section files
+
 ### Changed
 
 - [LOR-525] Mender support based directly on meta-mender-core, meta-mender-wifx for Wifx specific overrides
