@@ -41,8 +41,8 @@ RDEPENDS_${PN} = "\
     base-files-machine \
     ${VIRTUAL-RUNTIME_base-utils} \
     ${VIRTUAL-RUNTIME_watchdog} \
-    ${@bb.utils.contains("DISTRO_FEATURES", "sysvinit", "${SYSVINIT_SCRIPTS}", "", d)} \
-    ${@bb.utils.contains("MACHINE_FEATURES", "efi", "${EFI_PROVIDER} kernel", "", d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', '${SYSVINIT_SCRIPTS}', '', d)} \
+    ${@bb.utils.contains('MACHINE_FEATURES', 'efi', '${EFI_PROVIDER} kernel', '', d)} \
     netbase \
     ${VIRTUAL-RUNTIME_login_manager} \
     ${VIRTUAL-RUNTIME_init_manager} \

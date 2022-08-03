@@ -15,7 +15,7 @@ RDEPENDS_${PN} = " \
     packagegroup-os-full-cmdline \
     packagegroup-os-connectivity \
     packagegroup-os-extended \
-    ${@bb.utils.contains("MACHINE_FEATURES", "lora", "packagegroup-os-lora", "", d)} \
+    ${@bb.utils.contains('MACHINE_FEATURES', 'lora', 'packagegroup-os-lora', '', d)} \
     libgpiod \
     os-release \
     chrony \
@@ -23,9 +23,9 @@ RDEPENDS_${PN} = " \
     opkg \
     distro-feed-configs \
     run-postinsts \
-    ${@bb.utils.contains("DISTRO_FEATURES", "openrc", "openrc", "", d)} \
-    ${@bb.utils.contains("DISTRO_FEATURES", "openrc", "openrc-base-files", "", d)} \
-    ${@bb.utils.contains("DISTRO_FEATURES", "manager", "manager", "", d)} \
-    ${@bb.utils.contains("DISTRO_FEATURES", "pmonitor", "pmonitor", "", d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'openrc', 'openrc', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'openrc', 'openrc-base-files', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'manager', 'manager', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'pmonitor', 'pmonitor', '', d)} \
     virtual/updater \
 "
