@@ -37,3 +37,10 @@ python () {
         d.setVar('AUDIENCE', 'Public')
         d.setVar('AUDIENCE_ID', 'pub')
 }
+
+do_deploy() {
+    # Make the os-release available in the deploy directory as well so we can
+    # use it for external image build tools.
+    install -m 644 ${D}/etc/os-release ${DEPLOYDIR}/os-release
+}
+addtask do_deploy before do_package after do_install
