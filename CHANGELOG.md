@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-527] Replace u-boot-sama5d4-wifx-fw-utils by u-boot-fw-utils-mender-auto-provided
 - [LOR-528] Update mender-artifact from 3.5.2 to 3.7.0
 - [LOR-532] Upgrade Manager to v0.13
+- [LOR-533] Upgrade gateway-rs to alpha 30
 
 ## [1.5.0] - 2022-06-08
 
