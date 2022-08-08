@@ -1,0 +1,60 @@
+*nat
+:PREROUTING ACCEPT [0:0]
+:INPUT ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+:POSTROUTING ACCEPT [0:0]
+COMMIT
+*filter
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+:PINGPROTECT - [0:0]
+:SSHPROTECT - [0:0]
+
+# Accept everything on loopback
+[0:0] -A INPUT -i lo -j ACCEPT
+
+# Drop non-conforming packets, such as malformed headers, etc.
+[0:0] -A INPUT -m state --state INVALID -j DROP
+
+# Accept everything on localhost to localhost
+[0:0] -A INPUT -s 127.0.0.1 -d 127.0.0.1 -j ACCEPT
+
+# Block remote packets claiming to be from a loopback address.
+[0:0] -A INPUT -s 127.0.0.0/8 ! -i lo -j DROP
+
+# Accept ICMP (echo-request) before accept all ESTABLISHED connection
+[0:0] -A INPUT -p icmp -m icmp --icmp-type echo-request -m comment --comment "Must stay before ACCEPT for ESTABLISHED" -j PINGPROTECT
+
+# Accept already existing connections
+[0:0] -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+
+# Accept ICMP (destination-unreachable, time-exceeded, parameter-problem)
+[0:0] -A INPUT -p icmp -m icmp --icmp-type destination-unreachable -j ACCEPT
+[0:0] -A INPUT -p icmp -m icmp --icmp-type time-exceeded -j ACCEPT
+[0:0] -A INPUT -p icmp -m icmp --icmp-type parameter-problem -j ACCEPT
+
+# Accept mDNS
+[0:0] -A INPUT -p udp -m udp --sport 5353 -j ACCEPT
+
+# Accept HTTP and HTTPS
+[0:0] -A INPUT -p tcp -m tcp --dport 80 --tcp-flags FIN,SYN,RST,ACK SYN -m state --state NEW -j ACCEPT
+[0:0] -A INPUT -p tcp -m tcp --dport 443 --tcp-flags FIN,SYN,RST,ACK SYN -m state --state NEW -j ACCEPT
+
+# Accept SSH with brute force protection
+[0:0] -A INPUT -p tcp -m tcp --dport 22 -m state --state NEW -j SSHPROTECT
+
+# Drop the rest for the INPUT chain
+[0:0] -A INPUT -j DROP
+
+# Manage ping protection PINGPROTECT chain
+[0:0] -A PINGPROTECT -m recent --name PING --set --rsource -m comment --comment "PING: Only 10 tries per source IP per second"
+[0:0] -A PINGPROTECT -m recent --name PING --update --seconds 1 --hitcount 10 --rttl --rsource -j DROP
+[0:0] -A PINGPROTECT -j ACCEPT
+
+# Manage SSH protection SSHPROTECT chain
+[0:0] -A SSHPROTECT -m recent --set --name SSH --rsource -m comment --comment "SSH: Only 4 tries per source IP per minute"
+[0:0] -A SSHPROTECT -m recent --update --seconds 60 --hitcount 4 --name SSH --rsource -j DROP
+[0:0] -A SSHPROTECT -j ACCEPT
+
+COMMIT
