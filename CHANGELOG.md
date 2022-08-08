@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - [LOR-508] Network connectivity check fails to validate global network (Internet) access
+- [LOR-523] After a hardware factory reset, software reboots lead to factory reset again
 
 ## [1.4.0] - 2021-12-22
 
