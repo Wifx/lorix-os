@@ -39,7 +39,7 @@ BOOT_PART="0"
 BOOT_PART_NAME="rootfsA"
 UPGRADE_AVAILABLE="0"
 
-preinit_mender_read_info() {
+preinit_dual_partition_read_info() {
     # Detect current running partition
     BOOT_PART=$(printenv mender_boot_part)
     if [ $? -ne 0 ]; then
@@ -60,25 +60,6 @@ preinit_mender_read_info() {
     if [ $UPGRADE_AVAILABLE -eq 1 ]; then
         echo "Upgrade is available"
     fi
-}
-
-preinit_mender_rollback() {
-    BOOT_PART_INACTIVE="0"
-    if [ $BOOT_PART -eq 0 ]; then
-        BOOT_PART_INACTIVE="1"
-    fi
-    # Generate new env file to minimize write access
-    cd /mnt
-    cat > /mnt/env <<END
-mender_boot_part $BOOT_PART_INACTIVE
-mender_boot_part_hex $BOOT_PART_INACTIVE
-upgrade_available 0
-bootcount 0
-END
-    setenv --script /mnt/env
-    # Rollback is now planned, need a reboot
-    echo "Rollback completed, rebooting..."
-    /sbin/reboot -df
 }
 
 preinit_mount_base() {
@@ -181,12 +162,10 @@ preinit_manage_reset() {
         fi
     fi
 
-    # If we are here, there is a reset condition
-    # but if an upgrade is pending, we need to rollback to previous partition before clearing the system
-    if [ $UPGRADE_AVAILABLE -eq 1 ]; then
-        echo "Upgrade pending, need a rollback"
-        preinit_mender_rollback
-    fi
+    # No need to revert the running partition since the factory reset
+    # caused already a rollback state in u-boot. 
+    # We are then already in previous working partition, we only need to remove
+    # overlay content.
 
     # Launch the factory-reset script in overlay root
     echo "==== factory-reset ===="
@@ -221,7 +200,7 @@ mount -t sysfs sysfs /sys
 mount -t proc proc /proc
 
 # Reading bootloader info like active root partition
-preinit_mender_read_info
+preinit_dual_partition_read_info
 
 # Mount the base directory
 preinit_mount_base
