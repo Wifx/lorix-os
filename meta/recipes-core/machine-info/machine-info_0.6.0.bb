@@ -2,4 +2,4 @@ require machine-info.inc
 
 PR = "r0"
 
-#SRC_URI[md5sum] = "2e3ca101d5a67a8f6b633dc0f92bdd0b"
+SRC_URI[md5sum] = "f12754a43163f43d647f6f6f7e0f0076"
