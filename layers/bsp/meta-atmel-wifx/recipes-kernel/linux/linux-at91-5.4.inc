@@ -22,7 +22,6 @@ SRC_URI += " \
     file://kernel-features/nf_tables/nf_tables6.cfg \
     file://kernel-features/wireguard/wireguard.scc;type=kmeta;destsuffix=kernel-meta \
     file://kernel-features/wireguard/wireguard.cfg \
-    file://0001-l1-add-support-for-the-Wifx-L1-board.patch \
 "
 
 SRC_URI_append_l1 = " \

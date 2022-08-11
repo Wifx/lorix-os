@@ -18,6 +18,7 @@ SRC_URI = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'file://systemd.cfg', '', d)} \
 "
 
+KBRANCH = "linux-${LINUX_VERSION}-at91"
 KMACHINE ?= "${MACHINE}"
 KCONFIG_MODE="--alldefconfig"
 
