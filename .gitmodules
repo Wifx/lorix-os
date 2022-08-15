@@ -1,6 +1,7 @@
 [submodule "meta-openembedded"]
 	path = layers/meta-openembedded
-	url = git://git.openembedded.org/meta-openembedded
+	url = https://github.com/openembedded/meta-openembedded.git
+	branch = dunfell
 [submodule "poky"]
 	path = poky
 	url = https://github.com/Wifx/poky.git
