@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Include Helium gateway-rs in optional packages for L1
 - [LOR-537] Update manager-gui to v0.14.2 
+- [LOR-538] Update ChirpStack Gateway Bridge to v3.14.3 
 
 ## [1.5.1] - 2022-08-08
 
