@@ -11,6 +11,7 @@ MACHINE_FEATURES_OVERRIDES += "sx1301"
 
 MACHINE_PRETTY_NAME = "LORIX One"
 
+# These packages will not be installed but availalbe through OPKG
 BAD_RECOMMENDATIONS += " \
     chirpstack-concentratord \
     chirpstack-udp-bridge \

@@ -5,7 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.5.1] - Unreleased
+## [1.5.2] - 2022-09-07
+
+### Changed
+
+- Include Helium gateway-rs in optional packages for L1
+- [LOR-537] Update manager-gui to v0.14.4
+- [LOR-538] Update ChirpStack Gateway Bridge to v3.14.3
+- [LOR-539] Update manager to v0.13.1
+
+## [1.5.1] - 2022-08-08
 
 ### Added
 
@@ -17,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-526] Replace u-boot-sama5d4-wifx 2018.09 by Atmel stock u-boot-at91 2019.04
 - [LOR-527] Replace u-boot-sama5d4-wifx-fw-utils by u-boot-fw-utils-mender-auto-provided
 - [LOR-528] Update mender-artifact from 3.5.2 to 3.7.0
+- [LOR-532] Upgrade Manager to v0.13
+- [LOR-533] Upgrade gateway-rs to alpha 30
+- [LOR-534] Upgrade ChirpStack UDP Bridge to v3.0.0
 - Update at91bootstrap to 3.10.2
 - Update u-boot-at91 to 2022.01
 - Revert pciutils to default from Poky (3.6.2 -> 3.6.4)
@@ -72,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - [LOR-508] Network connectivity check fails to validate global network (Internet) access
+- [LOR-523] After a hardware factory reset, software reboots lead to factory reset again
 
 ## [1.4.0] - 2021-12-22
 

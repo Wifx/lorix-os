@@ -4,6 +4,8 @@
 inherit wifx-setup
 inherit wifx-tools
 inherit wifx-machine
+
+# Remove this to disable mender
 inherit wifx-mender
 
 WORKSPACE_REV_HASH := "${@get_os_rev(True, d)}"

@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=99e425257f8a67b7efd81dc0009ed8ff"
 
 SRCTAG = "v${PV}"
 SRC_URI += " \
-    git://github.com/brocaar/chirpstack-gateway-bridge.git;protocol=https;tag=${SRCTAG} \
+    git://github.com/chirpstack/chirpstack-gateway-bridge.git;branch=v3;protocol=https;tag=${SRCTAG} \
     file://0001-multiple-config-files.patch \
     file://10-general.toml \
     file://20-backend_semtech-udp.toml \
@@ -39,6 +39,9 @@ export HOME = "${WORKDIR}"
 do_configure[noexec] = "1"
 
 do_compile() {
+
+    go mod tidy
+
     oe_runmake
 
     # Clear the modcache. go mod sets the permissions such that yocto will

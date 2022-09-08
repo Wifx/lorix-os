@@ -35,3 +35,8 @@ RDEPENDS_${PN}_l1 = " \
     pmon-csgb-concentratord \
     pmon-csub-concentratord \
 "
+
+RRECOMMENDS_${PN}_l1 = " \
+    helium-gateway \
+    pmon-helium-csub-concentratord \
+"

@@ -1,4 +1,4 @@
-SUMMARY = "ChirpStack concentratord/UDP bridge package//Helium Gateway"
+SUMMARY = "ChirpStack concentratord/UDP bridge package/Helium Gateway"
 DESCRIPTION = "Configuration setup for interfacing the ChirpStack Concentratord with the Chripstack UDP Bridge and the Helium Gateway forwarder."
 AUTHOR = "Wifx Sàrl"
 SECTION = "base"
