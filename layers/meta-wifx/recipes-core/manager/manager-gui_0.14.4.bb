@@ -2,4 +2,4 @@ require manager-gui.inc
 
 PR = "r0"
 
-SRC_URI[md5sum] = "b53c306e45a2a18c4d7f2c895fea9772"
+SRC_URI[md5sum] = "f9f0d061443a9002cbbb32b331933801"
