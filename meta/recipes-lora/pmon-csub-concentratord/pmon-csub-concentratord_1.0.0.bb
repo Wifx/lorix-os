@@ -17,6 +17,8 @@ SRC_URI = " \
     file://csub-concentratord.yml \
 "
 
+RPROVIDES_${PN} += "virtual/udp-packet-forwarder"
+
 S = "${WORKDIR}"
 
 INHIBIT_DEFAULT_DEPS = "1"
