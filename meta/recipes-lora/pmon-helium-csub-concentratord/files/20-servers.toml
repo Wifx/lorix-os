@@ -1,0 +1,5 @@
+# Listen locally for Helium gateway-rs connection
+[[udp_bridge.servers]]
+  server="127.0.0.1:1680"
+  keepalive_interval_secs=10
+  keepalive_max_failures=2

@@ -16,6 +16,7 @@ RDEPENDS_${PN} += " \
 SRC_URI = " \
     file://LICENSE \
     file://helium-csub-concentratord.yml \
+    file://20-servers.toml \
 "
 
 S = "${WORKDIR}"
@@ -28,6 +29,10 @@ do_compile[noexec] = "1"
 inherit pmonitor
 
 do_install() {
+
+    install -d ${D}/etc/opt/helium-gateway/chirpstack-udp-bridge
+    install ${WORKDIR}/20-servers.toml ${D}/etc/opt/helium-gateway/chirpstack-udp-bridge/20-servers.toml
+
     # Pmonitor service configuration files
     pmonitor_service_install ${WORKDIR}/helium-csub-concentratord.yml
 }

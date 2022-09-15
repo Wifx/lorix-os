@@ -1,5 +1,6 @@
-listen = "127.0.0.1:1700"
+listen = "127.0.0.1:1680"
 keypair = "/etc/opt/helium-gateway/gateway_key.bin"
+#keypair = "ecc://i2c-3:96?slot=X&network=mainnet"
 
 [log]
 method = "stdio"
@@ -12,14 +13,14 @@ enabled = false
 
 # OVERRIDE: Platform to use as part of update check. This MUST be overriden by a
 # local settings file
-platform = "resiot"
+platform = "wifx"
 
 # Channel to use, alpha, beta, release, or semver which pulls it from the
 # running program
 channel = "semver"
 
 # Interval in minutes between update checks
-interval = 10
+interval = 60
 
 # The github release stream to check for updates
 uri = "https://api.github.com/repos/helium/gateway-rs/releases"

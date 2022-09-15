@@ -1,0 +1,10 @@
+#!/bin/sh -e
+
+# install the package. postinst step will (re)start the service
+opkg install "${1}"
+
+# remove the package from temp storage
+rm "${1}"
+
+pmcli service helium-csub-concentratord job helium-gateway restart
+pmcli service helium-upf job helium-gateway restart

@@ -36,7 +36,7 @@ jobs:
             program-arguments: >-
               -c /etc/opt/chirpstack-udp-bridge/00-concentratord.toml
               -c /etc/opt/chirpstack-udp-bridge/10-udp-bridge.toml
-              -c /etc/opt/chirpstack-udp-bridge/20-servers.toml
+              -c /etc/opt/helium-gateway/chirpstack-udp-bridge/20-servers.toml
             delays:
                 start: 5000
                 term: 10000
