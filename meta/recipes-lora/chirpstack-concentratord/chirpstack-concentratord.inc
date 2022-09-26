@@ -160,7 +160,7 @@ set_default() {
         exit 1
     fi;
 
-    ln -snf "$ID.json" "${D}${CONF_DIR}/channels/$REGION/default"
+    ln -snf "$ID.toml" "${D}${CONF_DIR}/channels/$REGION/default"
 }
 
 
