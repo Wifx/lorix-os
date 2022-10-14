@@ -1,0 +1,67 @@
+From 26a2dc780e93f42dbc16988c177fdd5d247369e1 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Thu, 22 Jul 2021 12:18:27 +0200
+Subject: [PATCH 2/6] Add i2c3 bus support for SAMA5D4x family processor in dt
+
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
+---
+ arch/arm/boot/dts/sama5d4.dtsi | 36 ++++++++++++++++++++++++++++++++++
+ 1 file changed, 36 insertions(+)
+
+diff --git a/arch/arm/boot/dts/sama5d4.dtsi b/arch/arm/boot/dts/sama5d4.dtsi
+index e1b89147a935..5ed547b6c352 100644
+--- a/arch/arm/boot/dts/sama5d4.dtsi
++++ b/arch/arm/boot/dts/sama5d4.dtsi
+@@ -429,6 +429,28 @@ i2c2: i2c@f8024000 {
+ 				status = "disabled";
+ 			};
+ 
++			i2c3: i2c@fc038000 {
++				compatible = "atmel,sama5d4-i2c";
++				reg = <0xfc038000 0x4000>;
++				interrupts = <62 IRQ_TYPE_LEVEL_HIGH 6>;
++				dmas = <&dma1
++					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1)
++					| AT91_XDMAC_DT_PERID(8))>,
++				       <&dma1
++					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1)
++					| AT91_XDMAC_DT_PERID(9))>;
++				dma-names = "tx", "rx";
++				pinctrl-names = "default", "gpio";
++				pinctrl-0 = <&pinctrl_i2c3>;
++				pinctrl-1 = <&pinctrl_i2c3_gpio>;
++				sda-gpios = <&pioC 25 GPIO_ACTIVE_HIGH>;
++				scl-gpios = <&pioC 26 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
++				#address-cells = <1>;
++				#size-cells = <0>;
++				clocks = <&pmc PMC_TYPE_PERIPHERAL 62>;
++				status = "disabled";
++			};
++
+ 			sfr: sfr@f8028000 {
+ 				compatible = "atmel,sama5d4-sfr", "syscon";
+ 				reg = <0xf8028000 0x60>;
+@@ -1035,6 +1057,20 @@ pinctrl_i2c2_gpio: i2c2-gpio {
+ 					};
+ 				};
+ 
++				i2c3 {
++					pinctrl_i2c3: i2c3-0 {
++						atmel,pins =
++							<AT91_PIOC 25 AT91_PERIPH_B AT91_PINCTRL_NONE
++							 AT91_PIOC 26 AT91_PERIPH_B AT91_PINCTRL_NONE>;
++					};
++
++					pinctrl_i2c3_gpio: i2c3-gpio {
++						atmel,pins =
++							<AT91_PIOC 25 AT91_PERIPH_GPIO AT91_PINCTRL_NONE
++							 AT91_PIOC 26 AT91_PERIPH_GPIO AT91_PINCTRL_NONE>;
++					};
++				};
++
+ 				isi {
+ 					pinctrl_isi_data_0_7: isi-0-data-0-7 {
+ 						atmel,pins =
+-- 
+2.34.1
+

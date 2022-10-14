@@ -1,0 +1,3845 @@
+From ff653e197e9ef614e5f86d7ef14f0f356c2f636e Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Tue, 24 May 2022 07:54:06 +0200
+Subject: [PATCH 4/6] wifx: Add base support for Wifx L1 machine
+
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
+---
+ arch/arm/boot/dts/Makefile              |   3 +-
+ arch/arm/boot/dts/l1.dts                | 405 +++++++++++++
+ arch/arm/boot/dts/sama5d4.dtsi          |   5 +-
+ arch/arm/configs/l1_defconfig           | 223 +++++++
+ drivers/leds/Kconfig                    |  10 +
+ drivers/leds/Makefile                   |   1 +
+ drivers/leds/leds-wgw-ec.c              | 273 +++++++++
+ drivers/leds/trigger/Kconfig            |   7 +
+ drivers/leds/trigger/Makefile           |   1 +
+ drivers/leds/trigger/ledtrig-wgw-usbc.c | 290 +++++++++
+ drivers/mfd/Kconfig                     |  63 ++
+ drivers/mfd/Makefile                    |   8 +
+ drivers/mfd/wgw_ec.c                    | 101 ++++
+ drivers/mfd/wgw_ec_chardev.c            | 285 +++++++++
+ drivers/mfd/wgw_ec_dev.c                | 769 ++++++++++++++++++++++++
+ drivers/mfd/wgw_ec_i2c.c                | 172 ++++++
+ drivers/mfd/wgw_ec_sysfs.c              | 359 +++++++++++
+ drivers/mfd/wgw_ec_usbc.c               | 365 +++++++++++
+ include/linux/mfd/wgw-ec/chardev.h      |  28 +
+ include/linux/mfd/wgw-ec/core.h         | 145 +++++
+ include/linux/mfd/wgw-ec/reg.h          |  41 ++
+ include/linux/mfd/wgw-ec/usbc.h         |  65 ++
+ 22 files changed, 3616 insertions(+), 3 deletions(-)
+ create mode 100644 arch/arm/boot/dts/l1.dts
+ create mode 100644 arch/arm/configs/l1_defconfig
+ create mode 100644 drivers/leds/leds-wgw-ec.c
+ create mode 100644 drivers/leds/trigger/ledtrig-wgw-usbc.c
+ create mode 100644 drivers/mfd/wgw_ec.c
+ create mode 100644 drivers/mfd/wgw_ec_chardev.c
+ create mode 100644 drivers/mfd/wgw_ec_dev.c
+ create mode 100644 drivers/mfd/wgw_ec_i2c.c
+ create mode 100644 drivers/mfd/wgw_ec_sysfs.c
+ create mode 100644 drivers/mfd/wgw_ec_usbc.c
+ create mode 100644 include/linux/mfd/wgw-ec/chardev.h
+ create mode 100644 include/linux/mfd/wgw-ec/core.h
+ create mode 100644 include/linux/mfd/wgw-ec/reg.h
+ create mode 100644 include/linux/mfd/wgw-ec/usbc.h
+
+diff --git a/arch/arm/boot/dts/Makefile b/arch/arm/boot/dts/Makefile
+index f70309065989..ce6c218ec1e6 100644
+--- a/arch/arm/boot/dts/Makefile
++++ b/arch/arm/boot/dts/Makefile
+@@ -77,7 +77,8 @@ dtb-$(CONFIG_SOC_SAM_V7) += \
+ 	at91-sama5d4ek.dtb \
+ 	at91-vinco.dtb \
+ 	lorix-one-256.dtb \
+-	lorix-one-512.dtb
++	lorix-one-512.dtb \
++	l1.dtb
+ dtb-$(CONFIG_SOC_SAMA7G5) += \
+ 	at91-sama7g5ek.dtb
+ dtb-$(CONFIG_ARCH_AXXIA) += \
+diff --git a/arch/arm/boot/dts/l1.dts b/arch/arm/boot/dts/l1.dts
+new file mode 100644
+index 000000000000..c6189a12b163
+--- /dev/null
++++ b/arch/arm/boot/dts/l1.dts
+@@ -0,0 +1,405 @@
++/*
++ * l1.dts
++ *  Device Tree file for the Wifx L1 LoRa gateway from Wifx Sàrl
++ *
++ *  Copyright (C) 2021 Wifx,
++ *                2021 Yannick Lanz <yannick.lanz@wifx.net>
++ *
++ * This file is dual-licensed: you can use it either under the terms
++ * of the GPL or the X11 license, at your option. Note that this dual
++ * licensing only applies to this file, and not this project as a
++ * whole.
++ *
++ *  a) This file is free software; you can redistribute it and/or
++ *     modify it under the terms of the GNU General Public License as
++ *     published by the Free Software Foundation; either version 2 of the
++ *     License, or (at your option) any later version.
++ *
++ *     This file is distributed in the hope that it will be useful,
++ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *     GNU General Public License for more details.
++ *
++ * Or, alternatively,
++ *
++ *  b) Permission is hereby granted, free of charge, to any person
++ *     obtaining a copy of this software and associated documentation
++ *     files (the "Software"), to deal in the Software without
++ *     restriction, including without limitation the rights to use,
++ *     copy, modify, merge, publish, distribute, sublicense, and/or
++ *     sell copies of the Software, and to permit persons to whom the
++ *     Software is furnished to do so, subject to the following
++ *     conditions:
++ *
++ *     The above copyright notice and this permission notice shall be
++ *     included in all copies or substantial portions of the Software.
++ *
++ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
++ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
++ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
++ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
++ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
++ *     OTHER DEALINGS IN THE SOFTWARE.
++ */
++/dts-v1/;
++#include "sama5d4.dtsi"
++
++/ {
++	model = "Wifx L1";
++	compatible = "wifx,l1", "atmel,sama5d4", "atmel,sama5";
++
++	chosen {
++		stdout-path = "serial0:115200n8";
++	};
++
++	aliases {
++		rtc0 = &ds1339;
++		rtc1 = &rtc_internal;
++		serial1 = &usart1;
++	};
++
++	memory {
++		reg = <0x20000000 0x10000000>;
++	};
++
++	clocks {
++		slow_xtal {
++			clock-frequency = <32768>;
++		};
++
++		main_xtal {
++			clock-frequency = <12000000>;
++		};
++	};
++
++	ahb {
++		apb {
++			spi0: spi@f8010000 {
++				status = "okay";
++				cs-gpios = <&pioC 3 0>;
++
++				sx1302@0 {
++					compatible = "semtech,sx1301";
++					spi-max-frequency = <10000000>;
++					reg = <0>;
++				};
++			};
++
++			i2c0: i2c@f8014000 {
++				status = "okay";
++				clock-frequency = <100000>;
++				i2c-digital-filter = "true";
++				i2c-analog-filter = "true";
++			};
++
++			i2c1: i2c@f8018000 {
++				status = "okay";
++				clock-frequency = <400000>;
++				i2c-digital-filter = "true";
++				i2c-analog-filter = "true";
++
++				stts751: temp_sensor@38 {
++					compatible = "stts751";
++					reg = <0x38>;
++					status = "okay";
++				};
++
++				m24c08: eeprom@54 {
++					compatible = "atmel,24c08";
++					reg = <0x54>;
++					pagesize = <16>;
++					status = "okay";
++				};
++
++				at24mac402: mac_eeprom@58 {
++					compatible = "atmel,24mac402";
++					reg = <0x58>;
++					status = "okay";
++				};
++
++				ds1339: rtc@68 {
++					compatible = "dallas,ds1339";
++					trickle-resistor-ohms = <250>;
++					reg = <0x68>;
++					status = "okay";
++				};
++			};
++
++			i2c2: i2c@f8024000 {
++				status = "okay";
++				clock-frequency = <400000>;
++				i2c-digital-filter = "true";
++				i2c-analog-filter = "true";
++
++				board_ec@2a {
++					compatible = "wifx,wgw-ec-i2c";
++					reg = <0x2a>;
++					status = "okay";
++
++					interrupt-parent = <&pioE>;
++					interrupts = <27 IRQ_TYPE_EDGE_RISING>;
++					pinctrl-names = "default";
++					pinctrl-0 = <&pinctrl_mcu_irq &pinctrl_mcu_cpu_state>;
++
++					cpu-state-gpios = <&pioA 19 0>;
++
++					usb_typec:usbc {
++						compatible = "wifx,wgw-ec-usbc";
++						#trigger-source-cells = <0>;
++						status = "okay";
++					};
++
++					leds {
++						compatible = "wifx,wgw-ec-leds";
++						#address-cells = <1>;
++						#size-cells = <0>;
++						status = "okay";
++
++						statusled {
++							reg = <0>;
++							label = "status";
++							max-brightness = <255>;
++							linux,default-trigger = "heartbeat";
++						};
++
++						serviceled {
++							reg = <1>;
++							label = "service";
++							max-brightness = <255>;
++							linux,default-trigger = "wgw-usbc-data-mode";
++							trigger-sources = <&usb_typec>;
++						};
++					};
++				};
++			};
++
++			i2c3: i2c@fc038000 {
++				status = "okay";
++				/* limited to 100KHz to support wake-up without bus mangling */
++				clock-frequency = <100000>;
++				atmel,fifo-size = <16>;
++				i2c-digital-filter = "true";
++				i2c-analog-filter = "true";
++			};
++
++			macb0: ethernet@f8020000 {
++				phy-mode = "rmii";
++				status = "okay";
++				pinctrl-names = "default";
++				pinctrl-0 = <&pinctrl_macb0_rmii &pinctrl_macb0_phy_irq>;
++
++				phy0: ethernet-phy@1 {
++					interrupt-parent = <&pioA>;
++					interrupts = <4 IRQ_TYPE_LEVEL_LOW>;
++					reg = <1>;
++				};
++			};
++
++			mmc1: mmc@fc000000 {
++				pinctrl-names = "default";
++				pinctrl-0 = <&pinctrl_mmc1_clk_cmd_dat0 &pinctrl_mmc1_dat1_3 &pinctrl_mmc1_cd>;
++				status = "okay";
++				slot@0 {
++					reg = <0>;
++					bus-width = <4>;
++					cd-gpios = <&pioE 3 0>;
++				};
++			};
++
++			usart1: serial@f8030000 {
++				atmel,use-dma-rx;
++				atmel,use-dma-tx;
++				pinctrl-0 = <&pinctrl_usart1>;
++				status = "okay";
++			};
++
++			usart3: serial@fc00c000 {
++				atmel,use-dma-rx;
++				atmel,use-dma-tx;
++				status = "okay";
++			};
++
++			tcb0: timer@f801c000 {
++				timer0: timer@0 {
++					compatible = "atmel,tcb-timer";
++					reg = <0>;
++				};
++
++				timer1: timer@1 {
++					compatible = "atmel,tcb-timer";
++					reg = <1>;
++				};
++			};
++
++			/* disable unused TCB */
++			tcb1: timer@fc020000 {
++				status = "disabled";
++			};
++			tcb2: timer@fc024000 {
++				status = "disabled";
++			};
++
++			watchdog@fc068640 {
++				status = "okay";
++			};
++
++			rtc_internal:rtc@fc0686b0 {
++				status = "okay";
++			};
++
++			pinctrl@fc06a000 {
++				board {
++					pinctrl_mmc1_cd: mmc1_cd {
++						atmel,pins = <AT91_PIOE 3 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
++					};
++					pinctrl_usb_vbus: usb_vbus {
++						atmel,pins = <AT91_PIOE 31 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
++					};
++					pinctrl_usb_id: usb_id {
++						atmel,pins = <AT91_PIOD 11 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
++					};
++					pinctrl_mcu_irq: mcu_irq_0 {
++						atmel,pins = <AT91_PIOE 27 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
++					};
++					pinctrl_mcu_cpu_state: mcu_cpu_state {
++						atmel,pins = <AT91_PIOA 19 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(1))>;
++					};
++					pinctrl_macb0_phy_irq: macb0_phy_irq_0 {
++						atmel,pins = <AT91_PIOA 4 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
++					};
++					pinctrl_sx130x_rst: sx130x_rst {
++						atmel,pins = <AT91_PIOA 1 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
++					};
++					pinctrl_rf_front_pwr_en: rf_front_pwr_en {
++						atmel,pins = <AT91_PIOA 1 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
++					};
++
++					pinctrl_ext_rst: ext_rst {
++						atmel,pins = <AT91_PIOA 17 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
++					};
++					pinctrl_ext_pwr_en: ext_pwr_en {
++						atmel,pins = <AT91_PIOD 18 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_DOWN>;
++					};
++					pinctrl_ext_boot_n: ext_boot_n {
++						atmel,pins = <AT91_PIOD 19 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
++					};
++					pinctrl_ext_wake: ext_wake {
++						atmel,pins = <AT91_PIOA 5 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
++					};
++					pinctrl_gnss_pps: gnss_pps {
++						atmel,pins = <AT91_PIOC 24 AT91_PERIPH_GPIO AT91_PINCTRL_DEGLITCH>;
++					};
++				};
++			};
++		};
++
++		usb0: gadget@400000 {
++			atmel,vbus-gpio = <&pioE 31 GPIO_ACTIVE_HIGH>;
++			atmel,id-gpio = <&pioD 11 GPIO_ACTIVE_HIGH>;
++			pinctrl-names = "default";
++			pinctrl-0 = <&pinctrl_usb_vbus>;
++			status = "okay";
++		};
++
++		usb1: ohci@500000 {
++			num-ports = <3>;
++			atmel,vbus-gpio = <
++				0
++				0
++				0
++			>;
++			atmel,id-gpio = <
++				&pioD 11 GPIO_ACTIVE_HIGH
++				0
++				0
++			>;
++			pinctrl-names = "default";
++			pinctrl-0 = <&pinctrl_usb_id>;
++			status = "okay";
++		};
++
++		usb2: ehci@600000 {
++			status = "okay";
++		};
++
++		ebi: ebi@10000000 {
++			pinctrl-0 = <&pinctrl_ebi_cs3 &pinctrl_ebi_nrd_nandoe
++					&pinctrl_ebi_nwe_nandwe &pinctrl_ebi_nandrdy
++					&pinctrl_ebi_data_0_7 &pinctrl_ebi_nand_addr>;
++			pinctrl-names = "default";
++			status = "okay";
++
++			nand_controller: nand-controller {
++				status = "okay";
++				atmel,pmecc-cap = <4>;
++				atmel,pmecc-sector-size = <512>;
++
++				nand@3 {
++					reg = <0x3 0x0 0x2>;
++					atmel,rb = <0>;
++					nand-bus-width = <8>;
++					nand-ecc-mode = "hw";
++					nand-on-flash-bbt;
++					label = "atmel_nand";
++
++					partitions {
++						compatible = "fixed-partitions";
++						#address-cells = <1>;
++						#size-cells = <1>;
++
++						at91bootstrap@0 {
++							label = "at91bootstrap";
++							reg = <0x0 0x40000>;
++						};
++
++						uboot@40000 {
++							label = "uboot";
++							reg = <0x40000 0xC0000>;
++						};
++
++						uboot-env@100000 {
++							label = "uboot-env";
++							reg = <0x100000 0x80000>;
++						};
++
++						ubi@180000 {
++							label = "ubi";
++							reg = <0x180000 0x3FE00000>;
++						};
++					};
++				};
++			};
++		};
++	};
++
++	leds {
++		compatible = "gpio-leds";
++		status = "okay";
++
++		status_internal {
++			gpios = <&pioE 15 GPIO_ACTIVE_HIGH>;
++			linux,default-trigger = "heartbeat";
++		};
++	};
++
++	vddbu_2v_reg: fixedregulator@0 {
++		compatible = "regulator-fixed";
++		regulator-name = "VDDBU 2V";
++		regulator-min-microvolt = <2000000>;
++		regulator-max-microvolt = <2000000>;
++		regulator-boot-on;
++		regulator-always-on;
++	};
++
++	pps {
++		pinctrl-names = "default";
++		pinctrl-0 = <&pinctrl_gnss_pps>;
++
++		gpios = <&pioC 24 GPIO_ACTIVE_HIGH>;
++		/* assert-falling-edge; */
++
++		compatible = "pps-gpio";
++	};
++};
+diff --git a/arch/arm/boot/dts/sama5d4.dtsi b/arch/arm/boot/dts/sama5d4.dtsi
+index 5ed547b6c352..5dcf6000ae29 100644
+--- a/arch/arm/boot/dts/sama5d4.dtsi
++++ b/arch/arm/boot/dts/sama5d4.dtsi
+@@ -40,6 +40,7 @@ aliases {
+ 		i2c0 = &i2c0;
+ 		i2c1 = &i2c1;
+ 		i2c2 = &i2c2;
++		i2c3 = &i2c3;
+ 	};
+ 	cpus {
+ 		#address-cells = <1>;
+@@ -433,10 +434,10 @@ i2c3: i2c@fc038000 {
+ 				compatible = "atmel,sama5d4-i2c";
+ 				reg = <0xfc038000 0x4000>;
+ 				interrupts = <62 IRQ_TYPE_LEVEL_HIGH 6>;
+-				dmas = <&dma1
++				dmas = <&dma0
+ 					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1)
+ 					| AT91_XDMAC_DT_PERID(8))>,
+-				       <&dma1
++				       <&dma0
+ 					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1)
+ 					| AT91_XDMAC_DT_PERID(9))>;
+ 				dma-names = "tx", "rx";
+diff --git a/arch/arm/configs/l1_defconfig b/arch/arm/configs/l1_defconfig
+new file mode 100644
+index 000000000000..2f144130cd63
+--- /dev/null
++++ b/arch/arm/configs/l1_defconfig
+@@ -0,0 +1,223 @@
++# CONFIG_LOCALVERSION_AUTO is not set
++# CONFIG_SWAP is not set
++CONFIG_SYSVIPC=y
++CONFIG_POSIX_MQUEUE=y
++CONFIG_NO_HZ_IDLE=y
++CONFIG_HIGH_RES_TIMERS=y
++CONFIG_LOG_BUF_SHIFT=16
++CONFIG_CGROUPS=y
++CONFIG_MEMCG=y
++CONFIG_CGROUP_SCHED=y
++CONFIG_CFS_BANDWIDTH=y
++CONFIG_RT_GROUP_SCHED=y
++CONFIG_CGROUP_FREEZER=y
++CONFIG_CGROUP_DEVICE=y
++CONFIG_CGROUP_CPUACCT=y
++CONFIG_NAMESPACES=y
++CONFIG_USER_NS=y
++CONFIG_BLK_DEV_INITRD=y
++# CONFIG_KALLSYMS is not set
++CONFIG_EMBEDDED=y
++CONFIG_ARCH_AT91=y
++CONFIG_SOC_SAMA5D4=y
++CONFIG_FORCE_MAX_ZONEORDER=15
++CONFIG_UACCESS_WITH_MEMCPY=y
++# CONFIG_ATAGS is not set
++CONFIG_CMDLINE="console=ttyS0,115200 initrd=0x21100000,25165824 root=/dev/ram0 rw"
++CONFIG_CPU_IDLE=y
++CONFIG_VFP=y
++CONFIG_NEON=y
++CONFIG_KERNEL_MODE_NEON=y
++CONFIG_PM_DEBUG=y
++CONFIG_PM_ADVANCED_DEBUG=y
++CONFIG_JUMP_LABEL=y
++CONFIG_MODULES=y
++CONFIG_MODULE_FORCE_LOAD=y
++CONFIG_MODULE_UNLOAD=y
++CONFIG_MODULE_FORCE_UNLOAD=y
++# CONFIG_BLK_DEV_BSG is not set
++# CONFIG_CORE_DUMP_DEFAULT_ELF_HEADERS is not set
++CONFIG_CMA=y
++CONFIG_CMA_DEBUGFS=y
++CONFIG_NET=y
++CONFIG_PACKET=y
++CONFIG_UNIX=y
++CONFIG_INET=y
++CONFIG_IP_MULTICAST=y
++CONFIG_IP_PNP=y
++CONFIG_IP_PNP_DHCP=y
++CONFIG_IP_PNP_BOOTP=y
++CONFIG_IP_PNP_RARP=y
++# CONFIG_INET_DIAG is not set
++CONFIG_UEVENT_HELPER=y
++CONFIG_UEVENT_HELPER_PATH="/sbin/hotplug"
++CONFIG_DEVTMPFS=y
++CONFIG_DEVTMPFS_MOUNT=y
++# CONFIG_STANDALONE is not set
++# CONFIG_PREVENT_FIRMWARE_BUILD is not set
++CONFIG_MTD=y
++CONFIG_MTD_CMDLINE_PARTS=y
++CONFIG_MTD_BLOCK=y
++CONFIG_MTD_CFI=y
++CONFIG_MTD_RAW_NAND=y
++CONFIG_MTD_NAND_ATMEL=y
++CONFIG_MTD_UBI=y
++CONFIG_MTD_UBI_GLUEBI=m
++CONFIG_BLK_DEV_LOOP=y
++CONFIG_BLK_DEV_RAM=y
++CONFIG_BLK_DEV_RAM_COUNT=4
++CONFIG_BLK_DEV_RAM_SIZE=8192
++CONFIG_ATMEL_SSC=y
++CONFIG_EEPROM_AT24=y
++CONFIG_EEPROM_93CX6=m
++CONFIG_NETDEVICES=y
++CONFIG_TUN=m
++# CONFIG_NET_VENDOR_ARC is not set
++# CONFIG_NET_VENDOR_BROADCOM is not set
++CONFIG_MACB=y
++# CONFIG_NET_VENDOR_CIRRUS is not set
++# CONFIG_NET_VENDOR_FARADAY is not set
++# CONFIG_NET_VENDOR_HISILICON is not set
++# CONFIG_NET_VENDOR_INTEL is not set
++# CONFIG_NET_VENDOR_MARVELL is not set
++# CONFIG_NET_VENDOR_MICREL is not set
++# CONFIG_NET_VENDOR_MICROCHIP is not set
++# CONFIG_NET_VENDOR_NATSEMI is not set
++# CONFIG_NET_VENDOR_QUALCOMM is not set
++# CONFIG_NET_VENDOR_ROCKER is not set
++# CONFIG_NET_VENDOR_SAMSUNG is not set
++# CONFIG_NET_VENDOR_SEEQ is not set
++# CONFIG_NET_VENDOR_SMSC is not set
++# CONFIG_NET_VENDOR_STMICRO is not set
++# CONFIG_NET_VENDOR_VIA is not set
++# CONFIG_NET_VENDOR_WIZNET is not set
++CONFIG_MICREL_PHY=y
++# CONFIG_USB_NET_DRIVERS is not set
++# CONFIG_WLAN is not set
++CONFIG_INPUT_EVDEV=y
++# CONFIG_INPUT_KEYBOARD is not set
++# CONFIG_INPUT_MOUSE is not set
++# CONFIG_SERIO is not set
++CONFIG_LEGACY_PTY_COUNT=4
++CONFIG_SERIAL_ATMEL=y
++CONFIG_SERIAL_ATMEL_CONSOLE=y
++CONFIG_HW_RANDOM=y
++CONFIG_I2C=y
++CONFIG_I2C_CHARDEV=y
++CONFIG_I2C_MUX=y
++CONFIG_I2C_MUX_GPIO=y
++CONFIG_I2C_AT91=y
++CONFIG_SPI=y
++CONFIG_SPI_ATMEL=y
++CONFIG_SPI_SPIDEV=y
++CONFIG_PINCTRL_AT91PIO4=y
++CONFIG_GPIO_SYSFS=y
++CONFIG_GPIO_SYSCON=y
++CONFIG_POWER_RESET=y
++CONFIG_POWER_SUPPLY=y
++CONFIG_BATTERY_ACT8945A=y
++CONFIG_SENSORS_STTS751=y
++CONFIG_THERMAL=y
++CONFIG_WATCHDOG=y
++CONFIG_AT91SAM9X_WATCHDOG=y
++CONFIG_SAMA5D4_WATCHDOG=y
++CONFIG_MFD_ACT8945A=y
++CONFIG_WGW_EC=y
++CONFIG_MFD_WGW_EC_DEV=y
++CONFIG_MFD_WGW_EC_I2C=y
++CONFIG_MFD_WGW_EC_USBC=y
++CONFIG_MFD_ATMEL_FLEXCOM=y
++CONFIG_MFD_ATMEL_HLCDC=y
++CONFIG_REGULATOR=y
++CONFIG_REGULATOR_FIXED_VOLTAGE=y
++CONFIG_REGULATOR_VIRTUAL_CONSUMER=y
++CONFIG_REGULATOR_ACT8865=y
++CONFIG_REGULATOR_ACT8945A=y
++# CONFIG_HID is not set
++# CONFIG_USB_HID is not set
++CONFIG_USB=y
++CONFIG_USB_ANNOUNCE_NEW_DEVICES=y
++CONFIG_USB_EHCI_HCD=y
++CONFIG_USB_OHCI_HCD=y
++CONFIG_USB_ACM=y
++CONFIG_USB_SERIAL=y
++CONFIG_USB_SERIAL_GENERIC=y
++CONFIG_USB_SERIAL_FTDI_SIO=y
++CONFIG_USB_GADGET=y
++CONFIG_USB_ATMEL_USBA=y
++CONFIG_USB_CONFIGFS=m
++CONFIG_USB_CONFIGFS_ACM=y
++CONFIG_USB_G_SERIAL=m
++CONFIG_TYPEC=y
++CONFIG_MMC=y
++CONFIG_MMC_SDHCI=y
++CONFIG_MMC_SDHCI_PLTFM=y
++CONFIG_MMC_SDHCI_OF_AT91=y
++CONFIG_MMC_ATMELMCI=y
++CONFIG_NEW_LEDS=y
++CONFIG_LEDS_CLASS=y
++CONFIG_LEDS_GPIO=y
++CONFIG_LEDS_WGW_EC=y
++CONFIG_LEDS_TRIGGERS=y
++CONFIG_LEDS_TRIGGER_TIMER=y
++CONFIG_LEDS_TRIGGER_HEARTBEAT=y
++CONFIG_LEDS_TRIGGER_CPU=y
++CONFIG_LEDS_TRIGGER_GPIO=y
++CONFIG_LEDS_TRIGGER_WGW_USBC=y
++CONFIG_RTC_CLASS=y
++CONFIG_RTC_DRV_DS1307=y
++CONFIG_RTC_DRV_AT91RM9200=y
++CONFIG_DMADEVICES=y
++CONFIG_AT_XDMAC=y
++CONFIG_DMATEST=m
++CONFIG_STAGING=y
++# CONFIG_IOMMU_SUPPORT is not set
++CONFIG_IIO=y
++CONFIG_IIO_BUFFER=y
++CONFIG_IIO_KFIFO_BUF=y
++CONFIG_IIO_TRIGGER=y
++CONFIG_RESET_CONTROLLER=y
++CONFIG_EXT4_FS=y
++CONFIG_FANOTIFY=y
++CONFIG_OVERLAY_FS=y
++CONFIG_VFAT_FS=y
++CONFIG_TMPFS=y
++CONFIG_CONFIGFS_FS=y
++CONFIG_UBIFS_FS=y
++CONFIG_UBIFS_FS_ADVANCED_COMPR=y
++CONFIG_NFS_FS=y
++CONFIG_NFS_V4=m
++CONFIG_ROOT_NFS=y
++CONFIG_NFSD=m
++CONFIG_NFSD_V4=y
++CONFIG_NLS_CODEPAGE_437=y
++CONFIG_NLS_CODEPAGE_850=y
++CONFIG_NLS_ISO8859_1=y
++CONFIG_NLS_UTF8=y
++CONFIG_CRYPTO_AUTHENC=y
++CONFIG_CRYPTO_ECDH=y
++CONFIG_CRYPTO_CCM=y
++CONFIG_CRYPTO_GCM=y
++CONFIG_CRYPTO_ECHAINIV=m
++CONFIG_CRYPTO_CBC=y
++CONFIG_CRYPTO_XTS=y
++CONFIG_CRYPTO_MD5=y
++CONFIG_CRYPTO_SHA1=y
++CONFIG_CRYPTO_SHA512=y
++CONFIG_CRYPTO_SM3=y
++CONFIG_CRYPTO_ARC4=y
++CONFIG_CRYPTO_DES=y
++CONFIG_CRYPTO_SM4=y
++CONFIG_CRYPTO_USER_API_HASH=m
++CONFIG_CRYPTO_USER_API_SKCIPHER=m
++CONFIG_CRYPTO_DEV_ATMEL_AES=y
++CONFIG_CRYPTO_DEV_ATMEL_TDES=y
++CONFIG_CRYPTO_DEV_ATMEL_SHA=y
++CONFIG_CRYPTO_DEV_ATMEL_ECC=m
++CONFIG_CRC_CCITT=m
++CONFIG_CRC_ITU_T=m
++CONFIG_STRIP_ASM_SYMS=y
++CONFIG_DEBUG_FS=y
++CONFIG_DEBUG_MEMORY_INIT=y
++# CONFIG_SCHED_DEBUG is not set
++# CONFIG_FTRACE is not set
+diff --git a/drivers/leds/Kconfig b/drivers/leds/Kconfig
+index 5c3b244059c2..df0305a5dce1 100644
+--- a/drivers/leds/Kconfig
++++ b/drivers/leds/Kconfig
+@@ -605,6 +605,16 @@ config LEDS_LORIX_ONE
+ 	  To compile this driver as a module, choose M here: the module will
+ 	  be called leds-pmic-lorix.
+ 
++config LEDS_WGW_EC
++	tristate "Wifx board EC LED management"
++	depends on LEDS_CLASS && MFD_WGW_EC_DEV && OF
++	help
++	  This option enables support for on-chip LED driver managed
++	  by the Embedded Controller of the Wifx gateway board.
++
++	  To compile this driver as a module, choose M here: the module will
++	  be called leds-wgw-ec.
++
+ config LEDS_ADP5520
+ 	tristate "LED Support for ADP5520/ADP5501 PMIC"
+ 	depends on LEDS_CLASS
+diff --git a/drivers/leds/Makefile b/drivers/leds/Makefile
+index 2af693f07ff5..f07158167372 100644
+--- a/drivers/leds/Makefile
++++ b/drivers/leds/Makefile
+@@ -56,6 +56,7 @@ obj-$(CONFIG_LEDS_LP8788)		+= leds-lp8788.o
+ obj-$(CONFIG_LEDS_LP8860)		+= leds-lp8860.o
+ obj-$(CONFIG_LEDS_LT3593)		+= leds-lt3593.o
+ obj-$(CONFIG_LEDS_LORIX_ONE)		+= leds-pmic-lorix.o
++obj-$(CONFIG_LEDS_WGW_EC)		+= leds-wgw-ec.o
+ obj-$(CONFIG_LEDS_MAX77650)		+= leds-max77650.o
+ obj-$(CONFIG_LEDS_MAX8997)		+= leds-max8997.o
+ obj-$(CONFIG_LEDS_MC13783)		+= leds-mc13783.o
+diff --git a/drivers/leds/leds-wgw-ec.c b/drivers/leds/leds-wgw-ec.c
+new file mode 100644
+index 000000000000..c9313c2eb7db
+--- /dev/null
++++ b/drivers/leds/leds-wgw-ec.c
+@@ -0,0 +1,273 @@
++/*
++ * LED driver for the Wifx board EC MFD driver
++ *
++ *  Copyright (C) 2021 Wifx,
++ *                2021 Yannick Lanz <yannick.lanz@wifx.net>
++ *
++ * This file is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation; either version 2 of the
++ * License, or (at your option) any later version.
++ *
++ * This file is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++#include <linux/leds.h>
++#include <linux/module.h>
++#include <linux/of.h>
++#include <linux/workqueue.h>
++
++#include <linux/mfd/wgw-ec/core.h>
++#include <linux/mfd/wgw-ec/reg.h>
++
++#define DRV_NAME "wgw-ec-leds"
++
++static const struct of_device_id led_wgw_ec_of_match[] = {
++	{
++		.compatible = "wifx,wgw-ec-leds",
++	},
++	{},
++};
++MODULE_DEVICE_TABLE(of, led_wgw_ec_of_match);
++
++struct led_wgw_ec {
++	const char *name;
++	const char *default_trigger;
++	s32 reg;
++	u8 active_low;
++	unsigned max_brightness;
++	struct device_node *of_node;
++};
++
++struct led_wgw_ec_data {
++	struct led_classdev cdev;
++	struct wgw_ec_dev *ec;
++	u8 id;
++	unsigned int active_low;
++	struct device_node *of_node;
++	/* delayed work*/
++	struct work_struct work;
++};
++
++struct led_wgw_ec_priv {
++	int num_leds;
++	struct wgw_ec_dev *ec;
++	struct led_wgw_ec_data leds[0];
++};
++
++// private prototypes
++static int led_wgw_ec_remove(struct platform_device *pdev);
++
++static void led_wgw_ec_set_work(struct work_struct *work)
++{
++	struct led_wgw_ec_data *led_data =
++		container_of(work, struct led_wgw_ec_data, work);
++	struct wgw_ec_device *ec_dev = led_data->ec->ec_dev;
++
++	u16 brightness = led_data->cdev.brightness;
++	if (led_data->active_low) {
++		brightness = led_data->cdev.max_brightness - brightness;
++	}
++	ec_dev->write_word(ec_dev, WGW_EC_REG_LED_START + led_data->id,
++			   brightness);
++}
++
++static void led_wgw_ec_set(struct led_classdev *led_cdev,
++			   enum led_brightness value)
++{
++	struct led_wgw_ec_data *led_data =
++		container_of(led_cdev, struct led_wgw_ec_data, cdev);
++
++	led_cdev->brightness = value;
++	schedule_work(&led_data->work);
++}
++
++static int led_wgw_ec_add(struct device *dev, struct led_wgw_ec_priv *priv,
++			  struct led_wgw_ec *led)
++{
++	struct led_wgw_ec_data *led_data = &priv->leds[priv->num_leds];
++	struct led_init_data init_data = {};
++	int ret;
++
++	led_data->ec = priv->ec;
++	if (led->reg < 0) {
++		led_data->id = (u8)priv->num_leds;
++	} else {
++		led_data->id = (u8)led->reg;
++	}
++	led_data->active_low = led->active_low;
++	// keep track of dt node
++	led_data->of_node = led->of_node;
++	led_data->cdev.name = led->name;
++	led_data->cdev.default_trigger = led->default_trigger;
++	led_data->cdev.max_brightness = led->max_brightness;
++	led_data->cdev.brightness = LED_OFF;
++	if (led->active_low) {
++		led_data->cdev.brightness = led->max_brightness;
++	}
++	led_data->cdev.brightness_set = led_wgw_ec_set;
++
++	INIT_WORK(&led_data->work, led_wgw_ec_set_work);
++
++	init_data.fwnode = of_fwnode_handle(led->of_node);
++	ret = led_classdev_register_ext(dev, &led_data->cdev, &init_data);
++	if (!ret) {
++		priv->num_leds++;
++	} else {
++		dev_err(dev, "failed to register wgw-ec led for %s: %d\n",
++			led->name, ret);
++	}
++	dev_info(dev, "registered led (name=%s, trigger=%s)\n",
++		 led_data->cdev.name, led_data->cdev.default_trigger);
++	return ret;
++}
++
++static int led_wgw_ec_probe_dt(struct device *dev, struct led_wgw_ec_priv *priv)
++{
++	struct device_node *np, *child;
++	struct led_wgw_ec led;
++	int ret = 0;
++
++	memset(&led, 0, sizeof(led));
++
++	np = of_node_get(dev->of_node);
++	// increment refcount of each child
++	for_each_child_of_node (np, child) {
++		ret = of_property_read_string(child, "label", &led.name);
++		if (ret) {
++			dev_err(dev, "field label not found in dt\n");
++			goto out_node_put;
++		}
++
++		ret = of_property_read_u32(child, "reg", &led.reg);
++		if (ret) {
++			dev_err(dev, "field reg not found in dt\n");
++			goto out_node_put;
++		}
++
++		ret = of_property_read_string(child, "linux,default-trigger",
++					      &led.default_trigger);
++		if (ret) {
++			dev_err(dev, "field default-trigger not found in dt\n");
++			goto out_node_put;
++		}
++
++		ret = of_property_read_u32(child, "max-brightness",
++					   &led.max_brightness);
++		if (ret) {
++			led.max_brightness = LED_FULL;
++		}
++		led.active_low = of_property_read_bool(child, "active-low");
++
++		led.of_node = child;
++		ret = led_wgw_ec_add(dev, priv, &led);
++		if (ret)
++			goto out_node_put;
++	}
++
++out_node_put:
++	of_node_put(np);
++	if (ret)
++		of_node_put(child);
++	return ret;
++}
++
++static int led_wgw_ec_probe(struct platform_device *pdev)
++{
++	struct wgw_ec_dev *ec = dev_get_drvdata(pdev->dev.parent);
++	struct device *dev = &pdev->dev;
++	struct device_node *parent = ec->ec_dev->dev->of_node;
++	struct led_wgw_ec_priv *priv;
++	int count;
++	int ret = -EINVAL;
++
++	if (!ec) {
++		dev_err(dev, "no parent EC device\n");
++		return ret;
++	}
++
++	if (!parent) {
++		dev_err(dev, "no parent of node\n");
++		return ret;
++	}
++
++	dev->of_node = of_get_compatible_child(parent,
++					       led_wgw_ec_of_match->compatible);
++	if (!dev->of_node) {
++		dev_err(dev, "no compatible led node in dt\n");
++		goto put_node;
++	}
++
++	count = of_get_child_count(dev->of_node);
++	dev_dbg(dev, "detect %d led node(s)\n", count);
++
++	if (!count) {
++		dev_err(dev, "no led node found\n");
++		goto put_node;
++	}
++
++	priv = devm_kzalloc(dev, struct_size(priv, leds, count), GFP_KERNEL);
++	if (!priv) {
++		ret = -ENOMEM;
++		goto put_node;
++	}
++	priv->ec = ec;
++	platform_set_drvdata(pdev, priv);
++
++	ret = led_wgw_ec_probe_dt(dev, priv);
++	if (ret) {
++		dev_dbg(dev, "create from fwnode failed, cleanup\n");
++		led_wgw_ec_remove(pdev);
++		goto put_node;
++	}
++
++	return 0;
++
++put_node:
++	of_node_put(dev->of_node);
++	return ret;
++}
++
++static int led_wgw_ec_remove(struct platform_device *pdev)
++{
++	struct led_wgw_ec_priv *priv = platform_get_drvdata(pdev);
++	struct wgw_ec_device *ec_dev = priv->ec->ec_dev;
++	struct led_wgw_ec_data *led_data;
++	int i;
++	u16 brightness, max_brightness;
++
++	for (i = 0; i < priv->num_leds; i++) {
++		led_data = &priv->leds[i];
++		brightness = 0;
++		max_brightness = led_data->cdev.max_brightness;
++
++		led_classdev_unregister(&led_data->cdev);
++		cancel_work_sync(&led_data->work);
++		of_node_put(led_data->of_node);
++
++		if (led_data->active_low) {
++			brightness = led_data->cdev.max_brightness - brightness;
++		}
++		ec_dev->write_word(ec_dev, WGW_EC_REG_LED_START + led_data->id,
++				   brightness);
++	}
++	of_node_put(pdev->dev.of_node);
++	return 0;
++}
++
++static struct platform_driver led_wgw_ec_driver = {
++	.driver = {
++		.name	= "wgw-ec-leds",
++		.of_match_table = of_match_ptr(led_wgw_ec_of_match),
++	},
++	.probe = led_wgw_ec_probe,
++	.remove   = led_wgw_ec_remove,
++};
++module_platform_driver(led_wgw_ec_driver);
++
++MODULE_ALIAS("platform:" DRV_NAME);
++MODULE_AUTHOR("Yannick Lanz <yannick.lanz@wifx.net>");
++MODULE_DESCRIPTION("LED support for the Wifx board EC");
++MODULE_LICENSE("GPL v2");
+diff --git a/drivers/leds/trigger/Kconfig b/drivers/leds/trigger/Kconfig
+index 1f1d57288085..31392b0a3454 100644
+--- a/drivers/leds/trigger/Kconfig
++++ b/drivers/leds/trigger/Kconfig
+@@ -153,4 +153,11 @@ config LEDS_TRIGGER_TTY
+ 
+ 	  When build as a module this driver will be called ledtrig-tty.
+ 
++config LEDS_TRIGGER_WGW_USBC
++	tristate "USB Type-C data mode trigger for the Wifx board EC LED"
++	depends on MFD_WGW_EC_USBC && OF
++	help
++	  This allows Wifx board EC LEDs to be controlled by the data mode 
++	  (device, host) of USB Type-C connector managed by the EC.
++
+ endif # LEDS_TRIGGERS
+diff --git a/drivers/leds/trigger/Makefile b/drivers/leds/trigger/Makefile
+index 25c4db97cdd4..2966de318e02 100644
+--- a/drivers/leds/trigger/Makefile
++++ b/drivers/leds/trigger/Makefile
+@@ -16,3 +16,4 @@ obj-$(CONFIG_LEDS_TRIGGER_NETDEV)	+= ledtrig-netdev.o
+ obj-$(CONFIG_LEDS_TRIGGER_PATTERN)	+= ledtrig-pattern.o
+ obj-$(CONFIG_LEDS_TRIGGER_AUDIO)	+= ledtrig-audio.o
+ obj-$(CONFIG_LEDS_TRIGGER_TTY)		+= ledtrig-tty.o
++obj-$(CONFIG_LEDS_TRIGGER_WGW_USBC)	+= ledtrig-wgw-usbc.o
+diff --git a/drivers/leds/trigger/ledtrig-wgw-usbc.c b/drivers/leds/trigger/ledtrig-wgw-usbc.c
+new file mode 100644
+index 000000000000..d16ed0a93803
+--- /dev/null
++++ b/drivers/leds/trigger/ledtrig-wgw-usbc.c
+@@ -0,0 +1,290 @@
++/*
++ * USB Type-C data mode trigger for the Wifx board EC LED
++ *
++ *  Copyright (C) 2021 Wifx,
++ *                2021 Yannick Lanz <yannick.lanz@wifx.net>
++ *
++ * This file is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation; either version 2 of the
++ * License, or (at your option) any later version.
++ *
++ * This file is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++#include <linux/leds.h>
++#include <linux/module.h>
++#include <linux/notifier.h>
++#include <linux/of.h>
++#include <linux/of_platform.h>
++#include <linux/slab.h>
++#include <linux/workqueue.h>
++
++#include <linux/mfd/wgw-ec/core.h>
++#include <linux/mfd/wgw-ec/usbc.h>
++
++struct wgw_usbc_trig_data {
++	spinlock_t lock;
++
++	struct led_classdev *led_cdev;
++	struct device *usbc_dev;
++	struct wgw_ec_usbc_dev *usbc;
++
++	struct delayed_work work;
++	struct notifier_block notifier;
++
++	u8 led_on;
++	u8 enabled;
++};
++
++static ssize_t enable_show(struct device *dev, struct device_attribute *attr,
++			   char *buf)
++{
++	struct wgw_usbc_trig_data *trigger_data = led_trigger_get_drvdata(dev);
++	ssize_t len;
++
++	spin_lock_bh(&trigger_data->lock);
++	len = sprintf(buf, "%u\n", trigger_data->enabled);
++	spin_unlock_bh(&trigger_data->lock);
++
++	return len;
++}
++
++static ssize_t enable_store(struct device *dev, struct device_attribute *attr,
++			    const char *buf, size_t size)
++{
++	struct wgw_usbc_trig_data *trigger_data = led_trigger_get_drvdata(dev);
++	int enable;
++	char newline;
++
++	switch (sscanf(buf, "%d%c", &enable, &newline)) {
++	case 2:
++		if (newline != '\n')
++			return -EINVAL;
++
++		if (enable > 1)
++			return -EINVAL;
++		break;
++	default:
++		return -EINVAL;
++	}
++
++	cancel_delayed_work_sync(&trigger_data->work);
++
++	spin_lock_bh(&trigger_data->lock);
++	trigger_data->enabled = enable;
++	schedule_delayed_work(&trigger_data->work, 0);
++	spin_unlock_bh(&trigger_data->lock);
++
++	return size;
++}
++
++static DEVICE_ATTR_RW(enable);
++static struct attribute *wgw_usbc_trig_attrs[] = { &dev_attr_enable.attr,
++						   NULL };
++ATTRIBUTE_GROUPS(wgw_usbc_trig);
++
++static int wgw_usbc_trig_notify(struct notifier_block *notifier,
++				unsigned long evt, void *dv)
++{
++	struct wgw_usbc_trig_data *trigger_data =
++		container_of(notifier, struct wgw_usbc_trig_data, notifier);
++
++	pr_debug("wgw-usbc-trig notify notified by wgw-ec-usbc\n");
++
++	if (evt == WGW_USBC_DATA_MODE_CHANGE) {
++		enum usb_data_mode data_mode =
++			wgw_ec_usbc_get_data_mode(trigger_data->usbc);
++
++		cancel_delayed_work_sync(&trigger_data->work);
++
++		pr_debug(
++			"trigger notified for data mode change, new value=%d\n",
++			data_mode);
++
++		spin_lock_bh(&trigger_data->lock);
++		trigger_data->led_on =
++			(data_mode == USB_DATA_MODE_DEVICE ? 1 : 0);
++		schedule_delayed_work(&trigger_data->work, 0);
++		spin_unlock_bh(&trigger_data->lock);
++
++		return NOTIFY_OK;
++	}
++	return NOTIFY_DONE;
++}
++
++static void wgw_usbc_trig_work(struct work_struct *work)
++{
++	struct wgw_usbc_trig_data *trigger_data =
++		container_of(work, struct wgw_usbc_trig_data, work.work);
++
++	pr_debug("trigger update to new value=%d\n",
++		 trigger_data->led_on && trigger_data->enabled);
++
++	// update of the LED here
++	if (trigger_data->led_on && trigger_data->enabled) {
++		led_set_brightness(trigger_data->led_cdev, LED_FULL);
++	} else {
++		led_set_brightness(trigger_data->led_cdev, LED_OFF);
++	}
++}
++
++static int wgw_usbc_trig_activate(struct led_classdev *led_cdev)
++{
++	// retrieve the attached LED
++	struct device *dev = led_cdev->dev;
++	struct platform_device *pdev_trigger;
++	struct device_node *of_node;
++	struct of_phandle_args of_trigger_handle;
++	struct wgw_usbc_trig_data *trigger_data;
++	enum usb_data_mode data_mode;
++	int count, err, ret;
++
++	dev_dbg(dev, "wgw-usbc-trig activate\n");
++
++	if (!dev) {
++		pr_err("wgw-usbc-data-mode: no LED device attached\n");
++		return -ENODEV;
++	}
++	dev_dbg(dev, "registering trigger for led %s\n", led_cdev->name);
++
++	/* Retrieve the of node */
++	if (!dev->fwnode) {
++		dev_err(dev, "wgw-usbc-data-mode: no LED dev fwnode\n");
++		return -ENODEV;
++	}
++	of_node = to_of_node(dev->fwnode);
++
++	/* Find trigger sources for this LED */
++	count = of_count_phandle_with_args(of_node, "trigger-sources",
++					   "#trigger-source-cells");
++	if (count == -ENOENT) {
++		dev_err(dev, "wgw-usbc-data-mode: no trigger phandle found\n");
++		goto put_of_node;
++	} else if (count < 0) {
++		dev_err(dev,
++			"wgw-usbc-data-mode: Failed to get trigger sources for %pOF\n",
++			of_node);
++		goto put_of_node;
++	} else if (count != 1) {
++		dev_err(dev,
++			"wgw-usbc-data-mode: Too much trigger sources (%d), max is 1\n",
++			count);
++		goto put_of_node;
++	}
++
++	/* Retrieve the trigger source phandle */
++	err = of_parse_phandle_with_args(of_node, "trigger-sources",
++					 "#trigger-source-cells", 0,
++					 &of_trigger_handle);
++	if (err) {
++		dev_err(dev,
++			"wgw-usbc-data-mode: Failed to get trigger source phandle: %d\n",
++			err);
++		goto put_of_node;
++	}
++	/* Only supported trigger source is wgw-ec-usbc */
++	if (!of_device_is_compatible(of_trigger_handle.np,
++				     "wifx,wgw-ec-usbc")) {
++		dev_err(dev,
++			"wgw-usbc-data-mode: %s is not a compatible trigger source\n",
++			of_trigger_handle.np->name);
++		goto put_trigger_handle;
++	}
++	pdev_trigger = of_find_device_by_node(of_trigger_handle.np);
++	if (IS_ERR_OR_NULL(pdev_trigger)) {
++		dev_err(dev,
++			"wgw-usbc-data-mode: platform device from of_device not found\n");
++		goto put_trigger_handle;
++	}
++	of_node_put(of_trigger_handle.np);
++	of_node_put(of_node);
++
++	trigger_data = kzalloc(sizeof(struct wgw_usbc_trig_data), GFP_KERNEL);
++	if (!trigger_data) {
++		goto put_device;
++	}
++
++	/* we know this plaftorm device contains a wgw_ec_usbc_dev */
++	trigger_data->usbc_dev = &pdev_trigger->dev;
++	trigger_data->usbc = (struct wgw_ec_usbc_dev *)dev_get_drvdata(
++		trigger_data->usbc_dev);
++
++	spin_lock_init(&trigger_data->lock);
++	trigger_data->notifier.notifier_call = wgw_usbc_trig_notify;
++	trigger_data->notifier.priority = 10;
++	INIT_DELAYED_WORK(&trigger_data->work, wgw_usbc_trig_work);
++
++	trigger_data->led_cdev = led_cdev;
++	led_set_trigger_data(led_cdev, trigger_data);
++
++	ret = blocking_notifier_chain_register(
++		&trigger_data->usbc->notifier_list, &trigger_data->notifier);
++	if (ret) {
++		kfree(trigger_data);
++		goto put_device;
++	}
++
++	/* Init LED state */
++	data_mode = wgw_ec_usbc_get_data_mode(trigger_data->usbc);
++	spin_lock_bh(&trigger_data->lock);
++	trigger_data->led_on = (data_mode == USB_DATA_MODE_DEVICE ? 1 : 0);
++	schedule_delayed_work(&trigger_data->work, 0);
++	spin_unlock_bh(&trigger_data->lock);
++
++	return ret;
++
++put_device:
++	put_device(&pdev_trigger->dev);
++put_trigger_handle:
++	of_node_put(of_trigger_handle.np);
++put_of_node:
++	of_node_put(of_node);
++	return -ENODEV;
++}
++
++static void wgw_usbc_trig_deactivate(struct led_classdev *led_cdev)
++{
++	struct wgw_usbc_trig_data *trigger_data =
++		led_get_trigger_data(led_cdev);
++
++	pr_debug("wgw-usbc-trig deactivate\n");
++
++	blocking_notifier_chain_unregister(&trigger_data->usbc->notifier_list,
++					   &trigger_data->notifier);
++
++	cancel_delayed_work_sync(&trigger_data->work);
++
++	if (trigger_data->usbc_dev)
++		put_device(trigger_data->usbc_dev);
++
++	kfree(trigger_data);
++}
++
++static struct led_trigger wgw_usbc_led_trigger = {
++	.name = "wgw-usbc-data-mode",
++	.activate = wgw_usbc_trig_activate,
++	.deactivate = wgw_usbc_trig_deactivate,
++	.groups = wgw_usbc_trig_groups,
++};
++
++static int __init wgw_usbc_trig_init(void)
++{
++	pr_debug("wgw-usbc-trig init\n");
++	return led_trigger_register(&wgw_usbc_led_trigger);
++}
++
++static void __exit wgw_usbc_trig_exit(void)
++{
++	pr_debug("wgw-usbc-trig exit\n");
++	led_trigger_unregister(&wgw_usbc_led_trigger);
++}
++
++module_init(wgw_usbc_trig_init);
++module_exit(wgw_usbc_trig_exit);
++
++MODULE_AUTHOR("Yannick Lanz <yannick.lanz@wifx.net>");
++MODULE_DESCRIPTION("USB Type-C data mode trigger for the Wifx board EC LED");
++MODULE_LICENSE("GPL v2");
+\ No newline at end of file
+diff --git a/drivers/mfd/Kconfig b/drivers/mfd/Kconfig
+index da6e2fbb690f..f09c7b091d2d 100644
+--- a/drivers/mfd/Kconfig
++++ b/drivers/mfd/Kconfig
+@@ -110,6 +110,69 @@ config PMIC_LORIX_ONE
+ 	  select individual components likes LEDs and reset status under the
+ 	  corresponding menus.
+ 
++config WGW_EC
++	tristate "Wifx board Embedded Controller"
++	help
++	  If you say Y here you get support for the Wifx board Embedded
++	  Controller (EC) providing USB Type-C, LED and memory.
++	  You also need to enable the driver for the bus you are using. The
++	  protocol for talking to the EC is defined by the bus driver.
++
++	  To compile this driver as a module, choose M here: the
++	  module will be called wgw_ec.
++
++config MFD_WGW_EC_DEV
++	tristate "Wifx board EC multifunction device"
++	select MFD_CORE
++	depends on WGW_EC && OF
++	help
++	  Select this to get support for Wifx board Embedded Controller and
++	  sub-devices. This driver will instantiate additional drivers such as
++	  USB Type-C, etc but you have to select the individual drivers.
++
++	  To compile this driver as a module, choose M here: the module will be
++	  called wgw-ec-dev.
++
++config MFD_WGW_EC_I2C
++	tristate "Wifx board EC support with I2C"
++	depends on WGW_EC && I2C && OF
++	help
++	  If you say Y here, you get support for talking to the Wifx board
++	  EC through an I2C bus. This uses a SMBus similar protocol including
++	  a checksum.
++
++config MFD_WGW_EC_USBC
++	tristate "USB Type-C management through Wifx board EC"
++	depends on MFD_WGW_EC_DEV && TYPEC
++	help
++	  This option enables support for the on-chip USB Type-C driver managed
++	  by the Embedded Controller on Wifx board.
++
++	  To compile this driver as a module, choose M here: the module will
++	  be called wgw-ec-usbc.
++
++config MFD_WGW_EC_CHARDEV
++	tristate "Wifx board EC miscdevice chardev"
++	depends on MFD_WGW_EC_DEV
++	default MFD_WGW_EC_DEV
++	help
++	  This driver adds file operations support to talk with the
++	  Wifx board EC from userspace via a character device.
++
++	  To compile this driver as a module, choose M here: the
++	  module will be called wgw-ec-chardev.
++
++config MFD_WGW_EC_SYSFS
++	tristate "Wifx board EC control and information through sysfs"
++	depends on MFD_WGW_EC_DEV && SYSFS
++	default MFD_WGW_EC_DEV
++	help
++	  This option exposes some sysfs attributes to control and get
++	  information from Wifx board EC.
++
++	  To compile this driver as a module, choose M here: the
++	  module will be called wgw-ec-sysfs.
++
+ config MFD_AAT2870_CORE
+ 	bool "AnalogicTech AAT2870"
+ 	select MFD_CORE
+diff --git a/drivers/mfd/Makefile b/drivers/mfd/Makefile
+index 72fa527a7b14..f3cb3b48bb87 100644
+--- a/drivers/mfd/Makefile
++++ b/drivers/mfd/Makefile
+@@ -184,6 +184,14 @@ obj-$(CONFIG_AB8500_CORE)	+= ab8500-core.o ab8500-sysctrl.o
+ obj-$(CONFIG_MFD_TIMBERDALE)    += timberdale.o
+ obj-$(CONFIG_PMIC_ADP5520)	+= adp5520.o
+ obj-$(CONFIG_PMIC_LORIX_ONE)	+= pmic-lorix.o
++
++obj-$(CONFIG_WGW_EC)		+= wgw_ec.o
++obj-$(CONFIG_MFD_WGW_EC_DEV)	+= wgw_ec_dev.o
++obj-$(CONFIG_MFD_WGW_EC_I2C)	+= wgw_ec_i2c.o
++obj-$(CONFIG_MFD_WGW_EC_USBC)	+= wgw_ec_usbc.o
++obj-$(CONFIG_MFD_WGW_EC_CHARDEV)+= wgw_ec_chardev.o
++obj-$(CONFIG_MFD_WGW_EC_SYSFS)	+= wgw_ec_sysfs.o
++
+ obj-$(CONFIG_MFD_KEMPLD)	+= kempld-core.o
+ obj-$(CONFIG_MFD_INTEL_QUARK_I2C_GPIO)	+= intel_quark_i2c_gpio.o
+ obj-$(CONFIG_LPC_SCH)		+= lpc_sch.o
+diff --git a/drivers/mfd/wgw_ec.c b/drivers/mfd/wgw_ec.c
+new file mode 100644
+index 000000000000..31fc0357c836
+--- /dev/null
++++ b/drivers/mfd/wgw_ec.c
+@@ -0,0 +1,101 @@
++/*
++ * MFD driver core for the Wifx board Embedded Controller
++ *
++ *  Copyright (C) 2021 Wifx,
++ *                2021 Yannick Lanz <yannick.lanz@wifx.net>
++ *
++ * This file is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation; either version 2 of the
++ * License, or (at your option) any later version.
++ *
++ * This file is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++#include <linux/gpio.h>
++#include <linux/interrupt.h>
++#include <linux/irq.h>
++#include <linux/module.h>
++#include <linux/mutex.h>
++#include <linux/platform_device.h>
++
++#include <linux/mfd/core.h>
++#include <linux/mfd/wgw-ec/core.h>
++#include <linux/mfd/wgw-ec/reg.h>
++
++#define DRV_NAME "wgw-ec"
++
++static irqreturn_t wgw_ec_irq_thread(int irq, void *data)
++{
++	struct wgw_ec_device *ec_dev = data;
++	dev_dbg(ec_dev->dev, "wgw-ec irq thread run\n");
++
++	blocking_notifier_call_chain(&ec_dev->notifier_list, 0, ec_dev);
++	return IRQ_HANDLED;
++}
++
++int wgw_ec_register(struct wgw_ec_device *ec_dev)
++{
++	struct device *dev = ec_dev->dev;
++	int err = 0;
++
++	BLOCKING_INIT_NOTIFIER_HEAD(&ec_dev->notifier_list);
++	mutex_init(&ec_dev->lock_ltr);
++
++	if (ec_dev->irq) {
++		err = devm_request_threaded_irq(
++			dev, ec_dev->irq, NULL, wgw_ec_irq_thread,
++			IRQF_TRIGGER_RISING | IRQF_ONESHOT, "wgw-ec-irq",
++			ec_dev);
++		if (err) {
++			dev_err(dev, "Failed to request IRQ %d: %d\n",
++				ec_dev->irq, err);
++			return err;
++		}
++		/* Clear the interrupt flag */
++		ec_dev->write_byte(ec_dev, WGW_EC_REG_INTERRUPT, 0xFF);
++	}
++
++	ec_dev->cpu_state_pin =
++		devm_gpiod_get_optional(dev, "cpu-state", GPIOF_DIR_OUT);
++	if (ec_dev->cpu_state_pin) {
++		if (IS_ERR(ec_dev->cpu_state_pin)) {
++			dev_err(dev, "Failed to request GPIO cpu-state: %ld\n",
++				PTR_ERR(ec_dev->cpu_state_pin));
++			return PTR_ERR(ec_dev->cpu_state_pin);
++		}
++		gpiod_set_value(ec_dev->cpu_state_pin, true);
++	} else {
++		dev_warn(
++			dev,
++			"No cpu-state gpio provided, functionnalities will be limited\n");
++	}
++
++	/* Register a platform device for the main EC instance */
++	ec_dev->ec = platform_device_register_data(
++		ec_dev->dev, "wgw-ec-dev", PLATFORM_DEVID_AUTO, NULL, 0);
++	if (IS_ERR(ec_dev->ec)) {
++		dev_err(ec_dev->dev,
++			"Failed to create Wifx OS EC platform device\n");
++		return PTR_ERR(ec_dev->ec);
++	}
++
++	dev_info(dev, "Wifx board EC device registered\n");
++
++	return 0;
++}
++EXPORT_SYMBOL_GPL(wgw_ec_register);
++
++int wgw_ec_unregister(struct wgw_ec_device *ec_dev)
++{
++	dev_dbg(ec_dev->dev, "wgw-ec unregister\n");
++	platform_device_unregister(ec_dev->ec);
++	return 0;
++}
++EXPORT_SYMBOL_GPL(wgw_ec_unregister);
++
++MODULE_AUTHOR("Yannick Lanz <yannick.lanz@wifx.net>");
++MODULE_DESCRIPTION("MFD driver core for the Wifx board Embedded Controller");
++MODULE_LICENSE("GPL v2");
+diff --git a/drivers/mfd/wgw_ec_chardev.c b/drivers/mfd/wgw_ec_chardev.c
+new file mode 100644
+index 000000000000..d97477c6cde5
+--- /dev/null
++++ b/drivers/mfd/wgw_ec_chardev.c
+@@ -0,0 +1,285 @@
++/*
++ * Miscellaneous character driver for Wifx board EC
++ *
++ *  Copyright (C) 2021 Wifx,
++ *                2021 Yannick Lanz <yannick.lanz@wifx.net>
++ *
++ * This file is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation; either version 2 of the
++ * License, or (at your option) any later version.
++ *
++ * This file is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++#include <linux/init.h>
++#include <linux/fs.h>
++#include <linux/miscdevice.h>
++#include <linux/module.h>
++#include <linux/slab.h>
++#include <linux/uaccess.h>
++#include <linux/i2c.h>
++
++#include <linux/mfd/wgw-ec/core.h>
++#include <linux/mfd/wgw-ec/chardev.h>
++
++#define DRV_NAME "wgw-ec-chardev"
++
++struct chardev_data {
++	struct wgw_ec_dev *ec;
++	struct miscdevice misc;
++};
++
++struct chardev_priv {
++	struct wgw_ec_dev *ec;
++};
++
++static noinline int wgw_ec_ioctl_pkt_cmd(struct wgw_ec_dev *ec, u8 read_write,
++					 u8 command, u32 size,
++					 union i2c_smbus_data __user *data)
++{
++	union i2c_smbus_data temp = {};
++	int datasize, res;
++	struct wgw_ec_device *ec_dev = ec->ec_dev;
++
++	dev_dbg(ec->dev, "wgw_ec_ioctl_pkt_cmd\n");
++	dev_dbg(ec->dev, "read_write: %d\n", read_write);
++	dev_dbg(ec->dev, "   command: %d\n", command);
++	dev_dbg(ec->dev, "      size: %d\n", size);
++
++	if ((size != I2C_SMBUS_BYTE_DATA) && (size != I2C_SMBUS_WORD_DATA) &&
++	    (size != I2C_SMBUS_BLOCK_DATA)) {
++		dev_dbg(ec->dev,
++			"size out of range (%x) in ioctl WGW_EC_DEV_IOC_PKT_CMD.\n",
++			size);
++		return -EINVAL;
++	}
++
++	if ((read_write != I2C_SMBUS_READ) && (read_write != I2C_SMBUS_WRITE)) {
++		dev_dbg(ec->dev,
++			"read_write out of range (%x) in ioctl WGW_EC_DEV_IOC_PKT_CMD.\n",
++			read_write);
++		return -EINVAL;
++	}
++
++	if (size == I2C_SMBUS_BYTE_DATA)
++		datasize = sizeof(data->byte);
++	else if (size == I2C_SMBUS_WORD_DATA)
++		datasize = sizeof(data->word);
++	else
++		datasize = sizeof(data->block);
++
++	if (read_write == I2C_SMBUS_WRITE) {
++		if (copy_from_user(&temp, data, datasize))
++			return -EFAULT;
++	}
++
++	switch (size) {
++	case I2C_SMBUS_BYTE_DATA:
++		if (read_write == I2C_SMBUS_READ) {
++			res = ec_dev->read_byte(ec_dev, command, &temp.byte);
++		} else {
++			res = ec_dev->write_byte(ec_dev, command, temp.byte);
++		}
++		break;
++
++	case I2C_SMBUS_WORD_DATA:
++		if (read_write == I2C_SMBUS_READ) {
++			res = ec_dev->read_word(ec_dev, command, &temp.word);
++		} else {
++			res = ec_dev->write_word(ec_dev, command, temp.word);
++		}
++		break;
++
++	case I2C_SMBUS_BLOCK_DATA: {
++		if (read_write == I2C_SMBUS_READ) {
++			res = ec_dev->read_block(ec_dev, command,
++						 &temp.block[1]);
++			if (res > 0) {
++				temp.block[0] = res;
++			}
++		} else {
++			u8 length = temp.block[0];
++			if (length > I2C_SMBUS_BLOCK_MAX)
++				length = I2C_SMBUS_BLOCK_MAX;
++			res = ec_dev->write_block(ec_dev, command,
++						  &temp.block[1], length);
++		}
++		break;
++	}
++
++	default:
++		dev_dbg(ec->dev, "fallback\n");
++		return 0;
++	}
++
++	if (res < 0) {
++		dev_err(ec->dev, "failed to run command: %d\n", res);
++		return res;
++	}
++
++	if (read_write == I2C_SMBUS_READ) {
++		if (copy_to_user(data, &temp, datasize))
++			return -EFAULT;
++	}
++	return 0;
++}
++
++static noinline int wgw_ec_ioctl_pkt_cmd_ltr(struct wgw_ec_dev *ec,
++					     u8 read_write, u8 command,
++					     u32 size,
++					     union i2c_smbus_data __user *data)
++{
++	struct wgw_ec_device *ec_dev = ec->ec_dev;
++	int res;
++
++	// send command
++	mutex_lock(&ec_dev->lock_ltr);
++	res = wgw_ec_ioctl_pkt_cmd(ec, read_write, command, size, data);
++	if (res < 0) {
++		mutex_unlock(&ec_dev->lock_ltr);
++		return res;
++	}
++
++	// wait ready
++	res = wgw_ec_wait_ready(ec);
++	mutex_unlock(&ec_dev->lock_ltr);
++	return res;
++}
++
++/*
++ * Device file ops
++ */
++static long wgw_ec_chardev_ioctl(struct file *filp, unsigned int cmd,
++				 unsigned long arg)
++{
++	struct chardev_priv *priv = filp->private_data;
++	struct wgw_ec_dev *ec = priv->ec;
++
++	/*dev_info(ec->dev, "wgw_ioctl\n  cmd: 0x%08X\n  arg: 0x%08lX\n", cmd,
++		 arg);*/
++
++	if (_IOC_TYPE(cmd) != WGW_EC_DEV_IOC)
++		return -ENOTTY;
++
++	switch (cmd) {
++	case WGW_EC_DEV_IOC_PKT_CMD: {
++		struct i2c_smbus_ioctl_data data_arg;
++
++		if (copy_from_user(&data_arg,
++				   (struct i2c_smbus_ioctl_data __user *)arg,
++				   sizeof(struct i2c_smbus_ioctl_data)))
++			return -EFAULT;
++
++		return wgw_ec_ioctl_pkt_cmd(ec, data_arg.read_write,
++					    data_arg.command, data_arg.size,
++					    data_arg.data);
++	}
++
++	case WGW_EC_DEV_IOC_PKT_CMD_LTR: {
++		struct i2c_smbus_ioctl_data data_arg;
++
++		if (copy_from_user(&data_arg,
++				   (struct i2c_smbus_ioctl_data __user *)arg,
++				   sizeof(struct i2c_smbus_ioctl_data)))
++			return -EFAULT;
++
++		return wgw_ec_ioctl_pkt_cmd_ltr(ec, data_arg.read_write,
++						data_arg.command, data_arg.size,
++						data_arg.data);
++	}
++	}
++	return 0;
++}
++
++static int wgw_ec_chardev_open(struct inode *inode, struct file *filp)
++{
++	struct miscdevice *mdev = filp->private_data;
++	struct wgw_ec_dev *ec = dev_get_drvdata(mdev->parent);
++	struct chardev_priv *priv;
++
++	pr_debug("wgw-ec-chardev open\n");
++
++	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
++	if (!priv)
++		return -ENOMEM;
++
++	priv->ec = ec;
++	filp->private_data = priv;
++
++	return 0;
++}
++
++static int wgw_ec_chardev_release(struct inode *inode, struct file *filp)
++{
++	struct chardev_priv *priv = filp->private_data;
++	//struct wgw_ec_device *ec = priv->ec_dev;
++	kfree(priv);
++	return 0;
++}
++
++static const struct file_operations chardev_fops = {
++	.open = wgw_ec_chardev_open,
++	.unlocked_ioctl = wgw_ec_chardev_ioctl,
++	.release = wgw_ec_chardev_release,
++};
++
++static int wgw_ec_chardev_probe(struct platform_device *pdev)
++{
++	struct wgw_ec_dev *ec = dev_get_drvdata(pdev->dev.parent);
++	struct chardev_data *data;
++	int ret;
++
++	dev_dbg(&pdev->dev, "wgw-ec-chardev probe\n");
++
++	/* Create a char device: we want to create it anew */
++	data = devm_kzalloc(&pdev->dev, sizeof(*data), GFP_KERNEL);
++	if (!data)
++		return -ENOMEM;
++
++	data->ec = ec;
++	data->misc.minor = MISC_DYNAMIC_MINOR;
++	data->misc.fops = &chardev_fops;
++	data->misc.name = "wgw-ec";
++	data->misc.parent = pdev->dev.parent;
++
++	dev_set_drvdata(&pdev->dev, data);
++
++	ret = misc_register(&data->misc);
++	if (ret < 0) {
++		dev_warn(&pdev->dev,
++			 "failed to register chardev misc device. err=%d\n",
++			 ret);
++		return ret;
++	}
++	dev_info(&pdev->dev, "registered chardev misc device\n");
++	return 0;
++}
++
++static int wgw_ec_chardev_remove(struct platform_device *pdev)
++{
++	struct chardev_data *data = dev_get_drvdata(&pdev->dev);
++
++	dev_dbg(&pdev->dev, "wgw-ec-chardev remove\n");
++
++	misc_deregister(&data->misc);
++
++	return 0;
++}
++
++static struct platform_driver wgw_ec_chardev_driver = {
++	.driver = {
++		.name = DRV_NAME,
++	},
++	.probe = wgw_ec_chardev_probe,
++	.remove = wgw_ec_chardev_remove,
++};
++
++module_platform_driver(wgw_ec_chardev_driver);
++
++MODULE_ALIAS("platform:" DRV_NAME);
++MODULE_AUTHOR("Yannick Lanz <yannick.lanz@wifx.net>");
++MODULE_DESCRIPTION("Miscellaneous character driver for Wifx board EC");
++MODULE_LICENSE("GPL v2");
+\ No newline at end of file
+diff --git a/drivers/mfd/wgw_ec_dev.c b/drivers/mfd/wgw_ec_dev.c
+new file mode 100644
+index 000000000000..a583694e7f37
+--- /dev/null
++++ b/drivers/mfd/wgw_ec_dev.c
+@@ -0,0 +1,769 @@
++/*
++ * Multifunctionnal device driver for the Wifx board Embedded Controller
++ *
++ *  Copyright (C) 2021 Wifx,
++ *                2021 Yannick Lanz <yannick.lanz@wifx.net>
++ *
++ * This file is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation; either version 2 of the
++ * License, or (at your option) any later version.
++ *
++ * This file is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++#include <linux/delay.h>
++#include <linux/dma-mapping.h>
++#include <linux/mfd/core.h>
++#include <linux/module.h>
++#include <linux/mod_devicetable.h>
++#include <linux/mutex.h>
++#include <linux/platform_device.h>
++#include <linux/slab.h>
++
++#include <linux/mfd/wgw-ec/core.h>
++#include <linux/mfd/wgw-ec/reg.h>
++
++#define DRV_NAME "wgw-ec-dev"
++
++static struct class wifx_class = {
++	.owner = THIS_MODULE,
++	.name = "wifx",
++};
++
++static struct mfd_cell wgw_ec_mfd_cells[] = {
++	{
++		.name = "wgw-ec-leds",
++		.of_compatible = "wifx,wgw-ec-leds",
++	},
++	{
++		.name = "wgw-ec-usbc",
++		.of_compatible = "wifx,wgw-ec-usbc",
++	},
++};
++
++static const struct mfd_cell wgw_ec_platform_cells[] = {
++	{
++		.name = "wgw-ec-chardev",
++	},
++	{
++		.name = "wgw-ec-sysfs",
++	},
++};
++
++#define WGW_EC_MEM_SLOT_EMPTY 0x00
++#define WGW_EC_MEM_SLOT_SET 0x01
++#define WGW_EC_MEM_SLOT_OTP 0x02
++#define WGW_EC_MEM_SLOT_SET_OTP (WGW_EC_MEM_SLOT_SET | WGW_EC_MEM_SLOT_OTP)
++#define WGW_EC_MEM_SLOT_STATE_Msk 0x03
++
++struct hw_info {
++	struct wgw_ec_version version;
++	u8 model;
++	u8 variant;
++	u8 frequency;
++};
++
++struct wgw_ec_reg {
++	union {
++		u8 data[32];
++		struct wgw_ec_version fw_info_version;
++		const char *fw_info_commit_hash;
++		const char *fw_info_commit_date;
++		struct hw_info hw_info;
++	};
++};
++
++static const char *unknown_str = "unknown";
++static const char *undefined_str = "undefined";
++static const char *error_str = "error";
++
++static const char *model_strs[] = { "lorix-one", "wifx-l1", "wifx-y1" };
++static const char *model_pretty_strs[] = { "LORIX One", "Wifx L1", "Wifx Y1" };
++int model_index(enum wgw_ec_model model)
++{
++	switch (model) {
++	case WGW_EC_M_LORIX_ONE:
++	case WGW_EC_M_WIFX_L1:
++	case WGW_EC_M_WIFX_Y1:
++		return (int)model;
++	default:
++		return -1;
++	}
++}
++
++const char *model_str(enum wgw_ec_model model)
++{
++	int index;
++	if ((index = model_index(model)) < 0) {
++		return unknown_str;
++	}
++	return model_strs[index];
++}
++
++const char *model_pretty_str(enum wgw_ec_model model)
++{
++	int index;
++	if ((index = model_index(model)) < 0) {
++		return unknown_str;
++	}
++	return model_pretty_strs[index];
++}
++
++static const char *variant_strs[] = { "standard" };
++int variant_index(enum wgw_ec_variant variant)
++{
++	switch (variant) {
++	case WGW_EC_V_STANDARD:
++		return (int)variant;
++	default:
++		return -1;
++	}
++}
++const char *variant_str(enum wgw_ec_variant variant)
++{
++	int index;
++	if ((index = variant_index(variant)) < 0) {
++		return unknown_str;
++	}
++	return variant_strs[index];
++}
++
++static const char *frequency_strs[] = { "863-870", "902-928" };
++int frequency_index(enum wgw_ec_frequency frequency)
++{
++	switch (frequency) {
++	case WGW_EC_F_863_870:
++	case WGW_EC_F_902_928:
++		return (int)frequency;
++	default:
++		return -1;
++	}
++}
++const char *frequency_str(enum wgw_ec_frequency frequency)
++{
++	int index;
++	if ((index = frequency_index(frequency)) < 0) {
++		return unknown_str;
++	}
++	return frequency_strs[index];
++}
++
++int hw_version_str(const struct wgw_ec_version *version, char *version_str,
++		   int max_len)
++{
++	if (version->revision == 0) {
++		return snprintf(version_str, max_len, "%d.%d", version->major,
++				version->minor);
++	} else {
++		return snprintf(version_str, max_len, "%d.%d%c", version->major,
++				version->minor,
++				(char)(version->revision + 'A'));
++	}
++}
++
++int fw_version_str(const struct wgw_ec_version *version, char *version_str,
++		   int max_len)
++{
++	return snprintf(version_str, max_len, "%d.%d.%d", version->major,
++			version->minor, version->revision);
++}
++
++#define CMD_LTR_STATUS_SUCCESS 0
++#define CMD_LTR_STATUS_BUSY 1
++#define CMD_LTR_STATUS_INVALID_ARG 2
++#define CMD_LTR_STATUS_FAILURE 3
++#define CMD_LTR_STATUS_BAD_CRC 4
++#define CMD_LTR_STATUS_NOT_WRITABLE 5
++#define CMD_LTR_STATUS_PAGE_NOT_ALIGNED 6
++
++int wgw_ec_get_ltr_status(struct wgw_ec_dev *ec)
++{
++	struct wgw_ec_device *ec_dev = ec->ec_dev;
++	u8 status;
++	int ret = ec_dev->read_byte(ec_dev, WGW_EC_REG_CMD_LTR_STATUS, &status);
++	if (ret < 0) {
++		dev_err(ec->dev,
++			"failed to read LTR command status from device\n");
++		return ret;
++	}
++	return (int)status;
++}
++EXPORT_SYMBOL_GPL(wgw_ec_get_ltr_status);
++
++int wgw_ec_wait_ready(struct wgw_ec_dev *ec)
++{
++	int i, status;
++	for (i = 0; i < 10; i++) {
++		status = wgw_ec_get_ltr_status(ec);
++		if (status < 0)
++			return status;
++
++		if (status == CMD_LTR_STATUS_SUCCESS)
++			return 0;
++
++		if (status == CMD_LTR_STATUS_BUSY) {
++			msleep(5);
++			continue;
++		}
++
++		dev_err(ec->dev, "LTR command error status: %d\n", status);
++		return -EIO;
++	}
++	return -EBUSY;
++}
++EXPORT_SYMBOL_GPL(wgw_ec_wait_ready);
++
++static int mem_slot_get(struct wgw_ec_dev *ec, u8 slot_index,
++			struct wgw_ec_memory_slot *slot)
++{
++	struct wgw_ec_device *ec_dev = ec->ec_dev;
++	char buffer[32];
++	int ret;
++
++	if (slot_index > 3) {
++		dev_err(ec->dev, "slot[%d] doesn't exist\n", slot_index);
++		return -EINVAL;
++	}
++
++	ret = ec_dev->read_block(ec_dev, WGW_EC_REG_MEM_SLOT0_CTRL + slot_index,
++				 buffer);
++	if (ret < 0) {
++		dev_err(ec->dev,
++			"failed to read memory slot[%d] ctrl register\n",
++			slot_index);
++		return ret;
++	}
++	slot->flags = buffer[0] & WGW_EC_MEM_SLOT_STATE_Msk;
++	slot->length = buffer[1];
++
++	if (!(slot->flags & WGW_EC_MEM_SLOT_SET)) {
++		slot->length = 0;
++	} else {
++		ret = ec_dev->read_block(
++			ec_dev, WGW_EC_REG_MEM_SLOT0 + slot_index, buffer);
++		if (ret < 0) {
++			dev_err(ec->dev,
++				"failed to read memory slot[%d] data register\n",
++				slot_index);
++			return ret;
++		}
++		if (ret != slot->length) {
++			dev_err(ec->dev,
++				"failed to read memory slot[%d] data register, data length error\n",
++				slot_index);
++			return ret;
++		}
++		memcpy(slot->data, buffer, slot->length);
++	}
++	return slot->length;
++}
++
++static int mem_slot_set(struct wgw_ec_dev *ec, u8 slot_index,
++			const struct wgw_ec_memory_slot *slot)
++{
++	struct wgw_ec_device *ec_dev = ec->ec_dev;
++	char buffer[2];
++	int ret;
++
++	if (slot_index > 3) {
++		dev_err(ec->dev, "slot[%d] doesn't exist\n", slot_index);
++		return -EINVAL;
++	}
++
++	// XOR compare
++	if (!(slot->flags & WGW_EC_MEM_SLOT_SET) != !slot->length) {
++		dev_err(ec->dev, "slot[%d] length and flags don't match\n",
++			slot_index);
++		return -EINVAL;
++	}
++
++	buffer[0] = slot->flags;
++	buffer[1] = 0; // length has not effect
++	mutex_lock(&ec_dev->lock_ltr);
++	if (!slot->length) {
++		ret = ec_dev->write_block(
++			ec_dev, WGW_EC_REG_MEM_SLOT0_CTRL + slot_index, buffer,
++			2);
++		if (ret < 0) {
++			dev_err(ec->dev,
++				"failed to write memory slot[%d] ctrl register\n",
++				slot_index);
++			mutex_unlock(&ec_dev->lock_ltr);
++			return ret;
++		}
++		ret = wgw_ec_wait_ready(ec);
++	} else {
++		// write data
++		ec_dev->write_block(ec_dev, WGW_EC_REG_MEM_SLOT0 + slot_index,
++				    slot->data, slot->length);
++		if (ret < 0) {
++			dev_err(ec->dev,
++				"failed to write memory slot[%d] data register\n",
++				slot_index);
++			mutex_unlock(&ec_dev->lock_ltr);
++			return ret;
++		}
++		if ((ret = wgw_ec_wait_ready(ec)) < 0) {
++			mutex_unlock(&ec_dev->lock_ltr);
++			return ret;
++		}
++
++		// write control register
++		ec_dev->write_block(ec_dev,
++				    WGW_EC_REG_MEM_SLOT0_CTRL + slot_index,
++				    buffer, 2);
++		if (ret < 0) {
++			dev_err(ec->dev,
++				"failed to write memory slot[%d] ctrl register\n",
++				slot_index);
++			mutex_unlock(&ec_dev->lock_ltr);
++			return ret;
++		}
++		ret = wgw_ec_wait_ready(ec);
++	}
++	mutex_unlock(&ec_dev->lock_ltr);
++	return ret;
++}
++
++static int hw_info_get(struct wgw_ec_dev *ec, struct wgw_ec_hw_info *hw_info)
++{
++	struct wgw_ec_device *ec_dev = ec->ec_dev;
++	struct wgw_ec_reg reg;
++	int32_t ret;
++
++	ret = ec_dev->read_block(ec_dev, WGW_EC_REG_HW_INFO, reg.data);
++	if (ret < 0) {
++		dev_err(ec->dev, "failed to read hw info (%d)\n", ret);
++		return ret;
++	}
++	if (ret != sizeof(reg.hw_info)) {
++		dev_err(ec->dev,
++			"failed to read hw info register (wrong returned size)\n");
++		return -EIO;
++	}
++	hw_info->version = reg.hw_info.version;
++	hw_version_str(&reg.hw_info.version, hw_info->version_str,
++		       WGW_EC_HW_VERSION_SIZE);
++	hw_info->model.id = model_index(reg.hw_info.model);
++	hw_info->model.str = model_str(reg.hw_info.model);
++	hw_info->variant.id = variant_index(reg.hw_info.variant);
++	hw_info->variant.str = variant_str(reg.hw_info.variant);
++	hw_info->frequency.id = frequency_index(reg.hw_info.frequency);
++	hw_info->frequency.str = frequency_str(reg.hw_info.frequency);
++	return 0;
++}
++
++static int fw_info_get(struct wgw_ec_dev *ec, struct wgw_ec_fw_info *fw_info)
++{
++	struct wgw_ec_device *ec_dev = ec->ec_dev;
++	struct wgw_ec_reg reg;
++	int32_t ret;
++
++	// retrieve firmware version
++	ret = ec_dev->read_block(ec_dev, WGW_EC_REG_FW_INFO1, reg.data);
++	if (ret < 0) {
++		dev_err(ec->dev, "failed to read firmware version (%d)\n", ret);
++		return ret;
++	}
++	if (ret != sizeof(reg.fw_info_version)) {
++		dev_err(ec->dev,
++			"failed to read fw version cause of wrong returned size (%d)\n",
++			ret);
++		return -EIO;
++	}
++	fw_info->version = reg.fw_info_version;
++	fw_version_str(&reg.fw_info_version, fw_info->version_str,
++		       WGW_EC_FW_VERSION_SIZE);
++
++	// retrieve firmware commit hash
++	ret = ec_dev->read_block(ec_dev, WGW_EC_REG_FW_INFO2, reg.data);
++	if (ret < 0) {
++		dev_err(ec->dev, "failed to read firmware commit hash (%d)\n",
++			ret);
++		return ret;
++	}
++	if (ret >= WGW_EC_APP_COMMIT_HASH_SIZE) {
++		dev_err(ec->dev,
++			"firmware commit hash string is too longth (%d)\n",
++			ret);
++		return -EIO;
++	}
++	memcpy(&fw_info->commit_hash[0], reg.data, ret);
++	// convert to null terminated string
++	fw_info->commit_hash[ret] = '\0';
++
++	// retrieve firmware commit date
++	ret = ec_dev->read_block(ec_dev, WGW_EC_REG_FW_INFO3, reg.data);
++	if (ret < 0) {
++		dev_err(ec->dev, "failed to read firmware commit date (%d)\n",
++			ret);
++		return ret;
++	}
++	if (ret >= WGW_EC_APP_COMMIT_DATE_SIZE) {
++		dev_err(ec->dev,
++			"firmware commit date string is too longth (%d)\n",
++			ret);
++		return -EIO;
++	}
++	memcpy(&fw_info->commit_date[0], reg.data, ret);
++	// convert to null terminated string
++	fw_info->commit_date[ret] = '\0';
++	return 0;
++}
++
++int serial_get(struct wgw_ec_dev *ec, struct wgw_ec_serial *serial)
++{
++	int ret;
++	struct wgw_ec_memory_slot slot;
++
++	ret = mem_slot_get(ec, 0, &slot);
++	if (ret < 0) {
++		serial->state = WGW_EC_SERIAL_ERROR;
++		strcpy(serial->data, error_str);
++		return ret;
++	}
++	if (ret >= WGW_EC_HW_SN_SIZE) {
++		serial->state = WGW_EC_SERIAL_ERROR;
++		strcpy(serial->data, error_str);
++		dev_err(ec->dev, "serial read from device is too long (%d)\n",
++			ret);
++		return -EIO;
++	}
++	serial->state = 0;
++	if (slot.flags & WGW_EC_MEM_SLOT_OTP) {
++		serial->state |= WGW_EC_SERIAL_OTP;
++	}
++	if (!(slot.flags & WGW_EC_MEM_SLOT_SET)) {
++		// slot is not set
++		strcpy(serial->data, undefined_str);
++	} else {
++		memcpy(serial->data, slot.data, slot.length);
++		// convert to null terminated string
++		serial->data[slot.length] = '\0';
++		serial->state |= WGW_EC_SERIAL_SET;
++	}
++	return 0;
++}
++
++int wgw_ec_serial_set(struct wgw_ec_dev *ec, char *serial,
++		      struct wgw_ec_serial *serial_cache)
++{
++	struct wgw_ec_memory_slot slot;
++	size_t len;
++	int ret;
++
++	if ((len = strnlen(serial, WGW_EC_HW_SN_SIZE)) == WGW_EC_HW_SN_SIZE) {
++		dev_err(ec->dev, "set serial error: serial too long\n");
++		return -EINVAL;
++	}
++
++	if (!len) {
++		dev_err(ec->dev,
++			"set serial error: cannot be null (len = 0)\n");
++		return -EINVAL;
++	}
++
++	slot.flags = WGW_EC_MEM_SLOT_SET_OTP;
++	slot.length = len;
++	memcpy(slot.data, serial, len);
++	ret = mem_slot_set(ec, 0, &slot);
++	if (ret < 0) {
++		return ret;
++	}
++	return serial_get(ec, serial_cache);
++}
++EXPORT_SYMBOL_GPL(wgw_ec_serial_set);
++
++int wgw_ec_boot_state_get(struct wgw_ec_dev *ec, u8 *boot_state)
++{
++	struct wgw_ec_device *ec_dev = ec->ec_dev;
++	int ret = ec_dev->read_byte(ec_dev, WGW_EC_REG_LAST_RESET_STATE,
++				    boot_state);
++	if (ret < 0) {
++		dev_err(ec->dev, "failed to read from device\n");
++		*boot_state = 0xFF;
++	}
++	return 0;
++}
++EXPORT_SYMBOL_GPL(wgw_ec_boot_state_get);
++
++int wgw_ec_boot_state_clr_update(struct wgw_ec_dev *ec, u8 *boot_state)
++{
++	struct wgw_ec_device *ec_dev = ec->ec_dev;
++	int ret = ec_dev->write_byte(ec_dev, WGW_EC_REG_LAST_RESET_STATE, 0xFF);
++	if (ret < 0) {
++		dev_err(ec->dev, "failed to write to device\n");
++		return ret;
++	}
++	// update local cache
++	return wgw_ec_boot_state_get(ec, boot_state);
++}
++EXPORT_SYMBOL_GPL(wgw_ec_boot_state_clr_update);
++
++static int fetch_cache_info(struct wgw_ec_dev *ec)
++{
++	struct wgw_ec_info *cache = &ec->cache_info;
++	struct wgw_ec_device *ec_dev = ec->ec_dev;
++	struct device *dev = ec->dev;
++	u8 buffer[32];
++	int ret;
++
++	mutex_lock(&ec->cache_lock);
++
++	/* Verify protocole version */
++	ret = ec_dev->read_byte(ec_dev, WGW_EC_REG_PROTOC_VER, buffer);
++	if (ret < 0) {
++		dev_err(dev, "failed to read protocole version (%d)\n", ret);
++		goto failure;
++	}
++	cache->protoc = buffer[0];
++	dev_info(dev, "detected wgw-ec, protocol version=%d\n", cache->protoc);
++	if (cache->protoc != 2) {
++		dev_err(dev, "protocol version %d not supported\n",
++			cache->protoc);
++		ret = -EPROTO;
++		goto failure;
++	}
++
++	/* Populate the cache */
++	ret = hw_info_get(ec, &cache->hw_info);
++	if (ret < 0) {
++		dev_err(dev, "failed to read hardware info (%d)\n", ret);
++		goto failure;
++	}
++
++	ret = fw_info_get(ec, &cache->fw_info);
++	if (ret < 0) {
++		dev_err(dev, "failed to read firmware info (%d)\n", ret);
++		goto failure;
++	}
++
++	ret = serial_get(ec, &cache->serial);
++	if (ret < 0) {
++		dev_err(dev, "failed to read serial (%d)\n", ret);
++		goto failure;
++	}
++
++	ret = wgw_ec_boot_state_get(ec, &cache->boot_state);
++	if (ret < 0) {
++		dev_err(dev, "failed to read boot state (%d)\n", ret);
++		goto failure;
++	}
++
++	mutex_unlock(&ec->cache_lock);
++	return 0;
++
++failure:
++	mutex_unlock(&ec->cache_lock);
++	return ret;
++}
++
++static int display_cache_info(struct wgw_ec_dev *ec)
++{
++	struct wgw_ec_info *cache = &ec->cache_info;
++	struct device *dev = ec->dev;
++	int ret = -ENODEV;
++
++	mutex_lock(&ec->cache_lock);
++
++	/* Verify the product is supported */
++	if (cache->hw_info.model.id != WGW_EC_M_WIFX_L1) {
++		dev_err(dev, "Unknown product detected\n");
++		goto failure;
++	}
++
++	if (cache->hw_info.model.id < 0 || cache->hw_info.variant.id < 0 ||
++	    cache->hw_info.frequency.id < 0) {
++		dev_err(dev,
++			"Product model, variant and/or frequency not detected or unknown\n");
++		goto failure;
++	}
++	dev_info(dev, "Model: %s (variant=%s, frequency=%s)\n",
++		 model_pretty_str((enum wgw_ec_model)cache->hw_info.model.id),
++		 cache->hw_info.variant.str, cache->hw_info.frequency.str);
++	if (!cache->serial.state) {
++		dev_warn(dev, "Serial: %s\n", cache->serial.data);
++	} else if (cache->serial.state < 0) {
++		dev_err(dev, " Serial: %s\n", cache->serial.data);
++	} else {
++		dev_info(dev, "Serial: %s\n", cache->serial.data);
++		if (!(cache->serial.state & WGW_EC_SERIAL_OTP)) {
++			dev_warn(dev, "serial is not locked\n");
++		} else if (!(cache->serial.state & WGW_EC_SERIAL_SET)) {
++			dev_err(dev, "serial is locked with null value\n");
++		}
++	}
++	dev_info(dev, "HW ver: %s\n", cache->hw_info.version_str);
++	dev_info(dev, "FW ver: %s (%s) [%s]\n", cache->fw_info.version_str,
++		 cache->fw_info.commit_hash, cache->fw_info.commit_date);
++
++	/* Display boot state */
++	switch (cache->boot_state) {
++	case 0x00:
++		dev_info(dev, "Boot: 0x00 (normal mode)\n");
++		break;
++	case 0x01:
++		dev_info(dev, "Boot: 0x01 (factory reset mode)\n");
++		break;
++	default:
++		dev_info(dev,
++			 "Boot: 0x%02X (unknown mode), clearing boot state\n",
++			 cache->boot_state);
++		ret = wgw_ec_boot_state_clr_update(ec, &cache->boot_state);
++		if (ret < 0)
++			return ret;
++		break;
++	}
++	mutex_unlock(&ec->cache_lock);
++	return 0;
++
++failure:
++	mutex_unlock(&ec->cache_lock);
++	return ret;
++}
++
++static void wgw_ec_class_release(struct device *dev)
++{
++	dev_dbg(dev, "wgw-ec-class release\n");
++	kfree(to_wgw_ec_dev(dev));
++}
++
++static int wgw_ec_dev_probe(struct platform_device *pdev)
++{
++	int retval = -ENOMEM;
++	struct device *dev = &pdev->dev;
++	struct wgw_ec_dev *ec = kzalloc(sizeof(*ec), GFP_KERNEL);
++
++	dev_dbg(dev, "wgw-ec-dev probe\n");
++
++	if (!ec)
++		return retval;
++
++	retval = dma_coerce_mask_and_coherent(dev, DMA_BIT_MASK(32));
++	if (retval)
++		return retval;
++
++	mutex_init(&ec->cache_lock);
++
++	dev_set_drvdata(dev, ec);
++	ec->ec_dev = dev_get_drvdata(dev->parent);
++	ec->dev = dev;
++	device_initialize(&ec->class_dev);
++
++	// detect the EC
++	retval = fetch_cache_info(ec);
++	if (retval) {
++		dev_err(dev, "failed to fetch device information\n");
++		return retval;
++	}
++	// diplay info
++	display_cache_info(ec);
++
++	/*
++	 * Add the class device
++	 */
++	ec->class_dev.class = &wifx_class;
++	ec->class_dev.parent = dev;
++	ec->class_dev.release = wgw_ec_class_release;
++
++	retval = dev_set_name(&ec->class_dev, "%s", "wgw-ec");
++	if (retval) {
++		dev_err(ec->dev, "dev_set_name failed => %d\n", retval);
++		goto error_put_device;
++	}
++
++	retval = device_add(&ec->class_dev);
++	if (retval)
++		goto error_put_device;
++
++	// device_register is device_initialize + device_add
++
++	/*
++	 * The following subdevices cannot be detected automatically
++	 */
++	retval = mfd_add_hotplug_devices(ec->dev, wgw_ec_platform_cells,
++					 ARRAY_SIZE(wgw_ec_platform_cells));
++	if (retval) {
++		dev_warn(ec->dev, "failed to add wgw-ec platform devices: %d\n",
++			 retval);
++		goto error_mfd_remove;
++	}
++
++	retval = mfd_add_devices(ec->dev, PLATFORM_DEVID_AUTO, wgw_ec_mfd_cells,
++				 ARRAY_SIZE(wgw_ec_mfd_cells), NULL, 0, NULL);
++	if (retval) {
++		dev_warn(ec->dev, "failed to add wgw-ec subdevice: %d\n",
++			 retval);
++		goto error_mfd_remove;
++	}
++	return 0;
++
++error_mfd_remove:
++	mfd_remove_devices(ec->dev);
++	device_unregister(&ec->class_dev);
++
++error_put_device:
++	put_device(&ec->class_dev);
++	return retval;
++}
++
++static int wgw_ec_dev_remove(struct platform_device *pdev)
++{
++	struct wgw_ec_dev *ec = dev_get_drvdata(&pdev->dev);
++	dev_dbg(ec->dev, "wgw-ec-dev remove\n");
++
++	mfd_remove_devices(ec->dev);
++	device_unregister(&ec->class_dev);
++	return 0;
++}
++
++static const struct platform_device_id wgw_ec_id[] = { { "wgw-ec-dev", 0 },
++						       { /* sentinel */ } };
++MODULE_DEVICE_TABLE(platform, wgw_ec_id);
++
++static struct platform_driver wgw_ec_dev_driver = {
++	.driver = {
++		.name = "wgw-ec-dev",
++	},
++	.id_table = wgw_ec_id,
++	.probe = wgw_ec_dev_probe,
++	.remove = wgw_ec_dev_remove,
++};
++
++static int __init wgw_ec_dev_init(void)
++{
++	int ret = class_register(&wifx_class);
++	if (ret) {
++		pr_err("wgw_ec: failed to register device class\n");
++		return ret;
++	}
++
++	/* Register the driver */
++	ret = platform_driver_register(&wgw_ec_dev_driver);
++	if (ret < 0) {
++		pr_warn("wgw_ec: can't register driver: %d\n", ret);
++		goto failed_devreg;
++	}
++	return 0;
++
++failed_devreg:
++	class_unregister(&wifx_class);
++	return ret;
++}
++
++static void __exit wgw_ec_dev_exit(void)
++{
++	platform_driver_unregister(&wgw_ec_dev_driver);
++	class_unregister(&wifx_class);
++}
++
++module_init(wgw_ec_dev_init);
++module_exit(wgw_ec_dev_exit);
++
++MODULE_ALIAS("platform:" DRV_NAME);
++MODULE_AUTHOR("Yannick Lanz <yannick.lanz@wifx.net>");
++MODULE_DESCRIPTION("MFD device driver for the Wifx board Embedded Controller");
++MODULE_LICENSE("GPL v2");
+diff --git a/drivers/mfd/wgw_ec_i2c.c b/drivers/mfd/wgw_ec_i2c.c
+new file mode 100644
+index 000000000000..f2947e7dd9ac
+--- /dev/null
++++ b/drivers/mfd/wgw_ec_i2c.c
+@@ -0,0 +1,172 @@
++/*
++ * I2C driver for the Wifx board EC
++ *
++ *  Copyright (C) 2021 Wifx,
++ *                2021 Yannick Lanz <yannick.lanz@wifx.net>
++ *
++ * This file is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation; either version 2 of the
++ * License, or (at your option) any later version.
++ *
++ * This file is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++#include <linux/err.h>
++#include <linux/i2c.h>
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/of.h>
++#include <linux/slab.h>
++
++#include <linux/mfd/wgw-ec/core.h>
++#include <linux/mfd/wgw-ec/reg.h>
++
++// Returns length read (>= 0) or error (< 0)
++static int read_byte(struct wgw_ec_device *wgw_dev, char command, u8 *data)
++{
++	struct i2c_client *client = wgw_dev->priv;
++	s32 result = i2c_smbus_read_byte_data(client, command);
++	if (result < 0) {
++		return result;
++	}
++	*data = (u8)result;
++	return 1;
++}
++
++static int read_word(struct wgw_ec_device *wgw_dev, char command, u16 *data)
++{
++	struct i2c_client *client = wgw_dev->priv;
++	s32 result = i2c_smbus_read_word_data(client, command);
++	if (result < 0) {
++		return result;
++	}
++	*data = (u16)result;
++	return 1;
++}
++
++static int read_block(struct wgw_ec_device *wgw_dev, char command, u8 *data)
++{
++	struct i2c_client *client = wgw_dev->priv;
++	return (int)i2c_smbus_read_block_data(client, command, data);
++}
++
++// Returns length written (>= 0) or error (< 0)
++static int write_byte(struct wgw_ec_device *wgw_dev, char command, u8 data)
++{
++	struct i2c_client *client = wgw_dev->priv;
++	s32 result = i2c_smbus_write_byte_data(client, command, data);
++	if (result < 0) {
++		return result;
++	}
++	return 1;
++}
++
++static int write_word(struct wgw_ec_device *wgw_dev, char command, u16 data)
++{
++	struct i2c_client *client = wgw_dev->priv;
++	s32 result = i2c_smbus_write_word_data(client, command, data);
++	if (result < 0) {
++		return result;
++	}
++	return 2;
++}
++
++static int write_block(struct wgw_ec_device *wgw_dev, char command,
++		       const u8 *data, u8 len)
++{
++	struct i2c_client *client = wgw_dev->priv;
++	return (int)i2c_smbus_write_block_data(client, command, len, data);
++}
++
++static int wgw_ec_i2c_probe(struct i2c_client *client,
++			    const struct i2c_device_id *id)
++{
++	struct device *dev = &client->dev;
++	struct wgw_ec_device *wgw_dev = NULL;
++	int err;
++
++	pr_debug("wgw-ec-i2c probe\n");
++
++	wgw_dev = devm_kzalloc(&client->dev, sizeof(*wgw_dev), GFP_KERNEL);
++	if (wgw_dev == NULL)
++		return -ENOMEM;
++
++	if (!i2c_check_functionality(client->adapter,
++				     I2C_FUNC_SMBUS_BYTE_DATA)) {
++		dev_err(&client->dev, "SMBUS Byte Data not Supported\n");
++		return -EIO;
++	}
++	if (!i2c_check_functionality(client->adapter,
++				     I2C_FUNC_SMBUS_WORD_DATA)) {
++		dev_err(&client->dev, "SMBUS Byte Data not Supported\n");
++		return -EIO;
++	}
++	if (!i2c_check_functionality(client->adapter,
++				     I2C_FUNC_SMBUS_BLOCK_DATA)) {
++		dev_err(&client->dev, "SMBUS Byte Data not Supported\n");
++		return -EIO;
++	}
++	if (i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_PEC)) {
++		client->flags |= I2C_CLIENT_PEC;
++	} else {
++		dev_err(&client->dev,
++			"SMBUS PEC is not supported, pass in unchecked mode\n");
++	}
++
++	i2c_set_clientdata(client, wgw_dev);
++	wgw_dev->dev = dev;
++	wgw_dev->priv = client;
++	wgw_dev->irq = client->irq;
++	wgw_dev->read_byte = read_byte;
++	wgw_dev->read_word = read_word;
++	wgw_dev->read_block = read_block;
++	wgw_dev->write_byte = write_byte;
++	wgw_dev->write_word = write_word;
++	wgw_dev->write_block = write_block;
++	wgw_dev->phys_name = client->adapter->name;
++
++	err = wgw_ec_register(wgw_dev);
++	if (err) {
++		dev_err(dev, "cannot register EC\n");
++		return err;
++	}
++
++	return 0;
++}
++
++static int wgw_ec_i2c_remove(struct i2c_client *client)
++{
++	struct wgw_ec_device *wgw_dev = i2c_get_clientdata(client);
++	pr_debug("wgw-ec-i2c remove\n");
++	return wgw_ec_unregister(wgw_dev);
++}
++
++static const struct i2c_device_id wgw_ec_i2c_id[] = { { "wgw-ec-i2c", 0 }, {} };
++MODULE_DEVICE_TABLE(client, wgw_ec_i2c_id);
++
++static const struct of_device_id wgw_ec_of_match[] = {
++	{
++		.compatible = "wifx,wgw-ec-i2c",
++	},
++	{}
++};
++MODULE_DEVICE_TABLE(of, wgw_ec_of_match);
++
++static struct i2c_driver wgw_ec_i2c_driver = {
++	.driver = {
++		.name = "wgw-ec-i2c",
++		.of_match_table = of_match_ptr(wgw_ec_of_match),
++	},
++	.probe = wgw_ec_i2c_probe,
++	.remove = wgw_ec_i2c_remove,
++	.id_table = wgw_ec_i2c_id,
++};
++
++module_i2c_driver(wgw_ec_i2c_driver);
++
++MODULE_AUTHOR("Yannick Lanz <yannick.lanz@wifx.net>");
++MODULE_DESCRIPTION("I2C driver for the Wifx board EC");
++MODULE_LICENSE("GPL v2");
+diff --git a/drivers/mfd/wgw_ec_sysfs.c b/drivers/mfd/wgw_ec_sysfs.c
+new file mode 100644
+index 000000000000..4cd2597bfee6
+--- /dev/null
++++ b/drivers/mfd/wgw_ec_sysfs.c
+@@ -0,0 +1,359 @@
++/*
++ * Expose the Wifx board EC through sysfs
++ *
++ *  Copyright (C) 2021 Wifx,
++ *                2021 Yannick Lanz <yannick.lanz@wifx.net>
++ *
++ * This file is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation; either version 2 of the
++ * License, or (at your option) any later version.
++ *
++ * This file is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++#include <linux/init.h>
++#include <linux/device.h>
++#include <linux/fs.h>
++#include <linux/miscdevice.h>
++#include <linux/module.h>
++#include <linux/notifier.h>
++#include <linux/platform_device.h>
++#include <linux/poll.h>
++#include <linux/slab.h>
++#include <linux/types.h>
++#include <linux/uaccess.h>
++
++#include <linux/mfd/wgw-ec/core.h>
++
++#define DRV_NAME "wgw-ec-sysfs"
++
++static ssize_t dev_version_show(struct device *dev,
++				struct device_attribute *attr, char *buf)
++{
++	return sprintf(buf, "%s\n", "2.0.0");
++}
++
++static ssize_t mem_ram_show(struct device *dev, struct device_attribute *attr,
++			    char *buf)
++{
++	return sprintf(buf, "%d\n", 256 * 1024);
++}
++
++static ssize_t mem_nand_show(struct device *dev, struct device_attribute *attr,
++			     char *buf)
++{
++	return sprintf(buf, "%d\n", 1024 * 1024);
++}
++
++static ssize_t product_model_show(struct device *dev,
++				  struct device_attribute *attr, char *buf)
++{
++	struct wgw_ec_dev *ec = to_wgw_ec_dev(dev);
++	struct wgw_ec_info *cache = &ec->cache_info;
++	ssize_t len;
++
++	mutex_lock(&ec->cache_lock);
++	len = sprintf(buf, "%s\n", cache->hw_info.model.str);
++	mutex_unlock(&ec->cache_lock);
++	return len;
++}
++
++static ssize_t product_model_id_show(struct device *dev,
++				     struct device_attribute *attr, char *buf)
++{
++	struct wgw_ec_dev *ec = to_wgw_ec_dev(dev);
++	struct wgw_ec_info *cache = &ec->cache_info;
++	u8 model_id;
++
++	mutex_lock(&ec->cache_lock);
++	model_id = cache->hw_info.model.id;
++	mutex_unlock(&ec->cache_lock);
++
++	return sprintf(buf, "%d\n", model_id);
++}
++
++static ssize_t product_variant_show(struct device *dev,
++				    struct device_attribute *attr, char *buf)
++{
++	struct wgw_ec_dev *ec = to_wgw_ec_dev(dev);
++	struct wgw_ec_info *cache = &ec->cache_info;
++	ssize_t len;
++
++	mutex_lock(&ec->cache_lock);
++	len = sprintf(buf, "%s\n", cache->hw_info.variant.str);
++	mutex_unlock(&ec->cache_lock);
++	return len;
++}
++
++static ssize_t product_variant_id_show(struct device *dev,
++				       struct device_attribute *attr, char *buf)
++{
++	struct wgw_ec_dev *ec = to_wgw_ec_dev(dev);
++	struct wgw_ec_info *cache = &ec->cache_info;
++	u8 variant_id;
++
++	mutex_lock(&ec->cache_lock);
++	variant_id = cache->hw_info.variant.id;
++	mutex_unlock(&ec->cache_lock);
++
++	return sprintf(buf, "%d\n", variant_id);
++}
++
++static ssize_t product_frequency_show(struct device *dev,
++				      struct device_attribute *attr, char *buf)
++{
++	struct wgw_ec_dev *ec = to_wgw_ec_dev(dev);
++	struct wgw_ec_info *cache = &ec->cache_info;
++	ssize_t len;
++
++	mutex_lock(&ec->cache_lock);
++	len = sprintf(buf, "%s\n", cache->hw_info.frequency.str);
++	mutex_unlock(&ec->cache_lock);
++	return len;
++}
++
++static ssize_t product_frequency_id_show(struct device *dev,
++					 struct device_attribute *attr,
++					 char *buf)
++{
++	struct wgw_ec_dev *ec = to_wgw_ec_dev(dev);
++	struct wgw_ec_info *cache = &ec->cache_info;
++	u8 frequency_id;
++
++	mutex_lock(&ec->cache_lock);
++	frequency_id = cache->hw_info.frequency.id;
++	mutex_unlock(&ec->cache_lock);
++
++	return sprintf(buf, "%d\n", frequency_id);
++}
++
++static ssize_t fw_version_show(struct device *dev,
++			       struct device_attribute *attr, char *buf)
++{
++	struct wgw_ec_dev *ec = to_wgw_ec_dev(dev);
++	struct wgw_ec_info *cache = &ec->cache_info;
++	ssize_t len;
++
++	mutex_lock(&ec->cache_lock);
++	len = sprintf(buf, "%s\n", cache->fw_info.version_str);
++	mutex_unlock(&ec->cache_lock);
++	return len;
++}
++
++static ssize_t fw_version_hash_show(struct device *dev,
++				    struct device_attribute *attr, char *buf)
++{
++	struct wgw_ec_dev *ec = to_wgw_ec_dev(dev);
++	struct wgw_ec_info *cache = &ec->cache_info;
++	ssize_t len;
++
++	mutex_lock(&ec->cache_lock);
++	len = sprintf(buf, "%s\n", cache->fw_info.commit_hash);
++	mutex_unlock(&ec->cache_lock);
++	return len;
++}
++
++static ssize_t fw_version_date_show(struct device *dev,
++				    struct device_attribute *attr, char *buf)
++{
++	struct wgw_ec_dev *ec = to_wgw_ec_dev(dev);
++	struct wgw_ec_info *cache = &ec->cache_info;
++	ssize_t len;
++
++	mutex_lock(&ec->cache_lock);
++	len = sprintf(buf, "%s\n", cache->fw_info.commit_date);
++	mutex_unlock(&ec->cache_lock);
++	return len;
++}
++
++static ssize_t hw_version_show(struct device *dev,
++			       struct device_attribute *attr, char *buf)
++{
++	struct wgw_ec_dev *ec = to_wgw_ec_dev(dev);
++	struct wgw_ec_info *cache = &ec->cache_info;
++	ssize_t len;
++
++	mutex_lock(&ec->cache_lock);
++	len = sprintf(buf, "%s\n", cache->hw_info.version_str);
++	mutex_unlock(&ec->cache_lock);
++	return len;
++}
++
++static ssize_t serial_show(struct device *dev, struct device_attribute *attr,
++			   char *buf)
++{
++	struct wgw_ec_dev *ec = to_wgw_ec_dev(dev);
++	struct wgw_ec_info *cache = &ec->cache_info;
++	ssize_t len;
++
++	mutex_lock(&ec->cache_lock);
++	len = sprintf(buf, "%s\n", cache->serial.data);
++	mutex_unlock(&ec->cache_lock);
++	return len;
++}
++
++static ssize_t serial_store(struct device *dev, struct device_attribute *attr,
++			    const char *buf, size_t count)
++{
++	struct wgw_ec_dev *ec = to_wgw_ec_dev(dev);
++	struct wgw_ec_info *cache = &ec->cache_info;
++	char serial[WGW_EC_HW_SN_SIZE];
++	int ret = -EACCES;
++
++	mutex_lock(&ec->cache_lock);
++	// test if serial is writable
++	if (cache->serial.state & WGW_EC_SERIAL_OTP) {
++		dev_err(ec->dev, "serial is already set and not writable\n");
++		// the serial is set and cannot be overwritten
++		goto failure;
++	}
++
++	if (count == 1 || count > WGW_EC_HW_SN_SIZE ||
++	    sscanf(buf, "%s\n", serial) <= 0) {
++		// count contains \n which means 0 length
++		ret = -EINVAL;
++		goto failure;
++	}
++
++	ret = wgw_ec_serial_set(ec, serial, &cache->serial);
++	if (ret >= 0) {
++		if (strncmp(serial, cache->serial.data, WGW_EC_HW_SN_SIZE)) {
++			dev_err(ec->dev,
++				"read serial doesn't match the written one\n");
++			ret = -EINVAL;
++		}
++	}
++	mutex_unlock(&ec->cache_lock);
++	return ret < 0 ? ret : count;
++
++failure:
++	mutex_unlock(&ec->cache_lock);
++	return ret;
++}
++
++static ssize_t boot_state_show(struct device *dev,
++			       struct device_attribute *attr, char *buf)
++{
++	struct wgw_ec_dev *ec = to_wgw_ec_dev(dev);
++	struct wgw_ec_info *cache = &ec->cache_info;
++	u8 boot_state;
++
++	mutex_lock(&ec->cache_lock);
++	boot_state = cache->boot_state;
++	mutex_unlock(&ec->cache_lock);
++
++	return sprintf(buf, "%d\n", boot_state);
++}
++
++static ssize_t boot_state_store(struct device *dev,
++				struct device_attribute *attr, const char *buf,
++				size_t count)
++{
++	struct wgw_ec_dev *ec = to_wgw_ec_dev(dev);
++	struct wgw_ec_info *cache = &ec->cache_info;
++	ssize_t ret;
++	unsigned int inval;
++
++	ret = count - 1;
++	if (!ret || ret > 1 || sscanf(buf, "%du\n", &inval) <= 0 || inval > 1)
++		return -EINVAL;
++
++	mutex_lock(&ec->cache_lock);
++	ret = wgw_ec_boot_state_clr_update(ec, &cache->boot_state);
++	mutex_unlock(&ec->cache_lock);
++
++	if (ret < 0) {
++		return -EIO;
++	}
++	return count;
++}
++
++static DEVICE_ATTR_RO(dev_version);
++static DEVICE_ATTR_RO(mem_ram);
++static DEVICE_ATTR_RO(mem_nand);
++static DEVICE_ATTR_RO(product_model);
++static DEVICE_ATTR_RO(product_model_id);
++static DEVICE_ATTR_RO(product_variant);
++static DEVICE_ATTR_RO(product_variant_id);
++static DEVICE_ATTR_RO(product_frequency);
++static DEVICE_ATTR_RO(product_frequency_id);
++static DEVICE_ATTR_RO(fw_version);
++static DEVICE_ATTR_RO(fw_version_hash);
++static DEVICE_ATTR_RO(fw_version_date);
++static DEVICE_ATTR_RO(hw_version);
++static DEVICE_ATTR(serial, (S_IWUSR | S_IRUSR | S_IWGRP | S_IRGRP | S_IROTH),
++		   serial_show, serial_store);
++static DEVICE_ATTR(boot_state,
++		   (S_IWUSR | S_IRUSR | S_IWGRP | S_IRGRP | S_IROTH),
++		   boot_state_show, boot_state_store);
++
++static struct attribute *wgw_attrs[] = {
++	&dev_attr_dev_version.attr,
++	&dev_attr_mem_ram.attr,
++	&dev_attr_mem_nand.attr,
++	&dev_attr_product_model.attr,
++	&dev_attr_product_model_id.attr,
++	&dev_attr_product_variant.attr,
++	&dev_attr_product_variant_id.attr,
++	&dev_attr_product_frequency.attr,
++	&dev_attr_product_frequency_id.attr,
++	&dev_attr_fw_version.attr,
++	&dev_attr_fw_version_hash.attr,
++	&dev_attr_fw_version_date.attr,
++	&dev_attr_hw_version.attr,
++	&dev_attr_serial.attr,
++	&dev_attr_boot_state.attr,
++	NULL,
++};
++
++static const struct attribute_group wgw_ec_attr_group = {
++	.attrs = wgw_attrs,
++};
++
++static int wgw_ec_sysfs_probe(struct platform_device *pdev)
++{
++	struct wgw_ec_dev *ec = dev_get_drvdata(pdev->dev.parent);
++	struct device *dev = &pdev->dev;
++	int ret;
++
++	pr_debug("wgw-ec-sysfs probe\n");
++
++	platform_set_drvdata(pdev, ec);
++
++	ret = sysfs_create_group(&ec->class_dev.kobj, &wgw_ec_attr_group);
++	if (ret < 0) {
++		dev_err(dev, "failed to create sysfs attributes. err=%d\n",
++			ret);
++		return ret;
++	}
++	dev_info(&pdev->dev, "registered sysfs attributes\n");
++	return 0;
++}
++
++static int wgw_ec_sysfs_remove(struct platform_device *pdev)
++{
++	struct wgw_ec_dev *ec = platform_get_drvdata(pdev);
++
++	pr_debug("wgw-ec-sysfs remove\n");
++
++	sysfs_remove_group(&ec->class_dev.kobj, &wgw_ec_attr_group);
++	return 0;
++}
++
++static struct platform_driver wgw_ec_sysfs_driver = {
++	.driver = {
++		.name = DRV_NAME,
++	},
++	.probe = wgw_ec_sysfs_probe,
++	.remove = wgw_ec_sysfs_remove,
++};
++
++module_platform_driver(wgw_ec_sysfs_driver);
++
++MODULE_ALIAS("platform:" DRV_NAME);
++MODULE_AUTHOR("Yannick Lanz <yannick.lanz@wifx.net>");
++MODULE_DESCRIPTION("Expose the Wifx board EC through sysfs");
++MODULE_LICENSE("GPL v2");
+diff --git a/drivers/mfd/wgw_ec_usbc.c b/drivers/mfd/wgw_ec_usbc.c
+new file mode 100644
+index 000000000000..57b32338f634
+--- /dev/null
++++ b/drivers/mfd/wgw_ec_usbc.c
+@@ -0,0 +1,365 @@
++/*
++ * USB Type-C support driver for the Wifx board EC
++ *
++ *  Copyright (C) 2021 Wifx,
++ *                2021 Yannick Lanz <yannick.lanz@wifx.net>
++ *
++ * This file is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation; either version 2 of the
++ * License, or (at your option) any later version.
++ *
++ * This file is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++#include <linux/err.h>
++#include <linux/kernel.h>
++#include <linux/module.h>
++
++#include <linux/mfd/wgw-ec/core.h>
++#include <linux/mfd/wgw-ec/reg.h>
++#include <linux/mfd/wgw-ec/usbc.h>
++
++#define DRV_NAME "wgw-ec-usbc"
++
++static const struct of_device_id wgw_ec_usbc_of_match[] = {
++	{
++		.compatible = "wifx,wgw-ec-usbc",
++	},
++	{},
++};
++MODULE_DEVICE_TABLE(of, wgw_ec_usbc_of_match);
++
++static const char *power_mode_to_str(enum usb_power_mode mode)
++{
++	static const char *power_mode_str[] = { "detached", "source", "sink",
++						"error" };
++	if (mode < USB_POWER_MODE_ERROR) {
++		return power_mode_str[mode];
++	}
++	return power_mode_str[USB_POWER_MODE_ERROR];
++}
++
++static const char *data_mode_to_str(enum usb_data_mode mode)
++{
++	static const char *data_mode_str[] = { "device", "host", "error" };
++	if (mode < USB_DATA_MODE_ERROR) {
++		return data_mode_str[mode];
++	}
++	return data_mode_str[USB_DATA_MODE_ERROR];
++}
++
++static int power_mode_get(struct wgw_ec_usbc_dev *usbc,
++			  enum usb_power_mode *usb_power_mode)
++{
++	u8 reg;
++	struct wgw_ec_device *ec_dev = usbc->ec->ec_dev;
++
++	int ret = ec_dev->read_byte(ec_dev, WGW_EC_REG_USB_MODE_POWER, &reg);
++	if (ret < 0)
++		return ret;
++
++	*usb_power_mode = reg;
++
++	switch (*usb_power_mode) {
++	case USB_POWER_MODE_DETACHED:
++	case USB_POWER_MODE_SOURCE:
++	case USB_POWER_MODE_SINK:
++		return ret;
++	default:
++		return -EIO;
++	}
++}
++
++static int data_mode_get(struct wgw_ec_usbc_dev *usbc,
++			 enum usb_data_mode *usb_data_mode)
++{
++	u8 reg;
++	struct wgw_ec_device *ec_dev = usbc->ec->ec_dev;
++
++	int ret = ec_dev->read_byte(ec_dev, WGW_EC_REG_USB_MODE_DATA, &reg);
++	if (ret < 0)
++		return -EIO;
++
++	*usb_data_mode = reg;
++
++	switch (*usb_data_mode) {
++	case USB_DATA_MODE_DEVICE:
++	case USB_DATA_MODE_HOST:
++		return ret;
++	default:
++		return -EIO;
++	}
++}
++
++static int data_mode_set(struct wgw_ec_usbc_dev *usbc,
++			 enum usb_data_mode usb_data_mode)
++{
++	u8 reg = usb_data_mode;
++	struct wgw_ec_device *ec_dev = usbc->ec->ec_dev;
++
++	switch (reg) {
++	case USB_DATA_MODE_DEVICE:
++	case USB_DATA_MODE_HOST:
++		return ec_dev->write_byte(ec_dev, WGW_EC_REG_USB_MODE_DATA,
++					  reg);
++	default:
++		return -EINVAL;
++	}
++}
++
++static int wgw_ec_usbc_connect(struct wgw_ec_usbc_dev *usbc,
++			       enum usb_power_mode usb_power_mode)
++{
++	struct typec_partner_desc desc;
++
++	if (usbc->partner || usb_power_mode == USB_POWER_MODE_DETACHED)
++		return 0;
++
++	desc.usb_pd = false;
++	desc.accessory = TYPEC_ACCESSORY_NONE;
++	desc.identity = NULL;
++
++	usbc->power_mode = usb_power_mode;
++	typec_set_pwr_role(usbc->port, usb_power_mode);
++
++	usbc->partner = typec_register_partner(usbc->port, &desc);
++	if (IS_ERR(usbc->partner))
++		return PTR_ERR(usbc->partner);
++
++	return 0;
++}
++
++static void wgw_ec_usbc_disconnect(struct wgw_ec_usbc_dev *usbc,
++				   enum usb_power_mode usb_power_mode)
++{
++	if (usb_power_mode != USB_POWER_MODE_DETACHED)
++		return;
++
++	if (!IS_ERR(usbc->partner))
++		typec_unregister_partner(usbc->partner);
++	usbc->partner = NULL;
++
++	usbc->power_mode = usb_power_mode;
++	typec_set_pwr_role(usbc->port, TYPEC_SINK);
++}
++
++static int wgw_ec_usbc_dr_set(struct typec_port *port,
++			      enum typec_data_role role)
++{
++	struct wgw_ec_usbc_dev *usbc = typec_get_drvdata(port);
++	ssize_t status;
++
++	pr_debug("wgw_ec_usbc_dr_set: %d\n", role);
++	status = data_mode_set(usbc, (enum usb_data_mode)role);
++	if (status < 0) {
++		return status;
++	}
++
++	typec_set_data_role(usbc->port, role);
++	return 0;
++}
++
++static int wgw_ec_usbc_trig_notify(struct notifier_block *nb, unsigned long evt,
++				   void *dv)
++{
++	struct wgw_ec_usbc_dev *usbc =
++		container_of(nb, struct wgw_ec_usbc_dev, notifier);
++	struct wgw_ec_device *ec_dev = usbc->ec->ec_dev;
++	enum usb_data_mode usb_data_mode;
++	enum usb_power_mode usb_power_mode;
++	int ret;
++	u8 reg;
++
++	pr_debug("wgw-ec-usbc notified by wgw-ec-core\n");
++
++	ret = ec_dev->read_byte(ec_dev, WGW_EC_REG_INTERRUPT, &reg);
++	if (ret < 0) {
++		dev_err(usbc->dev, "failed to read register ISR register\n");
++		return NOTIFY_DONE;
++	}
++
++	if (reg & WGW_USBC_DATA_MODE_CHANGE) {
++		ret = data_mode_get(usbc, &usb_data_mode);
++		if (ret < 0) {
++			dev_err(usbc->dev,
++				"failed to read USB-C data mode register\n");
++			goto failure;
++		}
++		spin_lock_bh(&usbc->lock);
++		if (usbc->data_mode != usb_data_mode) {
++			usbc->data_mode = usb_data_mode;
++			spin_unlock_bh(&usbc->lock);
++
++			typec_set_data_role(usbc->port, usb_data_mode);
++			blocking_notifier_call_chain(&usbc->notifier_list,
++						     WGW_USBC_DATA_MODE_CHANGE,
++						     NULL);
++		} else {
++			spin_unlock_bh(&usbc->lock);
++		}
++	}
++
++	if (reg & WGW_USBC_POWER_MODE_CHANGE) {
++		ret = power_mode_get(usbc, &usb_power_mode);
++		if (ret < 0) {
++			dev_err(usbc->dev,
++				"failed to read USB-C power mode register\n");
++			goto failure;
++		}
++		spin_lock_bh(&usbc->lock);
++		if (usbc->power_mode != usb_power_mode) {
++			spin_unlock_bh(&usbc->lock);
++			if (usbc->power_mode == USB_POWER_MODE_DETACHED) {
++				pr_debug("USB-C attach event\n");
++
++				ret = wgw_ec_usbc_connect(usbc, usb_power_mode);
++				if (ret)
++					dev_err(usbc->dev,
++						"failed to register partner\n");
++			}
++			if (usb_power_mode == USB_POWER_MODE_DETACHED) {
++				pr_debug("USB-C detach event\n");
++				wgw_ec_usbc_disconnect(usbc, usb_power_mode);
++			}
++
++			blocking_notifier_call_chain(&usbc->notifier_list,
++						     WGW_USBC_POWER_MODE_CHANGE,
++						     NULL);
++		} else {
++			spin_unlock_bh(&usbc->lock);
++		}
++	}
++
++	/* Clear the interrupt flag */
++	ret = ec_dev->write_byte(ec_dev, WGW_EC_REG_INTERRUPT, reg);
++	if (ret < 0)
++		dev_err(usbc->dev, "failed to clear register ISR register\n");
++	return NOTIFY_OK;
++
++failure:
++	/* Clear the interrupt flag */
++	ret = ec_dev->write_byte(ec_dev, WGW_EC_REG_INTERRUPT,
++				 (WGW_USBC_DATA_MODE_CHANGE |
++				  WGW_USBC_POWER_MODE_CHANGE));
++	if (ret < 0)
++		dev_err(usbc->dev, "failed to read register ISR register\n");
++	return NOTIFY_OK;
++}
++
++enum usb_data_mode wgw_ec_usbc_get_data_mode(struct wgw_ec_usbc_dev *usbc)
++{
++	enum usb_data_mode data_mode;
++	spin_lock_bh(&usbc->lock);
++	data_mode = usbc->data_mode;
++	spin_unlock_bh(&usbc->lock);
++	return data_mode;
++}
++EXPORT_SYMBOL(wgw_ec_usbc_get_data_mode);
++
++enum usb_power_mode wgw_ec_usbc_get_power_mode(struct wgw_ec_usbc_dev *usbc)
++{
++	enum usb_power_mode power_mode;
++	spin_lock_bh(&usbc->lock);
++	power_mode = usbc->power_mode;
++	spin_unlock_bh(&usbc->lock);
++	return power_mode;
++}
++EXPORT_SYMBOL(wgw_ec_usbc_get_power_mode);
++
++static const struct typec_operations wgw_ec_usbc_ops = {
++	.dr_set = wgw_ec_usbc_dr_set
++};
++
++static int wgw_ec_usbc_probe(struct platform_device *pdev)
++{
++	struct wgw_ec_dev *ec = dev_get_drvdata(pdev->dev.parent);
++	struct device *dev = &pdev->dev;
++	struct device_node *of_parent = ec->ec_dev->dev->of_node;
++	struct wgw_ec_usbc_dev *usbc;
++	int ret;
++
++	usbc = devm_kzalloc(dev, sizeof(struct wgw_ec_usbc_dev), GFP_KERNEL);
++	if (!usbc)
++		return -ENOMEM;
++
++	usbc->ec = ec;
++	usbc->dev = dev;
++	platform_set_drvdata(pdev, usbc);
++
++	dev->of_node = of_get_compatible_child(
++		of_parent, wgw_ec_usbc_of_match->compatible);
++	if (!dev->of_node) {
++		dev_err(dev, "no compatible usb node in dt\n");
++		goto put_node;
++	}
++
++	/* Retrieve USB-C power and data mode */
++	power_mode_get(usbc, &usbc->power_mode);
++	data_mode_get(usbc, &usbc->data_mode);
++
++	dev_info(dev,
++		 "USB-C controller detected: power mode=%s, data mode=%s\n",
++		 power_mode_to_str(usbc->power_mode),
++		 data_mode_to_str(usbc->data_mode));
++
++	spin_lock_init(&usbc->lock);
++	BLOCKING_INIT_NOTIFIER_HEAD(&usbc->notifier_list);
++	usbc->notifier.priority = 10;
++	usbc->notifier.notifier_call = wgw_ec_usbc_trig_notify;
++	ret = blocking_notifier_chain_register(&ec->ec_dev->notifier_list,
++					       &usbc->notifier);
++	if (ret < 0) {
++		dev_err(dev, "failed to register to wgw-ec notifier list\n");
++		goto put_node;
++	}
++
++	usbc->typec_cap.revision = USB_TYPEC_REV_1_1;
++	usbc->typec_cap.prefer_role = TYPEC_SINK;
++	usbc->typec_cap.type = TYPEC_PORT_DRP;
++	usbc->typec_cap.data = TYPEC_PORT_DRD;
++	usbc->typec_cap.ops = &wgw_ec_usbc_ops;
++	usbc->typec_cap.driver_data = usbc;
++	usbc->port = typec_register_port(dev, &usbc->typec_cap);
++	if (IS_ERR(usbc->port)) {
++		ret = PTR_ERR(usbc->port);
++		goto put_node;
++	}
++
++	typec_set_data_role(usbc->port, usbc->data_mode);
++	wgw_ec_usbc_connect(usbc, usbc->power_mode);
++	return 0;
++
++put_node:
++	of_node_put(dev->of_node);
++	return ret;
++}
++
++static int wgw_ec_usbc_remove(struct platform_device *pdev)
++{
++	struct wgw_ec_usbc_dev *usbc = platform_get_drvdata(pdev);
++	pr_debug("wgw-ec-usbc remove\n");
++	blocking_notifier_chain_unregister(&usbc->ec->ec_dev->notifier_list,
++					   &usbc->notifier);
++	wgw_ec_usbc_disconnect(usbc, USB_POWER_MODE_DETACHED);
++	typec_unregister_port(usbc->port);
++	of_node_put(pdev->dev.of_node);
++	return 0;
++}
++
++static struct platform_driver wgw_ec_usbc_driver = {
++	.driver = {
++		.name = "wgw-ec-usbc",
++		.of_match_table = of_match_ptr(wgw_ec_usbc_of_match),
++	},
++	.probe = wgw_ec_usbc_probe,
++	.remove = wgw_ec_usbc_remove,
++};
++module_platform_driver(wgw_ec_usbc_driver);
++
++MODULE_ALIAS("platform:" DRV_NAME);
++MODULE_AUTHOR("Yannick Lanz <yannick.lanz@wifx.net>");
++MODULE_DESCRIPTION("USB Type-C support for the Wifx board EC");
++MODULE_LICENSE("GPL v2");
+diff --git a/include/linux/mfd/wgw-ec/chardev.h b/include/linux/mfd/wgw-ec/chardev.h
+new file mode 100644
+index 000000000000..5d28195ba134
+--- /dev/null
++++ b/include/linux/mfd/wgw-ec/chardev.h
+@@ -0,0 +1,28 @@
++/*
++ * Miscellaneous character driver for Wifx board EC
++ *
++ *  Copyright (C) 2021 Wifx,
++ *                2021 Yannick Lanz <yannick.lanz@wifx.net>
++ *
++ * This file is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation; either version 2 of the
++ * License, or (at your option) any later version.
++ *
++ * This file is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++#ifndef __LINUX_MFD_WGW_EC_CHARDEV_H
++#define __LINUX_MFD_WGW_EC_CHARDEV_H
++
++#include <linux/i2c-dev.h>
++
++#define WGW_EC_DEV_IOC 0xEC
++#define WGW_EC_DEV_IOC_PKT_CMD                                                 \
++	_IOW(WGW_EC_DEV_IOC, 1, struct i2c_smbus_ioctl_data)
++#define WGW_EC_DEV_IOC_PKT_CMD_LTR                                             \
++	_IOW(WGW_EC_DEV_IOC, 2, struct i2c_smbus_ioctl_data)
++
++#endif /* __LINUX_MFD_WGW_EC_CHARDEV_H */
+diff --git a/include/linux/mfd/wgw-ec/core.h b/include/linux/mfd/wgw-ec/core.h
+new file mode 100644
+index 000000000000..daa12a83c0ae
+--- /dev/null
++++ b/include/linux/mfd/wgw-ec/core.h
+@@ -0,0 +1,145 @@
++/*
++ * MFD driver core for the Wifx board Embedded Controller
++ *
++ *  Copyright (C) 2021 Wifx,
++ *                2021 Yannick Lanz <yannick.lanz@wifx.net>
++ *
++ * This file is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation; either version 2 of the
++ * License, or (at your option) any later version.
++ *
++ * This file is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++#ifndef __LINUX_MFD_WGW_EC_CORE_H
++#define __LINUX_MFD_WGW_EC_CORE_H
++
++#include <linux/kernel.h>
++#include <linux/ioctl.h>
++#include <linux/mfd/wgw-ec/reg.h>
++#include <linux/platform_device.h>
++
++#define WGW_EC_APP_COMMIT_HASH_SIZE 16
++#define WGW_EC_APP_COMMIT_DATE_SIZE 32
++#define WGW_EC_HW_VERSION_SIZE 32
++#define WGW_EC_FW_VERSION_SIZE 32
++#define WGW_EC_HW_SN_SIZE 16
++
++#define WGW_EC_SERIAL_ERROR (-1)
++#define WGW_EC_SERIAL_SET 0x01
++#define WGW_EC_SERIAL_OTP 0x02
++#define WGW_EC_SERIAL_SET_OTP (WGW_EC_SERIAL_SET | WGW_EC_SERIAL_OTP)
++
++struct wgw_ec_serial {
++	char data[WGW_EC_HW_SN_SIZE];
++	u8 state;
++};
++
++enum wgw_ec_model {
++	WGW_EC_M_LORIX_ONE = 0,
++	WGW_EC_M_WIFX_L1 = 1,
++	WGW_EC_M_WIFX_Y1 = 2,
++};
++
++enum wgw_ec_variant {
++	WGW_EC_V_STANDARD = 0,
++};
++
++enum wgw_ec_frequency {
++	WGW_EC_F_863_870 = 0,
++	WGW_EC_F_902_928 = 1,
++};
++
++struct wgw_ec_version {
++	u16 major;
++	u16 minor;
++	u16 revision;
++};
++
++struct wgw_ec_hw_tuple_info {
++	u8 id;
++	const char *str;
++};
++
++struct wgw_ec_hw_info {
++	struct wgw_ec_version version;
++	char version_str[WGW_EC_HW_VERSION_SIZE];
++	struct wgw_ec_hw_tuple_info model;
++	struct wgw_ec_hw_tuple_info variant;
++	struct wgw_ec_hw_tuple_info frequency;
++};
++
++struct wgw_ec_fw_info {
++	struct wgw_ec_version version;
++	char version_str[WGW_EC_FW_VERSION_SIZE];
++	char commit_hash[WGW_EC_APP_COMMIT_HASH_SIZE];
++	char commit_date[WGW_EC_APP_COMMIT_DATE_SIZE];
++};
++
++struct wgw_ec_info {
++	struct wgw_ec_fw_info fw_info;
++	struct wgw_ec_hw_info hw_info;
++	struct wgw_ec_serial serial;
++	u8 boot_state;
++	u8 protoc;
++};
++
++#define WGW_EC_MEM_SLOT_SIZE 32
++struct wgw_ec_memory_slot {
++	u8 data[WGW_EC_MEM_SLOT_SIZE];
++	u8 length;
++	u8 flags;
++};
++
++struct wgw_ec_device {
++	const char *phys_name;
++	struct device *dev;
++	void *priv;
++
++	int irq;
++	struct gpio_desc *cpu_state_pin;
++	struct mutex lock_ltr;
++
++	struct blocking_notifier_head notifier_list;
++
++	// Returns length read (>= 0) or error (< 0)
++	int (*read_byte)(struct wgw_ec_device *mcu, char command, u8 *data);
++	int (*read_word)(struct wgw_ec_device *mcu, char command, u16 *data);
++	int (*read_block)(struct wgw_ec_device *mcu, char command, u8 *data);
++
++	// Returns length written (>= 0) or error (< 0)
++	int (*write_byte)(struct wgw_ec_device *mcu, char command, u8 data);
++	int (*write_word)(struct wgw_ec_device *mcu, char command, u16 data);
++	int (*write_block)(struct wgw_ec_device *mcu, char command,
++			   const u8 *data, u8 len);
++
++	/* The platform devices used by the mfd driver */
++	struct platform_device *ec;
++};
++
++struct wgw_ec_dev {
++	struct device class_dev;
++	struct wgw_ec_device *ec_dev;
++	struct device *dev;
++	struct wgw_ec_info cache_info;
++	struct mutex cache_lock;
++};
++
++extern int wgw_ec_register(struct wgw_ec_device *wgw_dev);
++extern int wgw_ec_unregister(struct wgw_ec_device *wgw_dev);
++
++extern int wgw_ec_get_ltr_status(struct wgw_ec_dev *ec);
++extern int wgw_ec_wait_ready(struct wgw_ec_dev *ec);
++
++extern int wgw_ec_serial_set(struct wgw_ec_dev *ec, char *serial,
++			     struct wgw_ec_serial *serial_cache);
++
++extern int wgw_ec_boot_state_get(struct wgw_ec_dev *ec, u8 *boot_state);
++extern int wgw_ec_boot_state_clr_update(struct wgw_ec_dev *ec, u8 *boot_state);
++
++#define to_wgw_ec_dev(dev) container_of(dev, struct wgw_ec_dev, class_dev)
++
++#endif /* __LINUX_MFD_WGW_EC_CORE_H */
+diff --git a/include/linux/mfd/wgw-ec/reg.h b/include/linux/mfd/wgw-ec/reg.h
+new file mode 100644
+index 000000000000..16a12f3f409d
+--- /dev/null
++++ b/include/linux/mfd/wgw-ec/reg.h
+@@ -0,0 +1,41 @@
++/*
++ * Register information for the Wifx board EC
++ *
++ *  Copyright (C) 2021 Wifx,
++ *                2021 Yannick Lanz <yannick.lanz@wifx.net>
++ *
++ * This file is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation; either version 2 of the
++ * License, or (at your option) any later version.
++ *
++ * This file is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++#ifndef __LINUX_MFD_WGW_EC_REG_H
++#define __LINUX_MFD_WGW_EC_REG_H
++
++#define WGW_EC_REG_PROTOC_VER 0x00
++#define WGW_EC_REG_HW_INFO 0x10
++#define WGW_EC_REG_FW_INFO1 0x20
++#define WGW_EC_REG_FW_INFO2 0x21
++#define WGW_EC_REG_FW_INFO3 0x22
++#define WGW_EC_REG_FW_INFO4 0x23
++
++#define WGW_EC_REG_CMD_LTR_STATUS 0x30
++#define WGW_EC_REG_MEM_SLOT0 0x31
++#define WGW_EC_REG_MEM_SLOT0_CTRL 0x35
++
++#define WGW_EC_REG_LED_START 0x60
++
++#define WGW_EC_REG_LAST_RESET_STATE 0x70
++
++#define WGW_EC_REG_USB_MODE_POWER 0x80
++#define WGW_EC_REG_USB_MODE_DATA 0x81
++
++#define WGW_EC_REG_INTERRUPT 0xA0
++#define WGW_EC_REG_MAX 0xFF
++
++#endif /* __LINUX_MFD_WGW_EC_REG_H */
+diff --git a/include/linux/mfd/wgw-ec/usbc.h b/include/linux/mfd/wgw-ec/usbc.h
+new file mode 100644
+index 000000000000..2ccfd52642db
+--- /dev/null
++++ b/include/linux/mfd/wgw-ec/usbc.h
+@@ -0,0 +1,65 @@
++/*
++  * USB Type-C support driver for the Wifx board EC
++ *
++ *  Copyright (C) 2021 Wifx,
++ *                2021 Yannick Lanz <yannick.lanz@wifx.net>
++ *
++ * This file is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation; either version 2 of the
++ * License, or (at your option) any later version.
++ *
++ * This file is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++#ifndef __LINUX_MFD_WGW_EC_USBC_H
++#define __LINUX_MFD_WGW_EC_USBC_H
++
++#include <linux/of.h>
++#include <linux/notifier.h>
++#include <linux/usb/typec.h>
++
++#include <linux/mfd/wgw-ec/core.h>
++
++enum usb_power_mode {
++	USB_POWER_MODE_DETACHED,
++	USB_POWER_MODE_SOURCE,
++	USB_POWER_MODE_SINK,
++	USB_POWER_MODE_ERROR,
++};
++
++enum usb_data_mode {
++	USB_DATA_MODE_DEVICE,
++	USB_DATA_MODE_HOST,
++	USB_DATA_MODE_ERROR,
++};
++
++struct wgw_ec_usbc_dev {
++	struct device *dev;
++	struct wgw_ec_dev *ec;
++
++	spinlock_t lock;
++
++	struct notifier_block notifier;
++	struct blocking_notifier_head notifier_list;
++
++	enum usb_data_mode data_mode;
++	enum usb_power_mode power_mode;
++
++	struct typec_port *port;
++	struct typec_partner *partner;
++	struct typec_capability typec_cap;
++};
++
++/* Events from the usb core */
++#define WGW_USBC_DATA_MODE_CHANGE 0x0001
++#define WGW_USBC_POWER_MODE_CHANGE 0x0002
++
++extern enum usb_data_mode
++wgw_ec_usbc_get_data_mode(struct wgw_ec_usbc_dev *usbc);
++extern enum usb_power_mode
++wgw_ec_usbc_get_power_mode(struct wgw_ec_usbc_dev *usbc);
++
++#endif /* __LINUX_MFD_WGW_EC_LED_H */
+-- 
+2.34.1
+

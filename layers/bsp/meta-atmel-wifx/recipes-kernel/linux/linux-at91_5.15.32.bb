@@ -1,0 +1,7 @@
+require linux-at91-5.15.inc
+
+LINUX_VERSION ?= "5.15.32"
+
+PR = "r0"
+
+SRCREV = "744468b8f7426f9940f73ff80fc45164f09f5365"

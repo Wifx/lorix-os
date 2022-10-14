@@ -37,7 +37,7 @@ CONNECTIVITY_PACKAGES = " \
     dnsmasq \
     openvpn \
     openssh \
-    ${@bb.utils.contains('DISTRO_FEATURES','wireguard','wireguard-tools wireguard-module','', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES','wireguard','wireguard-tools','', d)} \
     ${@bb.utils.contains('MACHINE_FEATURES','gnss','gpsd gpsd-udev gpsd-conf gpsd-gpsctl gps-utils','',d)} \
 "
 
