@@ -14,6 +14,9 @@ DEPENDS += " \
     clang-native \
 "
 
+UPX_COMPRESS_FILES_${PN} = "/opt/chirpstack-udp-bridge/chirpstack-udp-bridge"
+inherit upx
+
 inherit cargo
 
 CONF_DIR = "${sysconfoptdir}/chirpstack-udp-bridge"

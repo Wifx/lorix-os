@@ -35,6 +35,9 @@ DEPENDS_append_sx1302 = " libloragw-sx1302"
 
 inherit cargo
 
+UPX_COMPRESS_FILES_${PN} = "/opt/chirpstack-concentratord/chirpstack-concentratord"
+inherit upx
+
 ASSUME_PROVIDED_remove = "cmake-native"
 
 CONF_DIR = "${sysconfoptdir}/chirpstack-concentratord"

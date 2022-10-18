@@ -6,6 +6,9 @@ LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://src/${GO_IMPORT}/LICENSE;md5=c6516b26d091c50b67e08602af287bfd"
 #LIC_FILES_CHKSUM = "file://LICENSE;md5=c6516b26d091c50b67e08602af287bfd"
 
+UPX_COMPRESS_FILES_${PN} = "/usr/sbin/pmonitord"
+inherit upx
+
 RDEPENDS_${PN} += "pvisor glibc"
 RRECOMMENDS_${PN} += "pmcli"
 
@@ -29,7 +32,6 @@ do_install_base(){
     # Monitor binary
     install -m 0755 -d ${D}${sbindir}
     install -m 0755 ${B}/bin/linux_arm/pmonitord ${D}${sbindir}/pmonitord
-    #install -m 0755 ${B}/pmonitor ${D}${sbindir}/pmonitord
 
     # D-bus configuration
     install -m 0755 -d ${D}${sysconfdir}/dbus-1/system.d
