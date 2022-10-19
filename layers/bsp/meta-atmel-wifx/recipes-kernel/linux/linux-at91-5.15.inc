@@ -28,6 +28,8 @@ SRC_URI += " \
     file://0004-wifx-Add-base-support-for-Wifx-L1-machine.patch \
     file://0005-mtdblock-warning-using-mtd-device-instead-of-UBI-is-.patch \
     file://0006-wifx-l1-lorix-remove-warning-about-dummy-vcc-regulat.patch \
+    file://0010-usb-role-add-read-only-mode-support-for-usb-role-sys.patch \
+    file://0011-wifx-l1-lorix-update-USB-gadget-driver-and-board-sup.patch \
 "
 
 SRC_URI_append_l1 = " \
