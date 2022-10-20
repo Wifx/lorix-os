@@ -1,0 +1,5 @@
+# System temperature shortcut in devfs for LORIX One
+ACTION=="add", SUBSYSTEM=="hwmon", KERNELS=="0-004d", RUN+="/bin/sh -c 'mkdir -p /dev/temp; ln -s /sys$devpath/temp1_input /dev/temp/system'"
+
+# System temperature shortcut in devfs for Wifx L1
+ACTION=="add", SUBSYSTEM=="hwmon", KERNELS=="1-0038", RUN+="/bin/sh -c 'mkdir -p /dev/temp; ln -s /sys$devpath/temp1_input /dev/temp/system'"

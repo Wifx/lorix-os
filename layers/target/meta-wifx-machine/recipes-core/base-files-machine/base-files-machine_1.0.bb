@@ -10,8 +10,9 @@ SRC_URI = " \
     file://LICENSE \
     file://.machine-functions \
     file://machine-functions \
-    file://20-spi.rules \
     file://10-sd-card-automount.rules \
+    file://20-spi.rules \
+    file://30-temp-system.rules \
 "
 
 PR = "r0"
@@ -31,12 +32,15 @@ do_install () {
     install -m 0600 ${WORKDIR}/.machine-functions ${D}${osdir}/.machine-functions
     install -m 0700 ${WORKDIR}/machine-functions ${D}${osdir}/machine-functions
 
-    # Install SPI fix udev rule
-    install -m 755 -d ${D}${sysconfdir}/udev/rules.d
-    install -m 644 ${WORKDIR}/20-spi.rules ${D}${sysconfdir}/udev/rules.d/20-spi.rules
-
     # Install SD automount rule
-    install -m 644 ${WORKDIR}/10-sd-card-automount.rules ${D}${sysconfdir}/udev/rules.d/10-sd-card-automount.rules
+    install -m 755 -d ${D}${sysconfdir}/udev/rules.d
+    install -m 644 ${WORKDIR}/10-sd-card-automount.rules ${D}${sysconfdir}/udev/rules.d
+
+    # Install SPI fix udev rule
+    install -m 644 ${WORKDIR}/20-spi.rules ${D}${sysconfdir}/udev/rules.d
+
+    # Install temperature sensor symlink rule
+    install -m 644 ${WORKDIR}/30-temp-system.rules ${D}${sysconfdir}/udev/rules.d
 }
 
 pkg_postinst_ontarget_lorix_one () {

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - [LOR-545] Update Linux kernel to 5.15.32
  - [LOR-548] Add USB attach/detach detection support
+ - [LOR-546] [LOR-547] Fix inconsistent system temperature sensor access using udev (/dev/temp/system)
 
 ## [1.5.2] - 2022-09-07
 
