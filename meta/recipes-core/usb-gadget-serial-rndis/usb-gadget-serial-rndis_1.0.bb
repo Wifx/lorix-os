@@ -1,5 +1,6 @@
-SUMMARY = "TBD"
-DESCRIPTION = "TBD"
+# Copyright (c) 2022, Wifx Sarl <info@iot.wifx.net>
+# All rights reserved.
+SUMMARY = "Ethernet + Serial over USB support for Wifx products"
 AUTHOR = "Wifx Sarl"
 
 LICENSE = "Proprietary"
@@ -7,11 +8,9 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=073bf747e205468f394819c786015ecc"
 
 SRC_URI += " \
     file://LICENSE \
-    file://br-usb.nmconnection \
-    file://usb0.nmconnection \
-    file://usb0_2.nmconnection \
+    file://usb.nmconnection \
     file://dnsmasq-default \
-    file://dnsmasq-bridge-usb.conf \
+    file://dnsmasq-usb.conf \
 "
 
 PR = "r0"
@@ -31,18 +30,15 @@ RRECOMMENDS_${PN} += " \
 "
 
 do_install() {
-    # Add connection configuration for usb0
+    # Add usb connection configuration to manager usb0 device
     install -d ${D}${sysconfdir}/NetworkManager/system-connections
-    #install -m 0600 ${WORKDIR}/br-usb.nmconnection ${D}${sysconfdir}/NetworkManager/system-connections
-    #install -m 0600 ${WORKDIR}/usb0.nmconnection ${D}${sysconfdir}/NetworkManager/system-connections
-    install -m 0600 ${WORKDIR}/usb0_2.nmconnection ${D}${sysconfdir}/NetworkManager/system-connections/usb0.nmconnection
+    install -m 0600 ${WORKDIR}/usb.nmconnection ${D}${sysconfdir}/NetworkManager/system-connections/usb.nmconnection
 
     # Add dnsmasq configurations
     install -d ${D}${sysconfdir}/default/volatiles
     install -m 0644 ${WORKDIR}/dnsmasq-default ${D}${sysconfdir}/default/volatiles/99_dnsmasq
-    install -d ${D}${sysconfdir}/NetworkManager/dnsmasq.d
     install -d ${D}${sysconfdir}/dnsmasq.d
-    install -m 0644 ${WORKDIR}/dnsmasq-bridge-usb.conf ${D}${sysconfdir}/dnsmasq.d/usb-dhcp.conf
+    install -m 0644 ${WORKDIR}/dnsmasq-usb.conf ${D}${sysconfdir}/dnsmasq.d/usb-dhcp.conf
 }
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"

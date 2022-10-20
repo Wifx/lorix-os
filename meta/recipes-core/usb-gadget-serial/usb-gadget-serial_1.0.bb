@@ -1,5 +1,6 @@
-SUMMARY = "TBD"
-DESCRIPTION = "TBD"
+# Copyright (c) 2022, Wifx Sarl <info@iot.wifx.net>
+# All rights reserved.
+SUMMARY = "Serial over USB support for Wifx products"
 AUTHOR = "Wifx Sarl"
 
 LICENSE = "Proprietary"

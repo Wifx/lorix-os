@@ -42,7 +42,7 @@ python do_fill_script() {
         pid = '0x0002'
         product_name = 'Wifx L1'
     else:
-        bb.error("The machine '%s' is not supported by this recipe or PID has not been defined yet" % machine)
+        bb.fatal("The machine '%s' is not supported by this recipe or PID has not been defined yet" % machine)
 
     filedata = filedata.replace('@{PID_SERIAL_RNDIS}', pid)
     filedata = filedata.replace('@{PRODUCT_NAME}', product_name)
