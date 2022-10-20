@@ -62,8 +62,7 @@ RRECOMMENDS_packagegroup-os-base = "\
 
 SUMMARY_packagegroup-os-base-usbgadget = "USB gadget support"
 RRECOMMENDS_packagegroup-os-base-usbgadget = "\
-    kernel-module-gadgetfs \
-    kernel-module-g-serial"
+    kernel-module-gadgetfs"
 
 SUMMARY_packagegroup-os-base-usbhost = "USB host support"
 RDEPENDS_packagegroup-os-base-usbhost = "\

@@ -1,0 +1,115 @@
+#!/sbin/openrc-run
+# Copyright (c) 2022, Wifx Sarl <info@iot.wifx.net>
+# All rights reserved.
+
+depend() {
+    need sysfs
+    after modules-load local
+    use usb-dhcp
+}
+
+g="/sys/kernel/config/usb_gadget/g1"
+
+start_pre() {
+    if [ -d ${g} ] && [ $(cat ${g}/UDC) != "" ]; then
+        eerror "Gadget is already up."
+        return 1
+    fi
+
+    serial=$(machine-info -n -f PRODUCT_SERIAL)
+    # Construct the hostname based on last 3 Bytes of eth0 MAC address
+    mac=$(cat /sys/class/net/eth0/address)
+    addr_dev=$(echo $mac | awk -F':' '{$1="02"; printf "%s:%s:%s:%s:%s:%s",$1,$2,$3,$4,$5,$6}')
+    addr_host=$(echo $mac | awk -F':' '{$1="12"; printf "%s:%s:%s:%s:%s:%s",$1,$2,$3,$4,$5,$6}')
+
+    modprobe libcomposite
+
+    return 0
+}
+
+start() {
+    ebegin "Setting USB gadget (Ethernet + Serial over USB profile)"
+
+    mkdir -p ${g}
+    cd ${g}
+
+    echo 0x0200 > bcdUSB
+    echo 0xEF > bDeviceClass
+    echo 0x02 > bDeviceSubClass
+    echo 0x01 > bDeviceProtocol
+    echo 0x3516 > idVendor
+    echo @{PID_SERIAL_RNDIS} > idProduct
+    # Update this value each time you want the host to invalidate device management cache
+    echo 0x0000 > bcdDevice
+
+    # Make it compatible with Windows
+    echo 1 > os_desc/use
+    echo 0xcd > os_desc/b_vendor_code
+    echo MSFT100 > os_desc/qw_sign
+
+    mkdir -p strings/0x409
+    echo "Wifx" > strings/0x409/manufacturer
+    echo "@{PRODUCT_NAME}" > strings/0x409/product
+    echo $serial > strings/0x409/serialnumber
+
+    # RNDIS function (must be first to work on Windows)
+    mkdir functions/rndis.usb0
+    echo $addr_dev > functions/rndis.usb0/host_addr
+    echo $addr_host > functions/rndis.usb0/dev_addr
+    echo "RNDIS" > functions/rndis.usb0/os_desc/interface.rndis/compatible_id
+    echo "5162001" > functions/rndis.usb0/os_desc/interface.rndis/sub_compatible_id
+
+    # ACM function
+    mkdir functions/acm.GS0
+
+    # Configuration 1
+    mkdir configs/c.1
+    echo 0xC0 > configs/c.1/bmAttributes
+    echo 500 > configs/c.1/MaxPower
+    mkdir configs/c.1/strings/0x409
+    echo "@{PRODUCT_NAME} RNDIS with ACM Serial" > configs/c.1/strings/0x409/configuration
+
+    # Map configuration
+    ln -s configs/c.1           os_desc
+    ln -s functions/rndis.usb0  configs/c.1
+    ln -s functions/acm.GS0     configs/c.1
+
+    # check for first available UDC driver
+    UDC_DRIVER=$(ls /sys/class/udc | cut -f1 | head -n 1)
+
+    # bind USB gadget to this UDC driver
+    echo $UDC_DRIVER > UDC
+
+    eend 0
+    return 0
+}
+
+stop() {
+    if [ ! -d ${g} ]; then
+        echo "Gadget is already down."
+        return 1
+    fi
+    ebegin "Taking down USB gadget (Ethernet + Serial over USB profile)"
+
+    if [ "$(cat ${g}/UDC)" != "" ]; then
+        echo "" > ${g}/UDC
+    fi
+    cd ${g}
+    rm -f os_desc/c.1
+    rm -f configs/c.1/rndis.usb0
+    rm -f configs/c.1/acm.GS0
+    [ -d functions/rndis.usb0 ] && rmdir functions/rndis.usb0
+    [ -d functions/acm.GS0 ] && rmdir functions/acm.GS0
+    [ -d configs/c.1/strings/0x409 ] && rmdir configs/c.1/strings/0x409
+    [ -d configs/c.1 ] && rmdir configs/c.1
+    [ -d strings/0x409 ] && rmdir strings/0x409
+    cd ..
+    rmdir ${g}
+
+    # No real need to unload modules + it's risky since other services could
+    # require some of them.
+    # rmmod usb_f_acm u_serial usb_f_rndis u_ether libcomposite
+
+    eend 0
+    return 0
+}

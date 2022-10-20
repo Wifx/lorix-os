@@ -11,8 +11,9 @@ COMMIT
 :PINGPROTECT - [0:0]
 :SSHPROTECT - [0:0]
 
-# Accept everything on loopback
-[0:0] -A INPUT -i lo -j ACCEPT
+# Accept everything on loopback and usb0
+[0:0] -A INPUT -i lo -j ACCEPT  -m comment --comment "Accept everything on loopback"
+[0:0] -A INPUT -i usb0 -j ACCEPT -m comment --comment "Accept everything on usb bridge"
 
 # Drop non-conforming packets, such as malformed headers, etc.
 [0:0] -A INPUT -m state --state INVALID -j DROP

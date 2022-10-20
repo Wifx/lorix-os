@@ -13,6 +13,7 @@ IMAGE_INSTALL = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'mender', 'mender-migrations', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'mender', 'mender-state-scripts-base', '', d)} \
     ${CORE_IMAGE_EXTRA_INSTALL} \
+    virtual/usb-gadget \
 "
 
 PACKAGE_EXCLUDE += " \

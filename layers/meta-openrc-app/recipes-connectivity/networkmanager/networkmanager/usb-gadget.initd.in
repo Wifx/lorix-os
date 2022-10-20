@@ -1,0 +1,99 @@
+#!/sbin/openrc-run
+# Copyright (c) 2021, Wifx Sàrl <info@wifx.net>
+# All rights reserved.
+
+description="Configure the USB gadget as RNDIS/ECM + ACM."
+
+depend()
+{
+    use modules-load
+    provide usb-gadget.virtual
+}
+
+start_pre()
+{
+    # Construct the hostname based on last 3 Bytes of eth0 MAC address
+    mac=$(cat /sys/class/net/eth0/address)
+    serial=$(echo $mac | awk -F':' '{print $1$2$3$4$5$6}')
+    addr_dev=$(echo $mac | awk -F':' '{$1="02"; printf "%s:%s:%s:%s:%s:%s",$1,$2,$3,$4,$5,$6}')
+    addr_host=$(echo $mac | awk -F':' '{$1="12"; printf "%s:%s:%s:%s:%s:%s",$1,$2,$3,$4,$5,$6}')
+    addr_dev2=$(echo $mac | awk -F':' '{$1="22"; printf "%s:%s:%s:%s:%s:%s",$1,$2,$3,$4,$5,$6}')
+    addr_host2=$(echo $mac | awk -F':' '{$1="32"; printf "%s:%s:%s:%s:%s:%s",$1,$2,$3,$4,$5,$6}')
+}
+
+start()
+{
+    modprobe libcomposite
+    cd /sys/kernel/config/usb_gadget
+    mkdir g1 && cd g1
+
+    echo 0x0200 > bcdUSB
+    echo 0xEF > bDeviceClass
+    echo 0x02 > bDeviceSubClass
+    echo 0x01 > bDeviceProtocol
+    echo 0x3507 > idVendor
+    echo 0x0070 > idProduct
+    echo 0x0100 > bcdDevice
+    
+    echo 1 > os_desc/use
+    echo 0xcd > os_desc/b_vendor_code
+    echo MSFT100 > os_desc/qw_sign
+
+    mkdir -p strings/0x409
+    echo "Wifx" > strings/0x409/manufacturer
+    echo "@{MACHINE_TYPE}" > strings/0x409/product
+    echo $serial > strings/0x409/serialnumber
+    
+    # RNDIS function
+    mkdir functions/rndis.usb0
+    echo $addr_dev > functions/rndis.usb0/host_addr
+    echo $addr_host > functions/rndis.usb0/dev_addr
+    echo "RNDIS" > functions/rndis.usb0/os_desc/interface.rndis/compatible_id
+    echo "5162001" > functions/rndis.usb0/os_desc/interface.rndis/sub_compatible_id
+    
+    # CDC ECM function
+    mkdir functions/ecm.usb1
+    echo $addr_dev2 > functions/ecm.usb1/host_addr
+    echo $addr_host2 > functions/ecm.usb1/dev_addr
+    
+    # ACM function
+    mkdir functions/acm.GS0
+    
+    # Configuration 1
+    mkdir configs/c.1
+    echo 0xC0 > configs/c.1/bmAttributes
+    echo 500 > configs/c.1/MaxPower
+    mkdir configs/c.1/strings/0x409
+    echo "RNDIS with ACM Serial" > configs/c.1/strings/0x409/configuration
+
+    # Configuration 2
+    mkdir configs/c.2
+    echo 0xC0 > configs/c.2/bmAttributes
+    echo 500 > configs/c.2/MaxPower
+    mkdir configs/c.2/strings/0x409
+    echo "ECM Ethernet with ACM Serial" > configs/c.2/strings/0x409/configuration
+
+    # Configuration 3
+    mkdir configs/c.3
+    echo 0xC0 > configs/c.3/bmAttributes
+    echo 500 > configs/c.3/MaxPower
+    mkdir configs/c.3/strings/0x409
+    echo "ACM Serial" > configs/c.3/strings/0x409/configuration
+    
+    # Map configuration
+    ln -s configs/c.1           os_desc
+    ln -s functions/rndis.usb0  configs/c.1
+    ln -s functions/acm.GS0     configs/c.1
+
+    ln -s functions/ecm.usb1    configs/c.2
+    ln -s functions/acm.GS0     configs/c.2
+
+    ln -s functions/acm.GS0     configs/c.3
+    
+
+    # check for first available UDC driver
+    UDC_DRIVER=$(ls /sys/class/udc | cut -f1 | head -n 1)
+
+    # bind USB gadget to this UDC driver
+    echo $UDC_DRIVER > UDC
+}

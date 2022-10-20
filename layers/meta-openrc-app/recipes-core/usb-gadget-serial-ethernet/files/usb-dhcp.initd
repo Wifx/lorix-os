@@ -1,0 +1,27 @@
+#!/sbin/openrc-run
+# Copyright (c) 2022, Wifx Sarl <info@iot.wifx.net>
+# All rights reserved.
+
+start() {
+    [ -n "${PIDFILE}" ] || PIDFILE=/run/dnsmasq-dhcp-usb.pid
+
+    ebegin "Starting DHCP server (dnsmasq) for Ethernet over USB"
+
+    start-stop-daemon \
+            --start \
+            --exec /usr/bin/dnsmasq \
+            --pidfile "${PIDFILE}" \
+            --  --no-resolv --bind-dynamic --pid-file=${PIDFILE} --conf-file=/etc/dnsmasq.d/usb-dhcp.conf
+    eend $?
+}
+
+stop() {
+    [ -n "${PIDFILE}" ] || PIDFILE=/run/dnsmasq-dhcp-usb.pid
+
+    ebegin "Stopping DHCP server (dnsmasq) for Ethernet over USB"
+
+    start-stop-daemon \
+            --stop \
+            --pidfile "${PIDFILE}"
+    eend $? "Failed to stop dnsmasq"
+}

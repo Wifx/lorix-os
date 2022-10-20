@@ -1,0 +1,98 @@
+#!/sbin/openrc-run
+# Copyright (c) 2022, Wifx Sarl <info@iot.wifx.net>
+# All rights reserved.
+
+depend() {
+    need sysfs
+    # virtual providing
+    provide usb-gadget
+    # provide also usb-gadget-serial
+}
+
+g="/sys/kernel/config/usb_gadget/g1"
+
+start_pre() {
+    if [ -d ${g} ] && [ $(cat ${g}/UDC) != "" ]; then
+        eerror "Gadget is already up."
+        return 1
+    fi
+
+    serial=$(machine-info -n -f PRODUCT_SERIAL)
+
+    modprobe libcomposite
+}
+
+start() {
+    ebegin "Setting USB gadget (Serial over USB profile)"
+
+    mkdir -p ${g}
+    cd ${g}
+
+    echo 0x0200 > bcdUSB
+    echo 0xFF > bDeviceClass
+    echo 0x00 > bDeviceSubClass
+    echo 0x00 > bDeviceProtocol
+    echo 0x3516 > idVendor
+    echo @{PID_SERIAL} > idProduct
+    # Update this value each time you want the host to invalidate device management cache
+    echo 0x0000 > bcdDevice
+
+    # Make it compatible with Windows
+    echo 1 > os_desc/use
+    echo 0xcd > os_desc/b_vendor_code
+    echo MSFT100 > os_desc/qw_sign
+
+    mkdir -p strings/0x409
+    echo "Wifx" > strings/0x409/manufacturer
+    echo "@{PRODUCT_NAME}" > strings/0x409/product
+    echo $serial > strings/0x409/serialnumber
+
+    # ACM function
+    mkdir functions/acm.GS0
+
+    # Configuration 1
+    mkdir configs/c.1
+    echo 0xC0 > configs/c.1/bmAttributes
+    echo 500 > configs/c.1/MaxPower
+    mkdir configs/c.1/strings/0x409
+    echo "@{PRODUCT NAME} ACM Serial" > configs/c.1/strings/0x409/configuration
+
+    # Map configuration
+    ln -s configs/c.1           os_desc
+    ln -s functions/acm.GS0     configs/c.1
+
+    # check for first available UDC driver
+    UDC_DRIVER=$(ls /sys/class/udc | cut -f1 | head -n 1)
+
+    # bind USB gadget to this UDC driver
+    echo $UDC_DRIVER > UDC
+
+    eend 0
+    return 0
+}
+
+stop() {
+    if [ ! -d ${g} ]; then
+        echo "Gadget is already down."
+        exit 1
+    fi
+    ebegin "Taking down USB gadget (Serial over USB profile)"
+
+    if [ "$(cat ${g}/UDC)" != "" ]; then
+        echo "" > ${g}/UDC
+    fi
+    cd ${g}
+    rm -f os_desc/c.1
+    rm -f configs/c.1/acm.GS0
+    [ -d functions/acm.GS0 ] && rmdir functions/acm.GS0
+    [ -d configs/c.1/strings/0x409 ] && rmdir configs/c.1/strings/0x409
+    [ -d configs/c.1 ] && rmdir configs/c.1
+    [ -d strings/0x409 ] && rmdir strings/0x409
+    cd ..
+    rmdir ${g}
+
+    rmmod usb_f_acm u_serial libcomposite
+
+    eend 0
+    return 0
+}

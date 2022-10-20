@@ -55,7 +55,7 @@ kernel_do_configure_append() {
 
 KERNEL_FEATURES_append = " ${KERNEL_EXTRA_FEATURES}"
 
-KERNEL_MODULE_AUTOLOAD += "atmel_usba_udc g_serial"
+KERNEL_MODULE_AUTOLOAD += ""
 KERNEL_MODULE_PACKAGE_SUFFIX=""
 
 COMPATIBLE_MACHINE = "sama5d4-wifx"
