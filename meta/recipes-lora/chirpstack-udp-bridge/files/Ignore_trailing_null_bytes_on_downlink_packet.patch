@@ -1,0 +1,68 @@
+Index: src/forwarder.rs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/forwarder.rs b/src/forwarder.rs
+--- a/src/forwarder.rs	(revision 4d1fa99a2c0d931be224ddea489f95e91971da10)
++++ b/src/forwarder.rs	(revision 93dbbe16efe911e671c99e35b219b2659efc195d)
+@@ -241,7 +241,7 @@
+         let size = match state.socket.recv(&mut buffer) {
+             Ok(v) => v,
+             Err(_) => {
+-                // Most likely, a timeout occured.
++                // Most likely, a timeout occurred.
+                 continue;
+             }
+         };
+@@ -254,37 +254,42 @@
+             continue;
+         }
+ 
++        let mut non_null_size = size;
++        while buffer[non_null_size - 1] == 0x00 {
++            non_null_size = non_null_size - 1;
++        }
++
+         match buffer[3] {
+             0x01 => {
+                 metrics::incr_udp_received_count(&state.server, "PUSH_ACK");
+-                metrics::incr_udp_received_bytes(&state.server, "PUSH_ACK", size);
++                metrics::incr_udp_received_bytes(&state.server, "PUSH_ACK", non_null_size);
+ 
+-                if let Err(e) = handle_push_ack(&state, &buffer[..size]) {
++                if let Err(e) = handle_push_ack(&state, &buffer[..non_null_size]) {
+                     warn!("Handling PUSH_ACK error: {}, server: {}", e, state.server);
+                 };
+             }
+             0x03 => {
+                 metrics::incr_udp_received_count(&state.server, "PULL_RESP");
+-                metrics::incr_udp_received_bytes(&state.server, "PULL_RESP", size);
++                metrics::incr_udp_received_bytes(&state.server, "PULL_RESP", non_null_size);
+ 
+-                if let Err(e) = handle_pull_resp(&state, &buffer[..size]) {
++                if let Err(e) = handle_pull_resp(&state, &buffer[..non_null_size]) {
+                     warn!("handling PULL_RESP error: {}, server: {}", e, state.server);
+                 };
+             }
+             0x04 => {
+                 metrics::incr_udp_received_count(&state.server, "PULL_ACK");
+-                metrics::incr_udp_received_bytes(&state.server, "PULL_ACK", size);
++                metrics::incr_udp_received_bytes(&state.server, "PULL_ACK", non_null_size);
+ 
+-                if let Err(e) = handle_pull_ack(&state, &buffer[..size]) {
++                if let Err(e) = handle_pull_ack(&state, &buffer[..non_null_size]) {
+                     warn!("Handling PULL_ACK error: {}, server: {}", e, state.server);
+                 };
+             }
+             _ => {
+                 metrics::incr_udp_received_count(&state.server, "UNKNOWN");
+-                metrics::incr_udp_received_bytes(&state.server, "UNKNOWN", size);
++                metrics::incr_udp_received_bytes(&state.server, "UNKNOWN", non_null_size);
+ 
+                 warn!(
+-                    "Ignoring unexepcted command, cid: {}, server: {}",
++                    "Ignoring unexpected command, cid: {}, server: {}",
+                     buffer[3], state.server
+                 );
+                 continue;
