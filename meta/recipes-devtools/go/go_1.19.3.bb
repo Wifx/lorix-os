@@ -3,7 +3,8 @@ require go-target.inc
 
 inherit linuxloader
 
-export GOBUILDMODE=""
+CGO_LDFLAGS:append:mips = " -no-pie"
+
 export GO_LDSO = "${@get_linuxloader(d)}"
 export CC_FOR_TARGET = "gcc"
 export CXX_FOR_TARGET = "g++"
@@ -12,6 +13,6 @@ export CXX_FOR_TARGET = "g++"
 # variants.
 python() {
     if 'mips' in d.getVar('TARGET_ARCH',True) or 'riscv32' in d.getVar('TARGET_ARCH',True):
-        d.appendVar('INSANE_SKIP_%s' % d.getVar('PN',True), " textrel")
+        d.appendVar('INSANE_SKIP:%s' % d.getVar('PN',True), " textrel")
 }
 
