@@ -1,11 +1,17 @@
 DEPENDS = "virtual/${TUNE_PKGARCH}-go go-native"
-DEPENDS_class-nativesdk = "virtual/${TARGET_PREFIX}go-crosssdk"
+DEPENDS:class-nativesdk = "virtual/${TARGET_PREFIX}go-crosssdk"
 PROVIDES = "virtual/${TARGET_PREFIX}go-runtime"
+
+DEBUG_PREFIX_MAP = "\
+                     -fdebug-prefix-map=${STAGING_DIR_HOST}= \
+                     -fdebug-prefix-map=${STAGING_DIR_NATIVE}= \
+"
 
 export CGO_CFLAGS = "${CFLAGS}"
 export CGO_CPPFLAGS = "${CPPFLAGS}"
 export CGO_CXXFLAGS = "${CXXFLAGS}"
-export CGO_LDFLAGS = "${LDFLAGS}"
+# Filter out -fdebug-prefix-map options as they clash with the GO's build system
+export CGO_LDFLAGS = "${@ ' '.join(filter(lambda f: not f.startswith('-fdebug-prefix-map'), d.getVar('LDFLAGS').split())) }"
 export GOCACHE = "${B}/.cache"
 
 GO_EXTLDFLAGS ?= "${HOST_CC_ARCH}${TOOLCHAIN_OPTIONS} ${LDFLAGS}"
@@ -15,7 +21,7 @@ do_configure() {
 	:
 }
 
-do_configure_libc-musl() {
+do_configure:libc-musl() {
 	rm -f ${S}/src/runtime/race/*.syso
 }
 
@@ -32,7 +38,6 @@ do_compile() {
 	fi
 	cd ${B}
 }
-do_compile[dirs] =+ "${GOTMPDIR} ${B}/bin ${B}/pkg"
 do_compile[cleandirs] += "${GOTMPDIR} ${B}/bin ${B}/pkg"
 
 do_install() {
@@ -55,9 +60,9 @@ do_install() {
 
 }
 
-ALLOW_EMPTY_${PN} = "1"
-FILES_${PN} = "${libdir}/go/pkg/${TARGET_GOTUPLE}_dynlink/*${SOLIBSDEV}"
-FILES_${PN}-dev = "${libdir}/go/src ${libdir}/go/pkg/include \
+ALLOW_EMPTY:${PN} = "1"
+FILES:${PN} = "${libdir}/go/pkg/${TARGET_GOTUPLE}_dynlink/*${SOLIBSDEV}"
+FILES:${PN}-dev = "${libdir}/go/src ${libdir}/go/pkg/include \
                    ${libdir}/go/pkg/${TARGET_GOTUPLE}_dynlink/*.shlibname \
                    ${libdir}/go/pkg/${TARGET_GOTUPLE}_dynlink/*/*.shlibname \
                    ${libdir}/go/pkg/${TARGET_GOTUPLE}_dynlink/*/*/*.shlibname \
@@ -73,12 +78,12 @@ FILES_${PN}-dev = "${libdir}/go/src ${libdir}/go/pkg/include \
                    ${libdir}/go/pkg/${TARGET_GOTUPLE}_dynlink/*/*/*/*/*/*.a \
                    ${libdir}/go/pkg/${TARGET_GOTUPLE}_dynlink/*/*/*/*/*/*/*.a \
 "
-FILES_${PN}-staticdev = "${libdir}/go/pkg/${TARGET_GOTUPLE}"
+FILES:${PN}-staticdev = "${libdir}/go/pkg/${TARGET_GOTUPLE}"
 
 # Go sources include some scripts and pre-built binaries for
 # multiple architectures.  The static .a files for dynamically-linked
 # runtime are also required in -dev.
-INSANE_SKIP_${PN}-dev = "staticdev file-rdeps arch"
+INSANE_SKIP:${PN}-dev = "staticdev file-rdeps arch"
 
 INHIBIT_PACKAGE_STRIP = "1"
 INHIBIT_PACKAGE_DEBUG_SPLIT = "1"

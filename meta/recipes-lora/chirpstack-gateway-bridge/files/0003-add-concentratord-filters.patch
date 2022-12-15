@@ -1,0 +1,41 @@
+Index: internal/backend/concentratord/concentratord.go
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/internal/backend/concentratord/concentratord.go b/internal/backend/concentratord/concentratord.go
+--- a/internal/backend/concentratord/concentratord.go	(revision cd8646debfa1c7c07f7fb0d598bce99b00c310b2)
++++ b/internal/backend/concentratord/concentratord.go	(revision 50ac4036d6fea60252e44f353818a06dbf8cb443)
+@@ -2,6 +2,8 @@
+ 
+ import (
+ 	"context"
++	"encoding/base64"
++	"github.com/brocaar/chirpstack-gateway-bridge/internal/filters"
+ 	"sync"
+ 	"time"
+ 
+@@ -368,12 +370,18 @@
+ 		loRaModInfo.Bandwidth = loRaModInfo.Bandwidth / 1000
+ 	}
+ 
+-	log.WithFields(log.Fields{
+-		"uplink_id": uplinkID,
+-	}).Info("backend/concentratord: uplink event received")
++	if filters.MatchFilters(pl.PhyPayload) {
++		log.WithFields(log.Fields{
++			"uplink_id": uplinkID,
++		}).Info("backend/concentratord: uplink event received")
+ 
+-	if b.uplinkFrameFunc != nil {
+-		b.uplinkFrameFunc(pl)
++		if b.uplinkFrameFunc != nil {
++			b.uplinkFrameFunc(pl)
++		}
++	} else {
++		log.WithFields(log.Fields{
++			"data_base64": base64.StdEncoding.EncodeToString(pl.PhyPayload),
++		}).Debug("backend/concentratord: uplink event dropped because of configured filters")
+ 	}
+ 
+ 	return nil
