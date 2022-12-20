@@ -34,6 +34,7 @@ RDEPENDS_${PN}_l1 = " \
     lora-basic-station \
     pmon-csgb-concentratord \
     pmon-csub-concentratord \
+    loriot-packet-forwarder \
 "
 
 RRECOMMENDS_${PN}_l1 = " \
