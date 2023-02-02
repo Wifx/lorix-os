@@ -5,15 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unrelease
+## [1.6.0] - Unreleased
+
+### Added
+
+ - [LOR-338] Add ethernet support through USB gadget
+ - [LOR-548] Add USB attach/detach detection support
+ - [LOR-549] Add ChirpStack Gateway Bridge Concentratord backend filters (patched)
+ - [LOR-550] Handle trailing null bytes in CSUB (patched)
 
 ### Changed
 
+ - [LOR-545] LOR-520	Upgrade OpenSSL to v1.1.1n
+ - [LOR-545] LOR-530	Upgrade mender client to 3.3
+ - [LOR-545] LOR-395	Update Yocto to Dunfell
+ - [LOR-545] LOR-453	Disable syslog-ng log statistics by default
+ - [LOR-545] LOR-519	Upgrade NetworkManager to 1.40
  - [LOR-545] Update Linux kernel to 5.15.32
- - [LOR-548] Add USB attach/detach detection support
  - [LOR-546] [LOR-547] Fix inconsistent system temperature sensor access using udev (/dev/temp/system)
- - [LOR-549] Add ChirpStack Gateway Bridge Concentratord backend filters 
- - [LOR-550] Handle trailing null bytes in CSUB
+
+ ### Fixed
+
+ - [LOR-545] LOR-306	Fix mender part warning
+ - [LOR-545] LOR-535	Reduce factory reset during upgrade to only one reboot
 
 ## [1.5.2] - 2022-09-07
 
