@@ -25,7 +25,15 @@ python do_install() {
 
     for path, dirs, files in os.walk(gui_source):
         relative_path=path.replace(gui_source+'/', '').replace(gui_source, '')
+
+        if relative_path.startswith("workbox"):
+            continue
+
+        bb.note("relative_path: '%s'" % relative_path)
+
         for directory in dirs:
+            if directory.startswith("workbox"):
+                continue
             dirpath = os.path.join(gui_dest, relative_path, directory)
             bb.note("Creating directory '%s'" % dirpath)
             os.mkdir(dirpath)
