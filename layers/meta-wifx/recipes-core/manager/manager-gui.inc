@@ -29,8 +29,6 @@ python do_install() {
         if relative_path.startswith("workbox"):
             continue
 
-        bb.note("relative_path: '%s'" % relative_path)
-
         for directory in dirs:
             if directory.startswith("workbox"):
                 continue
@@ -39,6 +37,9 @@ python do_install() {
             os.mkdir(dirpath)
 
         for file in files:
+            if relative_path == "fonts" and not file.endswith("woff2"):
+                continue
+
             filename=file.replace('.woff', '').replace('.eot.gz', '').replace('.eot.gz', '').replace('.ttf.gz', '')
             if os.path.isfile(os.path.join(path, file) + ".gz") or os.path.isfile(os.path.join(path, filename) + ".woff2"):
                 bb.note("'%s' install was skipped, preferring compressed version" % file)
