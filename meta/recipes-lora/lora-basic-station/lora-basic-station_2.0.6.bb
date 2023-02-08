@@ -12,6 +12,7 @@ SRC_URI = "git://github.com/lorabasics/basicstation.git;protocol=https;tag=${SRC
 SRC_URI += " \
     file://lora-basic-station.yml \
     file://0001-editable-toolchain-path.patch \
+    file://0002-handle-router-config-on-unknown-region.patch \
 "
 
 SRC_URI_append_lorix-one = " \
