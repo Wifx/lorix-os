@@ -11,6 +11,7 @@ jobs:
             program-arguments: >-
               -c /etc/opt/chirpstack-concentratord/00-concentratord.toml
               -c /etc/opt/chirpstack-concentratord/10-gateway.toml
+              -c /etc/opt/chirpstack-concentratord/11-location.toml
               -c /etc/opt/chirpstack-concentratord/channels/channels.toml
             delays:
                 start: 5000

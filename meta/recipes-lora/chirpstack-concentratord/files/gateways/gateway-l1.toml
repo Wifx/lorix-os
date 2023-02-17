@@ -1,13 +1,9 @@
 # LoRa gateway configuration of the concentratord
 #
 # You can update the gateway configuration for the concentratord here.
-# Do not add the following settings, they are configured in other files 
-# and will be overridden:
-# - antenna_gain
-# - model
-# - gateway_id
-#
 # Refer to https://www.chirpstack.io/concentratord/install/config/ for details
+#
+# NOTE: The LORIX Manager will override the antenna_gain setting if defined in the Manager
 
 [gateway]
 
@@ -18,12 +14,3 @@
   antenna_gain=0
   
   model="wifx_l1_863_870"
-
-  # Static gateway location.
-  #[gateway.location]
-
-    # When set to non-zero values, the static gateway location will be reported
-    # Example for the Matterhorn (CH)
-    # latitude=45.976451
-    # longitude=7.658492
-    # altitude=4478

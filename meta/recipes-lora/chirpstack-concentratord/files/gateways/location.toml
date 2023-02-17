@@ -1,0 +1,15 @@
+# Static gateway location.
+#
+# NOTES
+# ---------------
+# The LORIX Manager will override the location setting if defined in the Manager
+# If you uncomment any of the property, you must also uncomment the header
+# You can comment the whole content, but you must not delete the file
+
+#[gateway.location]
+
+  # When set to non-zero values, the static gateway location will be reported
+  # Example for the Matterhorn (CH)
+  #latitude=45.976451
+  #longitude=7.658492
+  #altitude=4478

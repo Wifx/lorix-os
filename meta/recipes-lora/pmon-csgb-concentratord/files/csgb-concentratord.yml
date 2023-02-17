@@ -11,13 +11,14 @@ jobs:
             program-arguments: >-
               -c /etc/opt/chirpstack-concentratord/00-concentratord.toml
               -c /etc/opt/chirpstack-concentratord/10-gateway.toml
+              -c /etc/opt/chirpstack-concentratord/11-location.toml
               -c /etc/opt/chirpstack-concentratord/channels/channels.toml
             delays:
                 start: 3000
                 term: 1000
                 restart: 5000
     gateway-bridge:
-        description: Gateway Bridge receiveing the cocnentrator daemon packets and sending them to the ChirpStack Network Server
+        description: Gateway Bridge receiveing the concentrator daemon packets and sending them to the ChirpStack Network Server
         boot-order: 1
         process:
             run-mode: exec

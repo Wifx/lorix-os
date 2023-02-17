@@ -5,8 +5,9 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=99e425257f8a67b7efd81dc0009ed8ff"
 
 SRC_URI += "\
     file://concentratord.toml \
-    file://gateways/* \
-    file://channels/* \
+    file://gateways/gateway-l1.toml \
+    file://gateways/gateway-lorix-one.toml \
+    file://gateways/location.toml \
     file://channels/AS920/* \
     file://channels/AS923/* \
     file://channels/AU915/* \
@@ -15,13 +16,6 @@ SRC_URI += "\
     file://channels/RU864/* \
     file://channels/US915/* \
 "
-
-# TODO: add support for splitted config in the concentratord
-#SRC_URI += "\
-#    file://gateway-id.toml \
-#    file://gateway-antenna.toml \
-#    file://models/* \
-#"
 
 DEPENDS += " \
     clang-native \
@@ -67,6 +61,7 @@ do_install() {
 install_configs() {
     install -m 0755 -d ${D}${CONF_DIR}
     install_config concentratord.toml 00-concentratord.toml
+    install_config gateways/location.toml 11-location.toml
 }
 
 do_install_append_lorix-one() {
