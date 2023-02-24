@@ -37,7 +37,7 @@ python do_install() {
             os.mkdir(dirpath)
 
         for file in files:
-            if relative_path == "fonts" and not file.endswith("woff2"):
+            if relative_path == "fonts" and not (file.endswith("woff2") or file.endswith("woff")):
                 continue
 
             filename=file.replace('.woff', '').replace('.eot.gz', '').replace('.eot.gz', '').replace('.ttf.gz', '')
