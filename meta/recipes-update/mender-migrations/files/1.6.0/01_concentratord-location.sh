@@ -62,10 +62,10 @@ log $PREFIX "Migrating..."
 EXPR="([[:blank:]]*# Static gateway location\.\n)?([[:blank:]]*#?\[gateway\.location](\n|.)*)"
 
 log $PREFIX "Creating location config at '$LOCATION_CONFIG_PATH'"
-grep -z -E -o $EXPR $GATEWAY_CONFIG_PATH > $LOCATION_CONFIG_PATH
+grep -z -E -o "$EXPR" $GATEWAY_CONFIG_PATH > $LOCATION_CONFIG_PATH
 
 log $PREFIX "Updating gateway config at '$GATEWAY_CONFIG_PATH'"
-sed -z -E -i "s|$EXPR||g" $GATEWAY_CONFIG_PATH
+sed -z -E -i "s/$EXPR//g" $GATEWAY_CONFIG_PATH
 
 ARGS_SEARCH="              -c /etc/opt/chirpstack-concentratord/10-gateway.toml"
 ARGS_INSERT="              -c /etc/opt/chirpstack-concentratord/11-location.toml"
