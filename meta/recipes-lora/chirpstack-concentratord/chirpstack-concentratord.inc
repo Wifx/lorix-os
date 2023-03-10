@@ -3,6 +3,8 @@ DESCRIPTION = "ChirpStack Concentratord"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=99e425257f8a67b7efd81dc0009ed8ff"
 
+PACKAGE_ARCH = "${MACHINE_ARCH}"
+
 SRC_URI += "\
     file://concentratord.toml \
     file://gateways/gateway-l1.toml \
@@ -170,15 +172,12 @@ do_install_append_sx1302() {
     install -m 0755 ${cargo_bindir}/chirpstack-concentratord-sx1302 ${D}${optdir}/chirpstack-concentratord/chirpstack-concentratord
 }
 
-# TODO: only for SX1301
 pkg_postinst_ontarget_${PN} () {
     if [ -z "$1" ]; then
         # execute only on first boot
         
-        ### GATEWAY ID ###
+        ### GATEWAY ID ### # TODO: only for SX1301
 
-        # TODO: update single separate file
-        #GW_ID_FILE_PATH="${CONF_DIR}/11-gateway-id.toml"
         GW_ID_FILE_PATH="${CONF_DIR}/10-gateway.toml"
 
         # retrieve gateway ID from machine-info

@@ -6,6 +6,8 @@ AUTHOR = "Semtech LoRa Basics"
 LICENSE = "BSD-3-Clause"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=a00b6155c30853bb390ec59ba94e2b06"
 
+PACKAGE_ARCH = "${MACHINE_ARCH}"
+
 SRCTAG = "v${PV}"
 SRC_URI = "git://github.com/lorabasics/basicstation.git;protocol=https;tag=${SRCTAG}"
 

@@ -12,6 +12,8 @@ SRC_URI = "\
     file://library.cfg \
 "
 
+PACKAGE_ARCH = "${MACHINE_ARCH}"
+
 S = "${WORKDIR}/git"
 
 COMPATIBLE_MACHINE_FEATURE = "sx1301"
