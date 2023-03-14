@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
+# Copyright (c) 2019, Wifx Sàrl <info@wifx.net>
 # All rights reserved.
 
 SUMMARY = "OS extended package group"
@@ -19,7 +19,10 @@ RDEPENDS_${PN} = " \
     ca-certificates \
 "
 
-RRECOMMENDS_${PN} = " \
+OPTIONAL_PACKAGES_${PN} = " \
     net-snmp-server \
     zabbix \
 "
+
+RRECOMMENDS_{PN} = "$OPTIONAL_PACKAGES_${PN}"
+PACKAGE_EXCLUDE_{PN} = "$OPTIONAL_PACKAGES_${PN}"
