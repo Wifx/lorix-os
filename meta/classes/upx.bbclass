@@ -3,6 +3,13 @@ DEPENDS_append = " upx-native"
 python package_do_compress() {
     import subprocess
 
+    compress = d.getVar('COMPRESS_BINARIES_UPX')
+    if compress == "true":
+        bb.note("UPX compression is enabled")
+    else:
+        bb.note("UPX compression is disabled (%s)" % compress)
+        return
+
     pn = d.getVar('PN')
     pkgd = d.getVar('PKGD')
 
