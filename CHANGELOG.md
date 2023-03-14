@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - [LOR-306] Fix mender part warning
  - [LOR-535] Reduce factory reset during upgrade to only one reboot
+ - [LOR-531] Opkg package installation installs non-related packages too
 
 ## [1.5.2] - 2022-09-07
 
