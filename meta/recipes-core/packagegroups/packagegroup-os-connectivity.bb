@@ -14,7 +14,7 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 inherit packagegroup
 
 # By default, the OS uses networkmanager
-NETWORK_MANAGER_PACKAGES ?= "networkmanager networkmanager-openvpn "
+NETWORK_MANAGER_PACKAGES ?= "networkmanager networkmanager-nmcli networkmanager-openvpn "
 
 CONNECTIVITY_MODULES = ""
 

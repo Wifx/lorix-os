@@ -7,20 +7,22 @@ inherit openrc-image
 
 IMAGE_FEATURES += " package-management"
 
-# Don't use default CORE_IMAGE_BASE_INSTALL for IMAGE_INSTALL
+MENDER_PACKAGES = " \
+    mender-migrations \    
+    mender-state-scripts-base \
+"
+
+# Don't use default CORE_IMAGE_BASE_INSTALL in IMAGE_INSTALL
 IMAGE_INSTALL = " \
     packagegroup-os \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'mender', 'mender-migrations', '', d)} \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'mender', 'mender-state-scripts-base', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'mender', '${MENDER_PACKAGES}', '', d)} \
     ${CORE_IMAGE_EXTRA_INSTALL} \
     virtual/usb-gadget \
 "
 
-PACKAGE_EXCLUDE += " \
+BAD_RECOMMENDATIONS_append = " \
     udev-hwdb \
-"
-
-BAD_RECOMMENDATIONS += " \
     shared-mime-info \
     cryptodev-module \
+    valgrind \
 "

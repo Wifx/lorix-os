@@ -13,6 +13,10 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 inherit packagegroup
 
+RDEPENDS_${PN} = " \
+    lora-basic-station \
+"
+
 RDEPENDS_${PN}_lorix-one = " \
     udp-packet-forwarder \
     loriot-packet-forwarder \
@@ -21,22 +25,34 @@ RDEPENDS_${PN}_lorix-one = " \
     pmon-csgb-upf \
 "
 
-RRECOMMENDS_${PN}_lorix-one = " \
-    chirpstack-concentratord \
-    chirpstack-udp-bridge \
-    helium-gateway \
-    pmon-csgb-concentratord \
-    pmon-csub-concentratord \
-    pmon-helium-upf \
-"
-
 RDEPENDS_${PN}_l1 = " \
     lora-basic-station \
     pmon-csgb-concentratord \
     pmon-csub-concentratord \
 "
 
-RRECOMMENDS_${PN}_l1 = " \
+OPTIONAL_PACKAGES_${PN} = " \
     helium-gateway \
+"
+
+OPTIONAL_PACKAGES_${PN}_lorix-one = " \
+    chirpstack-concentratord \
+    chirpstack-udp-bridge \
+    helium-gateway \
+    pmon-csgb-concentratord \
+    pmon-csub-concentratord \
+    pmon-helium-upf \
+" 
+
+OPTIONAL_PACKAGES_${PN}_l1 = " \
     pmon-helium-csub-concentratord \
 "
+
+RRECOMMENDS_{PN} = "$OPTIONAL_PACKAGES_${PN}"
+PACKAGE_EXCLUDE_{PN} = "$OPTIONAL_PACKAGES_${PN}"
+
+RRECOMMENDS_{PN}_lorix-one = "$OPTIONAL_PACKAGES_${PN}_lorix-one"
+PACKAGE_EXCLUDE_{PN}_lorix-one = "$OPTIONAL_PACKAGES_${PN}_lorix-one"
+
+RRECOMMENDS_{PN}_l1 = "$OPTIONAL_PACKAGES_${PN}_l1"
+PACKAGE_EXCLUDE_{PN}_l1 = "$OPTIONAL_PACKAGES_${PN}_l1"
