@@ -68,15 +68,12 @@ do_install(){
 }
 
 pkg_postinst_ontarget_${PN} () {
-    if [ -z "$1" ]; then
-        # execute only on first boot
+    # Generating auth secret key
+    if [ ! -f "${sysconfdir}/manager/conf.d/00-default/01-api-secret-key.toml" ]; then
+        echo -n "Generating authentification secret key...  "
+        key=$(openssl rand -base64 32)
 
-        # Generating auth secret key
-        if [ ! -f "${sysconfdir}/manager/conf.d/00-default/01-api-secret-key.toml" ]; then
-            echo -n "Generating authentification secret key...  "
-            key=$(openssl rand -base64 32)
-
-            cat <<EOM >"${sysconfdir}/manager/conf.d/00-default/01-api-secret-key.toml"
+        cat <<EOM >"${sysconfdir}/manager/conf.d/00-default/01-api-secret-key.toml"
 ### This file is auto-generated at first boot ###
 
 # Key used for encryption of the authentication token. All devices with the same secret share access tokens.
@@ -84,17 +81,16 @@ pkg_postinst_ontarget_${PN} () {
 secretKey = "$key"
 EOM
 
-            echo "done"
-        fi
+        echo "done"
+    fi
 
-        # Generating certificates
-        if [ ! -f "${sysconfdir}/manager/keys/default.key" ] || [ ! -f "${sysconfdir}/manager/certs/default.crt" ]; then
-            echo "Generating certificate..."
-            PRODUCT_LABEL=$(machine-info -n -f "PRODUCT_LABEL")
-            openssl req -new -newkey rsa:2048 -days 30 -nodes -x509 -subj "/CN=${PRODUCT_LABEL}" -keyout "${sysconfdir}/manager/keys/default.key" -out "${sysconfdir}/manager/certs/default.crt"
-            chmod 600 ${sysconfdir}/manager/keys/default.key
-            echo "done"
-        fi
+    # Generating certificates
+    if [ ! -f "${sysconfdir}/manager/keys/default.key" ] || [ ! -f "${sysconfdir}/manager/certs/default.crt" ]; then
+        echo "Generating certificate..."
+        PRODUCT_LABEL=$(machine-info -n -f "PRODUCT_LABEL")
+        openssl req -new -newkey rsa:2048 -days 30 -nodes -x509 -subj "/CN=${PRODUCT_LABEL}" -keyout "${sysconfdir}/manager/keys/default.key" -out "${sysconfdir}/manager/certs/default.crt"
+        chmod 600 ${sysconfdir}/manager/keys/default.key
+        echo "done"
     fi
 }
 do_package[vardeps] += "pkg_postinst_ontarget_${PN}"

@@ -44,33 +44,25 @@ do_install () {
 }
 
 pkg_postinst_ontarget_lorix_one () {
-    if [ -z "$1" ]; then
-        # execute only on first boot
-
-        if [ -e /sys/class/net/eth0/address ]; then
-            # Construct the hostname based on last 3 Bytes of eth0 MAC address
-            mac=$(cat /sys/class/net/eth0/address)
-            id=$(echo $mac | awk -F':' '{print $4$5$6}')
-            echo "lorix-one-$id" > /etc/hostname
-            # Set LORIX One hostname to "lorix-one-xxxxxx" to have unique hostname (for mDNS for example)
-        else
-            echo "lorix-one" > /etc/hostname
-        fi
+    if [ -e /sys/class/net/eth0/address ]; then
+        # Construct the hostname based on last 3 Bytes of eth0 MAC address
+        mac=$(cat /sys/class/net/eth0/address)
+        id=$(echo $mac | awk -F':' '{print $4$5$6}')
+        echo "lorix-one-$id" > /etc/hostname
+        # Set LORIX One hostname to "lorix-one-xxxxxx" to have unique hostname (for mDNS for example)
+    else
+        echo "lorix-one" > /etc/hostname
     fi
 }
 
 pkg_postinst_ontarget_l1 () {
-    if [ -z "$1" ]; then
-        # execute only on first boot
+    # get lower case serial
+    SERIAL_LABEL=$(machine-info --field "PRODUCT_SERIAL" --noheader)
 
-        # get lower case serial
-        SERIAL_LABEL=$(machine-info --field "PRODUCT_SERIAL" --noheader)
-
-        SERIAL=$(echo "${SERIAL_LABEL//-/}" | awk '{print tolower($0)}')
-        
-        # Set gateway hostname to "gw<serial>" to have unique hostname (for mDNS for example)
-        echo "gw$SERIAL" > /etc/hostname
-    fi
+    SERIAL=$(echo "${SERIAL_LABEL//-/}" | awk '{print tolower($0)}')
+    
+    # Set gateway hostname to "gw<serial>" to have unique hostname (for mDNS for example)
+    echo "gw$SERIAL" > /etc/hostname
 }
 
 PACKAGESPLITFUNCS_prepend = "populate_packages_lorix "
