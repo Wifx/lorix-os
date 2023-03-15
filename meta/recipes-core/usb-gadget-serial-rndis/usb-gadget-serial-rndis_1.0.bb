@@ -41,6 +41,15 @@ do_install() {
     install -m 0644 ${WORKDIR}/dnsmasq-usb.conf ${D}${sysconfdir}/dnsmasq.d/usb-dhcp.conf
 }
 
+pkg_postinst_ontarget_${PN} () {
+    # execute only on first boot
+    # Update dhcp static IP attribution filter with USB host MAC address
+    mac=$(cat /sys/class/net/eth0/address)
+    addr_host=$(echo $mac | awk -F':' '{$1="12"; printf "%s:%s:%s:%s:%s:%s",$1,$2,$3,$4,$5,$6}')
+
+    sed -i "s|#dhcp-host=@{USB_HOST_MAC},172.20.20.2|dhcp-host=${addr_host},172.20.20.2|" ${sysconfdir}/dnsmasq.d/usb-dhcp.conf
+}
+
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 # This recipe need to define a valid VID for the USB gadget (UART + RNDIS)
 # Ensure the compatibility between VID and existing machine.
