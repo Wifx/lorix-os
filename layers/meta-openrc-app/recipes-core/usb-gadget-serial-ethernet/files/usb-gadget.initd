@@ -54,8 +54,8 @@ start() {
 
     # RNDIS function (must be first to work on Windows)
     mkdir functions/rndis.usb0
-    echo $addr_dev > functions/rndis.usb0/host_addr
-    echo $addr_host > functions/rndis.usb0/dev_addr
+    echo $addr_dev > functions/rndis.usb0/dev_addr
+    echo $addr_host > functions/rndis.usb0/host_addr
     echo "RNDIS" > functions/rndis.usb0/os_desc/interface.rndis/compatible_id
     echo "5162001" > functions/rndis.usb0/os_desc/interface.rndis/sub_compatible_id
 
