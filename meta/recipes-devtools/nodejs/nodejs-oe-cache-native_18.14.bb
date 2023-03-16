@@ -18,4 +18,4 @@ do_install() {
     install -D -p -m 0755 ${B}/oe-npm-cache ${D}${bindir}/oe-npm-cache
 }
 
-RDEPENDS:${PN} = "nodejs-native"
+RDEPENDS_${PN} = "nodejs-native"

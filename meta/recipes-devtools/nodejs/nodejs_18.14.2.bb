@@ -1,13 +1,15 @@
 DESCRIPTION = "nodeJS Evented I/O for V8 JavaScript"
 HOMEPAGE = "http://nodejs.org"
-LICENSE = "MIT & ISC & BSD-2-Clause & BSD-3-Clause & Artistic-2.0"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=6e54852cd826c41e80c6d80f6db00a85"
+LICENSE = "MIT & ISC & BSD-2-Clause & BSD-3-Clause & Artistic-2.0 & Apache-2.0"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=2dff1ccca11e333f1388e34f7e2d1de3"
 
-DEPENDS = "openssl"
+CVE_PRODUCT = "nodejs node.js"
+
+DEPENDS = "openssl file-replacement-native"
 DEPENDS_append_class-target = " qemu-native"
 DEPENDS_append_class-native = " c-ares-native"
 
-inherit pkgconfig python3native qemu
+inherit pkgconfig python3native qemu ptest
 
 COMPATIBLE_MACHINE_armv4 = "(!.*armv4).*"
 COMPATIBLE_MACHINE_armv5 = "(!.*armv5).*"
@@ -26,6 +28,7 @@ SRC_URI = "http://nodejs.org/dist/v${PV}/node-v${PV}.tar.xz \
            file://0001-liftoff-Correct-function-signatures.patch \
            file://0001-mips-Use-32bit-cast-for-operand-on-mips32.patch \
            "
+
 SRC_URI_append_class-target = " \
            file://0001-Using-native-binaries.patch \
            "
@@ -35,7 +38,7 @@ SRC_URI_append_toolchain-clang_x86 = " \
 SRC_URI_append_toolchain-clang_powerpc64le = " \
            file://0001-ppc64-Do-not-use-mminimal-toc-with-clang.patch \
            "
-SRC_URI[sha256sum] = "1f8051a88f86f42064f4415fe7a980e59b0a502ecc8def583f6303bc4d445238"
+SRC_URI[sha256sum] = "fbc364dd25fee2cacc0f2033db2d86115fc07575310ea0e64408b8170d09c685"
 
 S = "${WORKDIR}/node-v${PV}"
 
@@ -85,22 +88,24 @@ EXTRA_OEMAKE = "\
     builddir_name=./ \
 "
 
-python do_unpack() {
+EXTRANATIVEPATH += "file-native"
+
+python prune_sources() {
     import shutil
 
-    bb.build.exec_func('base_do_unpack', d)
-    shutil.rmtree(d.getVar('S') + '/deps/openssl', True)
+    shutil.rmtree(d.getVar('S') + '/deps/openssl')
     if 'ares' in d.getVar('PACKAGECONFIG'):
-        shutil.rmtree(d.getVar('S') + '/deps/cares', True)
+        shutil.rmtree(d.getVar('S') + '/deps/cares')
     if 'brotli' in d.getVar('PACKAGECONFIG'):
-        shutil.rmtree(d.getVar('S') + '/deps/brotli', True)
+        shutil.rmtree(d.getVar('S') + '/deps/brotli')
     if 'libuv' in d.getVar('PACKAGECONFIG'):
-        shutil.rmtree(d.getVar('S') + '/deps/uv', True)
+        shutil.rmtree(d.getVar('S') + '/deps/uv')
     if 'nghttp2' in d.getVar('PACKAGECONFIG'):
-        shutil.rmtree(d.getVar('S') + '/deps/nghttp2', True)
+        shutil.rmtree(d.getVar('S') + '/deps/nghttp2')
     if 'zlib' in d.getVar('PACKAGECONFIG'):
-        shutil.rmtree(d.getVar('S') + '/deps/zlib', True)
+        shutil.rmtree(d.getVar('S') + '/deps/zlib')
 }
+do_unpack[postfuncs] += "prune_sources"
 
 # V8's JIT infrastructure requires binaries such as mksnapshot and
 # mkpeephole to be run in the host during the build. However, these
@@ -113,7 +118,7 @@ python do_create_v8_qemu_wrapper () {
     on the host."""
     qemu_libdirs = [d.expand('${STAGING_DIR_HOST}${libdir}'),
                     d.expand('${STAGING_DIR_HOST}${base_libdir}')]
-    qemu_cmd = qemu_wrapper_cmdline(d, d.getVar('STAGING_DIR_HOST', True),
+    qemu_cmd = qemu_wrapper_cmdline(d, d.getVar('STAGING_DIR_HOST'),
                                     qemu_libdirs)
     wrapper_path = d.expand('${B}/v8-qemu-wrapper.sh')
     with open(wrapper_path, 'w') as wrapper_file:
@@ -133,24 +138,27 @@ addtask create_v8_qemu_wrapper after do_configure before do_compile
 
 LDFLAGS_append_x86 = " -latomic"
 
+CROSS_FLAGS = "--cross-compiling"
+CROSS_FLAGS_class-native = "--no-cross-compiling"
+
 # Node is way too cool to use proper autotools, so we install two wrappers to forcefully inject proper arch cflags to workaround gypi
 do_configure () {
-    export LD="${CXX}"
     GYP_DEFINES="${GYP_DEFINES}" export GYP_DEFINES
     # $TARGET_ARCH settings don't match --dest-cpu settings
-    python3 configure.py --prefix=${prefix} --cross-compiling \
+    python3 configure.py --verbose --prefix=${prefix} \
                --shared-openssl \
                --without-dtrace \
                --without-etw \
                --dest-cpu="${@map_nodejs_arch(d.getVar('TARGET_ARCH'), d)}" \
                --dest-os=linux \
-               --libdir=${D}${libdir} \
+               --libdir=${baselib} \
+               ${CROSS_FLAGS} \
                ${ARCHFLAGS} \
                ${PACKAGECONFIG_CONFARGS}
 }
 
 do_compile () {
-    export LD="${CXX}"
+    install -D ${RECIPE_SYSROOT_NATIVE}/etc/ssl/openssl.cnf ${B}/deps/openssl/nodejs-openssl.cnf
     install -D ${B}/v8-qemu-wrapper.sh ${B}/out/Release/v8-qemu-wrapper.sh
     oe_runmake BUILDTYPE=Release
 }
@@ -159,18 +167,10 @@ do_install () {
     oe_runmake install DESTDIR=${D}
 }
 
-BINARIES = " \
-    bytecode_builtins_list_generator \
-    ${@bb.utils.contains('PACKAGECONFIG', 'icu', 'gen-regexp-special-case', '', d)} \
-    mkcodecache \
-    node_mksnapshot \
-    torque \
-"
-
-do_install_append_class-native() {
-    # Install the native binaries to provide it within sysroot for the target compilation
-    install -d ${D}${bindir}
-    (cd ${S}/out/Release && install ${BINARIES} ${D}${bindir})
+do_install_ptest () {
+    cp -r  ${B}/out/Release/cctest ${D}${PTEST_PATH}/
+    cp -r ${B}/test ${D}${PTEST_PATH}
+    chown -R root:root ${D}${PTEST_PATH}
 }
 
 PACKAGES =+ "${PN}-npm"
