@@ -1,5 +1,5 @@
 DEPENDS = "virtual/${TUNE_PKGARCH}-go go-native"
-DEPENDS:class-nativesdk = "virtual/${TARGET_PREFIX}go-crosssdk go-native"
+DEPENDS_class-nativesdk = "virtual/${TARGET_PREFIX}go-crosssdk go-native"
 
 DEBUG_PREFIX_MAP = "\
                      -fdebug-prefix-map=${STAGING_DIR_HOST}= \
@@ -14,10 +14,10 @@ export CGO_LDFLAGS = "${@ ' '.join(filter(lambda f: not f.startswith('-fdebug-pr
 
 export GOCACHE = "${B}/.cache"
 GO_LDFLAGS = ""
-GO_LDFLAGS:class-nativesdk = "-linkmode external"
+GO_LDFLAGS_class-nativesdk = "-linkmode external"
 export GO_LDFLAGS
 
-CC:append:class-nativesdk = " ${SECURITY_NOPIE_CFLAGS}"
+CC_append_class-nativesdk = " ${SECURITY_NOPIE_CFLAGS}"
 
 do_configure[noexec] = "1"
 
@@ -48,8 +48,8 @@ do_install() {
 }
 
 PACKAGES = "${PN} ${PN}-dev"
-FILES:${PN} = "${libdir}/go/bin ${libdir}/go/pkg/tool/${TARGET_GOTUPLE} ${bindir}"
-RDEPENDS:${PN} = "go-runtime"
-INSANE_SKIP:${PN} = "ldflags"
+FILES_${PN} = "${libdir}/go/bin ${libdir}/go/pkg/tool/${TARGET_GOTUPLE} ${bindir}"
+RDEPENDS_${PN} = "go-runtime"
+INSANE_SKIP_${PN} = "ldflags"
 
 BBCLASSEXTEND = "nativesdk"
