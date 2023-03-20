@@ -22,14 +22,6 @@ SRC_URI += " \
     file://kernel-features/nf_tables/nf_tables6.cfg \
     file://kernel-features/wireguard/wireguard.scc;type=kmeta;destsuffix=kernel-meta \
     file://kernel-features/wireguard/wireguard.cfg \
-    file://0001-Add-optionnal-customization-of-Atmel-NAND-PMECC-para.patch \
-    file://0002-Add-i2c3-bus-support-for-SAMA5D4x-family-processor-i.patch \
-    file://0003-wifx-Add-base-support-for-Wifx-LORIX-One-machine.patch \
-    file://0004-wifx-Add-base-support-for-Wifx-L1-machine.patch \
-    file://0005-mtdblock-warning-using-mtd-device-instead-of-UBI-is-.patch \
-    file://0006-wifx-l1-lorix-remove-warning-about-dummy-vcc-regulat.patch \
-    file://0010-usb-role-add-read-only-mode-support-for-usb-role-sys.patch \
-    file://0011-wifx-l1-lorix-update-USB-gadget-driver-and-board-sup.patch \
 "
 
 SRC_URI_append_l1 = " \
