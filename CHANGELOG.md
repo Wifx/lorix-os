@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - [LOR-548] Add USB attach/detach detection support
  - [LOR-549] Add ChirpStack Gateway Bridge Concentratord backend filters (patched)
  - [LOR-550] Handle trailing null bytes in CSUB (patched)
+ - [LOR-561] Add LORIOT forwarder to Wifx L1 image
 
 ### Changed
 

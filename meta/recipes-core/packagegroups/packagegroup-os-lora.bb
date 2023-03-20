@@ -15,18 +15,16 @@ inherit packagegroup
 
 RDEPENDS_${PN} = " \
     lora-basic-station \
+    loriot-packet-forwarder \
 "
 
 RDEPENDS_${PN}_lorix-one = " \
     udp-packet-forwarder \
-    loriot-packet-forwarder \
-    lora-basic-station \
     chirpstack-gateway-bridge \
     pmon-csgb-upf \
 "
 
 RDEPENDS_${PN}_l1 = " \
-    lora-basic-station \
     pmon-csgb-concentratord \
     pmon-csub-concentratord \
 "

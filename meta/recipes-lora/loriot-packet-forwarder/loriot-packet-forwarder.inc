@@ -27,3 +27,5 @@ do_install () {
 }
 
 FILES_${PN} += "${optdir}/loriot"
+
+PACKAGE_ARCH = "${MACHINE_ARCH}"

@@ -10,3 +10,5 @@ BIN_SRC_FILE_NAME = "loriot_lorix_one_SPI_2.8.870-JKS-EU-1"
 RDEPENDS_${PN} += "libcrypto openssl"
 
 INSANE_SKIP_${PN} += "file-rdeps"
+
+COMPATIBLE_MACHINE = "lorix"
