@@ -14,10 +14,7 @@ SRC_URI = "\
     file://reset_lgw.sh \
 "
 
-PACKAGE_ARCH = "${MACHINE_ARCH}"
-
-# is normally true but machine-info requires it to stay generic
-#COMPATIBLE_MACHINE_FEATURE = "sx1302"
+COMPATIBLE_MACHINE_FEATURE = "sx1302"
 
 # depends on lora-concentrator-reset script
 RDEPENDS_${PN}-utils += "lora-concentrator"

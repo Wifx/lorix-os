@@ -24,3 +24,5 @@ do_install_base(){
     install -m 755 -d ${D}${sysconfdir}/udev/rules.d
     install -m 644 ${WORKDIR}/30-machine-info.rules ${D}${sysconfdir}/udev/rules.d/30-machine-info.rules
 }
+
+PACKAGE_ARCH = "${MACHINE_ARCH}"

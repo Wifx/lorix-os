@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  ### Fixed
 
+ - [LOR-558] Remove machine-info dependency on libloragw-sx1302 for the LORIX One
  - [LOR-306] Fix mender part warning
  - [LOR-535] Reduce factory reset during upgrade to only one reboot
  - [LOR-531] Opkg package installation installs non-related packages too
