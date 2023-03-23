@@ -13,7 +13,7 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 inherit packagegroup
 
-RDEPENDS_${PN}_append = " \
+RDEPENDS_${PN} = " \
     lora-basic-station \
     loriot-packet-forwarder \
 "
@@ -46,11 +46,11 @@ OPTIONAL_PACKAGES_${PN}_l1 = " \
     pmon-helium-csub-concentratord \
 "
 
-RRECOMMENDS_{PN}_append = "$OPTIONAL_PACKAGES_${PN}"
-PACKAGE_EXCLUDE_{PN}_append = "$OPTIONAL_PACKAGES_${PN}"
+RRECOMMENDS_{PN} = "$OPTIONAL_PACKAGES_${PN}"
+BAD_RECOMMENDATIONS_{PN} = "$OPTIONAL_PACKAGES_${PN}"
 
 RRECOMMENDS_{PN}_append_lorix-one = "$OPTIONAL_PACKAGES_${PN}_lorix-one"
-PACKAGE_EXCLUDE_{PN}_append_lorix-one = "$OPTIONAL_PACKAGES_${PN}_lorix-one"
+BAD_RECOMMENDATIONS_{PN}_append_lorix-one = "$OPTIONAL_PACKAGES_${PN}_lorix-one"
 
 RRECOMMENDS_{PN}_append_l1 = "$OPTIONAL_PACKAGES_${PN}_l1"
-PACKAGE_EXCLUDE_{PN}_append_l1 = "$OPTIONAL_PACKAGES_${PN}_l1"
+BAD_RECOMMENDATIONS_{PN}_append_l1 = "$OPTIONAL_PACKAGES_${PN}_l1"

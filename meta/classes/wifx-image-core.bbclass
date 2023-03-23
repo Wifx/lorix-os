@@ -20,7 +20,7 @@ IMAGE_INSTALL = " \
     virtual/usb-gadget \
 "
 
-PACKAGE_EXCLUDE_append = " \
+BAD_RECOMMENDATIONS = " \
     udev-hwdb \
     shared-mime-info \
     cryptodev-module \
