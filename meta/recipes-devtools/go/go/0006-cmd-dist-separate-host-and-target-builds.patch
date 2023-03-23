@@ -1,4 +1,4 @@
-From 7bc891e00be4263311d75aa2b2ee6a3b7b75355f Mon Sep 17 00:00:00 2001
+From ef5fddafdec78cab9963d21736e64d71ca520bcc Mon Sep 17 00:00:00 2001
 From: Alex Kube <alexander.j.kube@gmail.com>
 Date: Wed, 23 Oct 2019 21:18:12 +0430
 Subject: [PATCH] cmd/dist: separate host and target builds
@@ -36,14 +36,14 @@ Matt Madison <matt@madison.systems>.
 Signed-off-by: Alexander J Kube <alexander.j.kube@gmail.com>
 
 ---
- src/cmd/dist/build.go | 156 ++++++++++++++++++++++++++++++------------
- 1 file changed, 113 insertions(+), 43 deletions(-)
+ src/cmd/dist/build.go | 154 ++++++++++++++++++++++++++++++------------
+ 1 file changed, 112 insertions(+), 42 deletions(-)
 
 diff --git a/src/cmd/dist/build.go b/src/cmd/dist/build.go
-index d82f612..5c8459c 100644
+index 3024d0c..45ebee0 100644
 --- a/src/cmd/dist/build.go
 +++ b/src/cmd/dist/build.go
-@@ -43,6 +43,7 @@ var (
+@@ -45,6 +45,7 @@ var (
  	goexperiment     string
  	workdir          string
  	tooldir          string
@@ -59,7 +59,7 @@ index d82f612..5c8459c 100644
  
  	vflag int // verbosity
  )
-@@ -251,6 +253,8 @@ func xinit() {
+@@ -267,6 +269,8 @@ func xinit() {
  	if tooldir = os.Getenv("GOTOOLDIR"); tooldir == "" {
  		tooldir = pathf("%s/pkg/tool/%s_%s", goroot, gohostos, gohostarch)
  	}
@@ -68,7 +68,7 @@ index d82f612..5c8459c 100644
  }
  
  // compilerEnv returns a map from "goos/goarch" to the
-@@ -496,8 +500,10 @@ func setup() {
+@@ -468,8 +472,10 @@ func setup() {
  	p := pathf("%s/pkg/%s_%s", goroot, gohostos, gohostarch)
  	if rebuildall {
  		xremoveall(p)
@@ -79,7 +79,7 @@ index d82f612..5c8459c 100644
  
  	if goos != gohostos || goarch != gohostarch {
  		p := pathf("%s/pkg/%s_%s", goroot, goos, goarch)
-@@ -1267,17 +1273,35 @@ func cmdbootstrap() {
+@@ -1248,17 +1254,35 @@ func cmdbootstrap() {
  
  	var noBanner, noClean bool
  	var debug bool
@@ -116,7 +116,7 @@ index d82f612..5c8459c 100644
  	// Set GOPATH to an internal directory. We shouldn't actually
  	// need to store files here, since the toolchain won't
  	// depend on modules outside of vendor directories, but if
-@@ -1345,8 +1369,13 @@ func cmdbootstrap() {
+@@ -1326,8 +1350,13 @@ func cmdbootstrap() {
  		xprintf("\n")
  	}
  
@@ -130,9 +130,9 @@ index d82f612..5c8459c 100644
 +		goldflags = os.Getenv("GO_LDFLAGS") // we were using $BOOT_GO_LDFLAGS until now
 +	}
  	goBootstrap := pathf("%s/go_bootstrap", tooldir)
- 	cmdGo := pathf("%s/go", gobin)
+ 	cmdGo := pathf("%s/go", gorootBin)
  	if debug {
-@@ -1375,7 +1404,11 @@ func cmdbootstrap() {
+@@ -1356,7 +1385,11 @@ func cmdbootstrap() {
  		xprintf("\n")
  	}
  	xprintf("Building Go toolchain2 using go_bootstrap and Go toolchain1.\n")
@@ -145,7 +145,7 @@ index d82f612..5c8459c 100644
  	// Now that cmd/go is in charge of the build process, enable GOEXPERIMENT.
  	os.Setenv("GOEXPERIMENT", goexperiment)
  	goInstall(goBootstrap, append([]string{"-i"}, toolchain...)...)
-@@ -1414,50 +1447,84 @@ func cmdbootstrap() {
+@@ -1395,50 +1428,84 @@ func cmdbootstrap() {
  	}
  	checkNotStale(goBootstrap, append(toolchain, "runtime/internal/sys")...)
  
@@ -197,8 +197,6 @@ index d82f612..5c8459c 100644
 -		timelog("build", "host toolchain")
 -		if vflag > 0 {
 -			xprintf("\n")
--		}
--		xprintf("Building packages and commands for host, %s/%s.\n", goos, goarch)
 +
 +		if goos == oldgoos && goarch == oldgoarch {
 +			// Common case - not setting up for cross-compilation.
@@ -230,7 +228,8 @@ index d82f612..5c8459c 100644
 +			os.Setenv("GOARCH", goarch)
 +			os.Setenv("CC", compilerEnvLookup(defaultcc, goos, goarch))
 +			xprintf("Building packages and commands for target, %s/%s.\n", goos, goarch)
-+		}
+ 		}
+-		xprintf("Building packages and commands for host, %s/%s.\n", goos, goarch)
  		goInstall(goBootstrap, "std", "cmd")
  		checkNotStale(goBootstrap, "std", "cmd")
  		checkNotStale(cmdGo, "std", "cmd")
@@ -267,7 +266,7 @@ index d82f612..5c8459c 100644
  	}
  
  	// Check that there are no new files in $GOROOT/bin other than
-@@ -1474,8 +1541,11 @@ func cmdbootstrap() {
+@@ -1455,8 +1522,11 @@ func cmdbootstrap() {
  		}
  	}
  

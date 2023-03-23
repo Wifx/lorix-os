@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - [LOR-546] [LOR-547] Fix inconsistent system temperature sensor access using udev (/dev/temp/system)
  - [LOR-555] Update Basic Station with temporary unsupported region patch
  - [LOR-556] Restore http endpoint for NM connectivity check
+ - [LOR-562] Update GO to v1.19
 
  ### Fixed
 
