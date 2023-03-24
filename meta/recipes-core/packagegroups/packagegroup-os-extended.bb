@@ -18,11 +18,7 @@ RDEPENDS_${PN} = " \
     openssl-misc \
     ca-certificates \
 "
-
-OPTIONAL_PACKAGES = " \
+RRECOMMENDS_${PN} += " \
     net-snmp-server \
     zabbix \
 "
-
-RRECOMMENDS_${PN} = "${OPTIONAL_PACKAGES}"
-BAD_RECOMMENDATIONS_${PN} = "${OPTIONAL_PACKAGES}"

@@ -18,39 +18,23 @@ RDEPENDS_${PN} = " \
     loriot-packet-forwarder \
 "
 
+# LORIX One
 RDEPENDS_${PN}_append_lorix-one = " \
     udp-packet-forwarder \
     chirpstack-gateway-bridge \
     pmon-csgb-upf \
 "
-
-RDEPENDS_${PN}_append_l1 = " \
-    pmon-csgb-concentratord \
-    pmon-csub-concentratord \
-"
-
-OPTIONAL_PACKAGES = " \
-    helium-gateway \
-"
-
-OPTIONAL_PACKAGES_lorixone = " \
-    chirpstack-concentratord \
-    chirpstack-udp-bridge \
-    helium-gateway \
+RRECOMMENDS_${PN}_append_lorix-one += " \
     pmon-csgb-concentratord \
     pmon-csub-concentratord \
     pmon-helium-upf \
 " 
 
-OPTIONAL_PACKAGES_l1 = " \
+# Wifx L1
+RDEPENDS_${PN}_append_l1 += " \
+    pmon-csgb-concentratord \
+    pmon-csub-concentratord \
+"
+RRECOMMENDS_${PN}_append_l1 += " \
     pmon-helium-csub-concentratord \
 "
-
-RRECOMMENDS_${PN} = "${OPTIONAL_PACKAGES}"
-BAD_RECOMMENDATIONS_${PN} = "${OPTIONAL_PACKAGES}"
-
-RRECOMMENDS_${PN}_lorix-one += "${OPTIONAL_PACKAGES_lorixone}"
-BAD_RECOMMENDATIONS_${PN}_lorix-one += "${OPTIONAL_PACKAGES_lorixone}"
-
-RRECOMMENDS_${PN}_l1 += "${OPTIONAL_PACKAGES_l1}"
-BAD_RECOMMENDATIONS_${PN}_l1 += "${OPTIONAL_PACKAGES_l1}"

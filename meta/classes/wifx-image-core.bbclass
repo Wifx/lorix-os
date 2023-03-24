@@ -20,9 +20,15 @@ IMAGE_INSTALL = " \
     virtual/usb-gadget \
 "
 
-BAD_RECOMMENDATIONS = " \
-    udev-hwdb \
+BAD_RECOMMENDATIONS_append = " \
     shared-mime-info \
     cryptodev-module \
     valgrind \
+    net-snmp-server \
+    zabbix \
+    helium-gateway \
+"
+
+PACKAGE_EXCLUDE_append = " \
+    udev-hwdb \
 "

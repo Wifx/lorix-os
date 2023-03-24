@@ -10,3 +10,9 @@ MACHINEOVERRIDES =. "lorix-one:"
 MACHINE_FEATURES_OVERRIDES += "sx1301"
 
 MACHINE_PRETTY_NAME = "LORIX One"
+
+BAD_RECOMMENDATIONS_append = " \
+    pmon-csgb-concentratord \
+    pmon-csub-concentratord \
+    pmon-helium-upf \
+" 
