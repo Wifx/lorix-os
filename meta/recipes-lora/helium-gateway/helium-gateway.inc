@@ -7,16 +7,14 @@ SRC_URI += "\
     file://000-remove-cargo-strip.patch \
     file://default.toml \
     file://settings.toml \
-    file://install_update \
 "
 
 inherit cargo
 
-RDEPENDS_${PN} += "curl"
-
 DEPENDS += " \
     clang-native \
     cmake-native \
+    protobuf-c protobuf-c-native \
 "
 
 CONF_DIR = "${sysconfoptdir}/helium-gateway"
@@ -39,7 +37,6 @@ do_install() {
     # Bin directory
     install -m 0755 -d ${D}${OPT_DIR}
     install -m 0777 ${cargo_bindir}/helium_gateway ${D}${OPT_DIR}/helium-gateway
-    install -m 0777 ${WORKDIR}/install_update ${D}${OPT_DIR}/install_update
 }
 
 install_config() {

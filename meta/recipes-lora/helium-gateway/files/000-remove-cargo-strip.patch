@@ -1,11 +1,13 @@
 diff --git a/Cargo.toml b/Cargo.toml
-index c9b1a60..d41e80c 100644
+index 5a9bc4e..989a528 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
-@@ -64,5 +64,5 @@ codegen-units = 1
+@@ -70,7 +70,7 @@ codegen-units = 1
  panic = "abort"
  #debug = true
  #strip = "debuginfo"
 -strip = "symbols"
 +#strip = "symbols"
  
+ [package.metadata.cross.build]
+ pre-build = ["apt-get install -y protobuf-compiler"]
