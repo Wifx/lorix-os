@@ -67,17 +67,17 @@ grep -z -E -o "$EXPR" $GATEWAY_CONFIG_PATH | tr -d '\000' > $LOCATION_CONFIG_PAT
 log $PREFIX "Updating gateway config at '$GATEWAY_CONFIG_PATH'"
 sed -z -E -i "s/$EXPR//g" $GATEWAY_CONFIG_PATH
 
-ARGS_SEARCH="              -c /etc/opt/chirpstack-concentratord/10-gateway.toml"
-ARGS_INSERT="              -c /etc/opt/chirpstack-concentratord/11-location.toml"
+ARGS_SEARCH="-c /etc/opt/chirpstack-concentratord/10-gateway.toml"
+ARGS_INSERT=" -c /etc/opt/chirpstack-concentratord/11-location.toml"
 
 if [[ -f "$CSGB_CONFIG" ]]; then
     log $PREFIX "Mirating '$CSGB_CONFIG'"
-    sed -i "s|$ARGS_SEARCH|&\n$ARGS_INSERT|" $CSGB_CONFIG
+    sed -i "s|$ARGS_SEARCH|&$ARGS_INSERT|" $CSGB_CONFIG
 fi
 
 if [[ -f "$CSUB_CONFIG" ]]; then
     log $PREFIX "Mirating '$CSUB_CONFIG'"
-    sed -i "s|$ARGS_SEARCH|&\n$ARGS_INSERT|" $CSUB_CONFIG
+    sed -i "s|$ARGS_SEARCH|&$ARGS_INSERT|" $CSUB_CONFIG
 fi
 
 log $PREFIX "Migration done"
