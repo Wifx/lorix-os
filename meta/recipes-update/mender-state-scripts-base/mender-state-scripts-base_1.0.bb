@@ -17,6 +17,7 @@ SRC_URI = " \
     file://config-migration-enable.sh;subdir=${BPN}-${PV} \
     file://version-compare.run;subdir=${BPN}-${PV} \
     file://update-ca-certificates.sh;subdir=${BPN}-${PV} \
+    file://opkg-configure.sh;subdir=${BPN}-${PV} \
 "
 
 RDEPENDS_${PN} += "ca-certificates"
@@ -94,7 +95,8 @@ do_compile() {
     STAGE=ArtifactCommit_Leave
     TARGET=${MENDER_STATE_SCRIPTS_DIR}/${STAGE}
     cp migrate-cleanup.sh ${TARGET}_90_Migrate-cleanup
-    cp update-ca-certificates.sh ${TARGET}_90_Update-ca-certificates
+    cp opkg-configure.sh ${TARGET}_91_OPKG-configure
+    cp update-ca-certificates.sh ${TARGET}_92_Update-ca-certificates
 
     # Artifact rollback enter
     STAGE=ArtifactRollback_Enter
