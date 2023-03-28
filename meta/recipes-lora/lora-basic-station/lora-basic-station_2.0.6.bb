@@ -97,12 +97,16 @@ do_install_append_l1() {
 
 pkg_postinst_ontarget_${PN} () {
     # Update gateway ID in config
-
-    # retrieve gateway ID from machine-info
     file="${sysconfoptdir}/lora-basic-station/gateway-id"
-    GWID=$(machine-info -e lora -n -f "LORA_GATEWAY_ID")
-    echo "$GWID" > "$file"
-    echo "Gateway ID set to "$GWID" in file "$file
+
+    if [ ! -f "$CHANNELS_CONFDIR/channels_conf.json" ]; then
+        # retrieve gateway ID from machine-info
+        GWID=$(machine-info -e lora -n -f "LORA_GATEWAY_ID")
+        echo "$GWID" > "$file"
+        echo "Gateway ID set to "$GWID" in file "$file
+    else
+        echo "Gateway ID already defined"
+    fi
 }
 
 FILES_${PN} += "${optdir}"

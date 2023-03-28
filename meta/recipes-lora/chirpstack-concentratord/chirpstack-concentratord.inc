@@ -173,24 +173,27 @@ do_install_append_sx1302() {
 }
 
 pkg_postinst_ontarget_${PN} () {
-    ### GATEWAY ID ### # TODO: only for SX1301
 
+    ### GATEWAY ID ### 
     GW_ID_FILE_PATH="${CONF_DIR}/10-gateway.toml"
 
-    # retrieve gateway ID from machine-info
-    GWID=$(machine-info -e lora -n -f "LORA_GATEWAY_ID")
-    
-    sed -i 's/gateway_id=""/gateway_id="'${GWID}'"/g' $GW_ID_FILE_PATH
+    # TODO: only for SX1301
+    if [ -f "$GW_ID_FILE_PATH" ]; then
+        # retrieve gateway ID from machine-info
+        GWID=$(machine-info -e lora -n -f "LORA_GATEWAY_ID")
+        
+        sed -i 's/gateway_id=""/gateway_id="'${GWID}'"/g' $GW_ID_FILE_PATH
 
-    echo "Gateway ID set to "$GWID" in file "$GW_ID_FILE_PATH
-
+        echo "Gateway ID set to "$GWID" in file "$GW_ID_FILE_PATH
+    else
+        echo "Gateway ID file does not exist ("$GW_ID_FILE_PATH")"
+    fi
 
     ### FREQUENCY PLAN ###
-
-    # Set default channel
     PRODUCT_FREQUENCY=$(machine-info -n -f "PRODUCT_FREQUENCY")
     CHANNELS_CONFDIR=/etc/opt/chirpstack-concentratord/channels
 
+    # Set default channel
     if [ ! -f "$CHANNELS_CONFDIR/channels.toml" ]; then
 
         cd "$CHANNELS_CONFDIR"
