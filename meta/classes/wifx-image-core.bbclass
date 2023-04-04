@@ -24,7 +24,6 @@ BAD_RECOMMENDATIONS_append = " \
     shared-mime-info \
     cryptodev-module \
     valgrind \
-    net-snmp-server \
     zabbix \
     helium-gateway \
 "
