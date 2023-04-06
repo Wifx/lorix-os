@@ -8,7 +8,7 @@ jobs:
         process:
             run-mode: exec
             program-path: /opt/helium-gateway/helium-gateway
-            program-arguments: -c /etc/opt/helium-gateway/ server
+            program-arguments: -c /etc/opt/helium-gateway/settings.toml server
             delays:
                 start: 5000
                 term: 10000

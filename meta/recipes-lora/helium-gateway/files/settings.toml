@@ -1,1 +1,36 @@
 region = "EU868"
+
+keypair = "/etc/opt/helium-gateway/gateway_key.bin"
+#keypair = "ecc://i2c-3:96?slot=X&network=mainnet"
+
+# The address to listen on for the packet forwarder
+listen = "127.0.0.1:1680"
+
+# The local port to serve the local grpc on. 
+# Do NOT expose this port outside of the host network for security
+api = 4467
+
+[log]
+# The logging level to assume on startup
+level = "info"
+# Whether the logged output should include timestamps
+timestamp = true
+
+[poc]
+# The uri to fetch entropy for poc beacons
+entropy_uri = "http://entropy.iot.mainnet.helium.io:7080"
+# The uri for IOT ingest services to deliver beacons and witnesses
+ingest_uri = "http://mainnet-pociot.helium.io:9080"
+
+# The config service is used to fetch and monitor region parameters and other
+# configuration items
+[config]
+pubkey = "137oJzq1qZpSbzHawaysTGGsRCYTXG1MiTMQNxYSsQJp4YMDdN8"
+uri = "http://mainnet-config.helium.io:6080/"
+
+# The router uri is where lorawan packets are delivered to the helium packet
+# router. 
+[router]
+uri = "http://mainnet-router.helium.io:8080/"
+# Maximum number of packets to queue up for the packet router
+queue = 20

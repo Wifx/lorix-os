@@ -5,7 +5,6 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=1c3a461cb3bfa8dedcbf13b9e8a6335a"
 
 SRC_URI += "\
     file://000-remove-cargo-strip.patch \
-    file://default.toml \
     file://settings.toml \
 "
 
@@ -31,7 +30,6 @@ do_install() {
 
     # Config
     install -m 0755 -d ${D}${CONF_DIR}
-    install_config default.toml
     install_config settings.toml
 
     # Bin directory
