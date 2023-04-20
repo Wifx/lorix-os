@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - [LOR-568] Update ChirpStack UDP Bridge for Semtech UDP defect implementations compatibility
+- [LOR-569] Update Helium gateway software to 1.0.2
 
 ## [1.6.0] - 2023-04-03
 
