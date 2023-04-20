@@ -4,7 +4,8 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=09fe2246a30dca84af09ac8608093cd7"
 
 SRC_URI += "\
-    file://Ignore_trailing_null_bytes_on_downlink_packet.patch \
+    file://000-ignore_trailing_null_bytes_on_downlink_packet.patch \
+    file://001-no-null-in-json.patch \
     file://00-concentratord.toml \
     file://10-udp-bridge.toml \
     file://20-servers.toml \
