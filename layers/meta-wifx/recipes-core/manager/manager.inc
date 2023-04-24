@@ -21,6 +21,7 @@ SRC_URI += " \
     file://bash_completion \
 "
 
+# TODO: restore file-rdpes check
 INSANE_SKIP_${PN} = "file-rdeps"
 
 GO_IMPORT = "git.wifx.net/lorix/manager"
