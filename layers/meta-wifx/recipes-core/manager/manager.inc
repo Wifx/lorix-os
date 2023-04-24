@@ -21,6 +21,8 @@ SRC_URI += " \
     file://bash_completion \
 "
 
+INSANE_SKIP_${PN} = "file-rdeps"
+
 GO_IMPORT = "git.wifx.net/lorix/manager"
 
 S = "${WORKDIR}/git"
