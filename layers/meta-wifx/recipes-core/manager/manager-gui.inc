@@ -6,7 +6,7 @@ LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=7b29896a760c7f57013dc1412764b30c"
 
 PROVIDES = "manager-gui"
-RDEPENDS_${PN}  += "manager"
+RDEPENDS:${PN}  += "manager"
 
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/git/dist"
@@ -51,4 +51,4 @@ python do_install() {
     shutil.copy(os.path.join(d.expand("${S}"), "LICENSE"), os.path.join(gui_dest))
 }
 
-FILES_${PN} = "${servicedir}/manager/*"
+FILES:${PN} = "${servicedir}/manager/*"

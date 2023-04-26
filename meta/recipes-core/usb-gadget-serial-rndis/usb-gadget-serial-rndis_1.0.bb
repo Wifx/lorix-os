@@ -21,9 +21,9 @@ do_patch[noexec] = "1"
 do_configure[noexec] = "1"
 do_compile[noexec] = "1"
 
-RPROVIDES_${PN} += "virtual/usb-gadget"
-RDEPENDS_${PN} += "networkmanager"
-RRECOMMENDS_${PN} += " \
+RPROVIDES:${PN} += "virtual/usb-gadget"
+RDEPENDS:${PN} += "networkmanager"
+RRECOMMENDS:${PN} += " \
     kernel-module-libcomposite \
     kernel-module-usb-f-acm kernel-module-u-serial \
     kernel-module-usb-f-rndis kernel-module-u-ether \
@@ -41,7 +41,7 @@ do_install() {
     install -m 0644 ${WORKDIR}/dnsmasq-usb.conf ${D}${sysconfdir}/dnsmasq.d/usb-dhcp.conf
 }
 
-pkg_postinst_ontarget_${PN} () {
+pkg_postinst_ontarget:${PN} () {
     # execute only on first boot
     # Update dhcp static IP attribution filter with USB host MAC address
     mac=$(cat /sys/class/net/eth0/address)
@@ -56,5 +56,5 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 # Do not replace by sama5d4-wifx to ensure error on new machine.
 COMPATIBLE_MACHINE = "(lorix-one-256|lorix-one-512|l1)"
 
-RCONFLICTS_${PN} += "usb-gadget-serial"
+RCONFLICTS:${PN} += "usb-gadget-serial"
 

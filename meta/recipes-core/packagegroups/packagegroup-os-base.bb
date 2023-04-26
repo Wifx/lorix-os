@@ -35,10 +35,10 @@ DEPENDS = "${DISTRO_EXTRA_DEPENDS}"
 # packagegroup-os-base contain stuff needed for base system (machine related)
 #
 # Do not include packagegroup-core-boot, already managed by packagegroup-os-boot
-DISTRO_EXTRA_RDEPENDS_remove = " \
+DISTRO_EXTRA_RDEPENDS:remove = " \
     packagegroup-core-boot \
 "
-RDEPENDS_packagegroup-os-base = "\
+RDEPENDS:packagegroup-os-base = "\
     ${DISTRO_EXTRA_RDEPENDS} \
     ${@bb.utils.contains('COMBINED_FEATURES', 'usbgadget', 'packagegroup-os-base-usbgadget', '',d)} \
     ${@bb.utils.contains('COMBINED_FEATURES', 'usbhost', 'packagegroup-os-base-usbhost', '',d)} \
@@ -50,7 +50,7 @@ RDEPENDS_packagegroup-os-base = "\
     ${@bb.utils.contains('DISTRO_FEATURES', 'zeroconf', 'packagegroup-os-base-zeroconf', '',d)} \
 "
 
-RRECOMMENDS_packagegroup-os-base = "\
+RRECOMMENDS:packagegroup-os-base = "\
     ${DISTRO_EXTRA_RRECOMMENDS} \
     kernel-module-nls-utf8 \
     kernel-module-input \
@@ -60,14 +60,14 @@ RRECOMMENDS_packagegroup-os-base = "\
     kernel-module-rtc-sysfs \
     kernel-module-unix"
 
-SUMMARY_packagegroup-os-base-usbgadget = "USB gadget support"
-RRECOMMENDS_packagegroup-os-base-usbgadget = "\
+SUMMARY:packagegroup-os-base-usbgadget = "USB gadget support"
+RRECOMMENDS:packagegroup-os-base-usbgadget = "\
     kernel-module-gadgetfs"
 
-SUMMARY_packagegroup-os-base-usbhost = "USB host support"
-RDEPENDS_packagegroup-os-base-usbhost = "\
+SUMMARY:packagegroup-os-base-usbhost = "USB host support"
+RDEPENDS:packagegroup-os-base-usbhost = "\
     usbutils"
-RRECOMMENDS_packagegroup-os-base-usbhost = "\
+RRECOMMENDS:packagegroup-os-base-usbhost = "\
     kernel-module-uhci-hcd \
     kernel-module-ohci-hcd \
     kernel-module-ehci-hcd \
@@ -76,38 +76,38 @@ RRECOMMENDS_packagegroup-os-base-usbhost = "\
     kernel-module-usbserial \
     kernel-module-usb-storage"
 
-SUMMARY_packagegroup-os-base-ipv6 = "IPv6 support"
-RDEPENDS_packagegroup-os-base-ipv6 = ""
-RRECOMMENDS_packagegroup-os-base-ipv6 = "\
+SUMMARY:packagegroup-os-base-ipv6 = "IPv6 support"
+RDEPENDS:packagegroup-os-base-ipv6 = ""
+RRECOMMENDS:packagegroup-os-base-ipv6 = "\
     kernel-module-ipv6"
 
-SUMMARY_packagegroup-os-base-ppp = "PPP dial-up protocol support"
-RDEPENDS_packagegroup-os-base-ppp = "\
+SUMMARY:packagegroup-os-base-ppp = "PPP dial-up protocol support"
+RDEPENDS:packagegroup-os-base-ppp = "\
     ppp \
     ppp-dialin"
-RRECOMMENDS_packagegroup-os-base-ppp = "\
+RRECOMMENDS:packagegroup-os-base-ppp = "\
     kernel-module-ppp-async \
     kernel-module-ppp-deflate \
     kernel-module-ppp-generic \
     kernel-module-ppp-mppe \
     kernel-module-slhc"
 
-SUMMARY_packagegroup-os-base-ipsec = "IPSEC support"
-RDEPENDS_packagegroup-os-base-ipsec = ""
-RRECOMMENDS_packagegroup-os-base-ipsec = "\
+SUMMARY:packagegroup-os-base-ipsec = "IPSEC support"
+RDEPENDS:packagegroup-os-base-ipsec = ""
+RRECOMMENDS:packagegroup-os-base-ipsec = "\
     kernel-module-ipsec"
 
 #
 # packagegroup-os-base-nfs provides ONLY client support - server is in nfs-utils package
 #
-SUMMARY_packagegroup-os-base-nfs = "NFS network filesystem support"
-RDEPENDS_packagegroup-os-base-nfs = "\
+SUMMARY:packagegroup-os-base-nfs = "NFS network filesystem support"
+RDEPENDS:packagegroup-os-base-nfs = "\
     rpcbind"
-RRECOMMENDS_packagegroup-os-base-nfs = "\
+RRECOMMENDS:packagegroup-os-base-nfs = "\
     kernel-module-nfs"
 
-SUMMARY_packagegroup-os-base-zeroconf = "Zeroconf support"
-RDEPENDS_packagegroup-os-base-zeroconf = "\
+SUMMARY:packagegroup-os-base-zeroconf = "Zeroconf support"
+RDEPENDS:packagegroup-os-base-zeroconf = "\
     avahi-daemon"
-RDEPENDS_packagegroup-os-base-zeroconf_append_libc-glibc = "\
+RDEPENDS:packagegroup-os-base-zeroconf:append:libc-glibc = "\
     libnss-mdns"

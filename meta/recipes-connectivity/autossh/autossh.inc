@@ -9,8 +9,8 @@ inherit autotools
 
 S = "${WORKDIR}/${PN}-${PV}"
 B = "${S}"
-RDEPENDS_${PN} += "ssh"
+RDEPENDS:${PN} += "ssh"
 
 TARGET_CC_ARCH += "${LDFLAGS}"
 
-FILES_${PN}-doc += "${datadir}/examples"
+FILES:${PN}-doc += "${datadir}/examples"

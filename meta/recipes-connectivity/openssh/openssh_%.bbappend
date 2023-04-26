@@ -1,12 +1,12 @@
 # Copyright (c) 2019, Wifx Sàrl <info@wifx.net>
 # All rights reserved.
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 SRC_URI += " \
     file://sshd_config \
 "
 
-do_install_append() {
+do_install:append() {
     if ${@bb.utils.contains('DISTRO_FEATURES','motd-dynamic','true','false',d)}; then
         if [ -e ${D}${sysconfdir}/pam.d/sshd ]; then
             cat >> ${D}${sysconfdir}/pam.d/sshd <<EOF

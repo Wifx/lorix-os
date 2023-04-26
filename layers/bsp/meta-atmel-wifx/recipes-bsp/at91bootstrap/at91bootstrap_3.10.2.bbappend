@@ -6,7 +6,7 @@ require at91bootstrap.inc
 # Don't use git commit in package version
 PV = "3.10.2"
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/at91bootstrap-${PV}:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/at91bootstrap-${PV}:"
 
 SRC_URI += " \
     file://0001-Change-revision-to-wifx.patch \

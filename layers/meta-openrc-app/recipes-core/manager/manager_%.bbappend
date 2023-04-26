@@ -1,6 +1,6 @@
 # Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
 # All rights reserved.
-FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 SRC_URI += " \
     file://managerd.initd \
     file://managerd.confd \
@@ -11,7 +11,7 @@ inherit openrc
 OPENRC_SERVICE_${PN} = "managerd"
 OPENRC_RUNLEVEL_managerd = "default"
 
-do_install_append() {
+do_install:append() {
     # Install OpenRC conf script
     openrc_install_config ${WORKDIR}/managerd.confd
 
@@ -19,7 +19,7 @@ do_install_append() {
     openrc_install_script ${WORKDIR}/managerd.initd
 }
 
-FILES_${PN} += " \
+FILES:${PN} += " \
     ${OPENRC_INITDIR}/managerd \
     ${OPENRC_CONFDIR}/managerd \
 "

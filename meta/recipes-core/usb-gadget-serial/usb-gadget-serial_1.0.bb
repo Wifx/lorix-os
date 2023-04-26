@@ -19,8 +19,8 @@ do_patch[noexec] = "1"
 do_configure[noexec] = "1"
 do_compile[noexec] = "1"
 
-RPROVIDES_${PN} += "virtual/usb-gadget"
-RDEPENDS_${PN} += " \
+RPROVIDES:${PN} += "virtual/usb-gadget"
+RDEPENDS:${PN} += " \
     kernel-module-libcomposite \
     kernel-module-usb-f-acm kernel-module-u-serial \
     kernel-module-g-serial \
@@ -33,8 +33,8 @@ do_install() {
 
 #KERNEL_MODULE_AUTOLOAD += "g_serial"
 
-FILES_${PN} += " \
+FILES:${PN} += " \
     ${sysconfdir}/usb-gadget/scripts/* \
 "
 
-RCONFLICTS_${PN} += "usb-gadget-serial-rndis"
+RCONFLICTS:${PN} += "usb-gadget-serial-rndis"

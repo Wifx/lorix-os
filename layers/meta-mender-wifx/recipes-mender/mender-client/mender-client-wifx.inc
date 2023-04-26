@@ -3,10 +3,10 @@
 
 require recipes-mender/mender-client/mender-client.inc
 
-RPROVIDES_${PN} += "virtual/updater"
+RPROVIDES:${PN} += "virtual/updater"
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
-SRC_URI_append = " file://artifact-verify-key.pem"
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
+SRC_URI:append = " file://artifact-verify-key.pem"
 
 UPX_COMPRESS_FILES_${PN} = "/usr/bin/mender"
 inherit upx

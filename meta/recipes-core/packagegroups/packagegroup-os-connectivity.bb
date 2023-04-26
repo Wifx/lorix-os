@@ -41,7 +41,7 @@ CONNECTIVITY_PACKAGES = " \
     ${@bb.utils.contains('MACHINE_FEATURES','gnss','gpsd gpsd-udev gpsd-conf gpsd-gpsctl gps-utils','',d)} \
 "
 
-RDEPENDS_${PN} = " \
+RDEPENDS:${PN} = " \
     ${CONNECTIVITY_MODULES} \
     ${CONNECTIVITY_FIRMWARES} \
     ${CONNECTIVITY_PACKAGES} \

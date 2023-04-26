@@ -1,7 +1,7 @@
-# Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
+# Copyright (c) 2019, Wifx Sàrl <info@wifx.net>
 # All rights reserved.
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
 # Adds update-motd.d support for motd dynamic generation from Ubuntu work
 SRC_URI_FEATURE_MOTD_DYNAMIC = " \

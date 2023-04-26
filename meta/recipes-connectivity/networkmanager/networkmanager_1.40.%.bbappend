@@ -9,7 +9,7 @@ SRC_URI += " \
 "
 
 ALTERNATIVE_PRIORITY = "60"
-ALTERNATIVE_${PN} = "net.interfaces"
+ALTERNATIVE:${PN} = "net.interfaces"
 ALTERNATIVE_LINK_NAME[net.interfaces] = "${sysconfdir}/network/interfaces"
 ALTERNATIVE_TARGET[net.interfaces] = "${sysconfdir}/network/alternatives/interfaces.networkmanager"
 
@@ -19,7 +19,7 @@ PACKAGECONFIG ?= "nss ifupdown dnsmasq nmcli \
     ${@bb.utils.filter('DISTRO_FEATURES', 'wifi polkit', d)} \
 "
 
-do_install_append() {
+do_install:append() {
     # Add the ifupdown atlernative file
     install -d ${D}${sysconfdir}/network/alternatives
     install -m 0644 ${WORKDIR}/interfaces.networkmanager ${D}${sysconfdir}/network/alternatives/interfaces.networkmanager

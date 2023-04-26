@@ -1,4 +1,4 @@
-FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 SRC_URI += " \
     file://syslog-ng.conf \
     file://scl/local-file/persistent-file.conf \
@@ -17,7 +17,7 @@ PACKAGECONFIG = " \
     json \
 "
 
-do_install_append() {
+do_install:append() {
     install -d ${D}/${sysconfdir}/${PN}/
 
     install -m 755 ${WORKDIR}/syslog-ng.conf  ${D}/${sysconfdir}/${PN}/syslog-ng.conf

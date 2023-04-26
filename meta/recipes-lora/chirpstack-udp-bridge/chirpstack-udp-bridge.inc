@@ -58,7 +58,7 @@ install_config() {
     install -m 0644 ${WORKDIR}/$1 ${D}${CONF_DIR}/${DEST}
 }
 
-FILES_${PN} += " \
+FILES:${PN} += " \
     ${CONF_DIR}/udp-bridge.toml \
     ${optdir}/chirpstack-udp-bridge/chirpstack-udp-bridge \
 "

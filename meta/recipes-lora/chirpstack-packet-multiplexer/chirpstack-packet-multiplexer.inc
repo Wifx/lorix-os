@@ -12,7 +12,7 @@ SRC_URI += " \
     file://upf-multiplexer.yml \
 "
 
-RDEPENDS_${PN} += "udp-packet-forwarder pmcli"
+RDEPENDS:${PN} += "udp-packet-forwarder pmcli"
 
 inherit go-mod pmonitor
 
@@ -37,7 +37,7 @@ do_install() {
     pmonitor_service_install ${WORKDIR}/upf-multiplexer.yml
 }
 
-FILES_${PN} += "${BIN_DIR}"
-FILES_${PN}-dbg += "${BIN_DIR}/.debug"
+FILES:${PN} += "${BIN_DIR}"
+FILES:${PN}-dbg += "${BIN_DIR}/.debug"
 
-CONFFILES_${PN} += "${CONF_DIR}/chirpstack-packet-multiplexer.toml"
+CONFFILES:${PN} += "${CONF_DIR}/chirpstack-packet-multiplexer.toml"

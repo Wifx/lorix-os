@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
 # All rights reserved.
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
 SRC_URI += " \
     file://snmpd.initd \
@@ -19,7 +19,7 @@ OPENRC_PACKAGES = "${PN}-server-snmpd ${PN}-server-snmptrapd"
 #OPENRC_RUNLEVEL_snmpd = "default"
 #OPENRC_RUNLEVEL_snmptrapd = "default"
 
-do_install_append() {
+do_install:append() {
     # Install OpenRC conf script
     openrc_install_config ${WORKDIR}/snmpd.confd
     openrc_install_config ${WORKDIR}/snmptrapd.confd
@@ -29,12 +29,12 @@ do_install_append() {
     openrc_install_script ${WORKDIR}/snmptrapd.initd
 }
 
-FILES_${PN}-server-snmpd += " \
+FILES:${PN}-server-snmpd += " \
     ${OPENRC_INITDIR}/snmpd \
     ${OPENRC_CONFDIR}/snmpd \
 "
 
-FILES_${PN}-server-snmptrapd += " \
+FILES:${PN}-server-snmptrapd += " \
     ${OPENRC_INITDIR}/snmptrapd \
     ${OPENRC_CONFDIR}/snmptrapd \
 "

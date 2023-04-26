@@ -1,13 +1,13 @@
-DEPDENDS_${PN} += "cronie"
-RDEPENDS_${PN} += "cronie"
+DEPDENDS:${PN} += "cronie"
+RDEPENDS:${PN} += "cronie"
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
 SRC_URI += " \
     file://logrotate.cron \
 "
 
-do_install_append() {
+do_install:append() {
     install -d -m 755 ${D}${sysconfdir}/cron.d
     install -p -m 0644 ${WORKDIR}/logrotate.cron ${D}${sysconfdir}/cron.d/logrotate
 

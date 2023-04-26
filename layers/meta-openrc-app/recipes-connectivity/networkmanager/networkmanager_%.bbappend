@@ -1,4 +1,4 @@
-FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 SRC_URI += " \
     file://NetworkManager.initd \
     file://NetworkManager.confd \
@@ -13,7 +13,7 @@ OPENRC_SERVICE_${PN} = "NetworkManager"
 OPENRC_RUNLEVEL_NetworkManager = "default"
 
 do_install[vardeps] += "MACHINE_PRETTY_NAME"
-do_install_append() {
+do_install:append() {
     # Install OpenRC conf script
     openrc_install_config ${WORKDIR}/NetworkManager.confd
 
@@ -31,7 +31,7 @@ do_install_append() {
         ${D}${datadir}/polkit-1/rules.d/
 }
 
-FILES_${PN} += " \
+FILES:${PN} += " \
     ${OPENRC_INITDIR}/* \
     ${OPENRC_CONFDIR}/* \
     ${sysconfdir}/NetworkManager/dispatcher.d/10-openrc-status \

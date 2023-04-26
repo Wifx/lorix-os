@@ -1,7 +1,7 @@
 # Copyright (c) 2021, Wifx Sàrl <info@wifx.net>
 # All rights reserved.
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
 SRC_URI += " \
     file://zabbix-agent.initd \
@@ -12,7 +12,7 @@ inherit openrc
 
 OPENRC_PACKAGES = "${PN}"
 
-do_install_append() {
+do_install:append() {
     # Install OpenRC conf script
     openrc_install_config ${WORKDIR}/zabbix-agent.confd
 
@@ -20,7 +20,7 @@ do_install_append() {
     openrc_install_script ${WORKDIR}/zabbix-agent.initd
 }
 
-FILES_${PN} += " \
+FILES:${PN} += " \
     ${OPENRC_INITDIR}/zabbix-agent \
     ${OPENRC_CONFDIR}/zabbix-agent \
 "

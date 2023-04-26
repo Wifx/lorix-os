@@ -8,7 +8,7 @@ PR = "r0"
 
 inherit packagegroup
 
-RDEPENDS_${PN} = " \
+RDEPENDS:${PN} = " \
     packagegroup-os-boot \
     packagegroup-os-base \
     packagegroup-os-machine \

@@ -1,7 +1,7 @@
 # Copyright (c) 2022, Wifx Sarl <info@iot.wifx.net>
 # All rights reserved.
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 SRC_URI += " \
     file://usb-dhcp.initd \
     file://usb-gadget.initd \
@@ -9,13 +9,13 @@ SRC_URI += " \
 
 inherit openrc
 
-RDEPENDS_${PN} += "machine-info"
+RDEPENDS:${PN} += "machine-info"
 
 OPENRC_SERVICE_${PN} = "usb-dhcp usb-gadget"
 OPENRC_RUNLEVEL_usb-dhcp = "default"
 OPENRC_RUNLEVEL_usb-gadget = "default"
 
-do_install_append() {
+do_install:append() {
     # Install OpenRC script
     openrc_install_script ${WORKDIR}/usb-dhcp.initd
     openrc_install_script ${WORKDIR}/usb-gadget.initd

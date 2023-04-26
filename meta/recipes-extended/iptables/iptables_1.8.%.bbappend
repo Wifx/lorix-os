@@ -1,7 +1,7 @@
 # Copyright (c) 2022, Wifx Sarl <info@iot.wifx.net>
 # All rights reserved.
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 SRC_URI += " \
     file://iptables_override.rules \
     file://ip6tables_override.rules \
@@ -9,7 +9,7 @@ SRC_URI += " \
 
 IPTABLES_RULES_DIR ?= "${sysconfdir}/${BPN}"
 
-do_install_append() {
+do_install:append() {
     install -d ${D}${IPTABLES_RULES_DIR}
     install -m 0644 ${WORKDIR}/iptables_override.rules ${D}${IPTABLES_RULES_DIR}/iptables.rules
 

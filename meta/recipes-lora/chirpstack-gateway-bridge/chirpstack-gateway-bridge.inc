@@ -90,9 +90,9 @@ install_config() {
 }
 
 
-INSANE_SKIP_${PN} = "already-stripped"
+INSANE_SKIP:${PN} = "already-stripped"
 
-FILES_${PN} += " \
+FILES:${PN} += " \
     ${optdir} \
     ${CONF_DIR}/ \
 "

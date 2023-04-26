@@ -3,14 +3,14 @@
 
 PV = "v2022.01-at91"
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/files/${PV}:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/files/${PV}:"
 
 SRC_URI += " \
     file://0001-Add-base-support-for-Wifx-LORIX-One-machine.patch \
     file://0002-Add-base-support-for-Wifx-L1-machine.patch \
 "
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/files/:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/files/:"
 ENV_FILENAME = "u-boot-env.bin"
 
 COMPATIBLE_MACHINE = "sama5d4-wifx"

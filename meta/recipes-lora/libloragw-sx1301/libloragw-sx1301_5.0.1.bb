@@ -28,7 +28,7 @@ CFLAGS += "-Iinc -I."
 DIR_UTILS = "/opt/${PN}/gateway-utils"
 DIR_TESTS = "/opt/${PN}/gateway-tests"
 
-do_configure_append() {
+do_configure:append() {
     cp ${WORKDIR}/library.cfg ${S}/libloragw/library.cfg
 }
 
@@ -70,11 +70,11 @@ PACKAGES += "${PN}-utils ${PN}-tests"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
-FILES_${PN}-utils = "${DIR_UTILS}"
-FILES_${PN}-tests = "${DIR_TESTS}"
+FILES:${PN}-utils = "${DIR_UTILS}"
+FILES:${PN}-tests = "${DIR_TESTS}"
 
-FILES_${PN}-dev = "${includedir}"
-FILES_${PN}-staticdev = "${libdir}"
+FILES:${PN}-dev = "${includedir}"
+FILES:${PN}-staticdev = "${libdir}"
 
-INSANE_SKIP_${PN}-utils = "ldflags"
-INSANE_SKIP_${PN}-tests = "ldflags"
+INSANE_SKIP:${PN}-utils = "ldflags"
+INSANE_SKIP:${PN}-tests = "ldflags"

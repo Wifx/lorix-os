@@ -1,6 +1,6 @@
 require go-common.inc
 
-FILESEXTRAPATHS_prepend := "${FILE_DIRNAME}/go:"
+FILESEXTRAPATHS:prepend := "${FILE_DIRNAME}/go:"
 
 LIC_FILES_CHKSUM = "file://LICENSE;md5=5d4950ecb7b26d2c5e4e7b4e0dd74707"
 

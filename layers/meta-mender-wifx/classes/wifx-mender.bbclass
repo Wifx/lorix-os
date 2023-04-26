@@ -5,18 +5,18 @@
 inherit mender-full-ubi
 
 # Make mender feature globally visible
-DISTRO_FEATURES_append = " mender"
+DISTRO_FEATURES:append = " mender"
 
 # systemd is not desired as we use OpenRC
-MENDER_FEATURES_DISABLE_append = " \
+MENDER_FEATURES_DISABLE:append = " \
     mender-systemd \
 "
 
 # We don't need mtdimg which generates error related to empty partitions
-IMAGE_FSTYPES_remove = "mtdimg"
+IMAGE_FSTYPES:remove = "mtdimg"
 
 # Disable image from meta-mender (replaced by ours)
-IMAGE_CLASSES_remove = "mender-ubimg"
+IMAGE_CLASSES:remove = "mender-ubimg"
 IMAGE_CLASSES += "wifx-mender-emptyimg wifx-mender-ubimg"
 
 # This meta automatically use u-boot-fs-utils from Mender which is more 
@@ -25,7 +25,7 @@ PREFERRED_PROVIDER_u-boot-fw-utils = "u-boot-fw-utils-mender-auto-provided"
 
 # We do not want Mender to manager fstab for us, data partition is already
 # managed in preinit script.
-ROOTFS_POSTPROCESS_COMMAND_remove += "mender_update_fstab_file;"
+ROOTFS_POSTPROCESS_COMMAND:remove = "mender_update_fstab_file;"
 
 # Create link to mender artifact in release deploy directory
 IMAGE_POSTPROCESS_COMMAND += "final_deploy_link_mender_artifact ;"

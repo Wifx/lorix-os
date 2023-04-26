@@ -17,9 +17,9 @@ SRC_URI = "\
 COMPATIBLE_MACHINE_FEATURE = "sx1302"
 
 # depends on lora-concentrator-reset script
-RDEPENDS_${PN}-utils += "lora-concentrator"
-RDEPENDS_${PN}-tests += "lora-concentrator"
-RDEPENDS_${PN}-tests-ext += "${PN}-tests"
+RDEPENDS:${PN}-utils += "lora-concentrator"
+RDEPENDS:${PN}-tests += "lora-concentrator"
+RDEPENDS:${PN}-tests-ext += "${PN}-tests"
 
 S = "${WORKDIR}/git"
 
@@ -32,7 +32,7 @@ CFLAGS += "-I inc -I ../libtools/inc"
 DIR_UTILS = "/opt/${PN}/gateway-utils"
 DIR_TESTS = "/opt/${PN}/gateway-tests"
 
-do_configure_append() {
+do_configure:append() {
     cp ${WORKDIR}/library.cfg ${S}/libloragw/library.cfg
 }
 
@@ -73,16 +73,16 @@ PACKAGES =+ "${PN}-utils ${PN}-tests ${PN}-tests-ext"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
-FILES_${PN}-utils = "${DIR_UTILS}"
-FILES_${PN}-tests = " \
+FILES:${PN}-utils = "${DIR_UTILS}"
+FILES:${PN}-tests = " \
     ${DIR_TESTS}/reset_lgw.sh \
     ${DIR_TESTS}/test_loragw_hal_rx \
     ${DIR_TESTS}/test_loragw_hal_tx \
 "
-FILES_${PN}-tests-ext = "${DIR_TESTS}"
+FILES:${PN}-tests-ext = "${DIR_TESTS}"
 
-FILES_${PN}-dev = "${includedir}"
-FILES_${PN}-staticdev = "${libdir}"
+FILES:${PN}-dev = "${includedir}"
+FILES:${PN}-staticdev = "${libdir}"
 
-INSANE_SKIP_${PN}-utils = "ldflags"
-INSANE_SKIP_${PN}-tests = "ldflags"
+INSANE_SKIP:${PN}-utils = "ldflags"
+INSANE_SKIP:${PN}-tests = "ldflags"

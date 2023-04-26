@@ -58,4 +58,4 @@ MACHINE_ESSENTIAL_EXTRA_RRECOMMENDS += "kernel-devicetree kernel-image"
 MACHINE_ESSENTIAL_EXTRA_RDEPENDS += "kernel-modules"
 
 # make sure that kernel and devicetree are installed
-IMAGE_INSTALL_append = " kernel-devicetree kernel-image-zimage"
+IMAGE_INSTALL:append = " kernel-devicetree kernel-image-zimage"

@@ -17,12 +17,12 @@ SRC_URI += " \
     file://0002-handle-router-config-on-unknown-region.patch \
 "
 
-SRC_URI_append_lorix-one = " \
+SRC_URI:append:lorix-one = " \
     file://setup-lorix.gmk \
     file://resources-lorix-one \
 "
 
-SRC_URI_append_l1 = " \
+SRC_URI:append:l1 = " \
     file://setup-l1.gmk \
     file://resources-l1 \
 "
@@ -32,7 +32,7 @@ SRC_URI_append_l1 = " \
 
 inherit pmonitor
 
-RDEPENDS_${PN} += "lora-concentrator"
+RDEPENDS:${PN} += "lora-concentrator"
 
 S = "${WORKDIR}/git"
 
@@ -40,13 +40,13 @@ do_configure() {
     cp -f ${WORKDIR}/setup-*.gmk ${S}
 }
 
-do_configure_append_lorix-one() {
+do_configure:append:lorix-one() {
     path="${S}/deps/lgw"
     # copy existing lgw linux patch for the lorix
     cp -f ${path}/v5.0.1-linux.patch ${path}/v5.0.1-lorix.patch
 }
 
-do_configure_append_l1() {
+do_configure:append:l1() {
     path="${S}/deps/lgw1302"
     # copy existing lgw linux patch for the L1
     cp -f ${path}/V2.1.0-corecell.patch ${path}/V2.1.0-l1.patch
@@ -73,7 +73,7 @@ do_install() {
     pmonitor_service_install ${WORKDIR}/lora-basic-station.yml
 }
 
-do_install_append_lorix-one() {
+do_install:append:lorix-one() {
     install -m 0744 ${S}/build-lorix-std/bin/station ${D}${optdir}/lora-basic-station/lora-basic-station
 
     # configuration files
@@ -84,7 +84,7 @@ do_install_append_lorix-one() {
     done
 }
 
-do_install_append_l1() {
+do_install:append:l1() {
     install -m 0744 ${S}/build-l1-std/bin/station ${D}${optdir}/lora-basic-station/lora-basic-station
 
     # configuration files
@@ -95,7 +95,7 @@ do_install_append_l1() {
     done
 }
 
-pkg_postinst_ontarget_${PN} () {
+pkg_postinst_ontarget:${PN} () {
     # Update gateway ID in config
     file="${sysconfoptdir}/lora-basic-station/gateway-id"
 
@@ -109,4 +109,4 @@ pkg_postinst_ontarget_${PN} () {
     fi
 }
 
-FILES_${PN} += "${optdir}"
+FILES:${PN} += "${optdir}"

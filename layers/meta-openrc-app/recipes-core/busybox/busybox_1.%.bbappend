@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
 # All rights reserved.
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 SRC_URI += " \
     file://busybox-klogd.initd \
     file://busybox-klogd.confd \
@@ -18,7 +18,7 @@ OPENRC_SERVICE_${PN}-syslog = "busybox-klogd busybox-syslogd"
 OPENRC_RUNLEVEL_busybox-syslogd = "default"
 OPENRC_RUNLEVEL_busybox-klogd = "default"
 
-do_install_append() {
+do_install:append() {
     # Install OpenRC conf script
     openrc_install_config ${WORKDIR}/busybox-klogd.confd
     openrc_install_config ${WORKDIR}/busybox-syslogd.confd
@@ -32,13 +32,13 @@ do_install_append() {
     rm -rf ${D}${sysconfdir}/default/busybox-syslog
 }
 
-FILES_${PN}-syslog += " \
+FILES:${PN}-syslog += " \
     ${OPENRC_CONFDIR}/* \
     ${OPENRC_INITDIR}/* \
 "
-FILES_${PN}-syslog_remove = " \
+FILES:${PN}-syslog:remove = " \
     ${sysconfdir}/syslog-startup.conf* \
     ${sysconfdir}/default/busybox-syslog \
 "
 
-RDEPENDS_${PN}-syslog_append = " ${@bb.utils.contains('DISTRO_FEATURES','openrc','openrc','',d)}"
+RDEPENDS:${PN}-syslog:append = " ${@bb.utils.contains('DISTRO_FEATURES','openrc','openrc','',d)}"
