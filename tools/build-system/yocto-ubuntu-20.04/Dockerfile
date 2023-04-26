@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 MAINTAINER Wifx "support@iot.wifx.net"
 
@@ -8,10 +8,7 @@ RUN apt-get update && apt-get -y upgrade
 
 # Required Packages for the Host Development System
 # http://www.yoctoproject.org/docs/latest/mega-manual/mega-manual.html#required-packages-for-the-host-development-system
-RUN apt-get install -y gawk wget git-core git-lfs diffstat unzip texinfo \
-     gcc-multilib g++-multilib build-essential chrpath socat cpio python \
-     python3 python3-pip python3-pexpect apt-utils tmux xz-utils debianutils \
-     iputils-ping libncurses5-dev
+RUN apt-get install -y gawk wget git diffstat unzip texinfo gcc build-essential chrpath socat cpio python3 python3-pip python3-pexpect xz-utils debianutils iputils-ping python3-git python3-jinja2 libegl1-mesa libsdl1.2-dev python3-pytest-pylint xterm python3-subunit mesa-common-dev zstd liblz4-tool file
 
 # Additional host packages required by poky/scripts/wic
 RUN apt-get install -y curl dosfstools mtools parted syslinux tree
