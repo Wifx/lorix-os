@@ -1,4 +1,9 @@
-region = "EU868"
+# The default region to use until a region is received from the Helium network.
+# This value should line up with the configured region of the semtech packet
+# forwarder. Note: Not setting this here or with a GW_REGION env var will stop
+# packet and poc beaconing until the correct asserted region is retrieved. 
+#
+# region = "EU868"
 
 keypair = "/etc/opt/helium-gateway/gateway_key.bin"
 #keypair = "ecc://i2c-3:96?slot=X&network=mainnet"

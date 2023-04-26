@@ -1,0 +1,20 @@
+diff --git a/src/structs.rs b/src/structs.rs
+index aac0832..72b18e1 100644
+--- a/src/structs.rs
++++ b/src/structs.rs
+@@ -176,6 +176,7 @@ impl PushData {
+ #[derive(Serialize)]
+ pub struct PushDataPayload {
+     pub rxpk: Vec<RXPK>,
++    #[serde(skip_serializing_if = "Option::is_none")]
+     pub stat: Option<Stat>,
+ }
+ 
+@@ -185,6 +186,7 @@ pub struct RXPK {
+     #[serde(with = "compact_time_format")]
+     pub time: DateTime<Utc>,
+     /// GPS time of pkt RX, number of milliseconds since 06.Jan.1980
++    #[serde(skip_serializing_if = "Option::is_none")]
+     pub tmms: Option<u64>,
+     /// Internal timestamp of "RX finished" event (32b unsigned)
+     pub tmst: u32,
