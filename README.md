@@ -111,22 +111,6 @@ From the workspace (`lorix-os` directory).
    * **Packages**: the system packages to use with opkg are located at `lorix-os/poky/build/tmp/deploy/images/<machine>/ipk`
      * If you want to provide these packages to your image, please check the `OS_DISTRO_FEEDS_BASE_URL` option of the `release.conf` file.
 
-## Dependencies
-
-This build workspace depends on:
-
-* **meta-openembedded**<br />
-  URI: [git://git.openembedded.org/meta-openembedded](git://git.openembedded.org/meta-openembedded)<br />
-  Branch: zeus<br />
-
-* **poky**<br />
-  URI: [git://git.yoctoproject.org/poky](git://git.yoctoproject.org/poky)<br />
-  Branch: zeus<br />
-
-* **meta-rust-bin**<br />
-  URI: [https://github.com/rust-embedded/meta-rust-bin.git](https://github.com/rust-embedded/meta-rust-bin.git)<br />
-
-
 ## Support
 
 You may find additional help in the [Developer's Guide of the LORIX OS documentation](https://iot.wifx.net/docs/lorix-os/developer-s-guide);
