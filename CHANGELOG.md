@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.6.2] - Unrelease
 
 - Update rust compiler to 1.67.1
+- [LOR-572] Update helium-gateway to 1.1.1
 
 ## [1.6.1] - 2023-04-28
 
