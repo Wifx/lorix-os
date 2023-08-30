@@ -4,6 +4,7 @@ MACHINE_EXTRA_RDEPENDS_append = " \
     lora-concentrator \
     mtd-utils \
     mtd-utils-ubifs \
+    machine-nm-config \
 "
 
 MACHINE_EXTRA_RDEPENDS_append_l1 = " \
