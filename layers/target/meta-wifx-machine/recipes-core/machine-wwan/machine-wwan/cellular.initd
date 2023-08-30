@@ -4,7 +4,7 @@
 
 depend() {
     need sysfs
-    after modules-load local
+    after modules-load
 }
 
 start() {
