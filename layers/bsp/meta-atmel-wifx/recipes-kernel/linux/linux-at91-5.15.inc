@@ -22,6 +22,8 @@ SRC_URI += " \
     file://kernel-features/nf_tables/nf_tables6.cfg \
     file://kernel-features/wireguard/wireguard.scc;type=kmeta;destsuffix=kernel-meta \
     file://kernel-features/wireguard/wireguard.cfg \
+    ${@bb.utils.contains('MACHINE_FEATURES', 'wwan', 'file://cdc-ether.cfg', '', d)} \
+    file://0001-lte-add-Fibocom-L610-MC610-support-in-option-driver.patch \
 "
 
 SRC_URI_append_l1 = " \

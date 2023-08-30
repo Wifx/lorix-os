@@ -1,0 +1,45 @@
+From 11165329f88654f8f6a8b6689470859022a6bf7f Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Tue, 4 Apr 2023 16:59:12 +0200
+Subject: [PATCH] lte: add Fibocom L610/MC610 support in option driver
+
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
+---
+ drivers/net/usb/cdc_ether.c | 6 ++++++
+ drivers/usb/serial/option.c | 3 +++
+ 2 files changed, 9 insertions(+)
+
+diff --git a/drivers/net/usb/cdc_ether.c b/drivers/net/usb/cdc_ether.c
+index 9b4dfa3001d6..9e82c1487626 100644
+--- a/drivers/net/usb/cdc_ether.c
++++ b/drivers/net/usb/cdc_ether.c
+@@ -999,6 +999,12 @@ static const struct usb_device_id	products[] = {
+ 				      USB_CDC_SUBCLASS_ETHERNET,
+ 				      USB_CDC_PROTO_NONE),
+ 	.driver_info = (unsigned long)&wwan_info,
++}, {
++	/* Fibocom L610/MC610 */
++	USB_DEVICE_AND_INTERFACE_INFO(0x1782, 0x4d11, USB_CLASS_COMM,
++				      USB_CDC_SUBCLASS_ETHERNET,
++				      USB_CDC_PROTO_NONE),
++	.driver_info = (unsigned long)&wwan_info,
+ }, {
+ 	USB_INTERFACE_INFO(USB_CLASS_COMM, USB_CDC_SUBCLASS_ETHERNET,
+ 			USB_CDC_PROTO_NONE),
+diff --git a/drivers/usb/serial/option.c b/drivers/usb/serial/option.c
+index e7755d9cfc61..3dd234c86ff4 100644
+--- a/drivers/usb/serial/option.c
++++ b/drivers/usb/serial/option.c
+@@ -2121,6 +2121,9 @@ static const struct usb_device_id option_ids[] = {
+ 	{ USB_DEVICE_INTERFACE_CLASS(0x2cb7, 0x01a2, 0xff) },			/* Fibocom FM101-GL (laptop MBIM) */
+ 	{ USB_DEVICE_INTERFACE_CLASS(0x2cb7, 0x01a4, 0xff),			/* Fibocom FM101-GL (laptop MBIM) */
+ 	  .driver_info = RSVD(4) },
++	{ USB_DEVICE_INTERFACE_CLASS(0x1782, 0x4D10, 0xff) },			/* Fibocom L610/MC610 (PPP) */
++	{ USB_DEVICE_INTERFACE_CLASS(0x1782, 0x4D11, 0xff),			/* Fibocom L610/MC610 (ECM) */
++	  .driver_info = RSVD(4) },
+ 	{ USB_DEVICE_INTERFACE_CLASS(0x2df3, 0x9d03, 0xff) },			/* LongSung M5710 */
+ 	{ USB_DEVICE_INTERFACE_CLASS(0x305a, 0x1404, 0xff) },			/* GosunCn GM500 RNDIS */
+ 	{ USB_DEVICE_INTERFACE_CLASS(0x305a, 0x1405, 0xff) },			/* GosunCn GM500 MBIM */
+-- 
+2.34.1
+
