@@ -14,7 +14,12 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 inherit packagegroup
 
 # By default, the OS uses networkmanager
-NETWORK_MANAGER_PACKAGES ?= "networkmanager networkmanager-nmcli networkmanager-openvpn "
+NETWORK_MANAGER_PACKAGES ?= " \
+    networkmanager \
+    networkmanager-nmcli \
+    networkmanager-openvpn \
+    ${@bb.utils.contains('MACHINE_FEATURES','wwan','networkmanager-wwan mobile-broadband-provider-info','',d)} \
+"
 
 CONNECTIVITY_MODULES = ""
 
@@ -39,6 +44,7 @@ CONNECTIVITY_PACKAGES = " \
     openssh \
     ${@bb.utils.contains('DISTRO_FEATURES','wireguard','wireguard-tools','', d)} \
     ${@bb.utils.contains('MACHINE_FEATURES','gnss','gpsd gpsd-udev gpsd-conf gpsd-gpsctl gps-utils','',d)} \
+    ${@bb.utils.contains('MACHINE_FEATURES','wwan','modemmanager','',d)} \
 "
 
 RDEPENDS_${PN} = " \

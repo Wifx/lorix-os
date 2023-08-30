@@ -1,0 +1,15 @@
+ACTION!="add|change|move|bind", GOTO="mm_fibocom_setup_end"
+
+# Fibocom L610/MC610
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="1782", ATTRS{idProduct}=="4d10", GOTO="mm_fibocom_setup"
+GOTO="mm_fibocom_setup_end"
+
+LABEL="mm_fibocom_setup"
+
+# We retrieve the USB num interface
+SUBSYSTEMS=="usb", ATTRS{bInterfaceNumber}=="?*", ENV{.MM_USBIFNUM}="$attr{bInterfaceNumber}"
+
+# Call setup script for interface 0 (probably /dev/ttyUSB0)
+ENV{.MM_USBIFNUM}=="00", SUBSYSTEM=="tty", RUN+="@SCRIPT@ /dev/%k"
+
+LABEL="mm_fibocom_setup_end"

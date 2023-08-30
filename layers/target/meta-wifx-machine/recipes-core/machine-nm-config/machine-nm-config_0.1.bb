@@ -20,7 +20,7 @@ do_patch[noexec] = "1"
 do_configure[noexec] = "1"
 do_compile[noexec] = "1"
 
-RDEPENDS_${PN} += "bash networkmanager"
+RDEPENDS_${PN} += "bash networkmanager ${@bb.utils.contains('MACHINE_FEATURES','wwan','machine-wwan modemmanager','',d)}"
 
 do_install() {
     # Install default connections and main configuration file
@@ -31,6 +31,11 @@ do_install() {
     # Install general state parameters
     install -m 700 -d ${D}/var/lib/NetworkManager
     install -m 644 ${WORKDIR}/NetworkManager.state ${D}/var/lib/NetworkManager/NetworkManager.state
+
+    if [ "${@bb.utils.contains('MACHINE_FEATURES','wwan','1','0',d)}" = "1" ] ; then
+        sed -i -e 's,WWANEnabled=false,WWANEnabled=true,g' \
+           ${D}/var/lib/NetworkManager/NetworkManager.state
+    fi
 }
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"

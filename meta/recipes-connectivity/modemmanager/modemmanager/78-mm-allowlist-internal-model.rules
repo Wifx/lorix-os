@@ -1,0 +1,4 @@
+# We allow specifically the L610/MC610 Fibocom module to avoid enumeration on all devices
+ACTION!="add|change|move", GOTO="mm_allowlist_internal_modem_end"
+ATTRS{idVendor}=="1782", ATTRS{idProduct}=="4d11", ENV{ID_MM_DEVICE_PROCESS}="1"
+LABEL="mm_allowlist_internal_modem_end"

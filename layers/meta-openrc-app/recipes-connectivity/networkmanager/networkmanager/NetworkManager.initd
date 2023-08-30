@@ -20,6 +20,7 @@ command_args_foreground="--no-daemon"
 command_user="root"
 
 depend() {
+        after cellular
         need dbus
         use consolekit
         provide net

@@ -1,0 +1,101 @@
+From e3f3a5efdcc943f7eb28185379e81fac180f29c9 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Tue, 22 Aug 2023 18:14:52 +0200
+Subject: [PATCH 1/2] fibocom: add support for SIM PIN/PUK remaining entering
+ attempts
+
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
+---
+ plugins/fibocom/mm-broadband-modem-fibocom.c | 62 ++++++++++++++++++++
+ 1 file changed, 62 insertions(+)
+
+diff --git a/plugins/fibocom/mm-broadband-modem-fibocom.c b/plugins/fibocom/mm-broadband-modem-fibocom.c
+index 9d659698..9ef27d43 100644
+--- a/plugins/fibocom/mm-broadband-modem-fibocom.c
++++ b/plugins/fibocom/mm-broadband-modem-fibocom.c
+@@ -15,6 +15,8 @@
+ 
+ #include <config.h>
+ 
++#include <stdio.h>
++
+ #include "mm-broadband-modem-fibocom.h"
+ #include "mm-broadband-bearer-fibocom-ecm.h"
+ #include "mm-broadband-modem.h"
+@@ -48,6 +50,64 @@ struct _MMBroadbandModemFibocomPrivate {
+     gint            initial_eps_bearer_cid;
+ };
+ 
++/*****************************************************************************/
++/* Load unlock retries (Modem interface) */
++
++static MMUnlockRetries *
++load_unlock_retries_finish (MMIfaceModem *self,
++                            GAsyncResult *res,
++                            GError **error)
++{
++    MMUnlockRetries *unlock_retries;
++    const gchar *response;
++    gint matched;
++    guint a, b, c ,d;
++
++    response = mm_base_modem_at_command_finish (MM_BASE_MODEM (self), res, error);
++    if (!response)
++        return NULL;
++
++    matched = sscanf (response, "+TPIN: %d,%d,%d,%d",
++                      &a, &b, &c, &d);
++    if (matched != 4) {
++        g_set_error (error,
++                     MM_CORE_ERROR,
++                     MM_CORE_ERROR_FAILED,
++                     "Could not parse PIN retries results: '%s'",
++                     response);
++        return NULL;
++    }
++
++    if (a > 998) {
++        g_set_error (error,
++                     MM_CORE_ERROR,
++                     MM_CORE_ERROR_FAILED,
++                     "Invalid PIN attempts left: '%u'",
++                     a);
++        return NULL;
++    }
++
++    unlock_retries = mm_unlock_retries_new ();
++    mm_unlock_retries_set (unlock_retries, MM_MODEM_LOCK_SIM_PIN, a);
++    mm_unlock_retries_set (unlock_retries, MM_MODEM_LOCK_SIM_PUK, b);
++    mm_unlock_retries_set (unlock_retries, MM_MODEM_LOCK_SIM_PIN2, c);
++    mm_unlock_retries_set (unlock_retries, MM_MODEM_LOCK_SIM_PUK2, d);
++    return unlock_retries;
++}
++
++static void
++load_unlock_retries (MMIfaceModem *self,
++                     GAsyncReadyCallback callback,
++                     gpointer user_data)
++{
++    mm_base_modem_at_command (MM_BASE_MODEM (self),
++                              "+TPIN?",
++                              3,
++                              FALSE,
++                              callback,
++                              user_data);
++}
++
+ /*****************************************************************************/
+ /* Create Bearer (Modem interface) */
+ 
+@@ -726,6 +786,8 @@ iface_modem_init (MMIfaceModem *iface)
+     iface->modem_power_down_finish = modem_common_power_finish;
+     iface->modem_power_off = modem_power_off;
+     iface->modem_power_off_finish = modem_common_power_finish;
++    iface->load_unlock_retries = load_unlock_retries;
++    iface->load_unlock_retries_finish = load_unlock_retries_finish;
+ }
+ 
+ static void
+-- 
+2.34.1
+

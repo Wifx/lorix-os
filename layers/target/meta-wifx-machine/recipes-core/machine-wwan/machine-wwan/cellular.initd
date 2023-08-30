@@ -1,0 +1,20 @@
+#!/sbin/openrc-run
+# Copyright (c) 2023, Wifx Sarl <info@iot.wifx.net>
+# All rights reserved.
+
+depend() {
+    need sysfs
+    after modules-load local
+}
+
+start() {
+    ebegin "Powering up the WWAN modem"
+    # should be abstracted through machine-info
+    gpioset gpiochip3 18=1
+}
+
+stop() {
+    ebegin "Powering down the WWAN modem"
+    # should be abstracted through machine-info
+    gpioset gpiochip3 18=0
+}

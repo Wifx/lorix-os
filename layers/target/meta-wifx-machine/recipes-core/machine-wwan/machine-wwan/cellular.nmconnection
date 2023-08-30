@@ -1,0 +1,17 @@
+[connection]
+id=cellular
+uuid=5222a507-9f7c-44fb-86e7-c7843c4e433a
+type=gsm
+interface-name=ttyUSB0
+
+[gsm]
+auto-config=true
+
+[ipv4]
+method=auto
+
+[ipv6]
+addr-gen-mode=default
+method=auto
+
+[proxy]
