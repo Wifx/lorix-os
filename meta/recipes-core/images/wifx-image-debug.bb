@@ -13,6 +13,9 @@ IMAGE_INSTALL += " \
     chirpstack-concentratord \
     pmon-csgb-concentratord \
     binutils \
+    iperf3 \
+    libgpiod \
+    libgpiod-tools \
 "
 
 IMAGE_INSTALL_append_lorix-one = " \
