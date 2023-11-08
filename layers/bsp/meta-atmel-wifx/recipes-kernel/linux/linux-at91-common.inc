@@ -13,7 +13,7 @@ RDEPENDS:${KERNEL_PACKAGE_NAME}-base = ""
 PV = "${LINUX_VERSION}${LINUX_VERSION_EXTENSION}"
 
 SRC_URI = " \
-    git://github.com/Wifx/linux-at91.git;protocol=git;branch=${KBRANCH} \
+    git://github.com/Wifx/linux-at91.git;protocol=https;branch=${KBRANCH} \
     file://defconfig \
     ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'file://systemd.cfg', '', d)} \
 "

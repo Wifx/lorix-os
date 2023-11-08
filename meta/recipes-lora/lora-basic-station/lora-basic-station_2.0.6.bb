@@ -8,8 +8,8 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=a00b6155c30853bb390ec59ba94e2b06"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
-SRCTAG = "v${PV}"
-SRC_URI = "git://github.com/lorabasics/basicstation.git;protocol=https;tag=${SRCTAG}"
+SRC_URI = "git://github.com/lorabasics/basicstation.git;protocol=https;branch=master"
+SRCREV = "ba4f85d80a438a5c2b659e568cd2d0f0de08e5a7"
 
 SRC_URI += " \
     file://lora-basic-station.yml \
@@ -54,11 +54,11 @@ do_configure:append:l1() {
 
 TARGET_CC_ARCH += "${LDFLAGS}"
 
-do_compile_lorix-one() {
+do_compile:lorix-one() {
     make platform=lorix variant=std ARCH.lorix=${TARGET_SYS}
 }
 
-do_compile_l1() {
+do_compile:l1() {
     make platform=l1 variant=std \
         ARCH.l1=${TARGET_SYS} \
         TOOLCHAIN=${STAGING_BINDIR_TOOLCHAIN} \

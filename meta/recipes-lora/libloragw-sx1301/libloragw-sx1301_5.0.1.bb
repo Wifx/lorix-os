@@ -7,10 +7,11 @@ PR = "r8"
 PRR = "r2"
 
 SRC_URI = "\
-    git://github.com/brocaar/lora_gateway.git;protocol=https;tag=v${PV}${PRR} \
+    git://github.com/brocaar/lora_gateway.git;protocol=https;nobranch=1 \
     file://0001-Restore-default-SPI-path-to-keep-tests-and-utils-wor.patch \
     file://library.cfg \
 "
+SRCREV = "59381129a07858a2a91aeffe21cd6a728219cf23"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 

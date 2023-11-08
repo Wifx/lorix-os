@@ -1,18 +1,19 @@
 DESCRIPTION = "Driver/HAL to build a gateway using a concentrator board based on Semtech SX1302"
 HOMEPAGE = "https://github.com/Lora-net/sx1302_hal"
 PRIORITY = "optional"
-LICENSE = "BSD"
-LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/BSD;md5=3775480a712fc46a69647678acb234cb"
+LICENSE = "BSD-3-Clause"
+LIC_FILES_CHKSUM = "file://LICENSE.TXT;md5=d2119120bd616e725f4580070bd9ee19"
 PR = "r10"
 
 SRC_URI = "\
-    git://github.com/Lora-net/sx1302_hal.git;protocol=https;tag=V${PV} \
+    git://github.com/Lora-net/sx1302_hal.git;protocol=https;nobranch=1 \
     file://0001-test-change-stdout-err-to-line-buffered.patch \
     file://library.cfg \
     file://0001-test_loragw_hal_tx-enable-CRC-for-LoRa-TX-packets-by.patch \
     file://0002-test_loragw_hal_tx-add-optional-argument-to-disable-.patch \
     file://reset_lgw.sh \
 "
+SRCREV = "6dff8191d5034539e43990c7b9a4d1bc3d5b6658"
 
 COMPATIBLE_MACHINE_FEATURE = "sx1302"
 
