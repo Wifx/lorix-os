@@ -9,8 +9,8 @@ SRC_URI += " \
 
 inherit openrc
 
-OPENRC_SERVICE_${PN} = "chronyd"
-OPENRC_RUNLEVEL_chronyd = "default"
+OPENRC_SERVICE:${PN} = "chronyd"
+OPENRC_RUNLEVEL:chronyd = "default"
 
 do_install:append() {
     # Install OpenRC conf script

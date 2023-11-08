@@ -14,9 +14,9 @@ SRC_URI += " \
 inherit openrc
 
 OPENRC_PACKAGES = "${PN}-syslog"
-OPENRC_SERVICE_${PN}-syslog = "busybox-klogd busybox-syslogd"
-OPENRC_RUNLEVEL_busybox-syslogd = "default"
-OPENRC_RUNLEVEL_busybox-klogd = "default"
+OPENRC_SERVICE:${PN}-syslog = "busybox-klogd busybox-syslogd"
+OPENRC_RUNLEVEL:busybox-syslogd = "default"
+OPENRC_RUNLEVEL:busybox-klogd = "default"
 
 do_install:append() {
     # Install OpenRC conf script

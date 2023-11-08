@@ -7,8 +7,8 @@ SRC_URI += " \
 
 inherit openrc
 
-OPENRC_SERVICE_${PN} = "lora-concentrator"
-OPENRC_RUNLEVEL_lora-concentrator = "sysinit"
+OPENRC_SERVICE:${PN} = "lora-concentrator"
+OPENRC_RUNLEVEL:lora-concentrator = "sysinit"
 
 do_install:append() {
 

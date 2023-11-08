@@ -8,8 +8,8 @@ SRC_URI += " \
 
 inherit openrc
 
-OPENRC_SERVICE_${PN} = "monit"
-OPENRC_RUNLEVEL_monit = "default"
+OPENRC_SERVICE:${PN} = "monit"
+OPENRC_RUNLEVEL:monit = "default"
 
 do_install:append() {
     # Install OpenRC script

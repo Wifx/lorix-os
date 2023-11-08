@@ -6,8 +6,8 @@ inherit openrc
 RDEPENDS:avahi-daemon = "openrc"
 
 OPENRC_PACKAGES = "${PN}-daemon"
-OPENRC_SERVICE_${PN}-daemon = "avahi-daemon"
-OPENRC_RUNLEVEL_avahi-daemon = "default"
+OPENRC_SERVICE:${PN}-daemon = "avahi-daemon"
+OPENRC_RUNLEVEL:avahi-daemon = "default"
 
 do_install:append() {
     # Install OpenRC script

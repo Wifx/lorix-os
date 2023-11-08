@@ -14,10 +14,10 @@ inherit openrc
 
 OPENRC_PACKAGES = "${PN}-server-snmpd ${PN}-server-snmptrapd"
 # Services not enabled by default
-#OPENRC_SERVICE_${PN}-server-snmpd = "snmpd"
-#OPENRC_SERVICE_${PN}-server-snmptrapd = "snmptrapd"
-#OPENRC_RUNLEVEL_snmpd = "default"
-#OPENRC_RUNLEVEL_snmptrapd = "default"
+#OPENRC_SERVICE:${PN}-server-snmpd = "snmpd"
+#OPENRC_SERVICE:${PN}-server-snmptrapd = "snmptrapd"
+#OPENRC_RUNLEVEL:snmpd = "default"
+#OPENRC_RUNLEVEL:snmptrapd = "default"
 
 do_install:append() {
     # Install OpenRC conf script

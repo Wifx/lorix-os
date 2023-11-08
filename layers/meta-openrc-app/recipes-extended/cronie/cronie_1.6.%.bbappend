@@ -10,8 +10,8 @@ SRC_URI += " \
 
 inherit openrc
 
-OPENRC_SERVICE_${PN} = "crond"
-OPENRC_RUNLEVEL_crond = "default"
+OPENRC_SERVICE:${PN} = "crond"
+OPENRC_RUNLEVEL:crond = "default"
 
 do_install:append() {
     # Install OpenRC conf script

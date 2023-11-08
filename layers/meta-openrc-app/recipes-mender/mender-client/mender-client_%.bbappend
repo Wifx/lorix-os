@@ -5,8 +5,8 @@ SRC_URI += " \
 "
 
 inherit openrc
-#OPENRC_SERVICE_${PN} = "menderd"
-OPENRC_RUNLEVEL_menderd = "default"
+#OPENRC_SERVICE:${PN} = "menderd"
+OPENRC_RUNLEVEL:menderd = "default"
 
 do_install:append() {
     # Install OpenRC conf script

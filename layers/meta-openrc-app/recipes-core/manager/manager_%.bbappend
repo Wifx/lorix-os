@@ -8,8 +8,8 @@ SRC_URI += " \
 
 inherit openrc
 
-OPENRC_SERVICE_${PN} = "managerd"
-OPENRC_RUNLEVEL_managerd = "default"
+OPENRC_SERVICE:${PN} = "managerd"
+OPENRC_RUNLEVEL:managerd = "default"
 
 do_install:append() {
     # Install OpenRC conf script

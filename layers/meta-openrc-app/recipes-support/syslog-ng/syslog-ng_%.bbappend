@@ -6,8 +6,8 @@ SRC_URI += " \
 
 inherit openrc
 
-OPENRC_SERVICE_${PN} = "syslog-ng"
-OPENRC_RUNLEVEL_syslog-ng = "default"
+OPENRC_SERVICE:${PN} = "syslog-ng"
+OPENRC_RUNLEVEL:syslog-ng = "default"
 
 do_install:append() {
     # Install OpenRC conf script

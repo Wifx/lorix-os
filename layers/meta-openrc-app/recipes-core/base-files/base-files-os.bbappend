@@ -6,9 +6,9 @@ SRC_URI += " \
 
 inherit openrc
 
-OPENRC_SERVICE_${PN} = "firstboot stopstatusled"
-OPENRC_RUNLEVEL_firstboot = "default"
-OPENRC_RUNLEVEL_stopstatusled = "shutdown"
+OPENRC_SERVICE:${PN} = "firstboot stopstatusled"
+OPENRC_RUNLEVEL:firstboot = "default"
+OPENRC_RUNLEVEL:stopstatusled = "shutdown"
 
 do_install:append() {
     # Install OpenRC script

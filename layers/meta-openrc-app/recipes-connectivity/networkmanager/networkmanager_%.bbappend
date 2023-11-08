@@ -8,9 +8,9 @@ SRC_URI += " \
 
 inherit openrc
 
-OPENRC_SERVICE_${PN} = "NetworkManager"
-OPENRC_SERVICE_${PN} = "NetworkManager"
-OPENRC_RUNLEVEL_NetworkManager = "default"
+OPENRC_SERVICE:${PN} = "NetworkManager"
+OPENRC_SERVICE:${PN} = "NetworkManager"
+OPENRC_RUNLEVEL:NetworkManager = "default"
 
 do_install[vardeps] += "MACHINE_PRETTY_NAME"
 do_install:append() {

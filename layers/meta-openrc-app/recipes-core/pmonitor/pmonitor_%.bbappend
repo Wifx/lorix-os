@@ -6,8 +6,8 @@ SRC_URI += " \
 
 inherit openrc
 
-OPENRC_SERVICE_${PN} = "pmonitord"
-OPENRC_RUNLEVEL_pmonitord = "default"
+OPENRC_SERVICE:${PN} = "pmonitord"
+OPENRC_RUNLEVEL:pmonitord = "default"
 
 do_install:append() {
     # Install OpenRC conf script

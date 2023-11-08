@@ -6,8 +6,8 @@ SRC_URI += " \
 
 inherit openrc
 
-OPENRC_SERVICE_${PN} = "watchdog"
-OPENRC_RUNLEVEL_watchdog = "default"
+OPENRC_SERVICE:${PN} = "watchdog"
+OPENRC_RUNLEVEL:watchdog = "default"
 
 do_install:append() {
     # Install OpenRC conf script

@@ -72,7 +72,7 @@ python populate_packages_lorix() {
     pkg = d.getVar('PN', True)
     machine = d.getVar('MACHINE', True)
 
-    # Add pkg to the overrides so that it finds the OPENRC_SERVICE_pkg
+    # Add pkg to the overrides so that it finds the OPENRC_SERVICE:pkg
     # variable.
     localdata = d.createCopy()
     localdata.prependVar("OVERRIDES", pkg + ":")
