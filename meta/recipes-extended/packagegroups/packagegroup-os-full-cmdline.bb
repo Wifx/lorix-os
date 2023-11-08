@@ -100,7 +100,6 @@ RDEPENDS:packagegroup-os-full-cmdline-dev-utils = "\
     diffutils \
     elfutils \
     nfs-utils \
-    catchsegv \
     ltrace \
     strace \
     "
