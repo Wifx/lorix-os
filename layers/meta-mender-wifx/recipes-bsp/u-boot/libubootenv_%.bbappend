@@ -1,7 +1,10 @@
 # Copyright (c) 2022, Wifx Sarl <info@iot.wifx.net>
 # All rights reserved.
 
+include ${@mender_feature_is_enabled("mender-uboot","u-boot-mender-wifx-common.inc","",d)}
+
 FILES:${PN}:remove:mender-uboot = " /data/u-boot/fw_env.config"
+FILES:${PN}:append:mender-uboot = " /etc/fw_env.config"
 
 do_install:append:mender-uboot() {
     # Delete mender layer installation files
