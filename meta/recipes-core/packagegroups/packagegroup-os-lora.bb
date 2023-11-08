@@ -24,17 +24,17 @@ RDEPENDS:${PN}:append:lorix-one = " \
     chirpstack-gateway-bridge \
     pmon-csgb-upf \
 "
-RRECOMMENDS:${PN}:append:lorix-one += " \
+RRECOMMENDS:${PN}:append:lorix-one = " \
     pmon-csgb-concentratord \
     pmon-csub-concentratord \
     pmon-helium-upf \
 " 
 
 # Wifx L1
-RDEPENDS:${PN}:append:l1 += " \
+RDEPENDS:${PN}:append:l1 = " \
     pmon-csgb-concentratord \
     pmon-csub-concentratord \
 "
-RRECOMMENDS:${PN}:append:l1 += " \
+RRECOMMENDS:${PN}:append:l1 = " \
     pmon-helium-csub-concentratord \
 "

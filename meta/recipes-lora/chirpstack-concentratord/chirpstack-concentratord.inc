@@ -41,8 +41,8 @@ DEPENDS += " \
 
 RDEPENDS:${PN} += "machine-info"
 
-DEPENDS:append_sx1301 = " libloragw-sx1301"
-DEPENDS:append_sx1302 = " libloragw-sx1302"
+DEPENDS:append:sx1301 = " libloragw-sx1301"
+DEPENDS:append:sx1302 = " libloragw-sx1302"
 
 inherit cargo
 
@@ -56,8 +56,8 @@ S = "${WORKDIR}/git"
 
 export BINDGEN_EXTRA_CLANG_ARGS="-I${STAGING_INCDIR}"
  
-CARGO_BUILD_FLAGS:append_sx1301 = " -p libconcentratord -p chirpstack-concentratord-sx1301 -p libloragw-sx1301"
-CARGO_BUILD_FLAGS:append_sx1302 = " -p libconcentratord -p chirpstack-concentratord-sx1302 -p libloragw-sx1302"
+CARGO_BUILD_FLAGS:append:sx1301 = " -p libconcentratord -p chirpstack-concentratord-sx1301 -p libloragw-sx1301"
+CARGO_BUILD_FLAGS:append:sx1302 = " -p libconcentratord -p chirpstack-concentratord-sx1302 -p libloragw-sx1302" 
 
 do_install() {
 
