@@ -12,4 +12,5 @@ SRC_URI += " \
     file://0001-Change-revision-to-wifx.patch \
     file://0002-Add-base-support-for-Wifx-LORIX-One-machine.patch \
     file://0003-Add-base-support-for-Wifx-L1-machine.patch \
+    file://0004-Fix-nostartfiles-flag-passed-to-ld-instead-of-gcc.patch \
 "
