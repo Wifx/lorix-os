@@ -5,9 +5,7 @@ PRIORITY = "optional"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://src/${GO_IMPORT}/LICENSE;md5=5301050fd7cd58850085239d559297be"
 
-SRCTAG = "v${PV}"
 SRC_URI += " \
-    git://github.com/brocaar/chirpstack-packet-multiplexer.git;protocol=https;tag=${SRCTAG} \
     file://conf.toml \
     file://upf-multiplexer.yml \
 "
