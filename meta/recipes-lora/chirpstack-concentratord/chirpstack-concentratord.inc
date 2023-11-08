@@ -44,7 +44,11 @@ RDEPENDS:${PN} += "machine-info"
 DEPENDS:append:sx1301 = " libloragw-sx1301"
 DEPENDS:append:sx1302 = " libloragw-sx1302"
 
-inherit cargo
+## meta-rust-bin
+inherit cargo_bin
+
+# Enable network for the compile task allowing cargo to download dependencies
+do_compile[network] = "1"
 
 UPX_COMPRESS_FILES_${PN} = "/opt/chirpstack-concentratord/chirpstack-concentratord"
 inherit upx

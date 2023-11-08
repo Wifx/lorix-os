@@ -8,7 +8,11 @@ SRC_URI += "\
     file://settings.toml \
 "
 
-inherit cargo
+## meta-rust-bin
+inherit cargo_bin
+
+# Enable network for the compile task allowing cargo to download dependencies
+do_compile[network] = "1"
 
 DEPENDS += " \
     clang-native \

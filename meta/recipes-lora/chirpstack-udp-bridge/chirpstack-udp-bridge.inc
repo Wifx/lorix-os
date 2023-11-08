@@ -18,7 +18,11 @@ DEPENDS += " \
 UPX_COMPRESS_FILES_${PN} = "/opt/chirpstack-udp-bridge/chirpstack-udp-bridge"
 inherit upx
 
-inherit cargo
+## meta-rust-bin
+inherit cargo_bin
+
+# Enable network for the compile task allowing cargo to download dependencies
+do_compile[network] = "1"
 
 CONF_DIR = "${sysconfoptdir}/chirpstack-udp-bridge"
 S = "${WORKDIR}/git"
