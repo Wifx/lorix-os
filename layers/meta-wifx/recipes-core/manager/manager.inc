@@ -11,7 +11,9 @@ RDEPENDS:${PN} += " \
     glibc \
     machine-info \
 "
-RRECOMMENDS:${PN} += "manager-gui mender-client networkmanager networkmanager-nmcli"
+
+# TODO: kirkstone upgrade (add back manager-gui in this list)
+RRECOMMENDS:${PN} += "mender-client networkmanager networkmanager-nmcli"
 
 SRC_URI += " \
     file://config.toml \
