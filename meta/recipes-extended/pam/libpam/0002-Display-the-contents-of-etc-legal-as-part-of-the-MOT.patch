@@ -1,22 +1,24 @@
-From e66ca60b66fff82d356d6310bfe919664a335580 Mon Sep 17 00:00:00 2001
-From: Yannick Lanz <yannick.lanz@wifx.net>
-Date: Mon, 19 Aug 2019 21:01:23 +0000
-Subject: [PATCH 2/2] Applied motd legal notice patch from Ubuntu for legal
- notice displayed only once through motd
+From 23923bdb49df1561362ab5c7abe0fcc557e13a72 Mon Sep 17 00:00:00 2001
+From: Dustin Kirkland <kirkland@canonical.com>
+Date: Tue, 13 Jun 2023 12:44:45 +0000
+Subject: [PATCH 2/2] Display the contents of /etc/legal as part of the MOTD,
+ the first time the user logs in, and set a flag in the user's homedir if
+ possible to prevent repeat displays.
 
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
 ---
- modules/pam_motd/pam_motd.c | 58 +++++++++++++++++++++++++++++++++++++
- 1 file changed, 58 insertions(+)
+ modules/pam_motd/pam_motd.c | 64 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 64 insertions(+)
 
 diff --git a/modules/pam_motd/pam_motd.c b/modules/pam_motd/pam_motd.c
-index 5051021..4e92f3b 100644
+index 5a4949b3..28108e77 100644
 --- a/modules/pam_motd/pam_motd.c
 +++ b/modules/pam_motd/pam_motd.c
-@@ -73,6 +73,61 @@ static void display_file(pam_handle_t *pamh, const char *motd_path)
- 	close(fd);
+@@ -348,6 +348,65 @@ static int try_to_display(pam_handle_t *pamh, char **motd_path_split,
+     return PAM_SUCCESS;
  }
  
-+int display_legal(pam_handle_t *pamh)
++static int display_legal(pam_handle_t *pamh)
 +{
 +    int retval = PAM_IGNORE, rc;
 +    char *user = NULL;
@@ -26,7 +28,7 @@ index 5051021..4e92f3b 100644
 +    struct stat s;
 +    int f;
 +    /* Get the user name to determine if we need to print the disclaimer */
-+    rc = pam_get_item(pamh, PAM_USER, &user);
++    rc = pam_get_item(pamh, PAM_USER, (const void **)&user);
 +    if (rc == PAM_SUCCESS && user != NULL && *(const char *)user != '\0')
 +    {
 +        PAM_MODUTIL_DEF_PRIVS(privs);
@@ -50,7 +52,11 @@ index 5051021..4e92f3b 100644
 +
 +            if (stat(flag, &s) != 0)
 +            {
-+                display_file(pamh, "/etc/legal");
++                int fd = open("/etc/legal", O_RDONLY, 0);
++                if (fd >= 0) {
++                    try_to_display_fd(pamh, fd);
++                    close(fd);
++                }
 +                mkdir(dir, 0700);
 +                f = open(flag, O_WRONLY|O_CREAT|O_EXCL,
 +                         S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
@@ -74,16 +80,18 @@ index 5051021..4e92f3b 100644
  int pam_sm_open_session(pam_handle_t *pamh, int flags,
  			int argc, const char **argv)
  {
-@@ -123,6 +178,9 @@ int pam_sm_open_session(pam_handle_t *pamh, int flags,
-     /* Display the updated motd */
-     display_file(pamh, motd_path);
+@@ -446,6 +505,11 @@ int pam_sm_open_session(pam_handle_t *pamh, int flags,
+                             motd_dir_path_split, num_motd_dir_paths,
+                             report_missing);
  
-+    /* Display the legal disclaimer only if necessary */
-+    retval = display_legal(pamh);
++    if (retval == PAM_SUCCESS) {
++        /* Display the legal disclaimer only if necessary */
++        retval = display_legal(pamh);
++    }
 +
-     return retval;
- }
- 
+   out:
+     _pam_drop(motd_path_copy);
+     _pam_drop(motd_path_split);
 -- 
-2.17.1
+2.34.1
 

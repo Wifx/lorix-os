@@ -1,18 +1,20 @@
-From 2be9e923afa0bdc3a0af652563dcf4ce20ca9118 Mon Sep 17 00:00:00 2001
-From: Yannick Lanz <yannick.lanz@wifx.net>
-Date: Fri, 12 Jun 2020 10:08:43 +0200
-Subject: [PATCH 1/6] update-motd from Ubuntu libpam sources
+From 6bdb9220cdedd2ec7657dc795645c573878fd601 Mon Sep 17 00:00:00 2001
+From: Dustin Kirkland <kirkland@canonical.com>
+Date: Tue, 12 Feb 2019 00:00:00 +0000
+Subject: [PATCH 1/2] Provide a more dynamic MOTD, based on the short-lived
+ update-motd project.
 
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
 ---
  modules/pam_motd/pam_motd.8.xml | 11 +++++++++++
  modules/pam_motd/pam_motd.c     | 18 ++++++++++++++++++
  2 files changed, 29 insertions(+)
 
 diff --git a/modules/pam_motd/pam_motd.8.xml b/modules/pam_motd/pam_motd.8.xml
-index 906c4ed0..76dbfc80 100644
+index 0afd4c99..2c0653ae 100644
 --- a/modules/pam_motd/pam_motd.8.xml
 +++ b/modules/pam_motd/pam_motd.8.xml
-@@ -63,6 +63,17 @@
+@@ -115,6 +115,17 @@
            </para>
          </listitem>
        </varlistentry>
@@ -29,34 +31,39 @@ index 906c4ed0..76dbfc80 100644
 +      </varlistentry>
      </variablelist>
      <para>
-       When no options are given, the default is to display both
+       When no options are given, the default behavior applies for both
 diff --git a/modules/pam_motd/pam_motd.c b/modules/pam_motd/pam_motd.c
-index cc828d7e..7b38fcb9 100644
+index 6ac8cba2..5a4949b3 100644
 --- a/modules/pam_motd/pam_motd.c
 +++ b/modules/pam_motd/pam_motd.c
-@@ -101,8 +101,10 @@ int pam_sm_open_session(pam_handle_t *pamh, int flags,
+@@ -352,6 +352,7 @@ int pam_sm_open_session(pam_handle_t *pamh, int flags,
  			int argc, const char **argv)
  {
      int retval = PAM_IGNORE;
 +    int do_update = 1;
      const char *motd_path = NULL;
-     const char *motd_dir_path = NULL;
+     char *motd_path_copy = NULL;
+     unsigned int num_motd_paths = 0;
+@@ -361,6 +362,7 @@ int pam_sm_open_session(pam_handle_t *pamh, int flags,
+     unsigned int num_motd_dir_paths = 0;
+     char **motd_dir_path_split = NULL;
+     int report_missing;
 +    struct stat st;
  
      if (flags & PAM_SILENT) {
  	return retval;
-@@ -131,6 +133,9 @@ int pam_sm_open_session(pam_handle_t *pamh, int flags,
- 			   "motd_dir= specification missing argument - ignored");
+@@ -379,6 +381,9 @@ int pam_sm_open_session(pam_handle_t *pamh, int flags,
+ 			   "motd= specification missing argument - ignored");
  	    }
  	}
 +	else if (!strcmp(*argv,"noupdate")) {
 +		do_update = 0;
 +	}
- 	else
- 	    pam_syslog(pamh, LOG_ERR, "unknown option: %s", *argv);
-     }
-@@ -140,6 +145,19 @@ int pam_sm_open_session(pam_handle_t *pamh, int flags,
- 	motd_dir_path = default_motd_dir;
+ 	else if ((str = pam_str_skip_prefix(*argv, "motd_dir=")) != NULL) {
+ 
+             motd_dir_path = str;
+@@ -402,6 +407,19 @@ int pam_sm_open_session(pam_handle_t *pamh, int flags,
+ 	report_missing = 1;
      }
  
 +    /* Run the update-motd dynamic motd scripts, outputting to /run/motd.dynamic.
@@ -67,14 +74,14 @@ index cc828d7e..7b38fcb9 100644
 +        && S_ISDIR(st.st_mode))
 +    {
 +       mode_t old_mask = umask(0022);
-+       if (!system("/usr/bin/env -i PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin run-parts --lsbsysinit /etc/update-motd.d > /run/motd.dynamic.new"))
++       if (!system("/usr/bin/env -i PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin run-parts /etc/update-motd.d > /run/motd.dynamic.new"))
 +           rename("/run/motd.dynamic.new", "/run/motd.dynamic");
 +       umask(old_mask);
 +    }
 +
      if (motd_path != NULL) {
- 	int fd = open(motd_path, O_RDONLY, 0);
- 
+ 	motd_path_copy = strdup(motd_path);
+     }
 -- 
-2.17.1
+2.34.1
 
