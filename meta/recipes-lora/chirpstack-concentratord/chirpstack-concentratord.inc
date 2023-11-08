@@ -3,8 +3,6 @@ DESCRIPTION = "ChirpStack Concentratord"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=99e425257f8a67b7efd81dc0009ed8ff"
 
-PACKAGE_ARCH = "${MACHINE_ARCH}"
-
 SRC_URI += "\
     file://concentratord.toml \
     file://gateways/gateway-l1.toml \
@@ -34,15 +32,16 @@ SRC_URI += "\
     file://channels/US915/US_902_928_FSB_8.toml \
 "
 
-DEPENDS += " \
-    clang-native \
-    cmake-native \
-"
-
-RDEPENDS:${PN} += "machine-info"
+DEPENDS += "clang-native"
+ASSUME_PROVIDED:remove = "cmake-native"
 
 DEPENDS:append:sx1301 = " libloragw-sx1301"
 DEPENDS:append:sx1302 = " libloragw-sx1302"
+
+RDEPENDS:${PN} += "machine-info"
+
+UPX_COMPRESS_FILES_${PN} = "/opt/chirpstack-concentratord/chirpstack-concentratord"
+inherit upx
 
 ## meta-rust-bin
 inherit cargo_bin
@@ -50,18 +49,13 @@ inherit cargo_bin
 # Enable network for the compile task allowing cargo to download dependencies
 do_compile[network] = "1"
 
-UPX_COMPRESS_FILES_${PN} = "/opt/chirpstack-concentratord/chirpstack-concentratord"
-inherit upx
-
-ASSUME_PROVIDED:remove = "cmake-native"
-
-CONF_DIR = "${sysconfoptdir}/chirpstack-concentratord"
-S = "${WORKDIR}/git"
-
 export BINDGEN_EXTRA_CLANG_ARGS="-I${STAGING_INCDIR}"
  
 CARGO_BUILD_FLAGS:append:sx1301 = " -p libconcentratord -p chirpstack-concentratord-sx1301 -p libloragw-sx1301"
 CARGO_BUILD_FLAGS:append:sx1302 = " -p libconcentratord -p chirpstack-concentratord-sx1302 -p libloragw-sx1302" 
+
+CONF_DIR = "${sysconfoptdir}/chirpstack-concentratord"
+S = "${WORKDIR}/git"
 
 do_install() {
 
