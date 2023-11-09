@@ -1,5 +1,5 @@
 # The machine needs lora-concentrator to manage the LoRa concentrator reset line
-MACHINE_EXTRA_RDEPENDS_append = " \
+MACHINE_EXTRA_RDEPENDS:append = " \
     u-boot-fw-utils \
     lora-concentrator \
     mtd-utils \
@@ -7,7 +7,7 @@ MACHINE_EXTRA_RDEPENDS_append = " \
     machine-nm-config \
 "
 
-MACHINE_EXTRA_RDEPENDS_append_l1 = " \
+MACHINE_EXTRA_RDEPENDS:append:l1 = " \
     led-service \
     wgw-ec-util \
 "

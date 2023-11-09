@@ -23,7 +23,7 @@ inherit openrc
 OPENRC_SERVICE:${PN} = "led-service"
 OPENRC_RUNLEVEL:led-service = "default"
 
-do_install_l1() {
+do_install:l1() {
     # Install OpenRC script
     openrc_install_script ${WORKDIR}/led-service.initd
 }
