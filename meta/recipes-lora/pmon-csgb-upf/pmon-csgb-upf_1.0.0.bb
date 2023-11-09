@@ -6,7 +6,7 @@ SECTION = "base"
 LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=83564c4ad755d0edeaa1ba4b3918b365"
 
-RDEPENDS_${PN} += " \
+RDEPENDS:${PN} += " \
     pmonitor \
     chirpstack-gateway-bridge \
     udp-packet-forwarder \
@@ -40,7 +40,7 @@ do_install() {
     pmonitor_service_install ${WORKDIR}/chirpstack-gateway-bridge-udp.yml
 }
 
-CONFFILES_${PN} += " \
+CONFFILES:${PN} += " \
     ${UPF_CONF_DIR}/gateway_global_conf.json \
     ${UPF_CONF_DIR}/gateway_local_conf.json \
     "

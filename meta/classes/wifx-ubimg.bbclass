@@ -14,7 +14,7 @@ IMAGE_TYPES += " ubimg"
 
 do_image_ubimg[depends] += "mtd-utils-native:do_populate_sysroot"
 
-IMAGE_CMD_ubimg () {
+IMAGE_CMD:ubimg () {
     # Added prompt error message for ubi and ubifs image creation.
     if [ -z "${MKUBIFS_ARGS}"] || [ -z "${UBINIZE_ARGS}" ]; then
         bbfatal "MKUBIFS_ARGS and UBINIZE_ARGS have to be set, see http://www.linux-mtd.infradead.org/faq/ubifs.html for details"
@@ -60,9 +60,9 @@ EOF
 
 }
 
-IMAGE_TYPEDEP_ubimg_append = " ubifs dataimg"
+IMAGE_TYPEDEP:ubimg:append = " ubifs dataimg"
 
-IMAGE_TYPEDEP_mender_append = " ${ARTIFACTIMG_FSTYPE}"
+IMAGE_TYPEDEP:mender:append = " ${ARTIFACTIMG_FSTYPE}"
 
 # So that we can use the files from excluded paths in the full images.
 do_image_ubimg[respect_exclude_path] = "0"

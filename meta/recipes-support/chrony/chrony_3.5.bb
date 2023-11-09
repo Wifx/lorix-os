@@ -27,7 +27,7 @@ the client program only."
 
 HOMEPAGE = "http://chrony.tuxfamily.org/"
 SECTION = "net"
-LICENSE = "GPLv2"
+LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://COPYING;md5=751419260aa954499f7abaabaa882bbe"
 
 SRC_URI = " \
@@ -112,20 +112,20 @@ do_install() {
     sed -i 's!^EnvironmentFile=.*!EnvironmentFile=-${sysconfdir}/default/chronyd!' ${D}${systemd_unitdir}/system/chronyd.service
 }
 
-FILES_${PN} = "${sbindir}/chronyd ${sysconfdir} ${localstatedir} ${sysconfdir}/NetworkManager/dispatcher.d"
-CONFFILES_${PN} = "${sysconfdir}/chrony.conf"
+FILES:${PN} = "${sbindir}/chronyd ${sysconfdir} ${localstatedir} ${sysconfdir}/NetworkManager/dispatcher.d"
+CONFFILES:${PN} = "${sysconfdir}/chrony.conf"
 INITSCRIPT_NAME = "chronyd"
 INITSCRIPT_PARAMS = "defaults"
 SYSTEMD_PACKAGES = "${PN}"
-SYSTEMD_SERVICE_${PN} = "chronyd.service"
+SYSTEMD_SERVICE:${PN} = "chronyd.service"
 
 # It's probably a bad idea to run chrony and another time daemon on
 # the same system.  systemd includes the SNTP client 'timesyncd', which
 # will be disabled by chronyd.service, however it will remain on the rootfs
-# wasting 150 kB unless you put 'PACKAGECONFIG_remove_pn-systemd = "timesyncd"'
+# wasting 150 kB unless you put 'PACKAGECONFIG:remove:pn-systemd = "timesyncd"'
 # in a conf file or bbappend somewhere.
-RCONFLICTS_${PN} = "ntp ntimed"
+RCONFLICTS:${PN} = "ntp ntimed"
 
 # Separate the client program into its own package
 PACKAGES =+ "chronyc"
-FILES_chronyc = "${bindir}/chronyc"
+FILES:chronyc = "${bindir}/chronyc"

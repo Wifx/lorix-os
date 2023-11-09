@@ -12,7 +12,7 @@ SRC_URI += " \
 
 S = "${WORKDIR}"
 
-INSANE_SKIP_${PN} += "already-stripped"
+INSANE_SKIP:${PN} += "already-stripped"
 
 inherit pmonitor
 
@@ -26,6 +26,6 @@ do_install () {
     pmonitor_service_install ${WORKDIR}/loriot-packet-forwarder.yml
 }
 
-FILES_${PN} += "${optdir}/loriot"
+FILES:${PN} += "${optdir}/loriot"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"

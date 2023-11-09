@@ -10,5 +10,5 @@ ONLINE_ASSETS_ARCHIVE_PATH = "${ONLINE_PACKAGES_ASSETS_PATH}/${PN}/${ASSETS_ARCH
 python __anonymous() {
     if not bb.utils.to_boolean(d.getVar('INHIBIT_UNPACK_ONLINE_ASSETS', True)):
         d.appendVar('SRC_URI', ' ' + d.getVar('ONLINE_ASSETS_ARCHIVE_PATH'))
-        d.appendVar('INSANE_SKIP_' + d.getVar('PN'), ' already-stripped')
+        d.appendVar('INSANE_SKIP:' + d.getVar('PN'), ' already-stripped')
 }

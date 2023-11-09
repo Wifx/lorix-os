@@ -6,7 +6,7 @@
 
 IMAGE_TYPES += " dataimg"
 
-IMAGE_CMD_dataimg() {
+IMAGE_CMD:dataimg() {
     if [ ! -d "${IMAGE_ROOTFS}/data" ]; then
         mkdir -p "${WORKDIR}/data"
         mkfs.ubifs -o "${WORKDIR}/data.ubifs" -r "${WORKDIR}/data" ${MKUBIFS_ARGS}

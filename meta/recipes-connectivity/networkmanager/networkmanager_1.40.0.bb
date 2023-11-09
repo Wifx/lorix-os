@@ -2,7 +2,7 @@ SUMMARY = "NetworkManager"
 HOMEPAGE = "https://wiki.gnome.org/Projects/NetworkManager"
 SECTION = "net/misc"
 
-LICENSE = "GPLv2+ & LGPLv2.1"
+LICENSE = "GPL-2.0-or-later & LGPL-2.1-or-later"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.LGPL;md5=4fbd65380cdd255951079008b364516c \
 "
@@ -19,7 +19,7 @@ DEPENDS = " \
     curl \
     dbus \
 "
-DEPENDS_append_class-target = " bash-completion"
+DEPENDS:append:class-target = " bash-completion"
 
 GNOMEBASEBUILDCLASS = "meson"
 inherit gnomebase gettext update-rc.d systemd gobject-introspection gtk-doc update-alternatives upstream-version-is-even
@@ -58,11 +58,11 @@ EXTRA_OEMESON = "\
 # stolen from https://github.com/void-linux/void-packages/blob/master/srcpkgs/NetworkManager/template
 # avoids:
 # | ../NetworkManager-1.16.0/libnm-core/nm-json.c:106:50: error: 'RTLD_DEEPBIND' undeclared (first use in this function); did you mean 'RTLD_DEFAULT'?
-CFLAGS_append_libc-musl = " \
+CFLAGS:append:libc-musl = " \
     -DRTLD_DEEPBIND=0 \
 "
 
-do_compile_prepend() {
+do_compile:prepend() {
     export GI_TYPELIB_PATH="${B}}/src/libnm-client-impl${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
 }
 
@@ -128,53 +128,53 @@ NETWORKMANAGER_PLUGINDIR = "${libdir}/NetworkManager/${PV}"
 NETWORKMANAGER_DISPATCHERDIR = "${nonarch_libdir}/NetworkManager/dispatcher.d"
 
 
-SUMMARY_libnm = "Libraries for adding NetworkManager support to applications"
-FILES_libnm = "\
+SUMMARY:libnm = "Libraries for adding NetworkManager support to applications"
+FILES:libnm = "\
     ${libdir}/libnm.so.* \
     ${libdir}/girepository-1.0/NM-1.0.typelib \
 "
 
-SUMMARY_${PN}-adsl = "ADSL device plugin for NetworkManager"
-FILES_${PN}-adsl = "${NETWORKMANAGER_PLUGINDIR}/libnm-device-plugin-adsl.so"
-RDEPENDS_${PN}-adsl += "${PN}-daemon"
+SUMMARY:${PN}-adsl = "ADSL device plugin for NetworkManager"
+FILES:${PN}-adsl = "${NETWORKMANAGER_PLUGINDIR}/libnm-device-plugin-adsl.so"
+RDEPENDS:${PN}-adsl += "${PN}-daemon"
 
-SUMMARY_${PN}-bluetooth = "Bluetooth device plugin for NetworkManager"
-FILES_${PN}-bluetooth = "${NETWORKMANAGER_PLUGINDIR}/libnm-device-plugin-bluetooth.so"
-RDEPENDS_${PN}-bluetooth += "${PN}-daemon ${@bb.utils.contains('PACKAGECONFIG', 'bluez5', '${PN}-wwan bluez5', '', d)}"
+SUMMARY:${PN}-bluetooth = "Bluetooth device plugin for NetworkManager"
+FILES:${PN}-bluetooth = "${NETWORKMANAGER_PLUGINDIR}/libnm-device-plugin-bluetooth.so"
+RDEPENDS:${PN}-bluetooth += "${PN}-daemon ${@bb.utils.contains('PACKAGECONFIG', 'bluez5', '${PN}-wwan bluez5', '', d)}"
 
-SUMMARY_${PN}-cloud-setup = "Automatically configure NetworkManager in cloud"
-FILES_${PN}-cloud-setup = " \
+SUMMARY:${PN}-cloud-setup = "Automatically configure NetworkManager in cloud"
+FILES:${PN}-cloud-setup = " \
     ${libexecdir}/nm-cloud-setup \
     ${systemd_system_unitdir}/nm-cloud-setup.service \
     ${systemd_system_unitdir}/nm-cloud-setup.timer \
     ${libdir}/NetworkManager/dispatcher.d/90-nm-cloud-setup.sh \
     ${libdir}/NetworkManager/dispatcher.d/no-wait.d/90-nm-cloud-setup.sh \
 "
-RDEPENDS_${PN}-cloud-setup += "${PN}-daemon"
-ALLOW_EMPTY_${PN}-cloud-setup = "1"
-SYSTEMD_SERVICE_${PN}-cloud-setup = "${@bb.utils.contains('PACKAGECONFIG', 'cloud-setup', 'nm-cloud-setup.service nm-cloud-setup.timer', '', d)}"
+RDEPENDS:${PN}-cloud-setup += "${PN}-daemon"
+ALLOW_EMPTY:${PN}-cloud-setup = "1"
+SYSTEMD_SERVICE:${PN}-cloud-setup = "${@bb.utils.contains('PACKAGECONFIG', 'cloud-setup', 'nm-cloud-setup.service nm-cloud-setup.timer', '', d)}"
 
-SUMMARY_${PN}-nmcli = "NetworkManager command line client"
-FILES_${PN}-nmcli = " \
+SUMMARY:${PN}-nmcli = "NetworkManager command line client"
+FILES:${PN}-nmcli = " \
     ${bindir}/nmcli \
 "
-RDEPENDS_${PN}-nmcli += "${PN}-daemon"
+RDEPENDS:${PN}-nmcli += "${PN}-daemon"
 
-SUMMARY_${PN}-nmcli-bash-completion = "NetworkManager command line client bash completion"
-FILES_${PN}-nmcli-bash-completion = "${datadir}/bash-completion/completions/nmcli"
-RDEPENDS_${PN}-nmcli-bash-completion = "bash-completion"
+SUMMARY:${PN}-nmcli-bash-completion = "NetworkManager command line client bash completion"
+FILES:${PN}-nmcli-bash-completion = "${datadir}/bash-completion/completions/nmcli"
+RDEPENDS:${PN}-nmcli-bash-completion = "bash-completion"
 
-SUMMARY_${PN}-nmtui = "NetworkManager curses-based UI"
-FILES_${PN}-nmtui = " \
+SUMMARY:${PN}-nmtui = "NetworkManager curses-based UI"
+FILES:${PN}-nmtui = " \
     ${bindir}/nmtui \
     ${bindir}/nmtui-edit \
     ${bindir}/nmtui-connect \
     ${bindir}/nmtui-hostname \
 "
-RDEPENDS_${PN}-nmtui += "${PN}-daemon"
+RDEPENDS:${PN}-nmtui += "${PN}-daemon"
 
-SUMMARY_${PN}-wifi = "Wifi plugin for NetworkManager"
-FILES_${PN}-wifi = "\
+SUMMARY:${PN}-wifi = "Wifi plugin for NetworkManager"
+FILES:${PN}-wifi = "\
     ${NETWORKMANAGER_PLUGINDIR}/libnm-device-plugin-wifi.so \
     ${libdir}/NetworkManager/conf.d/enable-iwd.conf \
 "
@@ -187,38 +187,38 @@ def get_wifi_deps(d):
             return 'wpa-supplicant'
     else:
         return ''
-RDEPENDS_${PN}-wifi += "${PN}-daemon ${@get_wifi_deps(d)}"
+RDEPENDS:${PN}-wifi += "${PN}-daemon ${@get_wifi_deps(d)}"
 
-SUMMARY_${PN}-wwan = "Mobile broadband device plugin for NetworkManager"
-FILES_${PN}-wwan = "\
+SUMMARY:${PN}-wwan = "Mobile broadband device plugin for NetworkManager"
+FILES:${PN}-wwan = "\
     ${NETWORKMANAGER_PLUGINDIR}/libnm-device-plugin-wwan.so \
     ${NETWORKMANAGER_PLUGINDIR}/libnm-wwan.so \
 "
-RDEPENDS_${PN}-wwan += "${PN}-daemon ${@bb.utils.contains('PACKAGECONFIG','modemmanager','modemmanager','',d)}"
+RDEPENDS:${PN}-wwan += "${PN}-daemon ${@bb.utils.contains('PACKAGECONFIG','modemmanager','modemmanager','',d)}"
 
-SUMMARY_${PN}-ovs = "Open vSwitch device plugin for NetworkManager"
-FILES_${PN}-ovs = "\
+SUMMARY:${PN}-ovs = "Open vSwitch device plugin for NetworkManager"
+FILES:${PN}-ovs = "\
     ${NETWORKMANAGER_PLUGINDIR}/libnm-device-plugin-ovs.so \
     ${systemd_system_unitdir}/NetworkManager.service.d/NetworkManager-ovs.conf \
 "
-RDEPENDS_${PN}-ovs += "${PN}-daemon"
+RDEPENDS:${PN}-ovs += "${PN}-daemon"
 
-SUMMARY_${PN}-ppp = "PPP plugin for NetworkManager"
-FILES_${PN}-ppp = "\
+SUMMARY:${PN}-ppp = "PPP plugin for NetworkManager"
+FILES:${PN}-ppp = "\
     ${NETWORKMANAGER_PLUGINDIR}/libnm-ppp-plugin.so \
     ${libdir}/pppd/*/nm-pppd-plugin.so \
 "
-RDEPENDS_${PN}-ppp += "${PN}-daemon ${@bb.utils.contains('PACKAGECONFIG','ppp','ppp','',d)}"
+RDEPENDS:${PN}-ppp += "${PN}-daemon ${@bb.utils.contains('PACKAGECONFIG','ppp','ppp','',d)}"
 
-FILES_${PN}-dev += " \
+FILES:${PN}-dev += " \
     ${libdir}/pppd/*/*.la \
     ${libdir}/NetworkManager/*.la \
     ${NETWORKMANAGER_PLUGINDIR}/*.la \
     ${datadir}/dbus-1/interfaces/*.xml \
 "
 
-SUMMARY_${PN}-daemon += "The NetworkManager daemon"
-FILES_${PN}-daemon += " \
+SUMMARY:${PN}-daemon += "The NetworkManager daemon"
+FILES:${PN}-daemon += " \
     ${bindir}/nm-online \
     ${datadir}/dbus-1 \
     ${datadir}/polkit-1 \
@@ -241,21 +241,21 @@ FILES_${PN}-daemon += " \
     ${sysconfdir}/sysconfig/network-scripts \
     ${systemd_system_unitdir} \
 "
-RDEPENDS_${PN}-daemon += "\
+RDEPENDS:${PN}-daemon += "\
     ${@bb.utils.contains('PACKAGECONFIG', 'ifupdown', 'bash', '', d)} \
 "
-RRECOMMENDS_${PN}-daemon += "\
+RRECOMMENDS:${PN}-daemon += "\
     ${NETWORKMANAGER_FIREWALL_DEFAULT} \
     ${@bb.utils.filter('PACKAGECONFIG', 'dnsmasq', d)} \
 "
-INITSCRIPT_NAME_${PN}-daemon = "network-manager"
-SYSTEMD_SERVICE_${PN}-daemon = "\
+INITSCRIPT_NAME:${PN}-daemon = "network-manager"
+SYSTEMD_SERVICE:${PN}-daemon = "\
     NetworkManager.service \
     NetworkManager-dispatcher.service \
 "
-RCONFLICTS_${PN}-daemon += "connman"
+RCONFLICTS:${PN}-daemon += "connman"
 ALTERNATIVE_PRIORITY = "100"
-ALTERNATIVE_${PN}-daemon = "${@bb.utils.contains('DISTRO_FEATURES','systemd','resolv-conf','',d)}"
+ALTERNATIVE:${PN}-daemon = "${@bb.utils.contains('DISTRO_FEATURES','systemd','resolv-conf','',d)}"
 ALTERNATIVE_TARGET[resolv-conf] = "${@bb.utils.contains('DISTRO_FEATURES','systemd','${sysconfdir}/resolv-conf.NetworkManager','',d)}"
 ALTERNATIVE_LINK_NAME[resolv-conf] = "${@bb.utils.contains('DISTRO_FEATURES','systemd','${sysconfdir}/resolv.conf','',d)}"
 
@@ -264,8 +264,8 @@ ALTERNATIVE_LINK_NAME[resolv-conf] = "${@bb.utils.contains('DISTRO_FEATURES','sy
 # Install this package to get all plugins and related dependencies installed. Alternatively just install
 # plugins and related dependencies e.g. by installing networkmanager-wifi or networkmanager-wwan
 # packages to the firmware.
-ALLOW_EMPTY_${PN} = "1"
-RRECOMMENDS_${PN} += "\
+ALLOW_EMPTY:${PN} = "1"
+RRECOMMENDS:${PN} += "\
     ${@bb.utils.contains('PACKAGECONFIG','adsl','${PN}-adsl','',d)} \
     ${@bb.utils.contains('PACKAGECONFIG','bluez5','${PN}-bluetooth','',d)} \
     ${@bb.utils.contains('PACKAGECONFIG','cloud-setup','${PN}-cloud-setup','',d)} \
@@ -277,6 +277,6 @@ RRECOMMENDS_${PN} += "\
     ${@bb.utils.contains('PACKAGECONFIG','ppp','${PN}-ppp','',d)} \
 "
 
-do_install_append() {
+do_install:append() {
     rm -rf ${D}/run ${D}${localstatedir}/run
 }

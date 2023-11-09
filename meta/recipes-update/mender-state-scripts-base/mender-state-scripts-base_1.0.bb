@@ -1,4 +1,4 @@
-FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
 SRC_URI = " \
     file://LICENSE;subdir=${BPN}-${PV} \
@@ -20,14 +20,14 @@ SRC_URI = " \
     file://opkg-configure.sh;subdir=${BPN}-${PV} \
 "
 
-RDEPENDS_${PN} += "ca-certificates"
+RDEPENDS:${PN} += "ca-certificates"
 
 LICENSE = "Proprietary"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=8e55ec883d6ec0b7e92fc81cd5069e9a"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=60704a74c6a3bb355a519fd3d3592955"
 
 inherit mender-state-scripts
 
-ALLOW_EMPTY_${PN} = "1"
+ALLOW_EMPTY:${PN} = "1"
 
 DISTRO_METADATA = " \
     DISTRO='${DISTRO}' \n \

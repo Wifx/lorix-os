@@ -1,4 +1,4 @@
-FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 SRC_URI += " \
     file://pmonitord.initd \
     file://pmonitord.confd \
@@ -6,10 +6,10 @@ SRC_URI += " \
 
 inherit openrc
 
-OPENRC_SERVICE_${PN} = "pmonitord"
-OPENRC_RUNLEVEL_pmonitord = "default"
+OPENRC_SERVICE:${PN} = "pmonitord"
+OPENRC_RUNLEVEL:pmonitord = "default"
 
-do_install_append() {
+do_install:append() {
     # Install OpenRC conf script
     openrc_install_config ${WORKDIR}/pmonitord.confd
 

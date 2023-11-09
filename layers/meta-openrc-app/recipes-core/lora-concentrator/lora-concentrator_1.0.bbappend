@@ -1,4 +1,4 @@
-FILESEXTRAPATHS_append := "${THISDIR}/files:"
+FILESEXTRAPATHS:append := "${THISDIR}/files:"
 
 SRC_URI += " \
     file://lora-concentrator.confd \
@@ -7,10 +7,10 @@ SRC_URI += " \
 
 inherit openrc
 
-OPENRC_SERVICE_${PN} = "lora-concentrator"
-OPENRC_RUNLEVEL_lora-concentrator = "sysinit"
+OPENRC_SERVICE:${PN} = "lora-concentrator"
+OPENRC_RUNLEVEL:lora-concentrator = "sysinit"
 
-do_install_append() {
+do_install:append() {
 
     # Install OpenRC conf script
     openrc_install_config ${WORKDIR}/lora-concentrator.confd
@@ -19,7 +19,7 @@ do_install_append() {
     openrc_install_script ${WORKDIR}/lora-concentrator.initd
 }
 
-FILES_${PN} += " \
+FILES:${PN} += " \
     ${OPENRC_INITDIR}/lora-concentrator.confd \
     ${OPENRC_CONFDIR}/lora-concentrator.initd \
 "

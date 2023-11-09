@@ -1,4 +1,4 @@
-FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
 SRC_URI = " \
     file://LICENSE;subdir=${BPN}-${PV} \
@@ -18,14 +18,14 @@ SRC_URI = " \
 "
 
 LICENSE = "Proprietary"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=8e55ec883d6ec0b7e92fc81cd5069e9a"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=60704a74c6a3bb355a519fd3d3592955"
 
 inherit mender-state-scripts
 
-RDEPENDS_${PN} += "machine-info busybox sed"
+RDEPENDS:${PN} += "machine-info busybox sed"
 
 # 1.6.0/01_concentratord-location.sh
-RDEPENDS_${PN} += "grep"
+RDEPENDS:${PN} += "grep"
 
 do_compile() {
 

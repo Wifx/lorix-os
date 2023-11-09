@@ -20,7 +20,7 @@ IMAGE_INSTALL = " \
     virtual/usb-gadget \
 "
 
-BAD_RECOMMENDATIONS_append = " \
+BAD_RECOMMENDATIONS:append = " \
     shared-mime-info \
     cryptodev-module \
     valgrind \
@@ -28,6 +28,6 @@ BAD_RECOMMENDATIONS_append = " \
     helium-gateway \
 "
 
-PACKAGE_EXCLUDE_append = " \
+PACKAGE_EXCLUDE:append = " \
     udev-hwdb \
 "

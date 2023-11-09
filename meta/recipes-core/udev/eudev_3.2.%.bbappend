@@ -1,7 +1,7 @@
-FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 SRC_URI += "file://0001-Moved-binary-hardware-database-location-from-etc-ude.patch"
 
-do_install_append() {
+do_install:append() {
     # Remove useless and big hardware configuration files
     rm -f ${D}${sysconfdir}/udev/hwdb.d/20-OUI.hwdb
     rm -f ${D}${sysconfdir}/udev/hwdb.d/20-pci-classes.hwdb
@@ -14,12 +14,12 @@ do_install_append() {
     # Recreate empty directory for local user eudev hardware conf files
     install -m 0755 -d ${D}${sysconfdir}/udev/hwdb.d
 }
-FILES_eudev-hwdb = "${base_libdir}/udev/hwdb.d"
+FILES:eudev-hwdb = "${base_libdir}/udev/hwdb.d"
 
 # Modify hwdb location
 EXTRA_OECONF += "--with-hwdbbindir=${base_libdir}/udev"
 
-pkg_postinst_eudev-hwdb () {
+pkg_postinst:eudev-hwdb () {
     if test -n "$D"; then
         ${@qemu_run_binary(d, '$D', '${bindir}/udevadm')} hwdb --update --root $D
         chown root:root $D${base_libdir}/udev/hwdb.bin
@@ -28,6 +28,6 @@ pkg_postinst_eudev-hwdb () {
     fi
 }
 
-pkg_prerm_eudev-hwdb () {
+pkg_prerm:eudev-hwdb () {
         rm -f $D${base_libdir}/udev/hwdb.bin
 }

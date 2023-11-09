@@ -3,46 +3,59 @@ DESCRIPTION = "ChirpStack Concentratord"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=99e425257f8a67b7efd81dc0009ed8ff"
 
-PACKAGE_ARCH = "${MACHINE_ARCH}"
-
 SRC_URI += "\
     file://concentratord.toml \
     file://gateways/gateway-l1.toml \
     file://gateways/gateway-lorix-one.toml \
     file://gateways/location.toml \
-    file://channels/AS920/* \
-    file://channels/AS923/* \
-    file://channels/AU915/* \
-    file://channels/EU868/* \
-    file://channels/IN865/* \
-    file://channels/RU864/* \
-    file://channels/US915/* \
+    file://channels/AS920/AS_920_923.toml \
+    file://channels/AS923/AS_923_925_TTN_AU.toml \
+    file://channels/AS923/AS_923_925.toml \
+    file://channels/AU915/AU_915_928_FSB_1.toml \
+    file://channels/AU915/AU_915_928_FSB_2.toml \
+    file://channels/AU915/AU_915_928_FSB_3.toml \
+    file://channels/AU915/AU_915_928_FSB_4.toml \
+    file://channels/AU915/AU_915_928_FSB_5.toml \
+    file://channels/AU915/AU_915_928_FSB_6.toml \
+    file://channels/AU915/AU_915_928_FSB_7.toml \
+    file://channels/AU915/AU_915_928_FSB_8.toml \
+    file://channels/EU868/EU_863_870.toml \
+    file://channels/IN865/IN_865_867.toml \
+    file://channels/RU864/RU_864_870_TTN.toml \
+    file://channels/US915/US_902_928_FSB_1.toml \
+    file://channels/US915/US_902_928_FSB_2.toml \
+    file://channels/US915/US_902_928_FSB_3.toml \
+    file://channels/US915/US_902_928_FSB_4.toml \
+    file://channels/US915/US_902_928_FSB_5.toml \
+    file://channels/US915/US_902_928_FSB_6.toml \
+    file://channels/US915/US_902_928_FSB_7.toml \
+    file://channels/US915/US_902_928_FSB_8.toml \
 "
 
-DEPENDS += " \
-    clang-native \
-    cmake-native \
-"
+DEPENDS += "clang-native"
+ASSUME_PROVIDED:remove = "cmake-native"
 
-RDEPENDS_${PN} += "machine-info"
+DEPENDS:append:sx1301 = " libloragw-sx1301"
+DEPENDS:append:sx1302 = " libloragw-sx1302"
 
-DEPENDS_append_sx1301 = " libloragw-sx1301"
-DEPENDS_append_sx1302 = " libloragw-sx1302"
-
-inherit cargo
+RDEPENDS:${PN} += "machine-info"
 
 UPX_COMPRESS_FILES_${PN} = "/opt/chirpstack-concentratord/chirpstack-concentratord"
 inherit upx
 
-ASSUME_PROVIDED_remove = "cmake-native"
+## meta-rust-bin
+inherit cargo_bin
 
-CONF_DIR = "${sysconfoptdir}/chirpstack-concentratord"
-S = "${WORKDIR}/git"
+# Enable network for the compile task allowing cargo to download dependencies
+do_compile[network] = "1"
 
 export BINDGEN_EXTRA_CLANG_ARGS="-I${STAGING_INCDIR}"
  
-CARGO_BUILD_FLAGS_append_sx1301 = " -p libconcentratord -p chirpstack-concentratord-sx1301 -p libloragw-sx1301"
-CARGO_BUILD_FLAGS_append_sx1302 = " -p libconcentratord -p chirpstack-concentratord-sx1302 -p libloragw-sx1302"
+CARGO_BUILD_FLAGS:append:sx1301 = " -p libconcentratord -p chirpstack-concentratord-sx1301 -p libloragw-sx1301"
+CARGO_BUILD_FLAGS:append:sx1302 = " -p libconcentratord -p chirpstack-concentratord-sx1302 -p libloragw-sx1302" 
+
+CONF_DIR = "${sysconfoptdir}/chirpstack-concentratord"
+S = "${WORKDIR}/git"
 
 do_install() {
 
@@ -66,11 +79,11 @@ install_configs() {
     install_config gateways/location.toml 11-location.toml
 }
 
-do_install_append_lorix-one() {
+do_install:append:lorix-one() {
     install_config gateways/gateway-lorix-one.toml 10-gateway.toml
 }
 
-do_install_append_l1() {
+do_install:append:l1() {
     install_config gateways/gateway-l1.toml 10-gateway.toml
 }
 
@@ -164,15 +177,15 @@ set_default() {
 }
 
 
-do_install_append_sx1301() {
+do_install:append:sx1301() {
     install -m 0755 ${cargo_bindir}/chirpstack-concentratord-sx1301 ${D}${optdir}/chirpstack-concentratord/chirpstack-concentratord
 }
 
-do_install_append_sx1302() {
+do_install:append:sx1302() {
     install -m 0755 ${cargo_bindir}/chirpstack-concentratord-sx1302 ${D}${optdir}/chirpstack-concentratord/chirpstack-concentratord
 }
 
-pkg_postinst_ontarget_${PN} () {
+pkg_postinst_ontarget:${PN} () {
 
     ### GATEWAY ID ### 
     GW_ID_FILE_PATH="${CONF_DIR}/10-gateway.toml"
@@ -228,7 +241,7 @@ pkg_postinst_ontarget_${PN} () {
     fi
 }
 
-FILES_${PN} += " \
+FILES:${PN} += " \
     ${CONF_DIR}/ \
     ${optdir}/chirpstack-concentratord/chirpstack-concentratord \
 "

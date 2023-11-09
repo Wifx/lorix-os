@@ -13,28 +13,28 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 inherit packagegroup
 
-RDEPENDS_${PN} = " \
+RDEPENDS:${PN} = " \
     lora-basic-station \
     loriot-packet-forwarder \
 "
 
 # LORIX One
-RDEPENDS_${PN}_append_lorix-one = " \
+RDEPENDS:${PN}:append:lorix-one = " \
     udp-packet-forwarder \
     chirpstack-gateway-bridge \
     pmon-csgb-upf \
 "
-RRECOMMENDS_${PN}_append_lorix-one += " \
+RRECOMMENDS:${PN}:append:lorix-one = " \
     pmon-csgb-concentratord \
     pmon-csub-concentratord \
     pmon-helium-upf \
 " 
 
 # Wifx L1
-RDEPENDS_${PN}_append_l1 += " \
+RDEPENDS:${PN}:append:l1 = " \
     pmon-csgb-concentratord \
     pmon-csub-concentratord \
 "
-RRECOMMENDS_${PN}_append_l1 += " \
+RRECOMMENDS:${PN}:append:l1 = " \
     pmon-helium-csub-concentratord \
 "

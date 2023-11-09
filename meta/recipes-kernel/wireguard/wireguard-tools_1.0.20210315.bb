@@ -1,7 +1,7 @@
 require wireguard.inc
 
 SRCREV = "622408872fd6f3a58e98e88d39d30e98968314fa"
-SRC_URI = "git://git.zx2c4.com/wireguard-tools"
+SRC_URI = "git://git.zx2c4.com/wireguard-tools;branch=master"
 
 inherit bash-completion systemd pkgconfig
 
@@ -16,11 +16,11 @@ do_install () {
         install
 }
 
-FILES_${PN} = " \
+FILES:${PN} = " \
     ${sysconfdir} \
     ${systemd_system_unitdir} \
     ${bindir} \
 "
 
-RDEPENDS_${PN} = "bash"
-RRECOMMENDS_${PN} = "kernel-module-wireguard"
+RDEPENDS:${PN} = "bash"
+RRECOMMENDS:${PN} = "kernel-module-wireguard"

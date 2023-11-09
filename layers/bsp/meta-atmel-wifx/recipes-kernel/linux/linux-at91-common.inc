@@ -8,12 +8,12 @@ inherit kernel
 require recipes-kernel/linux/linux-yocto.inc
 
 # Do not include by default the kernel-image
-RDEPENDS_${KERNEL_PACKAGE_NAME}-base = ""
+RDEPENDS:${KERNEL_PACKAGE_NAME}-base = ""
 
 PV = "${LINUX_VERSION}${LINUX_VERSION_EXTENSION}"
 
 SRC_URI = " \
-    git://github.com/Wifx/linux-at91.git;protocol=git;branch=${KBRANCH} \
+    git://github.com/Wifx/linux-at91.git;protocol=https;branch=${KBRANCH} \
     file://defconfig \
     ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'file://systemd.cfg', '', d)} \
 "
@@ -27,7 +27,7 @@ python __anonymous () {
         d.appendVar('DEPENDS', ' u-boot-mkimage-native dtc-native')
 }
 
-do_deploy_append() {
+do_deploy:append() {
     if [ "${UBOOT_FIT_IMAGE}" = "xyes" ]; then
         DTB_PATH="${B}/arch/${ARCH}/boot/dts/"
         if [ ! -e "${DTB_PATH}" ]; then
@@ -44,16 +44,16 @@ do_deploy_append() {
     fi
 }
 
-kernel_do_configure_prepend() {
+kernel_do_configure:prepend() {
     # Create empty scmversion to remove the "+" at end of the kernel version
     echo "" > "${B}/.scmversion"
 }
 
-kernel_do_configure_append() {
+kernel_do_configure:append() {
     cd ${S}; git status; cd -
 }
 
-KERNEL_FEATURES_append = " ${KERNEL_EXTRA_FEATURES}"
+KERNEL_FEATURES:append = " ${KERNEL_EXTRA_FEATURES}"
 
 KERNEL_MODULE_AUTOLOAD += ""
 KERNEL_MODULE_PACKAGE_SUFFIX=""

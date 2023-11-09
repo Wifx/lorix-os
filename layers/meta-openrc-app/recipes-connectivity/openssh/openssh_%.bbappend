@@ -1,4 +1,4 @@
-FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 SRC_URI += " \
     file://sshd.initd \
     file://ssh-key.initd \
@@ -6,14 +6,14 @@ SRC_URI += " \
 
 inherit openrc
 
-OPENRC_SERVICE_${PN} = "ssh-key sshd"
-OPENRC_RUNLEVEL_ssh-key = "boot"
-OPENRC_RUNLEVEL_sshd = "default"
+OPENRC_SERVICE:${PN} = "ssh-key sshd"
+OPENRC_RUNLEVEL:ssh-key = "boot"
+OPENRC_RUNLEVEL:sshd = "default"
 
-do_install_append() {
+do_install:append() {
     # Install OpenRC script
     openrc_install_script ${WORKDIR}/ssh-key.initd
     openrc_install_script ${WORKDIR}/sshd.initd
 }
 
-FILES_${PN} += "${OPENRC_INITDIR}/ssh-key ${OPENRC_INITDIR}/sshd"
+FILES:${PN} += "${OPENRC_INITDIR}/ssh-key ${OPENRC_INITDIR}/sshd"

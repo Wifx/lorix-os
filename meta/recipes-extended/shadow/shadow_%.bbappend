@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
 # All rights reserved.
 
-do_install_append() {
+do_install:append() {
     if ${@bb.utils.contains('DISTRO_FEATURES','motd-dynamic','true','false',d)}; then
         if [ -e ${D}${sysconfdir}/pam.d/login ]; then
             # Add support of motd-dynamic feature in login file

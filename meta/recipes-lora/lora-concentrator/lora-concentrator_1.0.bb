@@ -6,7 +6,7 @@ SECTION = "base"
 LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://${WORKDIR}/LICENSE;md5=83564c4ad755d0edeaa1ba4b3918b365"
 
-RDEPENDS_${PN} += "libgpiod-tools"
+RDEPENDS:${PN} += "libgpiod-tools"
 
 SRC_URI += " \
     file://LICENSE \
@@ -26,7 +26,7 @@ do_install () {
 	ln -snf lora-concentrator-reset ${D}${sbindir}/reset-lgw
 }
 
-FILES_${PN} =+ " \
+FILES:${PN} =+ " \
     ${sbindir}/lora-concentrator-reset \
     ${sbindir}/reset-lgw \
 "

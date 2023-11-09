@@ -1,4 +1,4 @@
-FILESEXTRAPATHS_prepend = "${THISDIR}/${PN}-5.4:"
+FILESEXTRAPATHS:prepend = "${THISDIR}/${PN}-5.4:"
 
 require linux-at91-common.inc
 LIC_FILES_CHKSUM = "file://COPYING;md5=bbea815ee2795b2f4230826c0c6b8814"
@@ -24,11 +24,11 @@ SRC_URI += " \
     file://kernel-features/wireguard/wireguard.cfg \
 "
 
-SRC_URI_append_l1 = " \
+SRC_URI:append:l1 = " \
     file://l1.cfg \
 "
 
-SRC_URI_append_lorix-one = " \
+SRC_URI:append:lorix-one = " \
     file://lorix.cfg \
 "
 

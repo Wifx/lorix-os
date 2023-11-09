@@ -1,25 +1,26 @@
 DESCRIPTION = "Driver/HAL to build a gateway using a concentrator board based on Semtech SX1302"
 HOMEPAGE = "https://github.com/Lora-net/sx1302_hal"
 PRIORITY = "optional"
-LICENSE = "BSD"
-LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/BSD;md5=3775480a712fc46a69647678acb234cb"
+LICENSE = "BSD-3-Clause"
+LIC_FILES_CHKSUM = "file://LICENSE.TXT;md5=d2119120bd616e725f4580070bd9ee19"
 PR = "r10"
 
 SRC_URI = "\
-    git://github.com/Lora-net/sx1302_hal.git;protocol=https;tag=V${PV} \
+    git://github.com/Lora-net/sx1302_hal.git;protocol=https;nobranch=1 \
     file://0001-test-change-stdout-err-to-line-buffered.patch \
     file://library.cfg \
     file://0001-test_loragw_hal_tx-enable-CRC-for-LoRa-TX-packets-by.patch \
     file://0002-test_loragw_hal_tx-add-optional-argument-to-disable-.patch \
     file://reset_lgw.sh \
 "
+SRCREV = "6dff8191d5034539e43990c7b9a4d1bc3d5b6658"
 
 COMPATIBLE_MACHINE_FEATURE = "sx1302"
 
 # depends on lora-concentrator-reset script
-RDEPENDS_${PN}-utils += "lora-concentrator"
-RDEPENDS_${PN}-tests += "lora-concentrator"
-RDEPENDS_${PN}-tests-ext += "${PN}-tests"
+RDEPENDS:${PN}-utils += "lora-concentrator"
+RDEPENDS:${PN}-tests += "lora-concentrator"
+RDEPENDS:${PN}-tests-ext += "${PN}-tests"
 
 S = "${WORKDIR}/git"
 
@@ -32,7 +33,7 @@ CFLAGS += "-I inc -I ../libtools/inc"
 DIR_UTILS = "/opt/${PN}/gateway-utils"
 DIR_TESTS = "/opt/${PN}/gateway-tests"
 
-do_configure_append() {
+do_configure:append() {
     cp ${WORKDIR}/library.cfg ${S}/libloragw/library.cfg
 }
 
@@ -73,16 +74,16 @@ PACKAGES =+ "${PN}-utils ${PN}-tests ${PN}-tests-ext"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
-FILES_${PN}-utils = "${DIR_UTILS}"
-FILES_${PN}-tests = " \
+FILES:${PN}-utils = "${DIR_UTILS}"
+FILES:${PN}-tests = " \
     ${DIR_TESTS}/reset_lgw.sh \
     ${DIR_TESTS}/test_loragw_hal_rx \
     ${DIR_TESTS}/test_loragw_hal_tx \
 "
-FILES_${PN}-tests-ext = "${DIR_TESTS}"
+FILES:${PN}-tests-ext = "${DIR_TESTS}"
 
-FILES_${PN}-dev = "${includedir}"
-FILES_${PN}-staticdev = "${libdir}"
+FILES:${PN}-dev = "${includedir}"
+FILES:${PN}-staticdev = "${libdir}"
 
-INSANE_SKIP_${PN}-utils = "ldflags"
-INSANE_SKIP_${PN}-tests = "ldflags"
+INSANE_SKIP:${PN}-utils = "ldflags"
+INSANE_SKIP:${PN}-tests = "ldflags"
