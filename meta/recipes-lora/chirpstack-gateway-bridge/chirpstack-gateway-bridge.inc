@@ -30,6 +30,11 @@ S = "${WORKDIR}/git"
 
 DEPENDS = "go-native"
 
+# Workaround for network access issue during compile step
+# this needs to be fixed in the recipes buildsystem to move
+# this such that it can be accomplished during do_fetch task
+do_compile[network] = "1"
+
 # Make sure that make runs one job at a time.
 PARALLEL_MAKE = ""
 

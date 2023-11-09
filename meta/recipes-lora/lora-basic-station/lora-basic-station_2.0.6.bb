@@ -27,6 +27,11 @@ SRC_URI:append:l1 = " \
     file://resources-l1 \
 "
 
+# Workaround for network access issue during compile step
+# this needs to be fixed in the recipes buildsystem to move
+# this such that it can be accomplished during do_fetch task
+do_compile[network] = "1"
+
 # At the moment, the library are compiled directly from package sources
 #DEPENDS += "libloragw mbedtls"
 
