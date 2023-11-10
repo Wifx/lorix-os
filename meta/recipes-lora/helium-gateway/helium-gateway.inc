@@ -8,13 +8,13 @@ SRC_URI += "\
     file://settings.toml \
 "
 
-inherit cargo
+DEPENDS += "protobuf-native"
 
-DEPENDS += " \
-    clang-native \
-    cmake-native \
-    protobuf-c protobuf-c-native \
-"
+## meta-rust-bin
+inherit cargo_bin
+
+# Enable network for the compile task allowing cargo to download dependencies
+do_compile[network] = "1"
 
 CONF_DIR = "${sysconfoptdir}/helium-gateway"
 OPT_DIR = "${optdir}/helium-gateway"
@@ -34,7 +34,7 @@ do_install() {
 
     # Bin directory
     install -m 0755 -d ${D}${OPT_DIR}
-    install -m 0777 ${cargo_bindir}/helium_gateway ${D}${OPT_DIR}/helium-gateway
+    install -m 0755 ${cargo_bindir}/helium_gateway ${D}${OPT_DIR}/helium-gateway
 }
 
 install_config() {
@@ -51,7 +51,7 @@ install_config() {
     install -m 0644 ${WORKDIR}/$1 ${D}${CONF_DIR}/${DEST}
 }
 
-FILES_${PN} += " \
+FILES:${PN} += " \
     ${CONF_DIR}/ \
     ${OPT_DIR}/ \
 "

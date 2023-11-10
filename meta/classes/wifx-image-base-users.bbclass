@@ -9,6 +9,9 @@ update_sudoers(){
 }
 ROOTFS_POSTPROCESS_COMMAND += "update_sudoers;"
 
+# printf "%q" $(mkpasswd -m sha256crypt lorix4u)
+PWD = "\$5\$oMzTaptCua3XzAjm\$E.TMGgrEDuJ.xF23NDcc/CIly0GqMxKD1cKZDTSyXQA"
+
 EXTRA_USERS_PARAMS = " useradd -u 1000 admin; \
-                       usermod -P 'lorix4u' admin; \
+                       usermod -p '${PWD}' admin; \
                        usermod -a -G sudo admin;"

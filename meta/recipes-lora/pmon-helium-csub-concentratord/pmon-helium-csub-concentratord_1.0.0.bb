@@ -6,7 +6,7 @@ SECTION = "base"
 LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=83564c4ad755d0edeaa1ba4b3918b365"
 
-RDEPENDS_${PN} += " \
+RDEPENDS:${PN} += " \
     pmonitor \
     chirpstack-concentratord \
     chirpstack-udp-bridge \

@@ -6,18 +6,18 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=2dff1ccca11e333f1388e34f7e2d1de3"
 CVE_PRODUCT = "nodejs node.js"
 
 DEPENDS = "openssl file-replacement-native"
-DEPENDS_append_class-target = " qemu-native"
-DEPENDS_append_class-native = " c-ares-native"
+DEPENDS:append:class-target = " qemu-native"
+DEPENDS:append:class-native = " c-ares-native"
 
 inherit pkgconfig python3native qemu ptest
 
-COMPATIBLE_MACHINE_armv4 = "(!.*armv4).*"
-COMPATIBLE_MACHINE_armv5 = "(!.*armv5).*"
-COMPATIBLE_MACHINE_mips64 = "(!.*mips64).*"
+COMPATIBLE_MACHINE:armv4 = "(!.*armv4).*"
+COMPATIBLE_MACHINE:armv5 = "(!.*armv5).*"
+COMPATIBLE_MACHINE:mips64 = "(!.*mips64).*"
 
-COMPATIBLE_HOST_riscv64 = "null"
-COMPATIBLE_HOST_riscv32 = "null"
-COMPATIBLE_HOST_powerpc = "null"
+COMPATIBLE_HOST:riscv64 = "null"
+COMPATIBLE_HOST:riscv32 = "null"
+COMPATIBLE_HOST:powerpc = "null"
 
 SRC_URI = "http://nodejs.org/dist/v${PV}/node-v${PV}.tar.xz \
            file://0001-Disable-running-gyp-files-for-bundled-deps.patch \
@@ -29,13 +29,13 @@ SRC_URI = "http://nodejs.org/dist/v${PV}/node-v${PV}.tar.xz \
            file://0001-mips-Use-32bit-cast-for-operand-on-mips32.patch \
            "
 
-SRC_URI_append_class-target = " \
+SRC_URI:append:class-target = " \
            file://0001-Using-native-binaries.patch \
            "
-SRC_URI_append_toolchain-clang_x86 = " \
+SRC_URI:append:toolchain-clang:x86 = " \
            file://libatomic.patch \
            "
-SRC_URI_append_toolchain-clang_powerpc64le = " \
+SRC_URI:append:toolchain-clang:powerpc64le = " \
            file://0001-ppc64-Do-not-use-mminimal-toc-with-clang.patch \
            "
 SRC_URI[sha256sum] = "fbc364dd25fee2cacc0f2033db2d86115fc07575310ea0e64408b8170d09c685"
@@ -55,13 +55,13 @@ def map_nodejs_arch(a, d):
     elif re.match('powerpc$', a): return 'ppc'
     return a
 
-ARCHFLAGS_arm = "${@bb.utils.contains('TUNE_FEATURES', 'callconvention-hard', '--with-arm-float-abi=hard', '--with-arm-float-abi=softfp', d)} \
+ARCHFLAGS:arm = "${@bb.utils.contains('TUNE_FEATURES', 'callconvention-hard', '--with-arm-float-abi=hard', '--with-arm-float-abi=softfp', d)} \
                  ${@bb.utils.contains('TUNE_FEATURES', 'neon', '--with-arm-fpu=neon', \
                     bb.utils.contains('TUNE_FEATURES', 'vfpv3d16', '--with-arm-fpu=vfpv3-d16', \
                     bb.utils.contains('TUNE_FEATURES', 'vfpv3', '--with-arm-fpu=vfpv3', \
                     '--with-arm-fpu=vfp', d), d), d)}"
-ARCHFLAGS_append_mips = " --v8-lite-mode"
-ARCHFLAGS_append_mipsel = " --v8-lite-mode"
+ARCHFLAGS:append:mips = " --v8-lite-mode"
+ARCHFLAGS:append:mipsel = " --v8-lite-mode"
 ARCHFLAGS ?= ""
 
 PACKAGECONFIG ??= "ares brotli icu zlib"
@@ -136,10 +136,10 @@ python do_create_v8_qemu_wrapper () {
 do_create_v8_qemu_wrapper[dirs] = "${B}"
 addtask create_v8_qemu_wrapper after do_configure before do_compile
 
-LDFLAGS_append_x86 = " -latomic"
+LDFLAGS:append:x86 = " -latomic"
 
 CROSS_FLAGS = "--cross-compiling"
-CROSS_FLAGS_class-native = "--no-cross-compiling"
+CROSS_FLAGS:class-native = "--no-cross-compiling"
 
 # Node is way too cool to use proper autotools, so we install two wrappers to forcefully inject proper arch cflags to workaround gypi
 do_configure () {
@@ -174,11 +174,11 @@ do_install_ptest () {
 }
 
 PACKAGES =+ "${PN}-npm"
-FILES_${PN}-npm = "${nonarch_libdir}/node_modules ${bindir}/npm ${bindir}/npx"
-RDEPENDS_${PN}-npm = "bash python3-core python3-shell python3-datetime \
+FILES:${PN}-npm = "${nonarch_libdir}/node_modules ${bindir}/npm ${bindir}/npx"
+RDEPENDS:${PN}-npm = "bash python3-core python3-shell python3-datetime \
     python3-misc python3-multiprocessing"
 
 PACKAGES =+ "${PN}-systemtap"
-FILES_${PN}-systemtap = "${datadir}/systemtap"
+FILES:${PN}-systemtap = "${datadir}/systemtap"
 
 BBCLASSEXTEND = "native"

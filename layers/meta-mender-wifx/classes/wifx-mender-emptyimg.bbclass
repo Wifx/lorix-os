@@ -4,7 +4,7 @@
 # Class to create the "dataimg" type, which contains the data partition as a raw
 # filesystem.
 
-IMAGE_CMD_emptyimg() {
+IMAGE_CMD:emptyimg() {
     mkdir -p "${WORKDIR}/emptyimg"
     mkfs.ubifs -o "${WORKDIR}/emptyimg.ubifs" -r "${WORKDIR}/emptyimg" ${MKUBIFS_ARGS}
     rmdir "${WORKDIR}/emptyimg"

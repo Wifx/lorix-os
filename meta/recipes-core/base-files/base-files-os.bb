@@ -21,7 +21,7 @@ do_patch[noexec] = "1"
 do_configure[noexec] = "1"
 do_compile[noexec] = "1"
 
-RDEPENDS_${PN} =+ " \
+RDEPENDS:${PN} =+ " \
     machine-info \
     gawk \
     sed \
@@ -42,7 +42,7 @@ do_install () {
     install -d -m 0755 ${D}/data/layers
 }
 
-FILES_${PN} += " \
+FILES:${PN} += " \
     ${sysconfdir}/* \
     ${osdir}/* \
     /data/layers \

@@ -47,7 +47,7 @@ CONNECTIVITY_PACKAGES = " \
     ${@bb.utils.contains('MACHINE_FEATURES','wwan','modemmanager','',d)} \
 "
 
-RDEPENDS_${PN} = " \
+RDEPENDS:${PN} = " \
     ${CONNECTIVITY_MODULES} \
     ${CONNECTIVITY_FIRMWARES} \
     ${CONNECTIVITY_PACKAGES} \

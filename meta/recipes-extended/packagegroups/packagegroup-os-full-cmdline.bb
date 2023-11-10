@@ -8,6 +8,8 @@ SUMMARY = "Standard full-featured Linux system for the Wifx product family"
 DESCRIPTION = "Package group bringing in packages needed for a more traditional full-featured Linux system for the Wifx product family"
 PR = "r0"
 
+PACKAGE_ARCH = "${TUNE_PKGARCH}"
+
 inherit packagegroup
 
 PACKAGES = "\
@@ -49,12 +51,12 @@ python __anonymous () {
         if mapped:
             oldtaskname = mapped.replace("packagegroup-os", "task-core")
             mapstr = " %s %s" % (mapped, oldtaskname)
-            d.appendVar("RPROVIDES_%s" % pkg, mapstr)
-            d.appendVar("RREPLACES_%s" % pkg, mapstr)
-            d.appendVar("RCONFLICTS_%s" % pkg, mapstr)
+            d.appendVar("RPROVIDES:%s" % pkg, mapstr)
+            d.appendVar("RREPLACES:%s" % pkg, mapstr)
+            d.appendVar("RCONFLICTS:%s" % pkg, mapstr)
 }
 
-RDEPENDS_packagegroup-os-full-cmdline = "\
+RDEPENDS:packagegroup-os-full-cmdline = "\
     packagegroup-os-full-cmdline-utils \
     packagegroup-os-full-cmdline-extended \
     packagegroup-os-full-cmdline-multiuser \
@@ -62,11 +64,11 @@ RDEPENDS_packagegroup-os-full-cmdline = "\
     packagegroup-os-full-cmdline-sys-services \
     "
 
-RDEPENDS_packagegroup-os-full-cmdline-libs = "\
+RDEPENDS:packagegroup-os-full-cmdline-libs = "\
     glib-2.0 \
     "
 
-RDEPENDS_packagegroup-os-full-cmdline-utils = "\
+RDEPENDS:packagegroup-os-full-cmdline-utils = "\
     bash \
     e2fsprogs \
     findutils \
@@ -86,7 +88,7 @@ RDEPENDS_packagegroup-os-full-cmdline-utils = "\
     tree \
     "
 
-RDEPENDS_packagegroup-os-full-cmdline-extended = "\
+RDEPENDS:packagegroup-os-full-cmdline-extended = "\
     iproute2 \
     iputils \
     iptables \
@@ -96,16 +98,15 @@ RDEPENDS_packagegroup-os-full-cmdline-extended = "\
     wget \
     "
 
-RDEPENDS_packagegroup-os-full-cmdline-dev-utils = "\
+RDEPENDS:packagegroup-os-full-cmdline-dev-utils = "\
     diffutils \
     elfutils \
     nfs-utils \
-    catchsegv \
     ltrace \
     strace \
     "
 
-RRECOMMENDS_packagegroup-os-full-cmdline-dev-utils = "\
+RRECOMMENDS:packagegroup-os-full-cmdline-dev-utils = "\
     valgrind \
     "
 
@@ -113,19 +114,19 @@ VIRTUAL-RUNTIME_initscripts ?= "initscripts"
 VIRTUAL-RUNTIME_init_manager ?= "sysvinit"
 VIRTUAL-RUNTIME_login_manager ?= "busybox"
 VIRTUAL-RUNTIME_syslog ?= "sysklogd"
-RDEPENDS_packagegroup-os-full-cmdline-initscripts = "\
+RDEPENDS:packagegroup-os-full-cmdline-initscripts = "\
     ${VIRTUAL-RUNTIME_initscripts} \
     ${VIRTUAL-RUNTIME_init_manager} \
     ${VIRTUAL-RUNTIME_login_manager} \
     ${VIRTUAL-RUNTIME_syslog} \
     "
 
-RDEPENDS_packagegroup-os-full-cmdline-multiuser = "\
+RDEPENDS:packagegroup-os-full-cmdline-multiuser = "\
     shadow \
     sudo \
     "
 
-RDEPENDS_packagegroup-os-full-cmdline-sys-services = "\
+RDEPENDS:packagegroup-os-full-cmdline-sys-services = "\
     at \
     bzip2 \
     cronie \

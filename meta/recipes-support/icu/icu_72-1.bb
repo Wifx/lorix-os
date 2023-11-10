@@ -7,7 +7,7 @@ HOMEPAGE = "http://site.icu-project.org/"
 
 LICENSE = "ICU"
 DEPENDS = "icu-native autoconf-archive"
-DEPENDS_class-native = "autoconf-archive-native"
+DEPENDS:class-native = "autoconf-archive-native"
 
 CVE_PRODUCT = "international_components_for_unicode"
 
@@ -23,15 +23,15 @@ inherit autotools pkgconfig github-releases
 # cross-compiling. Taken the situation that different builds may share a common sstate-cache
 # into consideration, the native build directory needs to be staged.
 EXTRA_OECONF = "--with-cross-build=${STAGING_ICU_DIR_NATIVE} --disable-icu-config"
-EXTRA_OECONF_class-native = "--disable-icu-config"
-EXTRA_OECONF_class-nativesdk = "--with-cross-build=${STAGING_ICU_DIR_NATIVE} --disable-icu-config"
+EXTRA_OECONF:class-native = "--disable-icu-config"
+EXTRA_OECONF:class-nativesdk = "--with-cross-build=${STAGING_ICU_DIR_NATIVE} --disable-icu-config"
 
-EXTRA_OECONF_append_class-target = "${@oe.utils.conditional('SITEINFO_ENDIANNESS', 'be', ' --with-data-packaging=archive', '', d)}"
-TARGET_CXXFLAGS_append = "${@oe.utils.conditional('SITEINFO_ENDIANNESS', 'be', ' -DICU_DATA_DIR=\\""${datadir}/${BPN}/${PV}\\""', '', d)}"
+EXTRA_OECONF:append:class-target = "${@oe.utils.conditional('SITEINFO_ENDIANNESS', 'be', ' --with-data-packaging=archive', '', d)}"
+TARGET_CXXFLAGS:append = "${@oe.utils.conditional('SITEINFO_ENDIANNESS', 'be', ' -DICU_DATA_DIR=\\""${datadir}/${BPN}/${PV}\\""', '', d)}"
 
 ASNEEDED = ""
 
-do_compile_prepend_class-target () {
+do_compile:prepend:class-target () {
 	# Make sure certain build host references do not end up being compiled
 	# in the image. This only affects libicutu and icu-dbg
 	sed  \
@@ -41,7 +41,7 @@ do_compile_prepend_class-target () {
 }
 
 PREPROCESS_RELOCATE_DIRS = "${datadir}/${BPN}/${PV}"
-do_install_append_class-native() {
+do_install:append:class-native() {
 	mkdir -p ${D}/${STAGING_ICU_DIR_NATIVE}/config
 	cp -r ${B}/config/icucross.mk ${D}/${STAGING_ICU_DIR_NATIVE}/config
 	cp -r ${B}/config/icucross.inc ${D}/${STAGING_ICU_DIR_NATIVE}/config
@@ -50,7 +50,7 @@ do_install_append_class-native() {
 	cp -r ${B}/tools ${D}/${STAGING_ICU_DIR_NATIVE}
 }
 
-do_install_append_class-target() {
+do_install:append:class-target() {
     # The native pkgdata can not generate the correct data file.
     # Use icupkg to re-generate it.
     if [ "${SITEINFO_ENDIANNESS}" = "be" ] ; then
@@ -69,13 +69,13 @@ do_install_append_class-target() {
 
 PACKAGES =+ "libicudata libicuuc libicui18n libicutu libicuio"
 
-FILES_${PN}-dev += "${libdir}/${BPN}/"
+FILES:${PN}-dev += "${libdir}/${BPN}/"
 
-FILES_libicudata = "${libdir}/libicudata.so.*"
-FILES_libicuuc = "${libdir}/libicuuc.so.*"
-FILES_libicui18n = "${libdir}/libicui18n.so.*"
-FILES_libicutu = "${libdir}/libicutu.so.*"
-FILES_libicuio = "${libdir}/libicuio.so.*"
+FILES:libicudata = "${libdir}/libicudata.so.*"
+FILES:libicuuc = "${libdir}/libicuuc.so.*"
+FILES:libicui18n = "${libdir}/libicui18n.so.*"
+FILES:libicutu = "${libdir}/libicutu.so.*"
+FILES:libicuio = "${libdir}/libicuio.so.*"
 
 BBCLASSEXTEND = "native nativesdk"
 
@@ -97,8 +97,8 @@ ICU_PV = "${@icu_download_version(d)}"
 ICU_FOLDER = "${@icu_download_folder(d)}"
 
 # http://errors.yoctoproject.org/Errors/Details/20486/
-ARM_INSTRUCTION_SET_armv4 = "arm"
-ARM_INSTRUCTION_SET_armv5 = "arm"
+ARM_INSTRUCTION_SET:armv4 = "arm"
+ARM_INSTRUCTION_SET:armv5 = "arm"
 
 BASE_SRC_URI = "${GITHUB_BASE_URI}/download/release-${ICU_FOLDER}/icu4c-${ICU_PV}-src.tgz"
 DATA_SRC_URI = "${GITHUB_BASE_URI}/download/release-${ICU_FOLDER}/icu4c-${ICU_PV}-data.zip"
@@ -109,7 +109,7 @@ SRC_URI = "${BASE_SRC_URI};name=code \
            file://0001-icu-Added-armeb-support.patch \
            "
 
-SRC_URI_append_class-target = "\
+SRC_URI:append:class-target = "\
            file://0001-Disable-LDFLAGSICUDT-for-Linux.patch \
           "
 SRC_URI[code.sha256sum] = "a2d2d38217092a7ed56635e34467f92f976b370e20182ad325edea6681a71d68"
@@ -118,12 +118,12 @@ SRC_URI[data.sha256sum] = "ee19f876507d6c23d9e0a2b631096f6b0eaa6fa61728c33a89efd
 UPSTREAM_CHECK_REGEX = "releases/tag/release-(?P<pver>(?!.+rc).+)"
 GITHUB_BASE_URI = "https://github.com/unicode-org/icu/releases"
 
-EXTRA_OECONF_append_libc-musl = " ac_cv_func_strtod_l=no"
+EXTRA_OECONF:append:libc-musl = " ac_cv_func_strtod_l=no"
 
 PACKAGECONFIG ?= ""
 PACKAGECONFIG[make-icudata] = ",,,"
 
-do_make_icudata_class-target () {
+do_make_icudata:class-target () {
     ${@bb.utils.contains('PACKAGECONFIG', 'make-icudata', '', 'exit 0', d)}
     cd ${S}
     rm -rf data

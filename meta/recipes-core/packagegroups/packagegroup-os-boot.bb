@@ -34,7 +34,7 @@ SYSVINIT_SCRIPTS = "${@bb.utils.contains('MACHINE_FEATURES', 'rtc', '${VIRTUAL-R
                     ${VIRTUAL-RUNTIME_initscripts} \
                    "
 
-RDEPENDS_${PN} = "\
+RDEPENDS:${PN} = "\
     base-files \
     base-passwd \
     base-files-os \
@@ -50,5 +50,5 @@ RDEPENDS_${PN} = "\
     ${VIRTUAL-RUNTIME_update-alternatives} \
     ${MACHINE_ESSENTIAL_EXTRA_RDEPENDS}"
 
-RRECOMMENDS_${PN} = "\
+RRECOMMENDS:${PN} = "\
     ${MACHINE_ESSENTIAL_EXTRA_RRECOMMENDS}"

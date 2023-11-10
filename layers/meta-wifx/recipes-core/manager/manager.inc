@@ -5,13 +5,15 @@ AUTHOR = "Wifx Sàrl"
 LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://src/${GO_IMPORT}/LICENSE;md5=ffdb0a8bda31b45fc5b72d3774d715e2"
 
-RDEPENDS_${PN} += " \
+RDEPENDS:${PN} += " \
     openssl-bin \
     dbus \
     glibc \
     machine-info \
 "
-RRECOMMENDS_${PN} += "manager-gui mender-client networkmanager networkmanager-nmcli"
+
+# TODO: kirkstone upgrade (add back manager-gui in this list)
+RRECOMMENDS:${PN} += "mender-client networkmanager networkmanager-nmcli"
 
 SRC_URI += " \
     file://config.toml \
@@ -22,7 +24,7 @@ SRC_URI += " \
 "
 
 # TODO: restore file-rdpes check
-INSANE_SKIP_${PN} = "file-rdeps"
+INSANE_SKIP:${PN} = "file-rdeps"
 
 GO_IMPORT = "git.wifx.net/lorix/manager"
 
@@ -70,7 +72,7 @@ do_install(){
     do_install_base
 }
 
-pkg_postinst_ontarget_${PN} () {
+pkg_postinst_ontarget:${PN} () {
     # Generating auth secret key
     if [ ! -f "${sysconfdir}/manager/conf.d/00-default/01-api-secret-key.toml" ]; then
         echo -n "Generating authentification secret key...  "
@@ -96,4 +98,4 @@ EOM
         echo "done"
     fi
 }
-do_package[vardeps] += "pkg_postinst_ontarget_${PN}"
+do_package[vardeps] += "pkg_postinst_ontarget:${PN}"

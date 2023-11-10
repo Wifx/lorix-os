@@ -1,7 +1,7 @@
 # Copyright (c) 2022, Wifx Sarl <info@iot.wifx.net>
 # All rights reserved.
 
-do_deploy_append() {
+do_deploy:append() {
     if [ -e "${ENV_FILEPATH}/${MACHINE}.txt" ]; then
         install -Dm 0644 "${ENV_FILEPATH}/${MACHINE}.txt" "${DEPLOYDIR}/u-boot-env-${MACHINE}.txt"
     fi

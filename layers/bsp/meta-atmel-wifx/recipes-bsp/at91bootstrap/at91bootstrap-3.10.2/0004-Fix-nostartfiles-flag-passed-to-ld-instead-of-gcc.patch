@@ -1,0 +1,34 @@
+From 654c541402128cc56bd605df1832bb2e172912b2 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Tue, 13 Jun 2023 16:45:58 +0200
+Subject: [PATCH 4/4] Fix -nostartfiles flag passed to ld instead of gcc
+
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
+---
+ Makefile | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 6a5f5386..e700c7a0 100644
+--- a/Makefile
++++ b/Makefile
+@@ -250,6 +250,7 @@ GC_SECTIONS=--gc-sections
+ NOSTDINC_FLAGS := -nostdinc -isystem "$(shell $(CC) -print-file-name=include)"
+ 
+ CPPFLAGS=$(NOSTDINC_FLAGS) -ffunction-sections -g -Os -Wall \
++	-nostartfiles \
+ 	-mno-unaligned-access \
+ 	-fno-stack-protector -fno-common -fno-builtin -fno-jump-tables -fno-pie \
+ 	-I$(INCL) -Icontrib/include -Iinclude -Ifs/include \
+@@ -283,7 +284,7 @@ endif
+ #    --cref:    add cross reference to map file
+ #  -lc 	   : 	tells the linker to tie in newlib
+ #  -lgcc   : 	tells the linker to tie in newlib
+-LDFLAGS=-nostartfiles -Map=$(BINDIR)/$(BOOT_NAME).map --cref -static
++LDFLAGS=-Map=$(BINDIR)/$(BOOT_NAME).map --cref -static
+ LDFLAGS+=-T $(link_script) $(GC_SECTIONS) -Ttext $(LINK_ADDR)
+ 
+ ifneq ($(DATA_SECTION_ADDR),)
+-- 
+2.34.1
+

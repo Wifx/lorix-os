@@ -1,7 +1,7 @@
 # Copyright (c) 2020, Wifx Sàrl <info@wifx.net>
 # All rights reserved.
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
 SRC_URI += " \
     file://iptables.initd \
@@ -11,12 +11,12 @@ SRC_URI += " \
 
 inherit openrc
 
-OPENRC_SERVICE_${PN} = "iptables ${@bb.utils.contains('DISTRO_FEATURES', 'ipv6', 'ip6tables', '', d)}"
+OPENRC_SERVICE:${PN} = "iptables ${@bb.utils.contains('DISTRO_FEATURES', 'ipv6', 'ip6tables', '', d)}"
 
-OPENRC_RUNLEVEL_iptables = "default"
-OPENRC_RUNLEVEL_ip6tables = "default"
+OPENRC_RUNLEVEL:iptables = "default"
+OPENRC_RUNLEVEL:ip6tables = "default"
 
-do_install_append() {
+do_install:append() {
     # Install OpenRC conf script
     openrc_install_config ${WORKDIR}/iptables.confd
 
@@ -33,7 +33,7 @@ do_install_append() {
     fi
 }
 
-FILES_${PN} += " \
+FILES:${PN} += " \
     ${OPENRC_INITDIR}/iptables \
     ${OPENRC_CONFDIR}/iptables \
     ${sysconfdir}/runlevels \

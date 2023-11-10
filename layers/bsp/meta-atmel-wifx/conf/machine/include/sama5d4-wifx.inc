@@ -10,14 +10,14 @@ MACHINEOVERRIDES =. "sama5d4-wifx:"
 IMAGE_FSTYPES += "ubimg wimg tar.bz2"
 
 # Preferred providers
-PREFERRED_PROVIDER_virtual/firststage_sama5 = "at91bootstrap"
-PREFERRED_PROVIDER_virtual/kernel_sama5 = "linux-at91"
-PREFERRED_PROVIDER_virtual/bootloader_sama5 = "u-boot-at91"
-PREFERRED_PROVIDER_u-boot_sama5 = "u-boot-at91"
-PREFERRED_PROVIDER_u-boot-env_sama5 = "u-boot-at91"
+PREFERRED_PROVIDER_virtual/firststage:sama5 = "at91bootstrap"
+PREFERRED_PROVIDER_virtual/kernel:sama5 = "linux-at91"
+PREFERRED_PROVIDER_virtual/bootloader:sama5 = "u-boot-at91"
+PREFERRED_PROVIDER_u-boot:sama5 = "u-boot-at91"
+PREFERRED_PROVIDER_u-boot-env:sama5 = "u-boot-at91"
 
 # Avoid using new at91boostrap v4 which is completely different
-PREFERRED_VERSION_at91bootstrap_sama5 = "3.%"
+PREFERRED_VERSION_at91bootstrap:sama5 = "3.%"
 
 # Linux kernel specific variables
 KERNEL_DEVICETREE ?= "${MACHINE}.dtb"
@@ -58,4 +58,4 @@ MACHINE_ESSENTIAL_EXTRA_RRECOMMENDS += "kernel-devicetree kernel-image"
 MACHINE_ESSENTIAL_EXTRA_RDEPENDS += "kernel-modules"
 
 # make sure that kernel and devicetree are installed
-IMAGE_INSTALL_append = " kernel-devicetree kernel-image-zimage"
+IMAGE_INSTALL:append = " kernel-devicetree kernel-image-zimage"

@@ -8,7 +8,7 @@ PR = "r0"
 
 inherit packagegroup
 
-RDEPENDS_${PN} = " \
+RDEPENDS:${PN} = " \
     packagegroup-os-boot \
     packagegroup-os-base \
     packagegroup-os-machine \
@@ -25,7 +25,11 @@ RDEPENDS_${PN} = " \
     run-postinsts \
     ${@bb.utils.contains('DISTRO_FEATURES', 'openrc', 'openrc', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'openrc', 'openrc-base-files', '', d)} \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'manager', 'manager manager-gui', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'manager', 'manager', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'pmonitor', 'pmonitor pmcli', '', d)} \
     virtual/updater \
 "
+
+# TODO: kirkstone upgrade
+#   ${@bb.utils.contains('DISTRO_FEATURES', 'manager', 'manager manager-gui', '', d)} \
+#

@@ -23,7 +23,7 @@ do_patch[noexec] = "1"
 do_configure[noexec] = "1"
 do_compile[noexec] = "1"
 
-RDEPENDS_${PN} += "machine-info"
+RDEPENDS:${PN} += "machine-info"
 
 osdir = "${sysconfdir}/os"
 
@@ -43,7 +43,7 @@ do_install () {
     install -m 644 ${WORKDIR}/30-temp-system.rules ${D}${sysconfdir}/udev/rules.d
 }
 
-pkg_postinst_ontarget_lorix_one () {
+pkg_postinst_ontarget:lorix_one () {
     if [ -e /sys/class/net/eth0/address ]; then
         # Construct the hostname based on last 3 Bytes of eth0 MAC address
         mac=$(cat /sys/class/net/eth0/address)
@@ -55,7 +55,7 @@ pkg_postinst_ontarget_lorix_one () {
     fi
 }
 
-pkg_postinst_ontarget_l1 () {
+pkg_postinst_ontarget:l1 () {
     # get lower case serial
     SERIAL_LABEL=$(machine-info --field "PRODUCT_SERIAL" --noheader)
 
@@ -65,34 +65,34 @@ pkg_postinst_ontarget_l1 () {
     echo "gw$SERIAL" > /etc/hostname
 }
 
-PACKAGESPLITFUNCS_prepend = "populate_packages_lorix "
-populate_packages_lorix[vardeps] += "pkg_postinst_ontarget_lorix_one pkg_postinst_ontarget_l1"
+PACKAGESPLITFUNCS:prepend = "populate_packages_lorix "
+populate_packages_lorix[vardeps] += "pkg_postinst_ontarget:lorix_one pkg_postinst_ontarget:l1"
 
 python populate_packages_lorix() {
     pkg = d.getVar('PN', True)
     machine = d.getVar('MACHINE', True)
 
-    # Add pkg to the overrides so that it finds the OPENRC_SERVICE_pkg
+    # Add pkg to the overrides so that it finds the OPENRC_SERVICE:pkg
     # variable.
     localdata = d.createCopy()
     localdata.prependVar("OVERRIDES", pkg + ":")
 
     if machine.startswith('lorix-one-'):
-        postinst_ontarget = d.getVar('pkg_postinst_ontarget_%s' % pkg)
+        postinst_ontarget = d.getVar('pkg_postinst_ontarget:%s' % pkg)
         if not postinst_ontarget:
             postinst_ontarget = '#!/bin/sh\n'
-        postinst_ontarget += localdata.getVar('pkg_postinst_ontarget_lorix_one')
-        d.setVar('pkg_postinst_ontarget_%s' % pkg, postinst_ontarget)
+        postinst_ontarget += localdata.getVar('pkg_postinst_ontarget:lorix_one')
+        d.setVar('pkg_postinst_ontarget:%s' % pkg, postinst_ontarget)
 
     if machine.startswith('l1'):
-        postinst_ontarget = d.getVar('pkg_postinst_ontarget_%s' % pkg)
+        postinst_ontarget = d.getVar('pkg_postinst_ontarget:%s' % pkg)
         if not postinst_ontarget:
             postinst_ontarget = '#!/bin/sh\n'
-        postinst_ontarget += localdata.getVar('pkg_postinst_ontarget_l1')
-        d.setVar('pkg_postinst_ontarget_%s' % pkg, postinst_ontarget)
+        postinst_ontarget += localdata.getVar('pkg_postinst_ontarget:l1')
+        d.setVar('pkg_postinst_ontarget:%s' % pkg, postinst_ontarget)
 }
 
-FILES_${PN} += " \
+FILES:${PN} += " \
     ${osdir}/* \
     ${sysconfdir}/udev/rules.d/* \
 "

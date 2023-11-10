@@ -7,11 +7,11 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=8aebde4f3f92d0e71e58871d97d7420f"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
-RDEPENDS_${PN} += " \
+RDEPENDS:${PN} += " \
     libcrypto \
     machine-info \
 "
-RPROVIDES_${PN} += "virtual/udp-packet-forwarder"
+RPROVIDES:${PN} += "virtual/udp-packet-forwarder"
 
 SRC_URI += " \
     file://udp-packet-forwarder-generic.yml \
@@ -20,7 +20,7 @@ SRC_URI += " \
     file://LICENSE \
 "
 
-SRC_URI_append_lorix-one = " \
+SRC_URI:append:lorix-one = " \
     file://resources-lorix-one \
 "
 
@@ -54,7 +54,7 @@ do_install() {
     pmonitor_service_install ${WORKDIR}/udp-packet-forwarder-generic.yml
 }
 
-do_install_append_lorix-one() {
+do_install:append:lorix-one() {
     # configuration files
     install -m 0755 -d ${CONF}/hardware
     cd ${WORKDIR}/resources-lorix-one/hardware
@@ -94,7 +94,7 @@ set_default() {
     ln -snf "$ID.json" "${D}${sysconfoptdir}/udp-packet-forwarder/channels/$REGION/default"
 }
 
-pkg_postinst_ontarget_${PN} () {
+pkg_postinst_ontarget:${PN} () {
     # Update gateway ID in general config files
 
     # retrieve gateway ID from machine-info
@@ -145,4 +145,4 @@ pkg_postinst_ontarget_${PN} () {
     fi
 }
 
-FILES_${PN} += "${optdir}"
+FILES:${PN} += "${optdir}"

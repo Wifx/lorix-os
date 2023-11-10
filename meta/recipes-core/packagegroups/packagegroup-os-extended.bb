@@ -8,7 +8,7 @@ PR = "r0"
 
 inherit packagegroup
 
-RDEPENDS_${PN} = " \
+RDEPENDS:${PN} = " \
     iproute2 \
     iptables \
     bridge-utils \
@@ -18,7 +18,7 @@ RDEPENDS_${PN} = " \
     openssl-misc \
     ca-certificates \
 "
-RRECOMMENDS_${PN} += " \
+RRECOMMENDS:${PN} += " \
     net-snmp-server \
     zabbix \
 "

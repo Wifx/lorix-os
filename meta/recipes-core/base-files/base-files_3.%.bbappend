@@ -2,9 +2,9 @@ inherit wifx-tools
 
 DEPENDS += "os-release"
 
-RDEPENDS_${PN} += "machine-info"
+RDEPENDS:${PN} += "machine-info"
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
 SRC_URI_FEATURE_MOTD_DYNAMIC = " \
     file://update-motd.d/00-header \
@@ -20,8 +20,8 @@ SRC_URI += " \
     file://fstab \
 "
 
-dirs755_remove = "${localstatedir}/volatile/log"
-volatiles_remove = "log"
+dirs755:remove = "${localstatedir}/volatile/log"
+volatiles:remove = "log"
 
 def print_release_note(string, version_state, color, color_light):
 
@@ -116,7 +116,7 @@ python __anonymous() {
     d.setVarFlag('do_unpack', 'depends', 'os-release:do_populate_sysroot')
 }
 
-do_install_append() {
+do_install:append() {
     if ${@bb.utils.contains('DISTRO_FEATURES','motd-dynamic','true','false',d)}; then
         # we remove the standard motd
         rm -rf ${D}${sysconfdir}/motd

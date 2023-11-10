@@ -14,7 +14,7 @@ TEMPDIR = "${WORKDIR}/temp_wimg"
 IMAGE_TYPES += " wimg"
 
 do_image_wimg[depends] += "zip-native:do_populate_sysroot virtual/firststage:do_populate_sysroot virtual/bootloader:do_populate_sysroot virtual/kernel:do_populate_sysroot mtd-utils-native:do_populate_sysroot"
-IMAGE_TYPEDEP_wimg_append = " ubimg"
+IMAGE_TYPEDEP:wimg:append = " ubimg"
 IMAGE_NAME_SUFFIX = ""
 
 do_compress_zip () {
@@ -22,7 +22,7 @@ do_compress_zip () {
     zip -r ${IMGDEPLOYDIR}/${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.wimg .
 }
 
-IMAGE_CMD_wimg () {
+IMAGE_CMD:wimg () {
     # Delete previous temp directory if exists
     if [ -d ${TEMPDIR} ]; then
         rm -rf ${TEMPDIR}

@@ -1,7 +1,7 @@
 # Copyright (c) 2020, Wifx Sàrl <info@wifx.net>
 # All rights reserved.
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
 SRC_URI += " \
     file://crond.initd \
@@ -10,10 +10,10 @@ SRC_URI += " \
 
 inherit openrc
 
-OPENRC_SERVICE_${PN} = "crond"
-OPENRC_RUNLEVEL_crond = "default"
+OPENRC_SERVICE:${PN} = "crond"
+OPENRC_RUNLEVEL:crond = "default"
 
-do_install_append() {
+do_install:append() {
     # Install OpenRC conf script
     openrc_install_config ${WORKDIR}/crond.confd
     rm -rf ${D}${sysconfdir}/sysconfig/crond
@@ -23,4 +23,4 @@ do_install_append() {
     openrc_install_script ${WORKDIR}/crond.initd
 }
 
-FILES_${PN}_remove = "${sysconfdir}/sysconfig/crond"
+FILES:${PN}:remove = "${sysconfdir}/sysconfig/crond"

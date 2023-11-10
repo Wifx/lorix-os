@@ -11,19 +11,19 @@ SRC_URI += "\
     file://20-servers.toml \
 "
 
-DEPENDS += " \
-    clang-native \
-"
-
 UPX_COMPRESS_FILES_${PN} = "/opt/chirpstack-udp-bridge/chirpstack-udp-bridge"
 inherit upx
 
-inherit cargo
+## meta-rust-bin
+inherit cargo_bin
+
+# Enable network for the compile task allowing cargo to download dependencies
+do_compile[network] = "1"
+
+export BINDGEN_EXTRA_CLANG_ARGS="-I${STAGING_INCDIR}"
 
 CONF_DIR = "${sysconfoptdir}/chirpstack-udp-bridge"
 S = "${WORKDIR}/git"
-
-export BINDGEN_EXTRA_CLANG_ARGS="-I${STAGING_INCDIR}"
 
 do_install() {
 
@@ -58,7 +58,7 @@ install_config() {
     install -m 0644 ${WORKDIR}/$1 ${D}${CONF_DIR}/${DEST}
 }
 
-FILES_${PN} += " \
+FILES:${PN} += " \
     ${CONF_DIR}/udp-bridge.toml \
     ${optdir}/chirpstack-udp-bridge/chirpstack-udp-bridge \
 "

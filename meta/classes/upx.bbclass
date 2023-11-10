@@ -1,4 +1,4 @@
-DEPENDS_append = " upx-native"
+DEPENDS:append = " upx-native"
 
 python package_do_compress() {
     import subprocess
