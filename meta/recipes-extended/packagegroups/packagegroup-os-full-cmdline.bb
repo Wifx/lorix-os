@@ -8,6 +8,8 @@ SUMMARY = "Standard full-featured Linux system for the Wifx product family"
 DESCRIPTION = "Package group bringing in packages needed for a more traditional full-featured Linux system for the Wifx product family"
 PR = "r0"
 
+PACKAGE_ARCH = "${TUNE_PKGARCH}"
+
 inherit packagegroup
 
 PACKAGES = "\
