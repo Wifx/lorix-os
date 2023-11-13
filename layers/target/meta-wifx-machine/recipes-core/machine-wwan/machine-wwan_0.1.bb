@@ -25,8 +25,8 @@ RDEPENDS:${PN} += "bash networkmanager modemmanager"
 
 inherit openrc
 
-OPENRC_SERVICE_${PN} = "cellular"
-OPENRC_RUNLEVEL_cellular = "boot"
+OPENRC_SERVICE:${PN} = "cellular"
+OPENRC_RUNLEVEL:cellular = "boot"
 
 do_install:l1() {
     # Install OpenRC script
