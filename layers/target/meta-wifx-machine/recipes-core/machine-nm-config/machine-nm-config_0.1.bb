@@ -20,7 +20,7 @@ do_patch[noexec] = "1"
 do_configure[noexec] = "1"
 do_compile[noexec] = "1"
 
-RDEPENDS_${PN} += "bash networkmanager ${@bb.utils.contains('MACHINE_FEATURES','wwan','machine-wwan modemmanager','',d)}"
+RDEPENDS:${PN} += "bash networkmanager ${@bb.utils.contains('MACHINE_FEATURES','wwan','machine-wwan modemmanager','',d)}"
 
 do_install() {
     # Install default connections and main configuration file

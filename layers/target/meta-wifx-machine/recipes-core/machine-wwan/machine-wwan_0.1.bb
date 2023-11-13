@@ -21,14 +21,14 @@ do_patch[noexec] = "1"
 do_configure[noexec] = "1"
 do_compile[noexec] = "1"
 
-RDEPENDS_${PN} += "bash networkmanager modemmanager"
+RDEPENDS:${PN} += "bash networkmanager modemmanager"
 
 inherit openrc
 
 OPENRC_SERVICE_${PN} = "cellular"
 OPENRC_RUNLEVEL_cellular = "boot"
 
-do_install_l1() {
+do_install:l1() {
     # Install OpenRC script
     openrc_install_script ${WORKDIR}/cellular.initd
 
@@ -49,7 +49,7 @@ do_install_l1() {
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
-FILES_${PN} += " \
+FILES:${PN} += " \
     ${OPENRC_CONFDIR}/* \
     ${nonarch_base_libdir}/os/wwan/* \
 "
