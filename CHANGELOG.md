@@ -5,10 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.6.2] - Unrelease
+## [1.6.2] - Unreleased
+
+### Changed
 
 - Update rust compiler to 1.67.1
 - [LOR-572] Update helium-gateway to 1.1.1
+- [LOR-573] Update Chirpstack Gateway Bridge to v3.14.8
 
 ## [1.6.1] - 2023-04-28
 
