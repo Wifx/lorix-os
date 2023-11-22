@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Update rust compiler to 1.67.1
-- [LOR-572] Update helium-gateway to 1.1.1
+- [LOR-572] Update Helium gateway software to 1.3.0
 - [LOR-573] Update Chirpstack Gateway Bridge to v3.14.8
 - [LOR-574] Update rust to 1.74.0
 
