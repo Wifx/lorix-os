@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-574] Update rust to 1.74.0
 - [LOR-575] Update manager and manager-gui to v0.15.2
 
+### Fixed
+
+- [LOR-576] Update info refresh date not correct in motd
+
 ## [1.6.1] - 2023-04-28
 
 ### Changed
