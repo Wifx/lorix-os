@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
 ## [1.7.0] - Unreleased
 
 ### Changed
@@ -12,10 +13,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Update OpenRC to 0.43.5
  - Update OpenSSL to 3.0.8
  
-## [1.6.2] - Unrelease
+## [1.6.2] - 2023-11-27
 
-- Update rust compiler to 1.67.1
-- [LOR-572] Update helium-gateway to 1.1.1
+### Changed
+
+- [LOR-572] Update Helium gateway software to 1.3.0
+- [LOR-573] Update Chirpstack Gateway Bridge to v3.14.8
+- [LOR-574] Update rust to 1.74.0
+- [LOR-575] Update manager and manager-gui to v0.15.2
+
+### Fixed
+
+- [LOR-576] Update info refresh date not correct in motd
 
 ## [1.6.1] - 2023-04-28
 
