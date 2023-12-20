@@ -34,6 +34,7 @@ CONNECTIVITY_WIRELESS_PACKAGES = " \
 
 CONNECTIVITY_PACKAGES = " \
     ${NETWORK_MANAGER_PACKAGES} \
+    wpa-supplicant \
     dnsmasq \
     openvpn \
     openssh \
