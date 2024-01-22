@@ -6,7 +6,7 @@ LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://src/${GO_IMPORT}/LICENSE;md5=c6516b26d091c50b67e08602af287bfd"
 #LIC_FILES_CHKSUM = "file://LICENSE;md5=c6516b26d091c50b67e08602af287bfd"
 
-UPX_COMPRESS_FILES_${PN} = "/usr/sbin/pmonitord"
+UPX_COMPRESS_FILES:${PN} = "/usr/sbin/pmonitord"
 inherit upx
 
 RDEPENDS:${PN} += "pvisor glibc"

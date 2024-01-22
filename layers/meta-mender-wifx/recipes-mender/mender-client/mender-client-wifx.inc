@@ -8,5 +8,5 @@ RPROVIDES:${PN} += "virtual/updater"
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 SRC_URI:append = " file://artifact-verify-key.pem"
 
-UPX_COMPRESS_FILES_${PN} = "/usr/bin/mender"
+UPX_COMPRESS_FILES:${PN} = "/usr/bin/mender"
 inherit upx

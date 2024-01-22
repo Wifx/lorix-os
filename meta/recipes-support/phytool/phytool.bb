@@ -1,5 +1,5 @@
 SUMMARY = "PHY interface tool for Linux"
-LICENSE = "GPLv2"
+LICENSE = "GPL-2.0-only & LGPL-2.1-or-later"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=39bba7d2cf0ba1036f2a6e2be52fe3f0"
 
 PV = "2.0+git${SRCPV}"
