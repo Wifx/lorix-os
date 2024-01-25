@@ -6,8 +6,6 @@ LICENSE = "Apache-2.0"
 
 PR = "r0"
 
-PACKAGE_ARCH = "${MACHINE_ARCH}"
-
 inherit packagegroup
 
 RDEPENDS:${PN} = " \
@@ -18,7 +16,6 @@ RDEPENDS:${PN} = " \
     packagegroup-os-connectivity \
     packagegroup-os-extended \
     ${@bb.utils.contains('MACHINE_FEATURES', 'lora', 'packagegroup-os-lora', '', d)} \
-    libgpiod \
     os-release \
     chrony \
     chronyc \
