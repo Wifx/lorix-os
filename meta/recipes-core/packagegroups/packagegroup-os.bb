@@ -6,6 +6,8 @@ LICENSE = "Apache-2.0"
 
 PR = "r0"
 
+PACKAGE_ARCH = "${MACHINE_ARCH}"
+
 inherit packagegroup
 
 RDEPENDS:${PN} = " \
