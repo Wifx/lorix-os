@@ -5,6 +5,10 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=2dff1ccca11e333f1388e34f7e2d1de3"
 
 CVE_PRODUCT = "nodejs node.js"
 
+RDEPENDS:${PN} += " \
+    openssl-ossl-module-legacy \
+"
+
 DEPENDS = "openssl file-replacement-native"
 DEPENDS:append:class-target = " qemu-native"
 DEPENDS:append:class-native = " c-ares-native"

@@ -1,0 +1,42 @@
+ARG BASE_IMAGE=registry.wifx.net/yocto/lorix-os/build-system/rootless
+
+# Prebuild for git v2.36.1 which support wildcard for unsafe directory exception
+FROM ubuntu:22.04 as git-build
+
+ARG GIT_VERSION=2.36.6
+
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt-get update && apt-get -y upgrade
+RUN apt-get install -y dh-autoreconf libcurl4-gnutls-dev libexpat1-dev gettext \
+    libz-dev libssl-dev gcc-multilib build-essential unzip wget
+RUN wget https://github.com/git/git/archive/refs/tags/v$GIT_VERSION.zip
+RUN mv v$GIT_VERSION.zip git.zip
+RUN unzip git.zip
+WORKDIR /git-$GIT_VERSION
+# Configure
+RUN make configure
+RUN ./configure --prefix=/usr
+# Build
+RUN make all -j16
+# Install
+RUN mkdir /build
+RUN make DESTDIR=/build install
+
+FROM $BASE_IMAGE
+
+# Install manually compiled git
+COPY --from=git-build /build/usr/ /usr/
+
+# Create a non-root user that will perform the actual build
+RUN id build 2>/dev/null || useradd --uid 5000 --create-home build
+RUN apt-get install -y sudo
+RUN echo "build ALL=(ALL) NOPASSWD: ALL" | tee -a /etc/sudoers
+
+# Create yocto directory that will contain downloads and sstate cache (can be overridden by volume)
+RUN chown build:build /yocto
+
+USER build
+
+RUN git config --global --add safe.directory '*'
+
+# EOF
