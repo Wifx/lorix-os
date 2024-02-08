@@ -1,7 +1,7 @@
-From 11165329f88654f8f6a8b6689470859022a6bf7f Mon Sep 17 00:00:00 2001
+From 073869b81a5173b16776889e7a54757d2c73c07f Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
 Date: Tue, 4 Apr 2023 16:59:12 +0200
-Subject: [PATCH] lte: add Fibocom L610/MC610 support in option driver
+Subject: [PATCH 2/3] lte: add Fibocom L610/MC610 support in option driver
 
 Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
 ---

@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Update Yocto to Kirkstone
  - Update OpenRC to 0.43.5
  - Update OpenSSL to 3.0.8
+ - Update kernel for Wifx L1 4G support
  
 ## [1.6.2] - 2023-11-27
 
