@@ -11,7 +11,7 @@ SRC_URI += "\
     file://20-servers.toml \
 "
 
-UPX_COMPRESS_FILES_${PN} = "/opt/chirpstack-udp-bridge/chirpstack-udp-bridge"
+UPX_COMPRESS_FILES:${PN} = "/opt/chirpstack-udp-bridge/chirpstack-udp-bridge"
 inherit upx
 
 ## meta-rust-bin

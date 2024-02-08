@@ -18,7 +18,7 @@ python package_do_compress() {
     else:
         compression_level = f"-{UPX_COMPRESSION_LEVEL}"
 
-    UPX_COMPRESS_FILES_RAW = d.getVar('UPX_COMPRESS_FILES_' + pn)
+    UPX_COMPRESS_FILES_RAW = d.getVar('UPX_COMPRESS_FILES:' + pn)
     if UPX_COMPRESS_FILES_RAW is not None:
         compress_files = UPX_COMPRESS_FILES_RAW.strip().split()
 
@@ -33,7 +33,7 @@ python package_do_compress() {
             except Exception as error:
                 bb.fatal("cannot compress file '%s' : %s" % (fullpath, error))
     else:
-        bb.warn('No file to compress have been defined but upx has been inherited. You should define UPX_COMPRESS_FILES_${PN} or remove upx inheritance.')
+        bb.warn('No file to compress have been defined but upx has been inherited. You should define UPX_COMPRESS_FILES:${PN} or remove upx inheritance.')
 }
 
 PACKAGEBUILDPKGD += "package_do_compress"

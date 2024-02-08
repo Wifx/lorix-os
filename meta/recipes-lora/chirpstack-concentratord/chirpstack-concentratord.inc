@@ -40,7 +40,7 @@ DEPENDS:append:sx1302 = " libloragw-sx1302"
 
 RDEPENDS:${PN} += "machine-info"
 
-UPX_COMPRESS_FILES_${PN} = "/opt/chirpstack-concentratord/chirpstack-concentratord"
+UPX_COMPRESS_FILES:${PN} = "/opt/chirpstack-concentratord/chirpstack-concentratord"
 inherit upx
 
 ## meta-rust-bin

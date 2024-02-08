@@ -6,6 +6,8 @@ LICENSE = "Apache-2.0"
 
 PR = "r0"
 
+PACKAGE_ARCH = "${MACHINE_ARCH}"
+
 inherit packagegroup
 
 RDEPENDS:${PN} = " \
@@ -25,11 +27,7 @@ RDEPENDS:${PN} = " \
     run-postinsts \
     ${@bb.utils.contains('DISTRO_FEATURES', 'openrc', 'openrc', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'openrc', 'openrc-base-files', '', d)} \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'manager', 'manager', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'manager', 'manager manager-gui', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'pmonitor', 'pmonitor pmcli', '', d)} \
     virtual/updater \
 "
-
-# TODO: kirkstone upgrade
-#   ${@bb.utils.contains('DISTRO_FEATURES', 'manager', 'manager manager-gui', '', d)} \
-#

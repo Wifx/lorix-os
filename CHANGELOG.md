@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.7.0] - Unreleased
 
+### Added
+
+- [LOR-427] Add wpa-supplicant for 802.1x support
+
 ### Changed
 
  - Update Yocto to Kirkstone
