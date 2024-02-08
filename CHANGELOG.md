@@ -10,12 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [LOR-427] Add wpa-supplicant for 802.1x support
+- Add Wifx L1 4G support in kernel
 
 ### Changed
 
  - Update Yocto to Kirkstone
  - Update OpenRC to 0.43.5
  - Update OpenSSL to 3.0.8
+ - Update machine-info to 0.6.2 (Wifx L1 4G support)
  
 ## [1.6.2] - 2023-11-27
 
