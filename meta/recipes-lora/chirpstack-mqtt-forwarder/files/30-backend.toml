@@ -1,0 +1,74 @@
+# Backend configuration.
+[backend]
+
+  # Enabled backend.
+  #
+  # Set this to the backend that must be used by the ChirpStack MQTT Forwarder.
+  # Valid options are:
+  #   * concentratord
+  #   * semtech_udp
+  enabled="concentratord"
+
+  # Filters.
+  [backend.filters]
+
+    # Forward CRC ok.
+    forward_crc_ok=true
+
+    # Forward CRC invalid.
+    forward_crc_invalid=false
+
+    # Forward CRC missing.
+    forward_crc_missing=false
+
+    # DevAddr prefix filters.
+    #
+    # Example configuration:
+    # dev_addr_prefixes=["0000ff00/24"]
+    #
+    # The above filter means that the 24MSB of 0000ff00 will be used to
+    # filter DevAddrs. Uplinks with DevAddrs that do not match any of the
+    # configured filters will not be forwarded. Leaving this option empty
+    # disables filtering on DevAddr.
+    dev_addr_prefixes=[
+    ]
+
+    # JoinEUI prefix filters.
+    #
+    # Example configuration:
+    # join_eui_prefixes=["0000ff0000000000/24"]
+    #
+    # The above filter means that the 24MSB of 0000ff0000000000 will be used
+    # to filter JoinEUIs. Uplinks with JoinEUIs that do not match any of the
+    # configured filters will not be forwarded. Leaving this option empty
+    # disables filtering on JoinEUI.
+    join_eui_prefixes=[
+    ]
+
+
+  # ChirpStack Concentratord backend configuration.
+  [backend.concentratord]
+
+    # Event API URL.
+    event_url="ipc:///tmp/concentratord_event"
+
+    # Command API URL.
+    command_url="ipc:///tmp/concentratord_command"
+
+
+  # Semtech UDP backend configuration.
+  [backend.semtech_udp]
+
+    # ip:port to bind the UDP listener to.
+    #
+    # Example: 0.0.0.0:1700 to listen on port 1700 for all network interfaces.
+    # This is the listener to which the packet-forwarder forwards its data
+    # so make sure the 'serv_port_up' and 'serv_port_down' from your
+    # packet-forwarder matches this port.
+    bind="0.0.0.0:1700"
+
+    # Time fallback.
+    #
+    # In case the UDP packet-forwarder does not set the 'time' field, then the
+    # server-time will be used as fallback if this option is enabled.
+    time_fallback_enabled=false
