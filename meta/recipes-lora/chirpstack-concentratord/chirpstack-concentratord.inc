@@ -3,6 +3,8 @@ DESCRIPTION = "ChirpStack Concentratord"
 LICENSE = "MIT"
 
 SRC_URI += "\
+    file://0001-vendor-LORIX-One-support-version-863-870-and-902-928.patch \
+    file://0002-vendor-Wifx-L1-support-version-863-870-and-902-928MH.patch \
     file://concentratord.toml \
     file://gateways/gateway-l1.toml \
     file://gateways/gateway-lorix-one.toml \
