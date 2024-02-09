@@ -3,17 +3,17 @@ HOMEPAGE = "https://github.com/Lora-net/sx1302_hal"
 PRIORITY = "optional"
 LICENSE = "BSD-3-Clause"
 LIC_FILES_CHKSUM = "file://LICENSE.TXT;md5=d2119120bd616e725f4580070bd9ee19"
-PR = "r10"
+PR = "r7"
 
 SRC_URI = "\
-    git://github.com/Lora-net/sx1302_hal.git;protocol=https;nobranch=1 \
+    git://github.com/brocaar/sx1302_hal.git;protocol=https;nobranch=1 \
     file://0001-test-change-stdout-err-to-line-buffered.patch \
     file://library.cfg \
     file://0001-test_loragw_hal_tx-enable-CRC-for-LoRa-TX-packets-by.patch \
     file://0002-test_loragw_hal_tx-add-optional-argument-to-disable-.patch \
     file://reset_lgw.sh \
 "
-SRCREV = "6dff8191d5034539e43990c7b9a4d1bc3d5b6658"
+SRCREV = "c3d99009556fdfe273c3a53306082ef181333c7a"
 
 COMPATIBLE_MACHINE_FEATURE = "sx1302"
 
