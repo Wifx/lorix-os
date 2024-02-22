@@ -17,6 +17,9 @@ RDEPENDS:${PN} = " \
     lora-basic-station \
     loriot-packet-forwarder \
 "
+RRECOMMENDS:${PN}:append = " \
+    pmon-csmf-concentratord \
+" 
 
 # LORIX One
 RDEPENDS:${PN}:append:lorix-one = " \

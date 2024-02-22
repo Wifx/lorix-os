@@ -1,9 +1,10 @@
 HOMEPAGE = "https://www.chirpstack.io/"
 DESCRIPTION = "ChirpStack Concentratord"
 LICENSE = "MIT"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=99e425257f8a67b7efd81dc0009ed8ff"
 
 SRC_URI += "\
+    file://0001-vendor-LORIX-One-support-version-863-870-and-902-928.patch \
+    file://0002-vendor-Wifx-L1-support-version-863-870-and-902-928MH.patch \
     file://concentratord.toml \
     file://gateways/gateway-l1.toml \
     file://gateways/gateway-lorix-one.toml \
@@ -31,9 +32,6 @@ SRC_URI += "\
     file://channels/US915/US_902_928_FSB_7.toml \
     file://channels/US915/US_902_928_FSB_8.toml \
 "
-
-DEPENDS += "clang-native"
-ASSUME_PROVIDED:remove = "cmake-native"
 
 DEPENDS:append:sx1301 = " libloragw-sx1301"
 DEPENDS:append:sx1302 = " libloragw-sx1302"

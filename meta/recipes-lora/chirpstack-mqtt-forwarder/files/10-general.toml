@@ -1,0 +1,18 @@
+# Logging settings.
+[logging]
+
+  # Log level.
+  #
+  # Valid options are:
+  #   * TRACE
+  #   * DEBUG
+  #   * INFO
+  #   * WARN
+  #   * ERROR
+  #   * OFF
+  level="info"
+
+  # Log to syslog.
+  #
+  # If set to true, log messages are being written to syslog instead of stdout.
+  log_to_syslog=false

@@ -1,0 +1,17 @@
+# Gateway metadata configuration.
+[metadata]
+
+  # Static key / value metadata.
+  [metadata.static]
+      
+    # Example:
+    # maintainer="john.doe@acme.com"
+
+
+  # Commands returning metadata.
+  [metadata.commands]
+
+    # Examples:
+    # uptime="/usr/bin/uptime -p"
+
+    # antenna_gain="/usr/bin/manager lora hardware antenna"

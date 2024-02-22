@@ -1,0 +1,7 @@
+# Executable commands.
+# The configured commands can be triggered by sending a message to the
+# ChirpStack MQTT Forwarder.
+#[commands]
+
+  # Example:
+  # reboot=["/usr/bin/reboot"]

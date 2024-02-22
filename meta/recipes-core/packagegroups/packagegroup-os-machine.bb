@@ -18,6 +18,7 @@ MACHINE_EXTRA_RRECOMMENDS ?= ""
 
 RDEPENDS:${PN} = " \
     ${MACHINE_EXTRA_RDEPENDS} \
+    libgpiod \
 "
 
 RRECOMMENDS:${PN} = " \

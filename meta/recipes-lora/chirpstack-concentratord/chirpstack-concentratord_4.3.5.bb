@@ -1,8 +1,9 @@
-require chirpstack-concentratord-v3.inc
+require chirpstack-concentratord-v4.inc
+
 
 SRC_URI += " \
     git://github.com/brocaar/chirpstack-concentratord.git;protocol=https;branch=master \
 "
-SRCREV = "491450db7917c198360b923e93ae899c3445c201"
+SRCREV = "d716f2c7a9deff6334b14be51f81f90ea643b78e"
 
 PR = "r0"
