@@ -20,7 +20,10 @@ fi
 if [[ ! -z "$MIGRATION_CONDITION" ]]; then
     log "$PREFIX" "Checking if origin release (${ORIGIN_VERSION}) is in range for migration ($MIGRATION_CONDITION)"
 
-    VALID=$($VERSION_COMPARE_PATH "${ORIGIN_VERSION}" "$MIGRATION_CONDITION")
+    # Remove anything after the first + from ORIGIN_VERSION as version-compare does not support it and it is not used in the comparison
+    ORIGIN_VERSION_STRIPPED=$(echo $ORIGIN_VERSION | cut -d'+' -f1)
+
+    VALID=$($VERSION_COMPARE_PATH "${ORIGIN_VERSION_STRIPPED}" "$MIGRATION_CONDITION")
     RESULT=$?
 
     if [ $RESULT -eq 0 ]; then
