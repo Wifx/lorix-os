@@ -8,17 +8,15 @@ require mender-client-wifx.inc
 # - DEFAULT_PREFERENCE
 #-------------------------------------------------------------------------------
 
-SRC_URI = "git://github.com/Wifx/mender;protocol=https;branch=3.3.x-wifx \
-    file://0001-fix-Upgrade-openssl-dependency-to-fix-cast-error-in-.patch;patchdir=src/github.com/mendersoftware/mender \
-"
+SRC_URI = "git://github.com/Wifx/mender;protocol=https;branch=3.5.x-wifx"
 
-# Tag: 3.3.0-wifx
-SRCREV = "27558d5b37074b3f5806f54bccfdf7fdf9e8a532"
+# Tag: 3.5.2-wifx
+SRCREV = "7651e314fe7253a7b2f96376c88986524281e319"
 
 # Enable this in Betas, and in branches that cannot carry this major version as
 # default.
 # Downprioritize this recipe in version selections.
-#DEFAULT_PREFERENCE = "-1"
+# DEFAULT_PREFERENCE = "-1"
 
 ################################################################################
 
@@ -27,8 +25,8 @@ SRCREV = "27558d5b37074b3f5806f54bccfdf7fdf9e8a532"
 # releases, we must check the LIC_FILES_CHKSUM.sha256 file, not the LICENSE
 # file.
 LIC_FILES_CHKSUM = " \
-    file://src/github.com/mendersoftware/mender/LICENSE;md5=4cd0c347af5bce5ccf3b3d5439a2ea87 \
-    file://src/github.com/mendersoftware/mender/vendor/github.com/mendersoftware/mender-artifact/LICENSE;md5=fbe9cd162201401ffbb442445efecfdc \
+    file://src/github.com/mendersoftware/mender/LICENSE;md5=30b4554c64108561c0cb1c57e8a044f0 \
+    file://src/github.com/mendersoftware/mender/vendor/github.com/mendersoftware/mender-artifact/LICENSE;md5=b4b4cfdaea6d61aa5793b92efd42e081 \
     file://src/github.com/mendersoftware/mender/vendor/github.com/mendersoftware/openssl/LICENSE;md5=19cbd64715b51267a47bf3750cc6a8a5 \
     file://src/github.com/mendersoftware/mender/vendor/github.com/minio/sha256-simd/LICENSE;md5=3b83ef96387f14655fc854ddc3c6bd57 \
     file://src/github.com/mendersoftware/mender/vendor/github.com/mendersoftware/progressbar/LICENSE;md5=dcac2e5bf81a6fe99b034aaaaf1b2019 \
@@ -43,6 +41,8 @@ LIC_FILES_CHKSUM = " \
     file://src/github.com/mendersoftware/mender/vendor/golang.org/x/term/LICENSE;md5=5d4950ecb7b26d2c5e4e7b4e0dd74707 \
     file://src/github.com/mendersoftware/mender/vendor/github.com/davecgh/go-spew/LICENSE;md5=c06795ed54b2a35ebeeb543cd3a73e56 \
     file://src/github.com/mendersoftware/mender/vendor/github.com/klauspost/pgzip/LICENSE;md5=a6862811c790a468c5d82d68e717c154 \
+    file://src/github.com/mendersoftware/mender/vendor/github.com/klauspost/compress/internal/snapref/LICENSE;md5=b8b79c7d4cda128290b98c6a21f9aac6 \
+    file://src/github.com/mendersoftware/mender/vendor/github.com/klauspost/compress/zstd/internal/xxhash/LICENSE.txt;md5=802da049c92a99b4387d3f3d91b00fa9 \
     file://src/github.com/mendersoftware/mender/vendor/github.com/klauspost/cpuid/v2/LICENSE;md5=00d6f962401947482d082858f7ba2ff3 \
     file://src/github.com/mendersoftware/mender/vendor/github.com/sirupsen/logrus/LICENSE;md5=8dadfef729c08ec4e631c4f6fc5d43a0 \
     file://src/github.com/mendersoftware/mender/vendor/github.com/stretchr/testify/LICENSE;md5=188f01994659f3c0d310612333d2a26f \
@@ -55,5 +55,7 @@ LIC_FILES_CHKSUM = " \
 "
 LICENSE = "Apache-2.0 & BSD-2-Clause & BSD-3-Clause & ISC & MIT & OLDAP-2.8"
 
-DEPENDS += "xz openssl"
-RDEPENDS:${PN} += "liblzma openssl"
+DEPENDS = "xz openssl"
+RDEPENDS:${PN} = "liblzma openssl"
+
+RDEPENDS:${PN} += "mender-artifact-info"
