@@ -14,6 +14,9 @@ log $PREFIX "- Distro: ${TARGET_DISTRO}"
 log $PREFIX "- OS version: ${TARGET_VERSION}"
 log $PREFIX "- Upgradable OS versions: ${TARGET_COMPATIBLE_VERSIONS}"
 
+# Remove anything after the first + from TARGET_VERSION as version-compare does not support it and it's not used in the comparison
+TARGET_VERSION=$(echo $TARGET_VERSION | cut -d'+' -f1)
+
 VALID=$($VERSION_COMPARE_PATH "${ORIGIN_VERSION}" "${UPDATE_COMPATIBLE_VERSIONS}")
 
 RESULT=$?
