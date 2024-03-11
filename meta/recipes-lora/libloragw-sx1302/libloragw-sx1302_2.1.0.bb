@@ -74,6 +74,11 @@ PACKAGES =+ "${PN}-utils ${PN}-tests ${PN}-tests-ext"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
+# libloragw-sx1302 is an empty package and must be treated accordingly
+# otherwise populate_sdk will fail.
+# nothing provides libloragw-sx1302 needed by libloragw-sx1302-dev.<machine>
+ALLOW_EMPTY:${PN} = "1"
+
 FILES:${PN}-utils = "${DIR_UTILS}"
 FILES:${PN}-tests = " \
     ${DIR_TESTS}/reset_lgw.sh \
@@ -83,7 +88,6 @@ FILES:${PN}-tests = " \
 FILES:${PN}-tests-ext = "${DIR_TESTS}"
 
 FILES:${PN}-dev = "${includedir}"
-FILES:${PN}-staticdev = "${libdir}"
 
 INSANE_SKIP:${PN}-utils = "ldflags"
 INSANE_SKIP:${PN}-tests = "ldflags"
