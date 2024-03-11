@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 MAINTAINER Wifx "support@iot.wifx.net"
 
@@ -8,7 +8,7 @@ ARG WORKDIR=/root
 
 # Essentials
 RUN apt-get update
-RUN apt-get install -y gawk wget git-core diffstat unzip texinfo gcc-multilib build-essential chrpath socat libsdl1.2-dev xterm
+RUN apt-get install -y gawk wget git-core diffstat unzip texinfo gcc-multilib build-essential chrpath socat libsdl1.2-dev xterm file
 RUN apt-get clean
 
 # LORIX OS toolchain
