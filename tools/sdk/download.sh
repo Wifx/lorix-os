@@ -9,6 +9,6 @@ fi
 
 VERSION_SDK=$1
 
-SDK_SRC_URL=https://download.wifx.net/lorix-os/${VERSION_SDK}/sdk/lorix-os-glibc-x86_64-wifx-image-os-cortexa5t2hf-neon-vfpv4-lorix-one-512-toolchain-${VERSION_SDK}.sh
+SDK_SRC_URL=https://download.wifx.net/lorix-os/${VERSION_SDK}/sdk/lorix-os-glibc-x86_64-wifx-image-os-cortexa5t2hf-neon-vfpv4-l1-toolchain-${VERSION_SDK}.sh
 
 wget $SDK_SRC_URL -O sdk-installer.sh
