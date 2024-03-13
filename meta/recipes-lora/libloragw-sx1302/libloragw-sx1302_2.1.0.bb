@@ -11,6 +11,7 @@ SRC_URI = "\
     file://library.cfg \
     file://0001-test_loragw_hal_tx-enable-CRC-for-LoRa-TX-packets-by.patch \
     file://0002-test_loragw_hal_tx-add-optional-argument-to-disable-.patch \
+    file://0001-i2c-temp-sensor-back-port-default-i2c-device-i2c-1-f.patch \
     file://reset_lgw.sh \
 "
 SRCREV = "c3d99009556fdfe273c3a53306082ef181333c7a"
