@@ -5,13 +5,13 @@ Subject: [PATCH 2/2] fibocom: add support for SIM hot swap
 
 Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
 ---
- plugins/fibocom/mm-broadband-modem-fibocom.c | 115 +++++++++++++++++++
+ src/plugins/fibocom/mm-broadband-modem-fibocom.c | 115 +++++++++++++++++++
  1 file changed, 115 insertions(+)
 
-diff --git a/plugins/fibocom/mm-broadband-modem-fibocom.c b/plugins/fibocom/mm-broadband-modem-fibocom.c
+diff --git a/src/plugins/fibocom/mm-broadband-modem-fibocom.c b/src/plugins/fibocom/mm-broadband-modem-fibocom.c
 index 9ef27d43..9ee4bbc8 100644
---- a/plugins/fibocom/mm-broadband-modem-fibocom.c
-+++ b/plugins/fibocom/mm-broadband-modem-fibocom.c
+--- a/src/plugins/fibocom/mm-broadband-modem-fibocom.c
++++ b/src/plugins/fibocom/mm-broadband-modem-fibocom.c
 @@ -47,6 +47,11 @@ struct _MMBroadbandModemFibocomPrivate {
      FeatureSupport  gtrndis_support;
      GRegex         *sim_ready_regex;
