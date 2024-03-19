@@ -27,7 +27,7 @@ inherit gnomebase gettext update-rc.d systemd gobject-introspection gtk-doc upda
 SRC_URI = " \
     ${GNOME_MIRROR}/NetworkManager/${@gnome_verdir("${PV}")}/NetworkManager-${PV}.tar.xz \
 "
-SRC_URI[sha256sum] = "aee7e057bc2cca5dab84e41f15f1da8b795eb290747b04cbeee822bad9e9fc03"
+SRC_URI[sha256sum] = "722649e25362693b334371473802a729b0ec9ee283375096905f868808e74068"
 
 S = "${WORKDIR}/NetworkManager-${PV}"
 
