@@ -11,6 +11,7 @@ SRC_URI = "\
     file://library.cfg \
     file://0001-test_loragw_hal_tx-enable-CRC-for-LoRa-TX-packets-by.patch \
     file://0002-test_loragw_hal_tx-add-optional-argument-to-disable-.patch \
+    file://0001-i2c-temp-sensor-back-port-default-i2c-device-i2c-1-f.patch \
     file://reset_lgw.sh \
 "
 SRCREV = "c3d99009556fdfe273c3a53306082ef181333c7a"
@@ -74,6 +75,11 @@ PACKAGES =+ "${PN}-utils ${PN}-tests ${PN}-tests-ext"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
+# libloragw-sx1302 is an empty package and must be treated accordingly
+# otherwise populate_sdk will fail.
+# nothing provides libloragw-sx1302 needed by libloragw-sx1302-dev.<machine>
+ALLOW_EMPTY:${PN} = "1"
+
 FILES:${PN}-utils = "${DIR_UTILS}"
 FILES:${PN}-tests = " \
     ${DIR_TESTS}/reset_lgw.sh \
@@ -83,7 +89,6 @@ FILES:${PN}-tests = " \
 FILES:${PN}-tests-ext = "${DIR_TESTS}"
 
 FILES:${PN}-dev = "${includedir}"
-FILES:${PN}-staticdev = "${libdir}"
 
 INSANE_SKIP:${PN}-utils = "ldflags"
 INSANE_SKIP:${PN}-tests = "ldflags"
