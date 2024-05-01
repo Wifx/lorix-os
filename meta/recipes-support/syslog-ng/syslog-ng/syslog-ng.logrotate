@@ -5,7 +5,7 @@
 	notifempty
 	nodateext
 	maxsize 100k
-	rotate 5
+	rotate 2
 	sharedscripts
 	postrotate
 		/sbin/rc-service syslog-ng reload >/dev/null
@@ -20,7 +20,7 @@
 	notifempty
 	nodateext
 	maxsize 100k
-	rotate 3
+	rotate 1
 	sharedscripts
 	postrotate
 		/sbin/rc-service syslog-ng reload >/dev/null
