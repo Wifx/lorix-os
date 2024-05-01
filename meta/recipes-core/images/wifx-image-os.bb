@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
+# Copyright (c) 2019, Wifx Sàrl <info@wifx.net>
 # All rights reserved.
 
 DESCRIPTION = "A complete image supporting all the material to have a OS system without dev/debug tools"
