@@ -10,6 +10,10 @@ LIC_FILES_CHKSUM = "file://Licenses/README;md5=30503fd321432fc713238f582193b78e"
 SRCREV = "f88b6facb87dc4a52f1630eb9d858c0f54c6628e"
 PV = "v2018.09"
 
-SRC_URI = "git://github.com/u-boot/u-boot.git;protocol=https;branch=master"
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
+SRC_URI = " \ 
+    git://github.com/u-boot/u-boot.git;protocol=https;branch=master \
+    ${@bb.utils.contains('TCLIBC', 'musl', 'file://0001-Fix-redundant-YYLTYPE-yylloc-declaration.patch', '', d)} \
+"
 
 S = "${WORKDIR}/git"
