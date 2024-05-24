@@ -7,8 +7,6 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=d166218d6256cab6058ea8e31a8b66e8"
 
 SRC_URI = " \
     file://LICENSE \
-    file://backhaul.nmconnection \
-    file://service.nmconnection \
     file://NetworkManager.state \
 "
 

@@ -27,5 +27,3 @@ do_install() {
     install -m 0600 ${WORKDIR}/backhaul.nmconnection ${D}${sysconfdir}/NetworkManager/system-connections
     install -m 0600 ${WORKDIR}/wwan.nmconnection ${D}${sysconfdir}/NetworkManager/system-connections
 }
-
-PACKAGE_ARCH = "${MACHINE_ARCH}"
