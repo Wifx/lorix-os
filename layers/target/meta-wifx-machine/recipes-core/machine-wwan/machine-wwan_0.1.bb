@@ -7,8 +7,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=d166218d6256cab6058ea8e31a8b66e8"
 
 SRC_URI = " \
     file://LICENSE \
-    file://cellular.initd \
-    file://cellular.nmconnection \
+    file://wwan.initd \
     file://78-mm-fibocom-setup-ecm.rules \
     file://fibocom-mc610-setup-ecm.sh \
 "
@@ -25,12 +24,12 @@ RDEPENDS:${PN} += "bash networkmanager modemmanager"
 
 inherit openrc
 
-OPENRC_SERVICE:${PN} = "cellular"
-OPENRC_RUNLEVEL:cellular = "boot"
+OPENRC_SERVICE:${PN} = "wwan"
+OPENRC_RUNLEVEL:wwan = "boot"
 
 do_install:l1() {
     # Install OpenRC script
-    openrc_install_script ${WORKDIR}/cellular.initd
+    openrc_install_script ${WORKDIR}/wwan.initd
 
     # Install script called by udev
     install -d ${D}${nonarch_base_libdir}/os/wwan
@@ -41,10 +40,6 @@ do_install:l1() {
     install -m 0644 ${WORKDIR}/78-mm-fibocom-setup-ecm.rules ${D}/${nonarch_base_libdir}/udev/rules.d
     sed -i -e 's,@SCRIPT@,${nonarch_base_libdir}/os/wwan/fibocom-mc610-setup-ecm.sh,g' \
            ${D}/${nonarch_base_libdir}/udev/rules.d/78-mm-fibocom-setup-ecm.rules
-
-    # Install NetworkManager default connections and main configuration file
-    install -d ${D}${sysconfdir}/NetworkManager/system-connections
-    install -m 0600 ${WORKDIR}/cellular.nmconnection ${D}${sysconfdir}/NetworkManager/system-connections
 }
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"

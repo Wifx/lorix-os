@@ -23,11 +23,6 @@ do_compile[noexec] = "1"
 RDEPENDS:${PN} += "bash networkmanager ${@bb.utils.contains('MACHINE_FEATURES','wwan','machine-wwan modemmanager','',d)}"
 
 do_install() {
-    # Install default connections and main configuration file
-    install -d ${D}${sysconfdir}/NetworkManager/system-connections
-    install -m 0600 ${WORKDIR}/service.nmconnection ${D}${sysconfdir}/NetworkManager/system-connections
-    install -m 0600 ${WORKDIR}/backhaul.nmconnection ${D}${sysconfdir}/NetworkManager/system-connections
-
     # Install general state parameters
     install -m 700 -d ${D}/var/lib/NetworkManager
     install -m 644 ${WORKDIR}/NetworkManager.state ${D}/var/lib/NetworkManager/NetworkManager.state
