@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [LOR-427] Add wpa-supplicant for 802.1x support
+- [LOR-584] Update Manager to v0.15.3
+- [LOR-585] Update Manager GUI to v0.16.4
 
 ## [1.6.2] - 2023-11-27
 
