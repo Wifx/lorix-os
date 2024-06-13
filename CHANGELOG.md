@@ -13,8 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- [LOR-584] Update Manager to v0.15.3
-- [LOR-585] Update Manager GUI to v0.16.4
+- [LOR-584] Update Manager to v0.17.0
+- [LOR-585] Update Manager GUI to v0.17.0
 - [LOR-586] Disable go dynamic linking
 
 ## [1.6.2] - 2023-11-27
