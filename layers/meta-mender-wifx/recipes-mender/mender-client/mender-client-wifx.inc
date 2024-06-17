@@ -1,7 +1,7 @@
 # Copyright (c) 2022, Wifx Sarl <info@iot.wifx.net>
 # All rights reserved.
 
-require recipes-mender/mender-client/mender-client.inc
+require recipes-mender/mender-client/mender-client-go.inc
 
 RPROVIDES:${PN} += "virtual/updater"
 
