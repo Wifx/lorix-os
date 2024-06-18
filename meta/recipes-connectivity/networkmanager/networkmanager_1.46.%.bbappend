@@ -1,3 +1,6 @@
+# Copyright (c) 2022, Wifx Sarl <info@iot.wifx.net>
+# All rights reserved.
+
 SRC_URI += " \
     file://interfaces.networkmanager \
     file://00-no-systemd-resolved.conf \
@@ -5,10 +8,12 @@ SRC_URI += " \
     file://20-connectivity.conf \
 "
 
+inherit update-alternatives
+
 ALTERNATIVE_PRIORITY = "60"
-ALTERNATIVE:${PN} = "net.interfaces"
-ALTERNATIVE_LINK_NAME[net.interfaces] = "${sysconfdir}/network/interfaces"
-ALTERNATIVE_TARGET[net.interfaces] = "${sysconfdir}/network/alternatives/interfaces.networkmanager"
+ALTERNATIVE:${PN} = "net-interfaces"
+ALTERNATIVE_LINK_NAME[net-interfaces] = "${sysconfdir}/network/interfaces"
+ALTERNATIVE_TARGET[net-interfaces] = "${sysconfdir}/network/interfaces.networkmanager"
 
 PACKAGECONFIG ?= "nss ifupdown dnsmasq nmcli modemmanager \
     ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'systemd', bb.utils.contains('DISTRO_FEATURES', 'x11', 'consolekit', '', d), d)} \
@@ -18,9 +23,9 @@ PACKAGECONFIG ?= "nss ifupdown dnsmasq nmcli modemmanager \
 
 do_install:append() {
     # Add the ifupdown atlernative file
-    install -d ${D}${sysconfdir}/network/alternatives
-    install -m 0644 ${WORKDIR}/interfaces.networkmanager ${D}${sysconfdir}/network/alternatives/interfaces.networkmanager
-
+    install -d ${D}${sysconfdir}/network
+    install -m 0644 ${WORKDIR}/interfaces.networkmanager ${D}${sysconfdir}/network/interfaces.networkmanager
+    
     # Install default configuration files
     install -d ${D}${sysconfdir}/NetworkManager/conf.d
     install -m 0644 ${WORKDIR}/00-no-systemd-resolved.conf ${D}${sysconfdir}/NetworkManager/conf.d/00-no-systemd-resolved.conf
@@ -32,3 +37,5 @@ do_install:append() {
         sed -e '/ENV{DEVTYPE}=="gadget"\,\ ENV{NM_UNMANAGED}="1"/ s/^#*/#/' -i ${D}/lib/udev/rules.d/85-nm-unmanaged.rules
     fi
 }
+
+CONFFILES:${PN} = "${sysconfdir}/network/interfaces.networkmanager"
