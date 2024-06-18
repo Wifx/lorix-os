@@ -7,7 +7,6 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=d166218d6256cab6058ea8e31a8b66e8"
 
 SRC_URI = " \
     file://LICENSE \
-    file://wwan.initd \
     file://78-mm-fibocom-setup-ecm.rules \
     file://fibocom-mc610-setup-ecm.sh \
 "
@@ -22,15 +21,7 @@ do_compile[noexec] = "1"
 
 RDEPENDS:${PN} += "bash networkmanager modemmanager"
 
-inherit openrc
-
-OPENRC_SERVICE:${PN} = "wwan"
-OPENRC_RUNLEVEL:wwan = "boot"
-
 do_install:l1() {
-    # Install OpenRC script
-    openrc_install_script ${WORKDIR}/wwan.initd
-
     # Install script called by udev
     install -d ${D}${nonarch_base_libdir}/os/wwan
     install -m 0755 ${WORKDIR}/fibocom-mc610-setup-ecm.sh ${D}${nonarch_base_libdir}/os/wwan
@@ -45,6 +36,5 @@ do_install:l1() {
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 FILES:${PN} += " \
-    ${OPENRC_CONFDIR}/* \
     ${nonarch_base_libdir}/os/wwan/* \
 "
