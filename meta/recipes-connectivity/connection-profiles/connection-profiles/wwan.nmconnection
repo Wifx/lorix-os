@@ -1,5 +1,5 @@
 [connection]
-id=cellular
+id=wwan
 uuid=5222a507-9f7c-44fb-86e7-c7843c4e433a
 type=gsm
 interface-name=ttyUSB0

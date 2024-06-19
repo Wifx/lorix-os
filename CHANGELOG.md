@@ -20,6 +20,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Update machine-info to 0.6.2 (Wifx L1 4G support)
  - Update ethtool to 6.7
  
+## [1.6.3] - 2024-06-10
+
+### Changed
+
+- [LOR-584] Update Manager to v0.17.0
+- [LOR-585] Update Manager GUI to v0.17.0
+- [LOR-586] Disable go dynamic linking
+
 ## [1.6.2] - 2023-11-27
 
 ### Changed

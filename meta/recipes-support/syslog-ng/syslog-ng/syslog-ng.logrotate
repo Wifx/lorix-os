@@ -1,18 +1,6 @@
+/var/log-volatile/dmesg
 /var/log-volatile/*.log
 /var/log-persistent/*.log
-{
-	missingok
-	notifempty
-	nodateext
-	maxsize 100k
-	rotate 2
-	sharedscripts
-	postrotate
-		/sbin/rc-service syslog-ng reload >/dev/null
-	endscript
-}
-
-/var/log-volatile/dmesg
 /var/log-volatile/*/*.log
 /var/log-persistent/*/*.log
 {
@@ -20,7 +8,7 @@
 	notifempty
 	nodateext
 	maxsize 100k
-	rotate 1
+	rotate 2
 	sharedscripts
 	postrotate
 		/sbin/rc-service syslog-ng reload >/dev/null
