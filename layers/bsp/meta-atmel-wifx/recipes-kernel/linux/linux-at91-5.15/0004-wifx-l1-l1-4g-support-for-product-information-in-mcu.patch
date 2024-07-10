@@ -1,0 +1,916 @@
+From 874d0610254e74dc289847c55af1ba59dd8e29d7 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Mon, 8 Jul 2024 07:21:55 +0000
+Subject: [PATCH 4/4] wifx l1/l1 4g: support for product information in mcu
+ slots, sysfs API v3
+
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
+---
+ drivers/mfd/wgw_ec_dev.c        | 365 +++++++++++++++++++++++++-------
+ drivers/mfd/wgw_ec_sysfs.c      | 161 ++++++--------
+ include/linux/mfd/wgw-ec/core.h |  72 +++++--
+ 3 files changed, 402 insertions(+), 196 deletions(-)
+
+diff --git a/drivers/mfd/wgw_ec_dev.c b/drivers/mfd/wgw_ec_dev.c
+index bb881834d593..af8d2eac4a27 100644
+--- a/drivers/mfd/wgw_ec_dev.c
++++ b/drivers/mfd/wgw_ec_dev.c
+@@ -80,6 +80,50 @@ static const char *unknown_str = "unknown";
+ static const char *undefined_str = "undefined";
+ static const char *error_str = "error";
+ 
++static const char *mainboard_model_strs[] = { "wgw-l01-base", "wgw-l02-base",
++					      "wgw-l02-base-y1",
++					      "wgw-l02-base-4g" };
++int mainboard_ref_index(enum wgw_ec_mainboard_ref mb_ref)
++{
++	switch (mb_ref) {
++	case WGW_EC_MB_WGW_L01_BASE:
++	case WGW_EC_MB_WGW_L02_BASE_L1:
++	case WGW_EC_MB_WGW_L02_BASE_Y1:
++	case WGW_EC_MB_WGW_L02_BASE_L1_4G:
++		return (int)mb_ref;
++	default:
++		return -1;
++	}
++}
++const char *mainboard_ref_str(enum wgw_ec_mainboard_ref mb_ref)
++{
++	int index;
++	if ((index = mainboard_ref_index(mb_ref)) < 0) {
++		return unknown_str;
++	}
++	return mainboard_model_strs[index];
++}
++
++static const char *mainboard_variant_strs[] = { "8XX", "9XX" };
++int mainboard_variant_index(enum wgw_ec_mainboard_variant mb_variant)
++{
++	switch (mb_variant) {
++	case WGW_EC_MB_VARIANT_8XX:
++	case WGW_EC_MB_VARIANT_9XX:
++		return (int)mb_variant;
++	default:
++		return -1;
++	}
++}
++const char *mainboard_variant_str(enum wgw_ec_mainboard_variant mb_variant)
++{
++	int index;
++	if ((index = mainboard_variant_index(mb_variant)) < 0) {
++		return unknown_str;
++	}
++	return mainboard_variant_strs[index];
++}
++
+ static const char *model_strs[] = { "lorix-one", "wifx-l1", "wifx-y1",
+ 				    "wifx-l1-4g" };
+ static const char *model_pretty_strs[] = { "LORIX One", "Wifx L1", "Wifx Y1",
+@@ -115,23 +159,46 @@ const char *model_pretty_str(enum wgw_ec_model model)
+ 	return model_pretty_strs[index];
+ }
+ 
+-static const char *variant_strs[] = { "standard" };
+-int variant_index(enum wgw_ec_variant variant)
++int model_variant_index(enum wgw_ec_model product_model, u8 product_variant)
+ {
+-	switch (variant) {
+-	case WGW_EC_V_STANDARD:
+-		return (int)variant;
++	switch (product_model) {
++	case WGW_EC_M_WIFX_L1:
++		if (product_variant <= 1) {
++			return product_variant;
++		}
++		break;
++	case WGW_EC_M_WIFX_L1_4G:
++		if (product_variant <= 2) {
++			return product_variant;
++		}
++		break;
++	case WGW_EC_M_LORIX_ONE:
++	case WGW_EC_M_WIFX_Y1:
+ 	default:
+-		return -1;
++		break;
+ 	}
++	return -1;
+ }
+-const char *variant_str(enum wgw_ec_variant variant)
++
++const char *model_variant_str(enum wgw_ec_model product_model,
++			      u8 product_variant)
+ {
++	static const char *model_l1_variant_strs[] = { "8XX", "9XX" };
++	static const char *model_l1_4g_variant_strs[] = { "8XX-EU", "9XX-AU",
++							  "9XX-US" };
++
+ 	int index;
+-	if ((index = variant_index(variant)) < 0) {
++	if ((index = model_variant_index(product_model, product_variant)) < 0) {
++		return unknown_str;
++	}
++	switch (product_model) {
++	case WGW_EC_M_WIFX_L1:
++		return model_l1_variant_strs[product_variant];
++	case WGW_EC_M_WIFX_L1_4G:
++		return model_l1_4g_variant_strs[product_variant];
++	default:
+ 		return unknown_str;
+ 	}
+-	return variant_strs[index];
+ }
+ 
+ static const char *frequency_strs[] = { "863-870", "902-928" };
+@@ -264,48 +331,105 @@ static int mem_slot_get(struct wgw_ec_dev *ec, u8 slot_index,
+ 	return slot->length;
+ }
+ 
+-static int hw_info_get(struct wgw_ec_dev *ec, struct wgw_ec_hw_info *hw_info)
++int mem_slot_get_str(struct wgw_ec_dev *ec, u8 slot_index,
++		     struct wgw_ec_slot_str *slot_str)
+ {
+-	struct wgw_ec_device *ec_dev = ec->ec_dev;
+-	struct wgw_ec_reg reg;
++	int ret;
+ 	struct wgw_ec_memory_slot slot;
+-	int32_t ret;
+ 
+-	ret = ec_dev->read_block(ec_dev, WGW_EC_REG_HW_INFO, reg.data);
++	ret = mem_slot_get(ec, slot_index, &slot);
+ 	if (ret < 0) {
+-		dev_err(ec->dev, "failed to read hw info (%d)\n", ret);
++		slot_str->state = WGW_EC_MEM_SLOT_STATE_ERROR;
++		strcpy(slot_str->data, error_str);
+ 		return ret;
+ 	}
+-	if (ret != sizeof(reg.hw_info)) {
++	if (ret > WGW_EC_MEM_SLOT_STR_SIZE) {
++		slot_str->state = WGW_EC_MEM_SLOT_STATE_ERROR;
++		strcpy(slot_str->data, error_str);
+ 		dev_err(ec->dev,
+-			"failed to read hw info register (wrong returned size)\n");
++			"string in slot[%d] read from device is too long (%d)\n",
++			slot_index, ret);
+ 		return -EIO;
+ 	}
+-	hw_info->version = reg.hw_info.version;
+-	hw_version_str(&reg.hw_info.version, hw_info->version_str,
+-		       WGW_EC_HW_VERSION_SIZE);
++	slot_str->state = 0;
++	if (slot.flags & WGW_EC_MEM_SLOT_OTP) {
++		slot_str->state |= WGW_EC_MEM_SLOT_STATE_OTP;
++	}
++	if (!(slot.flags & WGW_EC_MEM_SLOT_SET)) {
++		// slot is not set
++		strcpy(slot_str->data, undefined_str);
++	} else {
++		memcpy(slot_str->data, slot.data, slot.length);
++		// convert to null terminated string
++		slot_str->data[slot.length] = '\0';
++		slot_str->state |= WGW_EC_MEM_SLOT_STATE_SET;
++	}
++	return 0;
++}
+ 
+-	// if model is Wifx L1, it could be also Wifx L1 4G
+-	if (reg.hw_info.model == WGW_EC_M_WIFX_L1) {
+-		ret = mem_slot_get(ec, 1, &slot);
+-		// if error retrieving model override, we don't override base model
+-		if (ret >= 0 && (slot.flags & WGW_EC_SERIAL_SET) &&
+-		    slot.length == 1) {
+-			if (slot.data[0] == WGW_EC_M_WIFX_L1_4G) {
+-				reg.hw_info.model = WGW_EC_M_WIFX_L1_4G;
+-			}
+-		}
++int mem_slot_get_u8(struct wgw_ec_dev *ec, u8 slot_index,
++		    struct wgw_ec_slot_u8 *slot_u8)
++{
++	int ret;
++	struct wgw_ec_memory_slot slot;
++
++	ret = mem_slot_get(ec, slot_index, &slot);
++	if (ret < 0) {
++		slot_u8->state = WGW_EC_MEM_SLOT_STATE_ERROR;
++		return ret;
++	}
++
++	if (ret > 1) {
++		dev_err(ec->dev,
++			"data in slot[%d] is too big to fit in a u8 (%d)\n",
++			slot_index, ret);
++		return -EIO;
+ 	}
+ 
+-	hw_info->model.id = model_index(reg.hw_info.model);
+-	hw_info->model.str = model_str(reg.hw_info.model);
+-	hw_info->variant.id = variant_index(reg.hw_info.variant);
+-	hw_info->variant.str = variant_str(reg.hw_info.variant);
+-	hw_info->frequency.id = frequency_index(reg.hw_info.frequency);
+-	hw_info->frequency.str = frequency_str(reg.hw_info.frequency);
++	// convert standard slot to u8 slot
++	slot_u8->state = slot.flags;
++	slot_u8->value = slot.data[0];
+ 	return 0;
+ }
+ 
++int product_serial_get(struct wgw_ec_dev *ec, struct wgw_ec_slot_str *serial)
++{
++	int ret = mem_slot_get_str(ec, 0, serial);
++	if (ret < 0) {
++		dev_err(ec->dev, "error retrieving product serial (%d)\n", ret);
++	}
++	return ret;
++}
++
++int product_model_get(struct wgw_ec_dev *ec, struct wgw_ec_slot_u8 *model)
++{
++	int ret = mem_slot_get_u8(ec, 1, model);
++	if (ret < 0) {
++		dev_err(ec->dev, "error retrieving product model (%d)\n", ret);
++	}
++	return ret;
++}
++
++int product_version_get(struct wgw_ec_dev *ec, struct wgw_ec_slot_str *version)
++{
++	int ret = mem_slot_get_str(ec, 2, version);
++	if (ret < 0) {
++		dev_err(ec->dev, "error retrieving product version (%d)\n",
++			ret);
++	}
++	return ret;
++}
++
++int product_variant_get(struct wgw_ec_dev *ec, struct wgw_ec_slot_u8 *variant)
++{
++	int ret = mem_slot_get_u8(ec, 3, variant);
++	if (ret < 0) {
++		dev_err(ec->dev, "error retrieving product variant (%d)\n",
++			ret);
++	}
++	return ret;
++}
++
+ static int fw_info_get(struct wgw_ec_dev *ec, struct wgw_ec_fw_info *fw_info)
+ {
+ 	struct wgw_ec_device *ec_dev = ec->ec_dev;
+@@ -364,38 +488,56 @@ static int fw_info_get(struct wgw_ec_dev *ec, struct wgw_ec_fw_info *fw_info)
+ 	return 0;
+ }
+ 
+-int serial_get(struct wgw_ec_dev *ec, struct wgw_ec_serial *serial)
++static int mainboard_info_get(struct wgw_ec_dev *ec,
++			      struct wgw_ec_mainboard_info *mb_info)
+ {
+-	int ret;
+-	struct wgw_ec_memory_slot slot;
++	struct wgw_ec_device *ec_dev = ec->ec_dev;
++	struct wgw_ec_reg reg;
++	//struct wgw_ec_memory_slot slot;
++	int32_t ret = 0;
+ 
+-	ret = mem_slot_get(ec, 0, &slot);
++	ret = ec_dev->read_block(ec_dev, WGW_EC_REG_HW_INFO, reg.data);
+ 	if (ret < 0) {
+-		serial->state = WGW_EC_SERIAL_ERROR;
+-		strcpy(serial->data, error_str);
++		dev_err(ec->dev, "failed to read hw info (%d)\n", ret);
+ 		return ret;
+ 	}
+-	if (ret >= WGW_EC_HW_SN_SIZE) {
+-		serial->state = WGW_EC_SERIAL_ERROR;
+-		strcpy(serial->data, error_str);
+-		dev_err(ec->dev, "serial read from device is too long (%d)\n",
+-			ret);
++	if (ret != sizeof(reg.hw_info)) {
++		dev_err(ec->dev,
++			"failed to read hw info register (wrong returned size)\n");
+ 		return -EIO;
+ 	}
+-	serial->state = 0;
+-	if (slot.flags & WGW_EC_MEM_SLOT_OTP) {
+-		serial->state |= WGW_EC_SERIAL_OTP;
++	hw_version_str(&reg.hw_info.version, mb_info->version_str,
++		       WGW_EC_HW_VERSION_SIZE);
++
++	// retrieve mainboard model
++	mb_info->model.id = mainboard_ref_index(reg.hw_info.model);
++	mb_info->model.str = mainboard_ref_str(reg.hw_info.model);
++
++	switch (mb_info->model.id) {
++	case WGW_EC_MB_WGW_L02_BASE_L1:
++	case WGW_EC_MB_WGW_L02_BASE_L1_4G:
++		mb_info->base_model.id = WGW_EC_MB_WGW_L02_BASE_L1;
++		mb_info->base_model.str =
++			mainboard_ref_str(mb_info->base_model.id);
++		break;
++	default:
++		dev_err(ec->dev, "mainboard model '%s' (%d) is not supported\n",
++			mainboard_ref_str(mb_info->model.id),
++			mb_info->model.id);
++		return -EIO;
+ 	}
+-	if (!(slot.flags & WGW_EC_MEM_SLOT_SET)) {
+-		// slot is not set
+-		strcpy(serial->data, undefined_str);
+-	} else {
+-		memcpy(serial->data, slot.data, slot.length);
+-		// convert to null terminated string
+-		serial->data[slot.length] = '\0';
+-		serial->state |= WGW_EC_SERIAL_SET;
++
++	// Legacy stuff, variant is derived from frequency information
++	mb_info->variant.id = mainboard_variant_index(reg.hw_info.frequency);
++	mb_info->variant.str = mainboard_variant_str(reg.hw_info.frequency);
++
++	// retrieve firmware info
++	ret = fw_info_get(ec, &mb_info->fw);
++	if (ret < 0) {
++		dev_err(ec->dev, "failed to read firmware info (%d)\n", ret);
++		return ret;
+ 	}
+-	return 0;
++	return ret;
+ }
+ 
+ int wgw_ec_boot_state_get(struct wgw_ec_dev *ec, u8 *boot_state)
+@@ -429,6 +571,8 @@ static int fetch_cache_info(struct wgw_ec_dev *ec)
+ 	struct wgw_ec_info *cache = &ec->cache_info;
+ 	struct wgw_ec_device *ec_dev = ec->ec_dev;
+ 	struct device *dev = ec->dev;
++	struct wgw_ec_slot_str slot_str;
++	struct wgw_ec_slot_u8 slot_u8;
+ 	u8 buffer[32];
+ 	int ret;
+ 
+@@ -450,19 +594,72 @@ static int fetch_cache_info(struct wgw_ec_dev *ec)
+ 	}
+ 
+ 	/* Populate the cache */
+-	ret = hw_info_get(ec, &cache->hw_info);
++	ret = mainboard_info_get(ec, &cache->mainboard);
+ 	if (ret < 0) {
+-		dev_err(dev, "failed to read hardware info (%d)\n", ret);
++		dev_err(dev, "failed to read mainboard info (%d)\n", ret);
+ 		goto failure;
+ 	}
+ 
+-	ret = fw_info_get(ec, &cache->fw_info);
++	// Determine product model
++	ret = product_model_get(ec, &slot_u8);
++	if (ret < 0 || slot_u8.state < WGW_EC_MEM_SLOT_STATE_SET) {
++		if (cache->mainboard.model.id == WGW_EC_MB_WGW_L01_BASE) {
++			// the product is a Wifx L1, possibly legacy (no product model written in slot)
++			cache->product.model.id = WGW_EC_M_WIFX_L1;
++		} else {
++			dev_err(dev,
++				"could not determine product model, corrupted or undefined\n");
++			ret = -EIO;
++			goto failure;
++		}
++	} else {
++		cache->product.model.id = slot_u8.value;
++	}
++	cache->product.model.str = model_str(cache->product.model.id);
++
++	// Determine product variant
++	ret = product_variant_get(ec, &slot_u8);
++	if (ret < 0 || slot_u8.state < WGW_EC_MEM_SLOT_STATE_SET) {
++		if (cache->product.model.id == WGW_EC_M_WIFX_L1) {
++			// the product is a Wifx L1, possibly legacy (no product variant written in slot)
++			cache->product.variant.id = cache->mainboard.variant.id;
++		} else {
++			dev_err(dev,
++				"could not determine product variant, corrupted or undefined\n");
++			ret = -EIO;
++			goto failure;
++		}
++	} else {
++		cache->product.variant.id = slot_u8.value;
++	}
++	ret = model_variant_index(cache->product.model.id,
++				  cache->product.variant.id);
+ 	if (ret < 0) {
+-		dev_err(dev, "failed to read firmware info (%d)\n", ret);
++		dev_err(dev,
++			"could not determine or unknown product variant (%d)\n",
++			cache->product.variant.id);
+ 		goto failure;
+ 	}
++	cache->product.variant.str = model_variant_str(
++		cache->product.model.id, cache->product.variant.id);
++
++	// Determine product version
++	ret = product_version_get(ec, &slot_str);
++	if (ret < 0) {
++		if (cache->product.model.id == WGW_EC_M_WIFX_L1) {
++			strcpy(cache->product.version_str,
++			       cache->mainboard.version_str);
++		} else {
++			dev_err(dev, "failed to read product version (%d)\n",
++				ret);
++			goto failure;
++		}
++	} else {
++		strcpy(cache->product.version_str, slot_str.data);
++	}
+ 
+-	ret = serial_get(ec, &cache->serial);
++	// Determine product serial
++	ret = product_serial_get(ec, &cache->product.serial);
+ 	if (ret < 0) {
+ 		dev_err(dev, "failed to read serial (%d)\n", ret);
+ 		goto failure;
+@@ -491,39 +688,44 @@ static int display_cache_info(struct wgw_ec_dev *ec)
+ 	mutex_lock(&ec->cache_lock);
+ 
+ 	/* Verify the product is supported */
+-	switch (cache->hw_info.model.id) {
++	switch (cache->product.model.id) {
+ 	case WGW_EC_M_WIFX_L1:
+ 	case WGW_EC_M_WIFX_L1_4G:
+ 		break;
+ 	default:
+ 		dev_err(dev, "Unknown product detected (id=%d)\n",
+-			cache->hw_info.model.id);
++			cache->mainboard.model.id);
+ 		goto failure;
+ 	}
+ 
+-	if (cache->hw_info.variant.id < 0 || cache->hw_info.frequency.id < 0) {
++	if (cache->mainboard.variant.id < 0) {
+ 		dev_err(dev,
+-			"Product model, variant and/or frequency not detected or unknown\n");
++			"Mainboard model and/or variant not detected or unknown\n");
+ 		goto failure;
+ 	}
+-	dev_info(dev, "Model: %s (variant=%s, frequency=%s)\n",
+-		 model_pretty_str((enum wgw_ec_model)cache->hw_info.model.id),
+-		 cache->hw_info.variant.str, cache->hw_info.frequency.str);
+-	if (!cache->serial.state) {
+-		dev_warn(dev, "Serial: %s\n", cache->serial.data);
+-	} else if (cache->serial.state < 0) {
+-		dev_err(dev, " Serial: %s\n", cache->serial.data);
++
++	dev_info(dev, "Found Wifx product, model: %s, variant: %s\n",
++		 model_pretty_str((enum wgw_ec_model)cache->product.model.id),
++		 cache->product.variant.str);
++	if (!cache->product.serial.state) {
++		dev_warn(dev, "Serial: %s\n", cache->product.serial.data);
++	} else if (cache->product.serial.state < 0) {
++		dev_err(dev, " Serial: %s\n", cache->product.serial.data);
+ 	} else {
+-		dev_info(dev, "Serial: %s\n", cache->serial.data);
+-		if (!(cache->serial.state & WGW_EC_SERIAL_OTP)) {
++		dev_info(dev, "Serial: %s\n", cache->product.serial.data);
++		if (!(cache->product.serial.state &
++		      WGW_EC_MEM_SLOT_STATE_OTP)) {
+ 			dev_warn(dev, "serial is not locked\n");
+-		} else if (!(cache->serial.state & WGW_EC_SERIAL_SET)) {
++		} else if (!(cache->product.serial.state &
++			     WGW_EC_MEM_SLOT_STATE_SET)) {
+ 			dev_err(dev, "serial is locked with null value\n");
+ 		}
+ 	}
+-	dev_info(dev, "HW ver: %s\n", cache->hw_info.version_str);
+-	dev_info(dev, "FW ver: %s (%s) [%s]\n", cache->fw_info.version_str,
+-		 cache->fw_info.commit_hash, cache->fw_info.commit_date);
++	dev_info(dev, "Product version: %s\n", cache->product.version_str);
++	dev_info(dev, "Firmware version: %s (%s) [%s]\n",
++		 cache->mainboard.fw.version_str,
++		 cache->mainboard.fw.commit_hash,
++		 cache->mainboard.fw.commit_date);
+ 
+ 	/* Display boot state */
+ 	switch (cache->boot_state) {
+@@ -542,6 +744,7 @@ static int display_cache_info(struct wgw_ec_dev *ec)
+ 			return ret;
+ 		break;
+ 	}
++
+ 	mutex_unlock(&ec->cache_lock);
+ 	return 0;
+ 
+diff --git a/drivers/mfd/wgw_ec_sysfs.c b/drivers/mfd/wgw_ec_sysfs.c
+index 7153647f7e78..f01dcbe0ccad 100644
+--- a/drivers/mfd/wgw_ec_sysfs.c
++++ b/drivers/mfd/wgw_ec_sysfs.c
+@@ -14,9 +14,9 @@
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+  */
+-#include <linux/init.h>
+ #include <linux/device.h>
+ #include <linux/fs.h>
++#include <linux/init.h>
+ #include <linux/miscdevice.h>
+ #include <linux/module.h>
+ #include <linux/notifier.h>
+@@ -33,19 +33,7 @@
+ static ssize_t dev_version_show(struct device *dev,
+ 				struct device_attribute *attr, char *buf)
+ {
+-	return sprintf(buf, "%s\n", "2.0.0");
+-}
+-
+-static ssize_t mem_ram_show(struct device *dev, struct device_attribute *attr,
+-			    char *buf)
+-{
+-	return sprintf(buf, "%d\n", 256 * 1024);
+-}
+-
+-static ssize_t mem_nand_show(struct device *dev, struct device_attribute *attr,
+-			     char *buf)
+-{
+-	return sprintf(buf, "%d\n", 1024 * 1024);
++	return sprintf(buf, "%s\n", "3.0.0");
+ }
+ 
+ static ssize_t product_model_show(struct device *dev,
+@@ -56,7 +44,7 @@ static ssize_t product_model_show(struct device *dev,
+ 	ssize_t len;
+ 
+ 	mutex_lock(&ec->cache_lock);
+-	len = sprintf(buf, "%s\n", cache->hw_info.model.str);
++	len = sprintf(buf, "%s\n", cache->product.model.str);
+ 	mutex_unlock(&ec->cache_lock);
+ 	return len;
+ }
+@@ -69,7 +57,7 @@ static ssize_t product_model_id_show(struct device *dev,
+ 	u8 model_id;
+ 
+ 	mutex_lock(&ec->cache_lock);
+-	model_id = cache->hw_info.model.id;
++	model_id = cache->product.model.id;
+ 	mutex_unlock(&ec->cache_lock);
+ 
+ 	return sprintf(buf, "%d\n", model_id);
+@@ -83,7 +71,7 @@ static ssize_t product_variant_show(struct device *dev,
+ 	ssize_t len;
+ 
+ 	mutex_lock(&ec->cache_lock);
+-	len = sprintf(buf, "%s\n", cache->hw_info.variant.str);
++	len = sprintf(buf, "%s\n", cache->product.variant.str);
+ 	mutex_unlock(&ec->cache_lock);
+ 	return len;
+ }
+@@ -96,80 +84,88 @@ static ssize_t product_variant_id_show(struct device *dev,
+ 	u8 variant_id;
+ 
+ 	mutex_lock(&ec->cache_lock);
+-	variant_id = cache->hw_info.variant.id;
++	variant_id = cache->product.variant.id;
+ 	mutex_unlock(&ec->cache_lock);
+ 
+ 	return sprintf(buf, "%d\n", variant_id);
+ }
+ 
+-static ssize_t product_frequency_show(struct device *dev,
+-				      struct device_attribute *attr, char *buf)
++static ssize_t product_version_show(struct device *dev,
++				    struct device_attribute *attr, char *buf)
+ {
+ 	struct wgw_ec_dev *ec = to_wgw_ec_dev(dev);
+ 	struct wgw_ec_info *cache = &ec->cache_info;
+ 	ssize_t len;
+ 
+ 	mutex_lock(&ec->cache_lock);
+-	len = sprintf(buf, "%s\n", cache->hw_info.frequency.str);
++	len = sprintf(buf, "%s\n", cache->product.version_str);
+ 	mutex_unlock(&ec->cache_lock);
+ 	return len;
+ }
+ 
+-static ssize_t product_frequency_id_show(struct device *dev,
+-					 struct device_attribute *attr,
+-					 char *buf)
++static ssize_t product_serial_show(struct device *dev,
++				   struct device_attribute *attr, char *buf)
+ {
+ 	struct wgw_ec_dev *ec = to_wgw_ec_dev(dev);
+ 	struct wgw_ec_info *cache = &ec->cache_info;
+-	u8 frequency_id;
++	ssize_t len;
+ 
+ 	mutex_lock(&ec->cache_lock);
+-	frequency_id = cache->hw_info.frequency.id;
++	len = sprintf(buf, "%s\n", cache->product.serial.data);
+ 	mutex_unlock(&ec->cache_lock);
+-
+-	return sprintf(buf, "%d\n", frequency_id);
++	return len;
+ }
+ 
+-static ssize_t fw_version_show(struct device *dev,
++static ssize_t boot_state_show(struct device *dev,
+ 			       struct device_attribute *attr, char *buf)
+ {
+ 	struct wgw_ec_dev *ec = to_wgw_ec_dev(dev);
+ 	struct wgw_ec_info *cache = &ec->cache_info;
+-	ssize_t len;
++	u8 boot_state;
+ 
+ 	mutex_lock(&ec->cache_lock);
+-	len = sprintf(buf, "%s\n", cache->fw_info.version_str);
++	boot_state = cache->boot_state;
+ 	mutex_unlock(&ec->cache_lock);
+-	return len;
++
++	return sprintf(buf, "%d\n", boot_state);
+ }
+ 
+-static ssize_t fw_version_hash_show(struct device *dev,
+-				    struct device_attribute *attr, char *buf)
++static ssize_t boot_state_store(struct device *dev,
++				struct device_attribute *attr, const char *buf,
++				size_t count)
+ {
+ 	struct wgw_ec_dev *ec = to_wgw_ec_dev(dev);
+ 	struct wgw_ec_info *cache = &ec->cache_info;
+-	ssize_t len;
++	ssize_t ret;
++	unsigned int inval;
++
++	ret = count - 1;
++	if (!ret || ret > 1 || sscanf(buf, "%du\n", &inval) <= 0 || inval > 1)
++		return -EINVAL;
+ 
+ 	mutex_lock(&ec->cache_lock);
+-	len = sprintf(buf, "%s\n", cache->fw_info.commit_hash);
++	ret = wgw_ec_boot_state_clr_update(ec, &cache->boot_state);
+ 	mutex_unlock(&ec->cache_lock);
+-	return len;
++
++	if (ret < 0) {
++		return -EIO;
++	}
++	return count;
+ }
+ 
+-static ssize_t fw_version_date_show(struct device *dev,
+-				    struct device_attribute *attr, char *buf)
++static ssize_t mem_ram_show(struct device *dev, struct device_attribute *attr,
++			    char *buf)
+ {
+-	struct wgw_ec_dev *ec = to_wgw_ec_dev(dev);
+-	struct wgw_ec_info *cache = &ec->cache_info;
+-	ssize_t len;
++	return sprintf(buf, "%d\n", 256 * 1024);
++}
+ 
+-	mutex_lock(&ec->cache_lock);
+-	len = sprintf(buf, "%s\n", cache->fw_info.commit_date);
+-	mutex_unlock(&ec->cache_lock);
+-	return len;
++static ssize_t mem_nand_show(struct device *dev, struct device_attribute *attr,
++			     char *buf)
++{
++	return sprintf(buf, "%d\n", 1024 * 1024);
+ }
+ 
+-static ssize_t hw_version_show(struct device *dev,
++static ssize_t fw_version_show(struct device *dev,
+ 			       struct device_attribute *attr, char *buf)
+ {
+ 	struct wgw_ec_dev *ec = to_wgw_ec_dev(dev);
+@@ -177,95 +173,68 @@ static ssize_t hw_version_show(struct device *dev,
+ 	ssize_t len;
+ 
+ 	mutex_lock(&ec->cache_lock);
+-	len = sprintf(buf, "%s\n", cache->hw_info.version_str);
++	len = sprintf(buf, "%s\n", cache->mainboard.fw.version_str);
+ 	mutex_unlock(&ec->cache_lock);
+ 	return len;
+ }
+ 
+-static ssize_t serial_show(struct device *dev, struct device_attribute *attr,
+-			   char *buf)
++static ssize_t fw_version_hash_show(struct device *dev,
++				    struct device_attribute *attr, char *buf)
+ {
+ 	struct wgw_ec_dev *ec = to_wgw_ec_dev(dev);
+ 	struct wgw_ec_info *cache = &ec->cache_info;
+ 	ssize_t len;
+ 
+ 	mutex_lock(&ec->cache_lock);
+-	len = sprintf(buf, "%s\n", cache->serial.data);
++	len = sprintf(buf, "%s\n", cache->mainboard.fw.commit_hash);
+ 	mutex_unlock(&ec->cache_lock);
+ 	return len;
+ }
+ 
+-static ssize_t boot_state_show(struct device *dev,
+-			       struct device_attribute *attr, char *buf)
+-{
+-	struct wgw_ec_dev *ec = to_wgw_ec_dev(dev);
+-	struct wgw_ec_info *cache = &ec->cache_info;
+-	u8 boot_state;
+-
+-	mutex_lock(&ec->cache_lock);
+-	boot_state = cache->boot_state;
+-	mutex_unlock(&ec->cache_lock);
+-
+-	return sprintf(buf, "%d\n", boot_state);
+-}
+-
+-static ssize_t boot_state_store(struct device *dev,
+-				struct device_attribute *attr, const char *buf,
+-				size_t count)
++static ssize_t fw_version_date_show(struct device *dev,
++				    struct device_attribute *attr, char *buf)
+ {
+ 	struct wgw_ec_dev *ec = to_wgw_ec_dev(dev);
+ 	struct wgw_ec_info *cache = &ec->cache_info;
+-	ssize_t ret;
+-	unsigned int inval;
+-
+-	ret = count - 1;
+-	if (!ret || ret > 1 || sscanf(buf, "%du\n", &inval) <= 0 || inval > 1)
+-		return -EINVAL;
++	ssize_t len;
+ 
+ 	mutex_lock(&ec->cache_lock);
+-	ret = wgw_ec_boot_state_clr_update(ec, &cache->boot_state);
++	len = sprintf(buf, "%s\n", cache->mainboard.fw.commit_date);
+ 	mutex_unlock(&ec->cache_lock);
+-
+-	if (ret < 0) {
+-		return -EIO;
+-	}
+-	return count;
++	return len;
+ }
+ 
+ static DEVICE_ATTR_RO(dev_version);
+-static DEVICE_ATTR_RO(mem_ram);
+-static DEVICE_ATTR_RO(mem_nand);
+ static DEVICE_ATTR_RO(product_model);
+ static DEVICE_ATTR_RO(product_model_id);
+ static DEVICE_ATTR_RO(product_variant);
+ static DEVICE_ATTR_RO(product_variant_id);
+-static DEVICE_ATTR_RO(product_frequency);
+-static DEVICE_ATTR_RO(product_frequency_id);
+-static DEVICE_ATTR_RO(fw_version);
+-static DEVICE_ATTR_RO(fw_version_hash);
+-static DEVICE_ATTR_RO(fw_version_date);
+-static DEVICE_ATTR_RO(hw_version);
+-static DEVICE_ATTR_RO(serial);
++static DEVICE_ATTR_RO(product_version);
++static DEVICE_ATTR_RO(product_serial);
+ static DEVICE_ATTR(boot_state,
+ 		   (S_IWUSR | S_IRUSR | S_IWGRP | S_IRGRP | S_IROTH),
+ 		   boot_state_show, boot_state_store);
++static DEVICE_ATTR_RO(mem_ram);
++static DEVICE_ATTR_RO(mem_nand);
++static DEVICE_ATTR_RO(fw_version);
++static DEVICE_ATTR_RO(fw_version_hash);
++static DEVICE_ATTR_RO(fw_version_date);
+ 
+ static struct attribute *wgw_attrs[] = {
+ 	&dev_attr_dev_version.attr,
+-	&dev_attr_mem_ram.attr,
+-	&dev_attr_mem_nand.attr,
+ 	&dev_attr_product_model.attr,
+ 	&dev_attr_product_model_id.attr,
+ 	&dev_attr_product_variant.attr,
+ 	&dev_attr_product_variant_id.attr,
+-	&dev_attr_product_frequency.attr,
+-	&dev_attr_product_frequency_id.attr,
++	&dev_attr_product_version.attr,
++	&dev_attr_product_serial.attr,
++	&dev_attr_boot_state.attr,
++	&dev_attr_mem_ram.attr,
++	&dev_attr_mem_nand.attr,
+ 	&dev_attr_fw_version.attr,
+ 	&dev_attr_fw_version_hash.attr,
+ 	&dev_attr_fw_version_date.attr,
+-	&dev_attr_hw_version.attr,
+-	&dev_attr_serial.attr,
+-	&dev_attr_boot_state.attr,
++	/* sentinel */
+ 	NULL,
+ };
+ 
+diff --git a/include/linux/mfd/wgw-ec/core.h b/include/linux/mfd/wgw-ec/core.h
+index 4e16fcfa6e6c..725a0cb7c6ce 100644
+--- a/include/linux/mfd/wgw-ec/core.h
++++ b/include/linux/mfd/wgw-ec/core.h
+@@ -17,8 +17,8 @@
+ #ifndef __LINUX_MFD_WGW_EC_CORE_H
+ #define __LINUX_MFD_WGW_EC_CORE_H
+ 
+-#include <linux/kernel.h>
+ #include <linux/ioctl.h>
++#include <linux/kernel.h>
+ #include <linux/mfd/wgw-ec/reg.h>
+ #include <linux/platform_device.h>
+ 
+@@ -28,16 +28,43 @@
+ #define WGW_EC_FW_VERSION_SIZE 32
+ #define WGW_EC_HW_SN_SIZE 16
+ 
+-#define WGW_EC_SERIAL_ERROR (-1)
+-#define WGW_EC_SERIAL_SET 0x01
+-#define WGW_EC_SERIAL_OTP 0x02
+-#define WGW_EC_SERIAL_SET_OTP (WGW_EC_SERIAL_SET | WGW_EC_SERIAL_OTP)
++#define WGW_EC_MEM_SLOT_COUNT 4
++#define WGW_EC_MEM_SLOT_DATA_SIZE 32
++#define WGW_EC_MEM_SLOT_STR_SIZE 31
+ 
+-struct wgw_ec_serial {
+-	char data[WGW_EC_HW_SN_SIZE];
++#define WGW_EC_MEM_SLOT_STATE_ERROR (-1)
++#define WGW_EC_MEM_SLOT_STATE_SET 0x01
++#define WGW_EC_MEM_SLOT_STATE_OTP 0x02
++#define WGW_EC_MEM_SLOT_STATE_SET_OTP                                          \
++	(WGW_EC_MEM_SLOT_STATE_SET | WGW_EC_MEM_SLOT_STATE_OTP)
++
++struct wgw_ec_slot_str {
++	// include space for '\0'
++	char data[WGW_EC_MEM_SLOT_STR_SIZE + 1];
+ 	u8 state;
+ };
+ 
++struct wgw_ec_slot_u8 {
++	u8 value;
++	u8 state;
++};
++
++enum wgw_ec_mainboard_ref {
++	// LORIX One's PCB
++	WGW_EC_MB_WGW_L01_BASE = 0,
++	// Wifx L1's PCB (or w/o model in slot[1])
++	WGW_EC_MB_WGW_L02_BASE_L1 = 1,
++	// Wifx Y1 (Y-Linx)'s PCB
++	WGW_EC_MB_WGW_L02_BASE_Y1 = 2,
++	// Wifx L1's PCB overriden with Wifx L1 4G product model
++	WGW_EC_MB_WGW_L02_BASE_L1_4G = 3,
++};
++
++enum wgw_ec_mainboard_variant {
++	WGW_EC_MB_VARIANT_8XX = 0,
++	WGW_EC_MB_VARIANT_9XX = 1,
++};
++
+ enum wgw_ec_model {
+ 	WGW_EC_M_LORIX_ONE = 0,
+ 	WGW_EC_M_WIFX_L1 = 1,
+@@ -46,7 +73,8 @@ enum wgw_ec_model {
+ };
+ 
+ enum wgw_ec_variant {
+-	WGW_EC_V_STANDARD = 0,
++	WGW_EC_V_8XX = 0,
++	WGW_EC_V_9XX = 1,
+ };
+ 
+ enum wgw_ec_frequency {
+@@ -65,27 +93,33 @@ struct wgw_ec_hw_tuple_info {
+ 	const char *str;
+ };
+ 
+-struct wgw_ec_hw_info {
++struct wgw_ec_fw_info {
+ 	struct wgw_ec_version version;
++	char version_str[WGW_EC_FW_VERSION_SIZE];
++	char commit_hash[WGW_EC_APP_COMMIT_HASH_SIZE];
++	char commit_date[WGW_EC_APP_COMMIT_DATE_SIZE];
++};
++
++struct wgw_ec_mainboard_info {
+ 	char version_str[WGW_EC_HW_VERSION_SIZE];
+ 	struct wgw_ec_hw_tuple_info model;
++	struct wgw_ec_hw_tuple_info base_model;
+ 	struct wgw_ec_hw_tuple_info variant;
+-	struct wgw_ec_hw_tuple_info frequency;
++	struct wgw_ec_fw_info fw;
+ };
+ 
+-struct wgw_ec_fw_info {
+-	struct wgw_ec_version version;
+-	char version_str[WGW_EC_FW_VERSION_SIZE];
+-	char commit_hash[WGW_EC_APP_COMMIT_HASH_SIZE];
+-	char commit_date[WGW_EC_APP_COMMIT_DATE_SIZE];
++struct wgw_ec_product_info {
++	struct wgw_ec_slot_str serial;
++	struct wgw_ec_hw_tuple_info model;
++	struct wgw_ec_hw_tuple_info variant;
++	char version_str[WGW_EC_HW_VERSION_SIZE];
+ };
+ 
+ struct wgw_ec_info {
+-	struct wgw_ec_fw_info fw_info;
+-	struct wgw_ec_hw_info hw_info;
+-	struct wgw_ec_serial serial;
+-	u8 boot_state;
+ 	u8 protoc;
++	u8 boot_state;
++	struct wgw_ec_mainboard_info mainboard;
++	struct wgw_ec_product_info product;
+ };
+ 
+ #define WGW_EC_MEM_SLOT_SIZE 32
+-- 
+2.36.6
+

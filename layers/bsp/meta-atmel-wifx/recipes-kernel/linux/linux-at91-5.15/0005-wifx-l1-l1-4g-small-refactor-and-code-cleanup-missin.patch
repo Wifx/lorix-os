@@ -1,0 +1,313 @@
+From 4bec01d4748183288900a7170737a8c7c6ad8675 Mon Sep 17 00:00:00 2001
+From: OpenEmbedded <oe.patch@oe>
+Date: Wed, 10 Jul 2024 21:08:36 +0000
+Subject: [PATCH 5/5] wifx l1/l1 4g: small refactor and code cleanup, missing
+ variant error replaced by warning
+
+---
+ drivers/mfd/wgw_ec_dev.c        | 112 ++++++++++++++++----------------
+ include/linux/mfd/wgw-ec/core.h |  26 ++++++--
+ 2 files changed, 79 insertions(+), 59 deletions(-)
+
+diff --git a/drivers/mfd/wgw_ec_dev.c b/drivers/mfd/wgw_ec_dev.c
+index af8d2eac4a27..e9f0795b5fd6 100644
+--- a/drivers/mfd/wgw_ec_dev.c
++++ b/drivers/mfd/wgw_ec_dev.c
+@@ -108,8 +108,8 @@ static const char *mainboard_variant_strs[] = { "8XX", "9XX" };
+ int mainboard_variant_index(enum wgw_ec_mainboard_variant mb_variant)
+ {
+ 	switch (mb_variant) {
+-	case WGW_EC_MB_VARIANT_8XX:
+-	case WGW_EC_MB_VARIANT_9XX:
++	case WGW_EC_MB_VAR_8XX:
++	case WGW_EC_MB_VAR_9XX:
+ 		return (int)mb_variant;
+ 	default:
+ 		return -1;
+@@ -163,12 +163,12 @@ int model_variant_index(enum wgw_ec_model product_model, u8 product_variant)
+ {
+ 	switch (product_model) {
+ 	case WGW_EC_M_WIFX_L1:
+-		if (product_variant <= 1) {
++		if (product_variant < WGW_EC_WIFX_L1_VAR_MAX) {
+ 			return product_variant;
+ 		}
+ 		break;
+ 	case WGW_EC_M_WIFX_L1_4G:
+-		if (product_variant <= 2) {
++		if (product_variant < WGW_EC_WIFX_L1_4G_VAR_MAX) {
+ 			return product_variant;
+ 		}
+ 		break;
+@@ -177,7 +177,7 @@ int model_variant_index(enum wgw_ec_model product_model, u8 product_variant)
+ 	default:
+ 		break;
+ 	}
+-	return -1;
++	return WGW_EC_MODEL_VAR_UNKNOWN;
+ }
+ 
+ const char *model_variant_str(enum wgw_ec_model product_model,
+@@ -189,7 +189,15 @@ const char *model_variant_str(enum wgw_ec_model product_model,
+ 
+ 	int index;
+ 	if ((index = model_variant_index(product_model, product_variant)) < 0) {
+-		return unknown_str;
++		switch (index) {
++		case WGW_EC_MODEL_VAR_UNDEFINED:
++			return undefined_str;
++		case WGW_EC_MODEL_VAR_UNKNOWN:
++			return unknown_str;
++		case WGW_EC_MODEL_VAR_ERROR:
++		default:
++			return error_str;
++		}
+ 	}
+ 	switch (product_model) {
+ 	case WGW_EC_M_WIFX_L1:
+@@ -201,27 +209,7 @@ const char *model_variant_str(enum wgw_ec_model product_model,
+ 	}
+ }
+ 
+-static const char *frequency_strs[] = { "863-870", "902-928" };
+-int frequency_index(enum wgw_ec_frequency frequency)
+-{
+-	switch (frequency) {
+-	case WGW_EC_F_863_870:
+-	case WGW_EC_F_902_928:
+-		return (int)frequency;
+-	default:
+-		return -1;
+-	}
+-}
+-const char *frequency_str(enum wgw_ec_frequency frequency)
+-{
+-	int index;
+-	if ((index = frequency_index(frequency)) < 0) {
+-		return unknown_str;
+-	}
+-	return frequency_strs[index];
+-}
+-
+-int hw_version_str(const struct wgw_ec_version *version, char *version_str,
++int hw_version_str(char *version_str, const struct wgw_ec_version *version,
+ 		   int max_len)
+ {
+ 	if (version->revision == 0) {
+@@ -234,7 +222,7 @@ int hw_version_str(const struct wgw_ec_version *version, char *version_str,
+ 	}
+ }
+ 
+-int fw_version_str(const struct wgw_ec_version *version, char *version_str,
++int fw_version_str(char *version_str, const struct wgw_ec_version *version,
+ 		   int max_len)
+ {
+ 	return snprintf(version_str, max_len, "%d.%d.%d", version->major,
+@@ -449,8 +437,9 @@ static int fw_info_get(struct wgw_ec_dev *ec, struct wgw_ec_fw_info *fw_info)
+ 		return -EIO;
+ 	}
+ 	fw_info->version = reg.fw_info_version;
+-	fw_version_str(&reg.fw_info_version, fw_info->version_str,
++	fw_version_str(fw_info->version_str, &reg.fw_info_version,
+ 		       WGW_EC_FW_VERSION_SIZE);
++	dev_dbg(ec->dev, "mainboard fw version: %s\n", fw_info->version_str);
+ 
+ 	// retrieve firmware commit hash
+ 	ret = ec_dev->read_block(ec_dev, WGW_EC_REG_FW_INFO2, reg.data);
+@@ -468,6 +457,8 @@ static int fw_info_get(struct wgw_ec_dev *ec, struct wgw_ec_fw_info *fw_info)
+ 	memcpy(&fw_info->commit_hash[0], reg.data, ret);
+ 	// convert to null terminated string
+ 	fw_info->commit_hash[ret] = '\0';
++	dev_dbg(ec->dev, "mainboard fw version hash: %s\n",
++		fw_info->commit_hash);
+ 
+ 	// retrieve firmware commit date
+ 	ret = ec_dev->read_block(ec_dev, WGW_EC_REG_FW_INFO3, reg.data);
+@@ -485,6 +476,9 @@ static int fw_info_get(struct wgw_ec_dev *ec, struct wgw_ec_fw_info *fw_info)
+ 	memcpy(&fw_info->commit_date[0], reg.data, ret);
+ 	// convert to null terminated string
+ 	fw_info->commit_date[ret] = '\0';
++	dev_dbg(ec->dev, "mainboard fw version date: %s\n",
++		fw_info->commit_date);
++
+ 	return 0;
+ }
+ 
+@@ -506,8 +500,9 @@ static int mainboard_info_get(struct wgw_ec_dev *ec,
+ 			"failed to read hw info register (wrong returned size)\n");
+ 		return -EIO;
+ 	}
+-	hw_version_str(&reg.hw_info.version, mb_info->version_str,
++	hw_version_str(mb_info->version_str, &reg.hw_info.version,
+ 		       WGW_EC_HW_VERSION_SIZE);
++	dev_dbg(ec->dev, "mainboard HW version: %s\n", mb_info->version_str);
+ 
+ 	// retrieve mainboard model
+ 	mb_info->model.id = mainboard_ref_index(reg.hw_info.model);
+@@ -526,10 +521,14 @@ static int mainboard_info_get(struct wgw_ec_dev *ec,
+ 			mb_info->model.id);
+ 		return -EIO;
+ 	}
++	dev_dbg(ec->dev, "mainboard model: %s (%d)\n", mb_info->model.str,
++		mb_info->model.id);
+ 
+ 	// Legacy stuff, variant is derived from frequency information
+ 	mb_info->variant.id = mainboard_variant_index(reg.hw_info.frequency);
+ 	mb_info->variant.str = mainboard_variant_str(reg.hw_info.frequency);
++	dev_dbg(ec->dev, "mainboard variant: %s (%d)\n", mb_info->variant.str,
++		mb_info->variant.id);
+ 
+ 	// retrieve firmware info
+ 	ret = fw_info_get(ec, &mb_info->fw);
+@@ -603,12 +602,15 @@ static int fetch_cache_info(struct wgw_ec_dev *ec)
+ 	// Determine product model
+ 	ret = product_model_get(ec, &slot_u8);
+ 	if (ret < 0 || slot_u8.state < WGW_EC_MEM_SLOT_STATE_SET) {
+-		if (cache->mainboard.model.id == WGW_EC_MB_WGW_L01_BASE) {
+-			// the product is a Wifx L1, possibly legacy (no product model written in slot)
++		dev_dbg(dev, "product model slot state: %d\n", slot_u8.state);
++
++		if (cache->mainboard.model.id == WGW_EC_MB_WGW_L02_BASE_L1) {
++			// the product is a Wifx L1, possibly legacy (no product model written in slot or corrupted)
+ 			cache->product.model.id = WGW_EC_M_WIFX_L1;
+ 		} else {
+ 			dev_err(dev,
+-				"could not determine product model, corrupted or undefined\n");
++				"could not determine product model, corrupted or undefined (mb id: %d)\n",
++				cache->mainboard.model.id);
+ 			ret = -EIO;
+ 			goto failure;
+ 		}
+@@ -619,40 +621,40 @@ static int fetch_cache_info(struct wgw_ec_dev *ec)
+ 
+ 	// Determine product variant
+ 	ret = product_variant_get(ec, &slot_u8);
+-	if (ret < 0 || slot_u8.state < WGW_EC_MEM_SLOT_STATE_SET) {
++	if (ret < 0) {
++		// product variant slot is probably corrupted
++		cache->product.variant.id = WGW_EC_MODEL_VAR_ERROR;
++	} else if (slot_u8.state < WGW_EC_MEM_SLOT_STATE_SET) {
+ 		if (cache->product.model.id == WGW_EC_M_WIFX_L1) {
+ 			// the product is a Wifx L1, possibly legacy (no product variant written in slot)
++			// product variant is derived from mainboard variant.
+ 			cache->product.variant.id = cache->mainboard.variant.id;
+ 		} else {
+-			dev_err(dev,
+-				"could not determine product variant, corrupted or undefined\n");
+-			ret = -EIO;
+-			goto failure;
++			// product variant slot is supposed to be set but is not.
++			cache->product.variant.id = WGW_EC_MODEL_VAR_UNDEFINED;
+ 		}
+ 	} else {
++		// product variant slot is set and can be read
+ 		cache->product.variant.id = slot_u8.value;
+ 	}
+-	ret = model_variant_index(cache->product.model.id,
+-				  cache->product.variant.id);
+-	if (ret < 0) {
+-		dev_err(dev,
+-			"could not determine or unknown product variant (%d)\n",
+-			cache->product.variant.id);
+-		goto failure;
+-	}
++	// we create variant string from id
+ 	cache->product.variant.str = model_variant_str(
+ 		cache->product.model.id, cache->product.variant.id);
+ 
+ 	// Determine product version
+ 	ret = product_version_get(ec, &slot_str);
+ 	if (ret < 0) {
++		// product version slot is probably corrupted
++		strcpy(cache->product.version_str, error_str);
++	} else if (slot_str.state < WGW_EC_MEM_SLOT_STATE_SET) {
+ 		if (cache->product.model.id == WGW_EC_M_WIFX_L1) {
++			// the product is a Wifx L1, possibly legacy (no product version written in slot)
++			// product version is derived from mainboard version.
+ 			strcpy(cache->product.version_str,
+ 			       cache->mainboard.version_str);
+ 		} else {
+-			dev_err(dev, "failed to read product version (%d)\n",
+-				ret);
+-			goto failure;
++			// product version slot is supposed to be set but is not.
++			strcpy(cache->product.version_str, undefined_str);
+ 		}
+ 	} else {
+ 		strcpy(cache->product.version_str, slot_str.data);
+@@ -698,15 +700,15 @@ static int display_cache_info(struct wgw_ec_dev *ec)
+ 		goto failure;
+ 	}
+ 
+-	if (cache->mainboard.variant.id < 0) {
+-		dev_err(dev,
+-			"Mainboard model and/or variant not detected or unknown\n");
+-		goto failure;
+-	}
+-
+ 	dev_info(dev, "Found Wifx product, model: %s, variant: %s\n",
+ 		 model_pretty_str((enum wgw_ec_model)cache->product.model.id),
+ 		 cache->product.variant.str);
++	if (cache->product.variant.id < 0) {
++		dev_warn(
++			dev,
++			"failed to determine correctly product variant, support could be limited.\n");
++	}
++
+ 	if (!cache->product.serial.state) {
+ 		dev_warn(dev, "Serial: %s\n", cache->product.serial.data);
+ 	} else if (cache->product.serial.state < 0) {
+diff --git a/include/linux/mfd/wgw-ec/core.h b/include/linux/mfd/wgw-ec/core.h
+index 725a0cb7c6ce..7aa56bea00f5 100644
+--- a/include/linux/mfd/wgw-ec/core.h
++++ b/include/linux/mfd/wgw-ec/core.h
+@@ -61,8 +61,8 @@ enum wgw_ec_mainboard_ref {
+ };
+ 
+ enum wgw_ec_mainboard_variant {
+-	WGW_EC_MB_VARIANT_8XX = 0,
+-	WGW_EC_MB_VARIANT_9XX = 1,
++	WGW_EC_MB_VAR_8XX = 0,
++	WGW_EC_MB_VAR_9XX = 1,
+ };
+ 
+ enum wgw_ec_model {
+@@ -72,7 +72,25 @@ enum wgw_ec_model {
+ 	WGW_EC_M_WIFX_L1_4G = 3,
+ };
+ 
+-enum wgw_ec_variant {
++/* Product model variants */
++#define WGW_EC_MODEL_VAR_UNDEFINED (-1)
++#define WGW_EC_MODEL_VAR_UNKNOWN (-2)
++#define WGW_EC_MODEL_VAR_ERROR (-3)
++
++enum wgw_ec_wifx_l1_variant {
++	WGW_EC_WIFX_L1_VAR_8XX = 0,
++	WGW_EC_WIFX_L1_VAR_9XX = 1,
++	WGW_EC_WIFX_L1_VAR_MAX = 2,
++};
++
++enum wgw_ec_wifx_l1_4g_variant {
++	WGW_EC_WIFX_L1_4G_VAR_8XX_EU = 0,
++	WGW_EC_WIFX_L1_4G_VAR_9XX_AU = 1,
++	WGW_EC_WIFX_L1_4G_VAR_9XX_US = 2,
++	WGW_EC_WIFX_L1_4G_VAR_MAX = 3,
++};
++
++/*enum wgw_ec_variant {
+ 	WGW_EC_V_8XX = 0,
+ 	WGW_EC_V_9XX = 1,
+ };
+@@ -80,7 +98,7 @@ enum wgw_ec_variant {
+ enum wgw_ec_frequency {
+ 	WGW_EC_F_863_870 = 0,
+ 	WGW_EC_F_902_928 = 1,
+-};
++};*/
+ 
+ struct wgw_ec_version {
+ 	u16 major;
+-- 
+2.36.6
+
