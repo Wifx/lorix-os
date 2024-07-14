@@ -1,7 +1,7 @@
-From 874d0610254e74dc289847c55af1ba59dd8e29d7 Mon Sep 17 00:00:00 2001
+From 2f48a1074f502f4f7215a72c82b56c64f7c7988c Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
 Date: Mon, 8 Jul 2024 07:21:55 +0000
-Subject: [PATCH 4/4] wifx l1/l1 4g: support for product information in mcu
+Subject: [PATCH 4/5] wifx l1/l1 4g: support for product information in mcu
  slots, sysfs API v3
 
 Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
@@ -912,5 +912,5 @@ index 4e16fcfa6e6c..725a0cb7c6ce 100644
  
  #define WGW_EC_MEM_SLOT_SIZE 32
 -- 
-2.36.6
+2.34.1
 
