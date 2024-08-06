@@ -199,44 +199,6 @@ pkg_postinst_ontarget:${PN} () {
     else
         echo "Gateway ID file does not exist ("$GW_ID_FILE_PATH")"
     fi
-
-    ### FREQUENCY PLAN ###
-    PRODUCT_FREQUENCY=$(machine-info -n -f "PRODUCT_FREQUENCY")
-    CHANNELS_CONFDIR=/etc/opt/chirpstack-concentratord/channels
-
-    # Set default channel
-    if [ ! -f "$CHANNELS_CONFDIR/channels.toml" ]; then
-
-        cd "$CHANNELS_CONFDIR"
-        echo "Looking for concentratord channels for '$PRODUCT_FREQUENCY' in '$CHANNELS_CONFDIR'"
-
-        # If the region provides a default channel plan, set it
-        if [ -f "$PRODUCT_FREQUENCY/default" ]; then
-            echo "Using default channel"
-            CHANNEL_FILE_NAME=$(readlink "$PRODUCT_FREQUENCY/default")
-            CHANNEL_FILE_PATH="$PRODUCT_FREQUENCY/$CHANNEL_FILE_NAME"
-        else
-            # Otherwise take the first in the list
-            echo "Using first available channel in '$PRODUCT_FREQUENCY'"
-            FILES="$PRODUCT_FREQUENCY/*.toml"
-            for FILE in $FILES; do
-                if [[ -f "$FILE" ]]; then
-                    CHANNEL_FILE_PATH=$FILE
-                    break
-                fi
-            done
-        fi
-
-        if [ ! -z "$CHANNEL_FILE_PATH" ]; then
-            ln -snf "$CHANNEL_FILE_PATH" "channels_conf.toml"
-            echo "concentratord channel has been set to '$CHANNEL_FILE_PATH'"
-        else
-            echo "Could not find any channel"
-        fi
-
-    else
-        echo "concentratord channel already defined"
-    fi
 }
 
 FILES:${PN} += " \

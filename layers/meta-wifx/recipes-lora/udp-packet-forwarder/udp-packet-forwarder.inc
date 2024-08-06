@@ -106,43 +106,6 @@ pkg_postinst_ontarget:${PN} () {
         sed -i 's/\(^\s*"gateway_ID":\s*"\).\{16\}"\s*\(,\?\).*$/\1'${GWID}'"\2/' $file
         echo "Gateway_ID set to "$GWID" in file "$file
     done
-
-    # Set default channel
-    PRODUCT_FREQUENCY=$(machine-info -n -f "PRODUCT_FREQUENCY")
-    CHANNELS_CONFDIR=/etc/opt/udp-packet-forwarder/channels
-
-    if [ ! -f "$CHANNELS_CONFDIR/channels_conf.json" ]; then
-
-        cd "$CHANNELS_CONFDIR"
-        echo "Looking for UDP Packet Forwarder channels for '$PRODUCT_FREQUENCY' in '$CHANNELS_CONFDIR'"
-
-        # If the region provides a default channel plan, set it
-        if [ -f "$PRODUCT_FREQUENCY/default" ]; then
-            echo "Using default channel"
-            CHANNEL_FILE_NAME=$(readlink "$PRODUCT_FREQUENCY/default")
-            CHANNEL_FILE_PATH="$PRODUCT_FREQUENCY/$CHANNEL_FILE_NAME"
-        else
-            # Otherwise take the first in the list
-            echo "Using first available channel in '$PRODUCT_FREQUENCY'"
-            FILES="$PRODUCT_FREQUENCY/*.json"
-            for FILE in $FILES; do
-                if [[ -f "$FILE" ]]; then
-                    CHANNEL_FILE_PATH=$FILE
-                    break
-                fi
-            done
-        fi
-
-        if [ ! -z "$CHANNEL_FILE_PATH" ]; then
-            ln -snf "$CHANNEL_FILE_PATH" "channels_conf.json"
-            echo "UDP Packet Forwarder channel has been set to '$CHANNEL_FILE_PATH'"
-        else
-            echo "Could not find any channel"
-        fi
-
-    else
-        echo "UDP Packet Forwarder channel already defined"
-    fi
 }
 
 FILES:${PN} += "${optdir}"
