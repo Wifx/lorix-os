@@ -3,8 +3,8 @@ DESCRIPTION = "ChirpStack Concentratord"
 LICENSE = "MIT"
 
 SRC_URI += "\
-    file://0001-vendor-LORIX-One-support-version-863-870-and-902-928.patch \
-    file://0002-vendor-Wifx-L1-support-version-863-870-and-902-928MH.patch \
+    file://0001-vendor-LORIX-One-support-version-8XX-and-9XX.patch \
+    file://0002-vendor-Wifx-L1-support-version-8XX-and-9XX.patch \
     file://concentratord.toml \
     file://gateways/gateway-l1.toml \
     file://gateways/gateway-lorix-one.toml \
@@ -185,19 +185,55 @@ do_install:append:sx1302() {
 
 pkg_postinst_ontarget:${PN} () {
 
+    GW_CONFIG_FILE_PATH="${CONF_DIR}/10-gateway.toml"
+
     ### GATEWAY ID ### 
-    GW_ID_FILE_PATH="${CONF_DIR}/10-gateway.toml"
+    PRODUCT_MODEL=$(machine-info -n -f "PRODUCT_MODEL")
 
-    # TODO: only for SX1301
-    if [ -f "$GW_ID_FILE_PATH" ]; then
-        # retrieve gateway ID from machine-info
-        GWID=$(machine-info -e lora -n -f "LORA_GATEWAY_ID")
+    if [ "$PRODUCT_MODEL" = "lorix-one" ]; then
         
-        sed -i 's/gateway_id=""/gateway_id="'${GWID}'"/g' $GW_ID_FILE_PATH
+        if [ -f "$GW_CONFIG_FILE_PATH" ]; then
+            # retrieve gateway ID from machine-info
+            GWID=$(machine-info -e lora -n -f "LORA_GATEWAY_ID")
+            
+            sed -i 's/gateway_id=""/gateway_id="'${GWID}'"/g' $GW_CONFIG_FILE_PATH
 
-        echo "Gateway ID set to "$GWID" in file "$GW_ID_FILE_PATH
+            echo "Gateway ID set to "$GWID" in file "$GW_CONFIG_FILE_PATH
+        else
+            echo "Gateway config file does not exist ("$GW_CONFIG_FILE_PATH")"
+        fi
+    fi
+}
+
+pkg_postinst_ontarget:${PN}:append:lorix_one () {
+    
+    ### MODEL ###
+
+    if [ -f "$GW_CONFIG_FILE_PATH" ]; then
+        # retrieve LoRa Region from machine-info
+        LORA_REGION=$(machine-info -n -f "PRODUCT_VARIANT_ATTR_LORA_REGION")
+        
+        sed -i 's/model=""/model="wifx_lorix_one_'${LORA_REGION}'"/g' $GW_CONFIG_FILE_PATH
+
+        echo "Model set to "$GWID" in file "$GW_CONFIG_FILE_PATH
     else
-        echo "Gateway ID file does not exist ("$GW_ID_FILE_PATH")"
+        echo "Gateway config file does not exist ("$GW_CONFIG_FILE_PATH")"
+    fi
+}
+
+pkg_postinst_ontarget:${PN}:append:l1 () {
+
+    ### MODEL ###
+
+    if [ -f "$GW_CONFIG_FILE_PATH" ]; then
+        # retrieve LoRa Region from machine-info
+        LORA_REGION=$(machine-info -n -f "PRODUCT_VARIANT_ATTR_LORA_REGION")
+        
+        sed -i 's/model=""/model="wifx_l1_'${LORA_REGION}'"/g' $GW_CONFIG_FILE_PATH
+
+        echo "Model set to "$GWID" in file "$GW_CONFIG_FILE_PATH
+    else
+        echo "Gateway config file does not exist ("$GW_CONFIG_FILE_PATH")"
     fi
 }
 

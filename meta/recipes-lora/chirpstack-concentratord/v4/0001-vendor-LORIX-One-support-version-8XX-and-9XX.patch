@@ -7,8 +7,8 @@ index c747a07..904841e 100644
          "risinghf_rhf0m301" => vendor::risinghf::rhf0m301::new(&config).unwrap(),
          "sandbox_lorago_port" => vendor::sandbox::lorago_port::new(&config).unwrap(),
 -        "wifx_lorix_one" => vendor::wifx::lorix_one::new(&config).unwrap(),
-+        "wifx_lorix_one_863_870" => vendor::wifx::lorix_one_863_870::new(&config).unwrap(),
-+        "wifx_lorix_one_902_928" => vendor::wifx::lorix_one_902_928::new(&config).unwrap(),
++        "wifx_lorix_one_8XX" => vendor::wifx::lorix_one_8XX::new(&config).unwrap(),
++        "wifx_lorix_one_9XX" => vendor::wifx::lorix_one_9XX::new(&config).unwrap(),
          _ => panic!("unexpected gateway model: {}", config.gateway.model),
      };
  
@@ -314,11 +314,11 @@ index ebf6f46..0000000
 -        reset_pin: conf.gateway.get_sx1301_reset_pin("/dev/gpiochip0", 1),
 -    })
 -}
-diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_863_870.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_863_870.rs
+diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_8XX.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_8XX.rs
 new file mode 100644
 index 0000000..42f3fcf
 --- /dev/null
-+++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_863_870.rs
++++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_8XX.rs
 @@ -0,0 +1,90 @@
 +use anyhow::Result;
 +use libloragw_sx1302::hal;
@@ -410,11 +410,11 @@ index 0000000..42f3fcf
 +    // keep only max 16 higher entries
 +    entries.as_slice()[start_index..].to_vec()
 +}
-diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_902_928.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_902_928.rs
+diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_9XX.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_9XX.rs
 new file mode 100644
 index 0000000..82972c6
 --- /dev/null
-+++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_902_928.rs
++++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_9XX.rs
 @@ -0,0 +1,90 @@
 +use anyhow::Result;
 +use libloragw_sx1302::hal;
@@ -512,5 +512,5 @@ index ac0dab1..4fdecef 100644
 +++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs
 @@ -1 +1,2 @@
 -pub mod lorix_one;
-+pub mod lorix_one_863_870;
-+pub mod lorix_one_902_928;
++pub mod lorix_one_8XX;
++pub mod lorix_one_9XX;

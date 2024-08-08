@@ -104,7 +104,7 @@ pkg_postinst_ontarget:${PN} () {
     # Update gateway ID in config
     file="${sysconfoptdir}/lora-basic-station/gateway-id"
 
-    if [ ! -f "$CHANNELS_CONFDIR/channels_conf.json" ]; then
+    if [ ! -f "$file" ]; then
         # retrieve gateway ID from machine-info
         GWID=$(machine-info -e lora -n -f "LORA_GATEWAY_ID")
         echo "$GWID" > "$file"
