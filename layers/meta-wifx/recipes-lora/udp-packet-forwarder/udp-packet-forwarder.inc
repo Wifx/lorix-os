@@ -15,13 +15,52 @@ RPROVIDES:${PN} += "virtual/udp-packet-forwarder"
 
 SRC_URI += " \
     file://udp-packet-forwarder-generic.yml \
-    file://channels \
-    file://gateway \
+    file://channels/AS920/AS_920_923.json \
+    file://channels/AS923/AS_923_925.json \
+    file://channels/AS923/AS_923_925_TTN_AU.json \
+    file://channels/AU915/AU_915_928_FSB_1.json \
+    file://channels/AU915/AU_915_928_FSB_2.json \
+    file://channels/AU915/AU_915_928_FSB_3.json \
+    file://channels/AU915/AU_915_928_FSB_4.json \
+    file://channels/AU915/AU_915_928_FSB_5.json \
+    file://channels/AU915/AU_915_928_FSB_6.json \
+    file://channels/AU915/AU_915_928_FSB_7.json \
+    file://channels/AU915/AU_915_928_FSB_8.json \
+    file://channels/EU868/EU_863_870.json \
+    file://channels/IN865/IN_865_867.json \
+    file://channels/RU864/RU_864_870_TTN.json \
+    file://channels/US915/US_902_928_FSB_1.json \
+    file://channels/US915/US_902_928_FSB_2.json \
+    file://channels/US915/US_902_928_FSB_3.json \
+    file://channels/US915/US_902_928_FSB_4.json \
+    file://channels/US915/US_902_928_FSB_5.json \
+    file://channels/US915/US_902_928_FSB_6.json \
+    file://channels/US915/US_902_928_FSB_7.json \
+    file://channels/US915/US_902_928_FSB_8.json \
+    file://gateway/generic/gateway_global_conf.json \
+    file://gateway/generic/gateway_local_conf.json \
+    file://gateway/ttn/gateway_global_conf.json \
+    file://gateway/ttn/gateway_local_conf.json \
     file://LICENSE \
 "
 
 SRC_URI:append:lorix-one = " \
-    file://resources-lorix-one \
+    file://resources-lorix-one/hardware/8XX/hardware_conf_2dBi.json \
+    file://resources-lorix-one/hardware/8XX/hardware_conf_2dBi.json.sha256 \
+    file://resources-lorix-one/hardware/8XX/hardware_conf_3dBi.json \
+    file://resources-lorix-one/hardware/8XX/hardware_conf_3dBi.json.sha256 \
+    file://resources-lorix-one/hardware/8XX/hardware_conf_4dBi.json \
+    file://resources-lorix-one/hardware/8XX/hardware_conf_4dBi.json.sha256 \
+    file://resources-lorix-one/hardware/8XX/hardware_conf_5dBi.json \
+    file://resources-lorix-one/hardware/8XX/hardware_conf_5dBi.json.sha256 \
+    file://resources-lorix-one/hardware/9XX/hardware_conf_2dBi.json \
+    file://resources-lorix-one/hardware/9XX/hardware_conf_2dBi.json.sha256 \
+    file://resources-lorix-one/hardware/9XX/hardware_conf_3dBi.json \
+    file://resources-lorix-one/hardware/9XX/hardware_conf_3dBi.json.sha256 \
+    file://resources-lorix-one/hardware/9XX/hardware_conf_4dBi.json \
+    file://resources-lorix-one/hardware/9XX/hardware_conf_4dBi.json.sha256 \
+    file://resources-lorix-one/hardware/9XX/hardware_conf_5dBi.json \
+    file://resources-lorix-one/hardware/9XX/hardware_conf_5dBi.json.sha256 \
 "
 
 S = "${WORKDIR}/git"

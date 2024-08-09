@@ -42,6 +42,7 @@ cd $D_ETC
 
 UPF_PATH="opt/udp-packet-forwarder/hardware"
 UPF_CONFIG_PATH="$UPF_PATH/hardware_conf.json" # Refers to /etc/opt/udp-packet-forwarder/hardware/hardware_conf.json
+UPF_CONFIG_PATH_HASH="$UPF_PATH/hardware_conf.json.sha256" 
 
 # It is generally a good thing to check wheter the migration should be applied or not depending on the FS state
 if [[ ! -f "$UPF_CONFIG_PATH" ]]; then
@@ -64,6 +65,16 @@ SYMLINK_TARGET=$(echo $SYMLINK_TARGET | sed -e 's/863-870/8XX/g' -e 's/902-928/9
 
 # Replace the symlink target
 ln -sf $SYMLINK_TARGET $UPF_CONFIG_PATH
+
+
+# Read the symlink target (e.g. /etc/opt/udp-packet-forwarder/hardware/863-870/hardware_conf_4dBi.json)
+SYMLINK_TARGET=$(readlink $UPF_CONFIG_PATH_HASH)
+
+# Replace "863-870" by "8XX" and "902-928" by "9XX" in the symlink target
+SYMLINK_TARGET=$(echo $SYMLINK_TARGET | sed -e 's/863-870/8XX/g' -e 's/902-928/9XX/g')
+
+# Replace the symlink target
+ln -sf $SYMLINK_TARGET $UPF_CONFIG_PATH_HASH
 
 log $PREFIX "Migration done"
 
