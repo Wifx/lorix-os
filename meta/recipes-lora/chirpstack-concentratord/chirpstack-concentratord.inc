@@ -174,22 +174,10 @@ do_install_append_sx1302() {
 
 pkg_postinst_ontarget_${PN} () {
 
-    ### GATEWAY ID ### 
-    GW_ID_FILE_PATH="${CONF_DIR}/10-gateway.toml"
-
-    # TODO: only for SX1301
-    if [ -f "$GW_ID_FILE_PATH" ]; then
-        # retrieve gateway ID from machine-info
-        GWID=$(machine-info -e lora -n -f "LORA_GATEWAY_ID")
-        
-        sed -i 's/gateway_id=""/gateway_id="'${GWID}'"/g' $GW_ID_FILE_PATH
-
-        echo "Gateway ID set to "$GWID" in file "$GW_ID_FILE_PATH
-    else
-        echo "Gateway ID file does not exist ("$GW_ID_FILE_PATH")"
-    fi
+    GW_CONFIG_FILE_PATH="${CONF_DIR}/10-gateway.toml"
 
     ### FREQUENCY PLAN ###
+
     PRODUCT_FREQUENCY=$(machine-info -n -f "PRODUCT_FREQUENCY")
     CHANNELS_CONFDIR=/etc/opt/chirpstack-concentratord/channels
 
@@ -227,6 +215,62 @@ pkg_postinst_ontarget_${PN} () {
         echo "concentratord channel already defined"
     fi
 }
+
+pkg_postinst_ontarget_${PN}_append_lorix_one () {
+    
+    ### GATEWAY ID ###
+
+    if [ -f "$GW_CONFIG_FILE_PATH" ]; then
+        # retrieve gateway ID from machine-info
+        GWID=$(machine-info -e lora -n -f "LORA_GATEWAY_ID")
+        
+        sed -i 's/gateway_id=""/gateway_id="'${GWID}'"/g' $GW_CONFIG_FILE_PATH
+
+        echo "Gateway ID set to "$GWID" in file "$GW_CONFIG_FILE_PATH
+    else
+        echo "Gateway ID file does not exist ("$GW_CONFIG_FILE_PATH")"
+    fi
+
+    ### MODEL ###
+
+    if [ -f "$GW_CONFIG_FILE_PATH" ]; then
+        # retrieve LoRa frequency from machine-info
+        LORA_FREQUENCY=$(machine-info -n -f "PRODUCT_FREQUENCY")
+        
+        # replace "-" with "_"
+        LORA_FREQUENCY=${LORA_FREQUENCY//-/_}
+
+        MODEL="wifx_lorix_one_${LORA_FREQUENCY}"
+
+        sed -i 's/model=""/model="'${MODEL}'"/g' $GW_CONFIG_FILE_PATH
+
+        echo "Model set to "$MODEL" in file "$GW_CONFIG_FILE_PATH
+    else
+        echo "Gateway config file does not exist ("$GW_CONFIG_FILE_PATH")"
+    fi
+}
+
+pkg_postinst_ontarget_${PN}_append_l1 () {
+
+    ### MODEL ###
+
+    if [ -f "$GW_CONFIG_FILE_PATH" ]; then
+        # retrieve LoRa frequency from machine-info
+        LORA_FREQUENCY=$(machine-info -n -f "PRODUCT_FREQUENCY")
+
+        # replace "-" with "_"
+        LORA_FREQUENCY=${LORA_FREQUENCY//-/_}
+
+        MODEL="wifx_l1_${LORA_FREQUENCY}"
+        
+        sed -i 's/model=""/model="'${MODEL}'"/g' $GW_CONFIG_FILE_PATH
+
+        echo "Model set to "$MODEL" in file "$GW_CONFIG_FILE_PATH
+    else
+        echo "Gateway config file does not exist ("$GW_CONFIG_FILE_PATH")"
+    fi
+}
+
 
 FILES_${PN} += " \
     ${CONF_DIR}/ \
