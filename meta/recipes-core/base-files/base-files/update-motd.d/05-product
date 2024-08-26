@@ -3,7 +3,6 @@
 product=$(machine-info --field "PRODUCT_LABEL_LONG" --noheader)
 model=$(machine-info --field "PRODUCT_MODEL" --noheader)
 lora_region=$(machine-info --field "PRODUCT_VARIANT_ATTR_LORA_REGION" --noheader)
-lte_region=$(machine-info --field "PRODUCT_VARIANT_ATTR_LTE_REGION" --noheader)
 serial=$(machine-info --field "PRODUCT_SERIAL" --noheader)
 
 echo " Product information"
@@ -12,6 +11,7 @@ printf "  LoRa Region:\t%s\n" "$lora_region"
 
 # If model is l1-4g, print the LTE region
 if [ "$model" = "l1-4g" ]; then
+    lte_region=$(machine-info --field "PRODUCT_VARIANT_ATTR_LTE_REGION" --noheader)
     printf "  LTE Region:\t%s\n" "$lte_region"
 fi
 
