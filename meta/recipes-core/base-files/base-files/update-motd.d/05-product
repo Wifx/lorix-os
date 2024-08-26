@@ -1,11 +1,19 @@
 #!/bin/sh
 
 product=$(machine-info --field "PRODUCT_LABEL_LONG" --noheader)
-rf_variant=$(machine-info --field "PRODUCT_FREQUENCY" --noheader)
+model=$(machine-info --field "PRODUCT_MODEL" --noheader)
+lora_region=$(machine-info --field "PRODUCT_VARIANT_ATTR_LORA_REGION" --noheader)
+lte_region=$(machine-info --field "PRODUCT_VARIANT_ATTR_LTE_REGION" --noheader)
 serial=$(machine-info --field "PRODUCT_SERIAL" --noheader)
 
 echo " Product information"
 printf "  Product:\t%s\n" "$product"
-printf "  RF Variant:\t%s\n" "$rf_variant"
+printf "  LoRa Region:\t%s\n" "$lora_region"
+
+# If model is l1-4g, print the LTE region
+if [ "$model" = "l1-4g" ]; then
+    printf "  LTE Region:\t%s\n" "$lte_region"
+fi
+
 printf "  Serial:\t%s\n" "$serial"
 echo ""

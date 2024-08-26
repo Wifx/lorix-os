@@ -3,6 +3,8 @@
 
 require recipes-mender/mender-client/mender-client-go.inc
 
+RDEPENDS_${PN} += "xdelta3"
+
 RPROVIDES:${PN} += "virtual/updater"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"

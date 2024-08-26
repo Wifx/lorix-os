@@ -15,6 +15,9 @@ SRC_URI = " \
     file://1.4.1/01_fix-manager-config-permissions.sh;subdir=${BPN}-${PV} \
     file://1.6.0/01_concentratord-location.sh;subdir=${BPN}-${PV} \
     file://1.6.0/02_iptables-add-eth-usb.sh;subdir=${BPN}-${PV} \
+    file://1.7.0/01_UPF-LoraRegion.sh;subdir=${BPN}-${PV} \
+    file://1.7.0/02_BasicStation-LoraRegion.sh;subdir=${BPN}-${PV} \
+    file://1.7.0/03_CSCD-LoraRegion.sh;subdir=${BPN}-${PV} \
 "
 
 LICENSE = "Proprietary"
@@ -66,4 +69,10 @@ do_compile() {
 
     cp 1.6.0/01_concentratord-location.sh ${TARGET}_Migration_1.6.0_01_concentratord-location
     cp 1.6.0/02_iptables-add-eth-usb.sh ${TARGET}_Migration_1.6.0_02_iptables-add-eth-usb
+
+    cp 1.6.0/01_concentratord-location.sh ${TARGET}_Migration_1.6.0_01_concentratord-location
+
+    cp 1.7.0/01_UPF-LoraRegion.sh ${TARGET}_Migration_1.7.0_01_UPF-LoraRegion
+    cp 1.7.0/02_BasicStation-LoraRegion.sh  ${TARGET}_Migration_1.7.0_02_BasicStation-LoraRegion
+    cp 1.7.0/03_CSCD-LoraRegion.sh  ${TARGET}_Migration_1.7.0_03_CSCD-LoraRegion
 }

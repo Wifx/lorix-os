@@ -1,59 +1,42 @@
-From 36e6c681684546e3577f52a248b674fcf0eb46e2 Mon Sep 17 00:00:00 2001
-From: Yannick Lanz <yannick.lanz@wifx.net>
-Date: Mon, 21 Mar 2022 09:46:14 +0100
-Subject: [PATCH 2/2] vendor: Wifx L1 support, version 863-870 and 902-928MHz
- hardware with dynamic antenna gain
-
-Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
----
- .../src/config/mod.rs                         |   2 +
- .../src/config/vendor/mod.rs                  |   1 +
- .../src/config/vendor/wifx/l1_863_870.rs      | 103 ++++++++++++++++++
- .../src/config/vendor/wifx/l1_902_928.rs      | 103 ++++++++++++++++++
- .../src/config/vendor/wifx/mod.rs             |  38 +++++++
- 5 files changed, 247 insertions(+)
- create mode 100644 chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870.rs
- create mode 100644 chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_902_928.rs
- create mode 100644 chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs
-
 diff --git a/chirpstack-concentratord-sx1302/src/config/mod.rs b/chirpstack-concentratord-sx1302/src/config/mod.rs
-index ad54401..b2f41c7 100644
+index 0bd1df1..51c3770 100644
 --- a/chirpstack-concentratord-sx1302/src/config/mod.rs
 +++ b/chirpstack-concentratord-sx1302/src/config/mod.rs
-@@ -172,6 +172,8 @@ pub fn get(filenames: Vec<String>) -> Configuration {
-         "rak_2287_kr920" => vendor::rak::rak2287_kr920::new(&config),
-         "rak_2287_ru864" => vendor::rak::rak2287_ru864::new(&config),
-         "rak_2287_us915" => vendor::rak::rak2287_us915::new(&config),
-+        "wifx_l1_863_870" => vendor::wifx::l1_863_870::new(&config),
-+        "wifx_l1_902_928" => vendor::wifx::l1_902_928::new(&config),
+@@ -250,6 +250,8 @@ pub fn get(filenames: Vec<String>) -> Configuration {
+         "waveshare_sx1302_lorawan_gateway_hat" => {
+             vendor::waveshare::sx1302_lorawan_gateway_hat::new(&config).unwrap()
+         }
++        "wifx_l1_8XX" => vendor::wifx::l1_8XX::new(&config).unwrap(),
++        "wifx_l1_9XX" => vendor::wifx::l1_9XX::new(&config).unwrap(),
          _ => panic!("unexpected gateway model: {}", config.gateway.model),
      };
  
 diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs b/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs
-index f530583..15592c8 100644
+index 95f32ec..261cb77 100644
 --- a/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs
 +++ b/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs
-@@ -2,6 +2,7 @@ use libloragw_sx1302::hal;
- 
- pub mod rak;
+@@ -7,6 +7,7 @@ pub mod rak;
+ pub mod seeed;
  pub mod semtech;
+ pub mod waveshare;
 +pub mod wifx;
  
- #[derive(Clone)]
- pub enum ComType {
-diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870.rs
+ #[derive(Default, Clone, PartialEq)]
+ pub enum Gps {
+diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX.rs
 new file mode 100644
-index 0000000..aef2c13
+index 0000000..e26b32d
 --- /dev/null
-+++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870.rs
++++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX.rs
 @@ -0,0 +1,103 @@
++use anyhow::Result;
 +use libloragw_sx1302::hal;
 +
 +use super::super::super::super::config;
-+use super::super::{ComType, Configuration, RadioConfig};
++use super::super::{ComType, Configuration, Gps, RadioConfig};
 +
-+pub fn new(conf: &config::Configuration) -> Configuration {
-+    Configuration {
++pub fn new(conf: &config::Configuration) -> Result<Configuration> {
++    Ok(Configuration {
 +        radio_count: 2,
 +        clock_source: 1,
 +        full_duplex: false,
@@ -97,18 +80,17 @@ index 0000000..aef2c13
 +                tx_gain_table: vec![],
 +            },
 +        ],
-+        gps_tty_path: None,
-+        com_type: ComType::SPI,
++        gps: Gps::None,
++        com_type: ComType::Spi,
 +        com_path: "/dev/spidev0.0".to_string(),
-+        reset_pin: match conf.gateway.reset_pin {
-+            0 => Some((0, 1)),
-+            _ => Some((0, conf.gateway.reset_pin)),
-+        },
-+        power_en_pin: match conf.gateway.power_en_pin {
-+            0 => None,
-+            _ => Some((0, conf.gateway.power_en_pin)),
-+        },
-+    }
++        i2c_path: None,
++        i2c_temp_sensor_addr: None,
++        sx1302_reset_pin: conf.gateway.get_sx1302_reset_pin("/dev/gpiochip0", 1),
++        sx1302_power_en_pin: None,
++        sx1261_reset_pin: None,
++        ad5338r_reset_pin: None,
++        reset_commands: None,
++    })
 +}
 +
 +// Power table with an antenna gain of 0dBi
@@ -150,19 +132,20 @@ index 0000000..aef2c13
 +        pwr_idx: pwr_idx,
 +    }
 +}
-diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_902_928.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_902_928.rs
+diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX.rs
 new file mode 100644
-index 0000000..7526834
+index 0000000..f0a0de5
 --- /dev/null
-+++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_902_928.rs
++++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX.rs
 @@ -0,0 +1,103 @@
++use anyhow::Result;
 +use libloragw_sx1302::hal;
 +
 +use super::super::super::super::config;
-+use super::super::{ComType, Configuration, RadioConfig};
++use super::super::{ComType, Configuration, Gps, RadioConfig};
 +
-+pub fn new(conf: &config::Configuration) -> Configuration {
-+    Configuration {
++pub fn new(conf: &config::Configuration) -> Result<Configuration> {
++    Ok(Configuration {
 +        radio_count: 2,
 +        clock_source: 1,
 +        full_duplex: false,
@@ -206,18 +189,17 @@ index 0000000..7526834
 +                tx_gain_table: vec![],
 +            },
 +        ],
-+        gps_tty_path: None,
-+        com_type: ComType::SPI,
++        gps: Gps::None,
++        com_type: ComType::Spi,
 +        com_path: "/dev/spidev0.0".to_string(),
-+        reset_pin: match conf.gateway.reset_pin {
-+            0 => Some((0, 1)),
-+            _ => Some((0, conf.gateway.reset_pin)),
-+        },
-+        power_en_pin: match conf.gateway.power_en_pin {
-+            0 => None,
-+            _ => Some((0, conf.gateway.power_en_pin)),
-+        },
-+    }
++        i2c_path: None,
++        i2c_temp_sensor_addr: None,
++        sx1302_reset_pin: conf.gateway.get_sx1302_reset_pin("/dev/gpiochip0", 1),
++        sx1302_power_en_pin: None,
++        sx1261_reset_pin: None,
++        ad5338r_reset_pin: None,
++        reset_commands: None,
++    })
 +}
 +
 +// Power table with an antenna gain of 0dBi
@@ -265,8 +247,8 @@ index 0000000..b0eb8f6
 --- /dev/null
 +++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs
 @@ -0,0 +1,38 @@
-+pub mod l1_863_870;
-+pub mod l1_902_928;
++pub mod l1_8XX;
++pub mod l1_9XX;
 +
 +use libloragw_sx1302::hal;
 +
@@ -303,6 +285,3 @@ index 0000000..b0eb8f6
 +    // keep only max 16 higher entries
 +    entries.as_slice()[start_index..].to_vec()
 +}
--- 
-2.25.1
-

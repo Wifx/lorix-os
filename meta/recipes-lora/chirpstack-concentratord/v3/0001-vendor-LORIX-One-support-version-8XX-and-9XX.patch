@@ -1,18 +1,18 @@
 From 5502b201ae09f6fd66ac7cc64f0fce4d237731e8 Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
 Date: Mon, 7 Feb 2022 14:44:35 +0100
-Subject: [PATCH 1/2] vendor: LORIX One support, version 863-870 and 902-928MHz
+Subject: [PATCH 1/2] vendor: LORIX One support, version 8XX and 9XX
  hardware with dynamic antenna gain
 
 Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
 ---
  .../src/config/mod.rs                         |  5 +-
- .../config/vendor/wifx/lorix_one_863_870.rs   | 89 +++++++++++++++++++
- .../config/vendor/wifx/lorix_one_902_928.rs   | 89 +++++++++++++++++++
+ .../config/vendor/wifx/lorix_one_8XX.rs   | 89 +++++++++++++++++++
+ .../config/vendor/wifx/lorix_one_9XX.rs   | 89 +++++++++++++++++++
  .../src/config/vendor/wifx/mod.rs             |  3 +-
  4 files changed, 184 insertions(+), 2 deletions(-)
- create mode 100644 chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_863_870.rs
- create mode 100644 chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_902_928.rs
+ create mode 100644 chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_8XX.rs
+ create mode 100644 chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_9XX.rs
 
 diff --git a/chirpstack-concentratord-sx1301/src/config/mod.rs b/chirpstack-concentratord-sx1301/src/config/mod.rs
 index 672a17e..eebf67d 100644
@@ -23,18 +23,18 @@ index 672a17e..eebf67d 100644
          "sandbox_lorago_port_eu868" => vendor::sandbox::lorago_port_eu868::new(&config),
          "sandbox_lorago_port_us915" => vendor::sandbox::lorago_port_us915::new(&config),
 -        "wifx_lorix_one_eu868" => vendor::wifx::lorix_one_eu868::new(&config),
-+        "wifx_lorix_one_863_870" | "wifx_lorix_one_eu868" => {
-+            vendor::wifx::lorix_one_863_870::new(&config)
++        "wifx_lorix_one_8XX" | "wifx_lorix_one_eu868" => {
++            vendor::wifx::lorix_one_8XX::new(&config)
 +        }
-+        "wifx_lorix_one_902_928" => vendor::wifx::lorix_one_902_928::new(&config),
++        "wifx_lorix_one_9XX" => vendor::wifx::lorix_one_9XX::new(&config),
          _ => panic!("unexpected gateway model: {}", config.gateway.model),
      };
  
-diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_863_870.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_863_870.rs
+diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_8XX.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_8XX.rs
 new file mode 100644
 index 0000000..49e81d9
 --- /dev/null
-+++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_863_870.rs
++++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_8XX.rs
 @@ -0,0 +1,89 @@
 +use libloragw_sx1301::hal;
 +
@@ -125,11 +125,11 @@ index 0000000..49e81d9
 +    // keep only max 16 higher entries
 +    entries.as_slice()[start_index..].to_vec()
 +}
-diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_902_928.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_902_928.rs
+diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_9XX.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_9XX.rs
 new file mode 100644
 index 0000000..413f4eb
 --- /dev/null
-+++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_902_928.rs
++++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_9XX.rs
 @@ -0,0 +1,89 @@
 +use libloragw_sx1301::hal;
 +
@@ -226,8 +226,8 @@ index ab9f708..4fdecef 100644
 +++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs
 @@ -1 +1,2 @@
 -pub mod lorix_one_eu868;
-+pub mod lorix_one_863_870;
-+pub mod lorix_one_902_928;
++pub mod lorix_one_8XX;
++pub mod lorix_one_9XX;
 -- 
 2.25.1
 
