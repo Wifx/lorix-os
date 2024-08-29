@@ -1,4 +1,4 @@
-From c0c8805265ce2b40574132558cacf32f9870478d Mon Sep 17 00:00:00 2001
+From 66ebad084f3cf187019b56239d7ce60f83d25104 Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
 Date: Wed, 13 Mar 2024 11:57:41 +0100
 Subject: [PATCH] i2c-temp-sensor: back port default i2c device (i2c-1) for
@@ -7,14 +7,21 @@ Subject: [PATCH] i2c-temp-sensor: back port default i2c device (i2c-1) for
 
 Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
 ---
- libloragw/src/loragw_hal.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libloragw/src/loragw_hal.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/libloragw/src/loragw_hal.c b/libloragw/src/loragw_hal.c
-index 2587208..dc674e3 100644
+index 2587208..fb50b7f 100644
 --- a/libloragw/src/loragw_hal.c
 +++ b/libloragw/src/loragw_hal.c
-@@ -210,7 +210,7 @@ static uint8_t ts_addr = 0xFF;
+@@ -204,13 +204,13 @@ FILE * log_file = NULL;
+ 
+ /* I2C temperature sensor handles */
+ static int     ts_fd = -1;
+-static uint8_t ts_addr = 0xFF;
++static uint8_t ts_addr = 0x39;
+ 
+ /* I2C AD5338 handles */
  static int     ad_fd = -1;
  
  /* I2C device */
@@ -23,6 +30,15 @@ index 2587208..dc674e3 100644
  
  /* -------------------------------------------------------------------------- */
  /* --- PRIVATE FUNCTIONS DECLARATION ---------------------------------------- */
+@@ -1116,6 +1116,8 @@ int lgw_start(void) {
+                 printf("INFO: no temperature sensor found on port 0x%02X\n", ts_addr);
+                 i2c_linuxdev_close(ts_fd);
+                 ts_fd = -1;
++            } else {
++                printf("INFO: found temperature sensor on port 0x%02X\n", ts_addr);
+             }
+         }
+ 
 -- 
 2.34.1
 
