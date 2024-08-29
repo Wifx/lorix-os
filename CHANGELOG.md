@@ -10,15 +10,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [LOR-427] Add wpa-supplicant for 802.1x support
-- Add Wifx L1 4G support in kernel
+- [LOR-577] Add Wifx L1 4G support in kernel
+- [LOR-577] Add ModemManager
 
 ### Changed
 
- - Update Yocto to Kirkstone
- - Update OpenRC to 0.43.5
- - Update OpenSSL to 3.0.8
- - Update machine-info to 0.6.2 (Wifx L1 4G support)
- - Update ethtool to 6.7
+- [LOR-560] Update Yocto to Kirkstone
+- [LOR-560] Update OpenRC to 0.43.5
+- [LOR-560] Update OpenSSL to 3.0.8
+- [LOR-560] Update ethtool to 6.7
+- [LOR-593] Update machine-info to 1.0 (Wifx L1 4G support) 
+- [LOR-590] Adapt OS to new product variant specification (LoRa Region )
+- [LOR-594] Reduce log size (syslog/logrotate)
  
 ## [1.6.3] - 2024-06-10
 
