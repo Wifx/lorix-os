@@ -1,0 +1,26 @@
+From 970e70ccdd7ea297c47145536a2bc275c75433bb Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Thu, 17 Oct 2024 15:43:43 +0200
+Subject: [PATCH 3/3] fibocom: increase CPIN? request timeout to fix
+ unavailable SIM functionnality bug
+
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
+---
+ src/mm-broadband-modem.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/mm-broadband-modem.c b/src/mm-broadband-modem.c
+index 10a67ea3..384d94a4 100644
+--- a/src/mm-broadband-modem.c
++++ b/src/mm-broadband-modem.c
+@@ -763,7 +763,7 @@ parse_caps_cgmm (MMBaseModem   *self,
+ static const MMBaseModemAtCommand capabilities[] = {
+     { "+GCAP",  2, TRUE,  parse_caps_gcap },
+     { "I",      1, TRUE,  parse_caps_gcap }, /* yes, really parse as +GCAP */
+-    { "+CPIN?", 1, FALSE, parse_caps_cpin },
++    { "+CPIN?", 5, FALSE, parse_caps_cpin },
+     { "+CGMM",  1, TRUE,  parse_caps_cgmm },
+     { NULL }
+ };
+--
+2.34.1
