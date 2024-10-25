@@ -6,7 +6,8 @@ SRC_URI += " \
     file://78-mm-allowlist-internal-model.rules \
     file://0001-fibocom-add-support-for-SIM-PIN-PUK-remaining-enteri.patch \
     file://0002-fibocom-add-support-for-SIM-hot-swap.patch \
-    file://0003-fibocom-increase-CPIN-request-timeout-to-fix-unavail.patch \
+    file://0003-Fix-timeout-on-CPIN-command-following-SIM-card-inser.patch \
+    file://0004-fibocom-Add-supported-and-current-modes-feature.patch \
 "
 
 # Disable MBIM and QMI features

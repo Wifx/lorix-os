@@ -1,8 +1,8 @@
-From 970e70ccdd7ea297c47145536a2bc275c75433bb Mon Sep 17 00:00:00 2001
-From: Yannick Lanz <yannick.lanz@wifx.net>
-Date: Thu, 17 Oct 2024 15:43:43 +0200
-Subject: [PATCH 3/3] fibocom: increase CPIN? request timeout to fix
- unavailable SIM functionnality bug
+From 24076ce58a76a51512fda3143cff5ce62a5138e8 Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Mon, 21 Oct 2024 13:14:33 +0200
+Subject: [PATCH 3/4] Fix timeout on CPIN? command following SIM card
+ insertion/remove
 
 Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
 ---
@@ -22,5 +22,6 @@ index 10a67ea3..384d94a4 100644
      { "+CGMM",  1, TRUE,  parse_caps_cgmm },
      { NULL }
  };
---
+-- 
 2.34.1
+

@@ -1,0 +1,633 @@
+From 741368bc8ab7869e5139b5d576796dde2b6948ae Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Mon, 21 Oct 2024 13:14:48 +0200
+Subject: [PATCH 4/4] fibocom: Add supported and current modes feature
+
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
+---
+ .../fibocom/mm-broadband-modem-fibocom.c      | 253 ++++++++++++----
+ .../fibocom/mm-modem-helpers-fibocom.c        | 275 ++++++++++++++++++
+ .../fibocom/mm-modem-helpers-fibocom.h        |  31 ++
+ src/plugins/meson.build                       |   1 +
+ 4 files changed, 502 insertions(+), 58 deletions(-)
+ create mode 100644 src/plugins/fibocom/mm-modem-helpers-fibocom.c
+ create mode 100644 src/plugins/fibocom/mm-modem-helpers-fibocom.h
+
+diff --git a/src/plugins/fibocom/mm-broadband-modem-fibocom.c b/src/plugins/fibocom/mm-broadband-modem-fibocom.c
+index dc37d225..a1a490ec 100644
+--- a/src/plugins/fibocom/mm-broadband-modem-fibocom.c
++++ b/src/plugins/fibocom/mm-broadband-modem-fibocom.c
+@@ -25,6 +25,7 @@
+ #include "mm-iface-modem-3gpp.h"
+ #include "mm-iface-modem-3gpp-profile-manager.h"
+ #include "mm-log.h"
++#include "mm-modem-helpers-fibocom.h"
+ 
+ static void iface_modem_init                      (MMIfaceModem                   *iface);
+ static void iface_modem_3gpp_init                 (MMIfaceModem3gpp               *iface);
+@@ -55,64 +56,6 @@ struct _MMBroadbandModemFibocomPrivate {
+     gint            initial_eps_bearer_cid;
+ };
+ 
+-/*****************************************************************************/
+-/* Load unlock retries (Modem interface) */
+-
+-static MMUnlockRetries *
+-load_unlock_retries_finish (MMIfaceModem *self,
+-                            GAsyncResult *res,
+-                            GError **error)
+-{
+-    MMUnlockRetries *unlock_retries;
+-    const gchar *response;
+-    gint matched;
+-    guint a, b, c ,d;
+-
+-    response = mm_base_modem_at_command_finish (MM_BASE_MODEM (self), res, error);
+-    if (!response)
+-        return NULL;
+-
+-    matched = sscanf (response, "+TPIN: %d,%d,%d,%d",
+-                      &a, &b, &c, &d);
+-    if (matched != 4) {
+-        g_set_error (error,
+-                     MM_CORE_ERROR,
+-                     MM_CORE_ERROR_FAILED,
+-                     "Could not parse PIN retries results: '%s'",
+-                     response);
+-        return NULL;
+-    }
+-
+-    if (a > 998) {
+-        g_set_error (error,
+-                     MM_CORE_ERROR,
+-                     MM_CORE_ERROR_FAILED,
+-                     "Invalid PIN attempts left: '%u'",
+-                     a);
+-        return NULL;
+-    }
+-
+-    unlock_retries = mm_unlock_retries_new ();
+-    mm_unlock_retries_set (unlock_retries, MM_MODEM_LOCK_SIM_PIN, a);
+-    mm_unlock_retries_set (unlock_retries, MM_MODEM_LOCK_SIM_PUK, b);
+-    mm_unlock_retries_set (unlock_retries, MM_MODEM_LOCK_SIM_PIN2, c);
+-    mm_unlock_retries_set (unlock_retries, MM_MODEM_LOCK_SIM_PUK2, d);
+-    return unlock_retries;
+-}
+-
+-static void
+-load_unlock_retries (MMIfaceModem *self,
+-                     GAsyncReadyCallback callback,
+-                     gpointer user_data)
+-{
+-    mm_base_modem_at_command (MM_BASE_MODEM (self),
+-                              "+TPIN?",
+-                              3,
+-                              FALSE,
+-                              callback,
+-                              user_data);
+-}
+-
+ /*****************************************************************************/
+ /* Create Bearer (Modem interface) */
+ 
+@@ -288,6 +231,194 @@ modem_power_off (MMIfaceModem *self,
+                               user_data);
+ }
+ 
++/*****************************************************************************/
++/* Load supported modes (Modem interface) */
++
++static GArray *
++load_supported_modes_finish (MMIfaceModem  *self,
++                             GAsyncResult  *res,
++                             GError       **error)
++{
++    const gchar *response;
++    GArray      *combinations;
++
++    response = mm_base_modem_at_command_finish (MM_BASE_MODEM (self), res, error);
++    if (!response)
++        return FALSE;
++
++    if (!(combinations = mm_fibocom_parse_gtrat_test_response (response, self, error)))
++        return FALSE;
++
++    return combinations;
++}
++
++static void
++load_supported_modes (MMIfaceModem        *self,
++                      GAsyncReadyCallback  callback,
++                      gpointer             user_data)
++{
++    mm_base_modem_at_command (
++        MM_BASE_MODEM (self),
++        "+GTRAT=?",
++        3,
++        TRUE,
++        callback,
++        user_data);
++}
++
++/*****************************************************************************/
++/* Load current modes (Modem interface) */
++
++static gboolean
++load_current_modes_finish (MMIfaceModem  *self,
++                           GAsyncResult  *res,
++                           MMModemMode   *allowed,
++                           MMModemMode   *preferred,
++                           GError       **error)
++{
++    const gchar *response;
++
++    response = mm_base_modem_at_command_finish (MM_BASE_MODEM (self), res, error);
++    if (!response)
++        return FALSE;
++
++    return mm_fibocom_parse_gtrat_read_response (response, self, allowed, preferred, error);
++}
++
++static void
++load_current_modes (MMIfaceModem        *self,
++                    GAsyncReadyCallback  callback,
++                    gpointer             user_data)
++{
++    mm_base_modem_at_command (MM_BASE_MODEM (self),
++                              "+GTRAT?",
++                              3,
++                              FALSE,
++                              callback,
++                              user_data);
++}
++
++/*****************************************************************************/
++/* Set current modes (Modem interface) */
++
++static gboolean
++set_current_modes_finish (MMIfaceModem  *self,
++                          GAsyncResult  *res,
++                          GError       **error)
++{
++    return g_task_propagate_boolean (G_TASK (res), error);
++}
++
++static void
++allowed_access_technology_update_ready (MMBroadbandModemFibocom *self,
++                                        GAsyncResult            *res,
++                                        GTask                   *task)
++{
++    GError *error = NULL;
++
++    mm_base_modem_at_command_finish (MM_BASE_MODEM (self), res, &error);
++    if (error)
++        g_task_return_error (task, error);
++    else
++        g_task_return_boolean (task, TRUE);
++    g_object_unref (task);
++}
++
++static void
++set_current_modes (MMIfaceModem        *_self,
++                   MMModemMode          allowed,
++                   MMModemMode          preferred,
++                   GAsyncReadyCallback  callback,
++                   gpointer             user_data)
++{
++    MMBroadbandModemFibocom *self = MM_BROADBAND_MODEM_FIBOCOM (_self);
++    GTask                   *task;
++    gchar *command;
++    GError *error = NULL;
++
++    task = g_task_new (self, NULL, callback, user_data);
++
++    mm_obj_dbg (self, "call set_current_modes, allowd: %d, preferred: %d", allowed, preferred);
++
++    command = mm_fibocom_build_gtrat_set_command (allowed, preferred, &error);
++
++    if (!command) {
++        g_task_return_error (task, error);
++        g_object_unref (task);
++        return;
++    }
++
++    mm_obj_dbg (self, "GTRAT: %s", command);
++
++    mm_base_modem_at_command (
++        MM_BASE_MODEM (self),
++        command,
++        30,
++        FALSE,
++        (GAsyncReadyCallback)allowed_access_technology_update_ready,
++        task);
++
++    g_free (command);
++}
++
++/*****************************************************************************/
++/* Load unlock retries (Modem interface) */
++
++static MMUnlockRetries *
++load_unlock_retries_finish (MMIfaceModem *self,
++                            GAsyncResult *res,
++                            GError **error)
++{
++    MMUnlockRetries *unlock_retries;
++    const gchar *response;
++    gint matched;
++    guint a, b, c ,d;
++
++    response = mm_base_modem_at_command_finish (MM_BASE_MODEM (self), res, error);
++    if (!response)
++        return NULL;
++
++    matched = sscanf (response, "+TPIN: %d,%d,%d,%d",
++                      &a, &b, &c, &d);
++    if (matched != 4) {
++        g_set_error (error,
++                     MM_CORE_ERROR,
++                     MM_CORE_ERROR_FAILED,
++                     "Could not parse PIN retries results: '%s'",
++                     response);
++        return NULL;
++    }
++
++    if (a > 998) {
++        g_set_error (error,
++                     MM_CORE_ERROR,
++                     MM_CORE_ERROR_FAILED,
++                     "Invalid PIN attempts left: '%u'",
++                     a);
++        return NULL;
++    }
++
++    unlock_retries = mm_unlock_retries_new ();
++    mm_unlock_retries_set (unlock_retries, MM_MODEM_LOCK_SIM_PIN, a);
++    mm_unlock_retries_set (unlock_retries, MM_MODEM_LOCK_SIM_PUK, b);
++    mm_unlock_retries_set (unlock_retries, MM_MODEM_LOCK_SIM_PIN2, c);
++    mm_unlock_retries_set (unlock_retries, MM_MODEM_LOCK_SIM_PUK2, d);
++    return unlock_retries;
++}
++
++static void
++load_unlock_retries (MMIfaceModem *self,
++                     GAsyncReadyCallback callback,
++                     gpointer user_data)
++{
++    mm_base_modem_at_command (MM_BASE_MODEM (self),
++                              "+TPIN?",
++                              3,
++                              FALSE,
++                              callback,
++                              user_data);
++}
++
+ /*****************************************************************************/
+ /* SIM hot swap setup (Modem interface) */
+ 
+@@ -900,6 +1031,12 @@ iface_modem_init (MMIfaceModem *iface)
+     iface->modem_power_down_finish = modem_common_power_finish;
+     iface->modem_power_off = modem_power_off;
+     iface->modem_power_off_finish = modem_common_power_finish;
++    iface->load_supported_modes = load_supported_modes;
++    iface->load_supported_modes_finish = load_supported_modes_finish;
++    iface->load_current_modes = load_current_modes;
++    iface->load_current_modes_finish = load_current_modes_finish;
++    iface->set_current_modes = set_current_modes;
++    iface->set_current_modes_finish = set_current_modes_finish;
+     iface->load_unlock_retries = load_unlock_retries;
+     iface->load_unlock_retries_finish = load_unlock_retries_finish;
+     iface->setup_sim_hot_swap = modem_setup_sim_hot_swap;
+diff --git a/src/plugins/fibocom/mm-modem-helpers-fibocom.c b/src/plugins/fibocom/mm-modem-helpers-fibocom.c
+new file mode 100644
+index 00000000..41a91a39
+--- /dev/null
++++ b/src/plugins/fibocom/mm-modem-helpers-fibocom.c
+@@ -0,0 +1,275 @@
++#include <glib.h>
++#include <string.h>
++
++#include "mm-log.h"
++#include "mm-modem-helpers.h"
++#include "mm-modem-helpers-fibocom.h"
++#include "mm-modem-helpers.h"
++#include "mm-common-helpers.h"
++
++/* Index of the array is the fibocom MC610 specific value */
++static const MMModemMode fibocom_combinations[] = {
++    (                     MM_MODEM_MODE_CS ),
++    ( MM_MODEM_MODE_NONE                                                        ),
++    ( MM_MODEM_MODE_NONE                                                        ),
++    (                                                          MM_MODEM_MODE_4G ),
++    ( MM_MODEM_MODE_NONE                                                        ),
++    (                    MM_MODEM_MODE_CS |                    MM_MODEM_MODE_4G ),
++    ( MM_MODEM_MODE_NONE                                                        ),
++    ( MM_MODEM_MODE_NONE                                                        ),
++    ( MM_MODEM_MODE_NONE                                                        ),
++    ( MM_MODEM_MODE_NONE                                                        ),
++    ( MM_MODEM_MODE_ANY ),
++};
++
++GArray *
++mm_fibocom_parse_gtrat_test_response (const gchar  *response,
++                                      gpointer      log_object,
++                                      GError      **error)
++{
++    GArray *combinations = NULL;
++    GArray *selected = NULL;
++    GArray *preferred = NULL;
++    gchar **split;
++    guint   split_len;
++    GError *inner_error = NULL;
++    guint   i;
++
++    /*
++     * E.g.:
++     *  AT+GTRAT=?
++     *  +GTRAT: (0,3,5,10),(0,3),(0,3)
++     */
++    response = mm_strip_tag (response, "+GTRAT:");
++    split = mm_split_string_groups (response);
++    split_len = g_strv_length (split);
++    if (split_len != 3) {
++        inner_error = g_error_new (MM_CORE_ERROR, MM_CORE_ERROR_FAILED,
++                                   "Unexpected number of groups in +GTRAT=? response: %u", g_strv_length (split));
++        goto out;
++    }
++
++    /* The selected list must have values */
++    selected = mm_parse_uint_list (split[0], &inner_error);
++    if (inner_error)
++        goto out;
++
++    if (!selected) {
++        inner_error = g_error_new (MM_CORE_ERROR, MM_CORE_ERROR_FAILED,
++                                   "No selected RAT values given in +GTRAT=? response");
++        goto out;
++    }
++
++    /* For our purposes, the preferred list may be empty */
++    preferred = mm_parse_uint_list (split[1], &inner_error);
++    if (inner_error)
++        goto out;
++
++    /* Build array of combinations */
++    combinations = g_array_new (FALSE, FALSE, sizeof (MMModemModeCombination));
++
++    mm_obj_dbg (log_object, "gtrat test parse, selected len: %d", selected->len);
++    for (i = 0; i < selected->len; i++) {
++        guint                  selected_value;
++        MMModemModeCombination combination;
++        guint                  j;
++
++        selected_value = g_array_index (selected, guint, i);
++        if (selected_value >= G_N_ELEMENTS (fibocom_combinations)) {
++            mm_obj_warn (log_object, "unexpected AcT value: %u", selected_value);
++            continue;
++        }
++
++        /* Combination without any preferred */
++        combination.allowed = fibocom_combinations[selected_value];
++        combination.preferred = MM_MODEM_MODE_NONE;
++        if (mm_count_bits_set (combination.allowed) == 1) {
++            if (combination.allowed != MM_MODEM_MODE_ANY)
++                g_array_append_val (combinations, combination);
++
++            continue;
++        }
++
++        if (!preferred)
++            continue;
++
++        for (j = 0; j < preferred->len; j++) {
++            guint preferred_value;
++
++            preferred_value = g_array_index (preferred, guint, j);
++            if (preferred_value >= G_N_ELEMENTS (fibocom_combinations)) {
++                mm_obj_warn (log_object, "unexpected AcT preferred value: %u", preferred_value);
++                continue;
++            }
++            combination.preferred = fibocom_combinations[preferred_value];
++            if (mm_count_bits_set (combination.preferred) != 1) {
++                mm_obj_warn (log_object, "AcT preferred value should be a single AcT: %u", preferred_value);
++                continue;
++            }
++            if (!(combination.allowed & combination.preferred))
++                continue;
++            g_array_append_val (combinations, combination);
++        }
++    }
++
++    if (combinations->len == 0) {
++        inner_error = g_error_new (MM_CORE_ERROR, MM_CORE_ERROR_FAILED,
++                                   "No combinations built from +GTRAT=? response");
++        goto out;
++    }
++
++out:
++    g_strfreev (split);
++    if (selected)
++        g_array_unref (selected);
++    if (preferred)
++        g_array_unref (preferred);
++
++    if (inner_error) {
++        if (combinations)
++            g_array_unref (combinations);
++        g_propagate_error (error, inner_error);
++        return NULL;
++    }
++
++    return combinations;
++}
++
++gboolean
++mm_fibocom_parse_gtrat_read_response (const gchar  *response,
++                                      gpointer      log_object,
++                                      MMModemMode  *out_allowed,
++                                      MMModemMode  *out_preferred,
++                                      GError      **error)
++{
++    g_autoptr(GRegex)      r = NULL;
++    g_autoptr(GMatchInfo)  match_info = NULL;
++    GError                *inner_error = NULL;
++    MMModemMode            allowed = MM_MODEM_MODE_NONE;
++    MMModemMode            preferred = MM_MODEM_MODE_NONE;
++    g_autofree gchar      *allowed_str = NULL;
++    g_autofree gchar      *preferred_str = NULL;
++
++    g_assert (out_allowed != NULL && out_preferred != NULL);
++
++    /* Response may be e.g.:
++     * +GTRAT: 10,3,0
++     */
++    r = g_regex_new ("\\+GTRAT: (\\d+)(?:,(\\d+))?(?:,(\\d+))?(?:\\r\\n)?", 0, 0, NULL);
++    g_assert (r != NULL);
++
++    g_regex_match_full (r, response, strlen (response), 0, 0, &match_info, &inner_error);
++    if (!inner_error && g_match_info_matches (match_info)) {
++        guint  value = 0;
++
++        /* Selected item is mandatory */
++        if (!mm_get_uint_from_match_info (match_info, 1, &value)) {
++            inner_error = g_error_new (MM_CORE_ERROR, MM_CORE_ERROR_FAILED,
++                                       "Couldn't read AcT selected value");
++            goto out;
++        }
++        mm_obj_dbg (log_object, "current mode: %d", value);
++        if (value >= G_N_ELEMENTS (fibocom_combinations)) {
++            inner_error = g_error_new (MM_CORE_ERROR, MM_CORE_ERROR_FAILED,
++                                       "Unexpected AcT selected value: %u", value);
++            goto out;
++        }
++        allowed = fibocom_combinations[value];
++        allowed_str = mm_modem_mode_build_string_from_mask (allowed);
++        mm_obj_dbg (log_object, "current allowed modes retrieved: %s", allowed_str);
++
++        /* If only one mode is allowed (not ANY or multiple), we ignore preferred value */
++        if (mm_count_bits_set (allowed) == 1) {
++            preferred = MM_MODEM_MODE_NONE;
++            goto out;
++        }
++
++        /* Preferred item is optional */
++        if (mm_get_uint_from_match_info (match_info, 2, &value)) {
++            if (value >= G_N_ELEMENTS (fibocom_combinations)) {
++                inner_error = g_error_new (MM_CORE_ERROR, MM_CORE_ERROR_FAILED,
++                                           "Unexpected AcT preferred value: %u", value);
++                goto out;
++            }
++
++            preferred = fibocom_combinations[value];
++            preferred_str = mm_modem_mode_build_string_from_mask (preferred);
++            mm_obj_dbg (log_object, "current preferred modes retrieved: %s", preferred_str);
++            if (mm_count_bits_set (preferred) != 1) {
++                inner_error = g_error_new (MM_CORE_ERROR, MM_CORE_ERROR_FAILED,
++                                           "AcT preferred value should be a single AcT: %s", preferred_str);
++                goto out;
++            }
++            if (!(allowed & preferred)) {
++                inner_error = g_error_new (MM_CORE_ERROR, MM_CORE_ERROR_FAILED,
++                                           "AcT preferred value (%s) not a subset of the allowed value (%s)",
++                                           preferred_str, allowed_str);
++                goto out;
++            }
++        }
++    }
++
++out:
++    if (inner_error) {
++        g_propagate_error (error, inner_error);
++        return FALSE;
++    }
++
++    if (allowed == MM_MODEM_MODE_NONE) {
++        inner_error = g_error_new (MM_CORE_ERROR, MM_CORE_ERROR_FAILED,
++                                   "Couldn't parse +GTRAT response: %s", response);
++        return FALSE;
++    }
++
++    *out_allowed = allowed;
++    *out_preferred = preferred;
++    return TRUE;
++}
++
++static gboolean
++append_gtrat_rat_value (GString      *str,
++                        MMModemMode   mode,
++                        GError      **error)
++{
++    guint i;
++
++    for (i = 0; i < G_N_ELEMENTS (fibocom_combinations); i++) {
++        if (fibocom_combinations[i] == mode) {
++            g_string_append_printf (str, "%u", i);
++            return TRUE;
++        }
++    }
++
++    g_set_error (error, MM_CORE_ERROR, MM_CORE_ERROR_FAILED,
++                 "No AcT value matches requested mode");
++    return FALSE;
++}
++
++gchar *mm_fibocom_build_gtrat_set_command (MMModemMode allowed,
++                                           MMModemMode preferred,
++                                           GError **error)
++{
++    GString *command;
++
++    command = g_string_new("+GTRAT=");
++    if (!append_gtrat_rat_value (command, allowed, error)) {
++        g_string_free (command, TRUE);
++        return NULL;
++    }
++
++    if (preferred != MM_MODEM_MODE_NONE) {
++        if (mm_count_bits_set (preferred) != 1) {
++            *error = g_error_new (MM_CORE_ERROR, MM_CORE_ERROR_FAILED,
++                                  "AcT preferred value should be a single AcT");
++            g_string_free (command, TRUE);
++            return NULL;
++        }
++        g_string_append (command, ",");
++        if (!append_gtrat_rat_value (command, preferred, error)) {
++            g_string_free (command, TRUE);
++            return NULL;
++        }
++    }
++
++    return g_string_free (command, FALSE);
++}
+diff --git a/src/plugins/fibocom/mm-modem-helpers-fibocom.h b/src/plugins/fibocom/mm-modem-helpers-fibocom.h
+new file mode 100644
+index 00000000..ea447b1c
+--- /dev/null
++++ b/src/plugins/fibocom/mm-modem-helpers-fibocom.h
+@@ -0,0 +1,31 @@
++#ifndef MM_MODEM_HELPERS_FIBOCOM_H
++#define MM_MODEM_HELPERS_FIBOCOM_H
++
++#include <glib.h>
++#include <ModemManager.h>
++
++/*****************************************************************************/
++/* GTRAT=? response parser */
++
++GArray *mm_fibocom_parse_gtrat_test_response (const gchar  *response,
++                                              gpointer      log_object,
++                                              GError      **error);
++
++/*****************************************************************************/
++/* GTRAT? response parser */
++
++gboolean
++mm_fibocom_parse_gtrat_read_response (const gchar  *response,
++                                      gpointer      log_object,
++                                      MMModemMode  *out_allowed,
++                                      MMModemMode  *out_preferred,
++                                      GError      **error);
++
++/*****************************************************************************/
++/* +GTRAT set command helper */
++
++gchar *mm_fibocom_build_gtrat_set_command (MMModemMode allowed,
++                                           MMModemMode preferred,
++                                           GError **error);
++
++#endif  /* MM_MODEM_HELPERS_FIBOCOM_H */
+diff --git a/src/plugins/meson.build b/src/plugins/meson.build
+index 25e4918c..b3124603 100644
+--- a/src/plugins/meson.build
++++ b/src/plugins/meson.build
+@@ -391,6 +391,7 @@ if plugins_options['fibocom']
+   endif
+   plugins += {'plugin-fibocom': {
+     'plugin': true,
++    'helper': {'sources': files('fibocom/mm-modem-helpers-fibocom.c'), 'include_directories': plugins_incs, 'c_args': common_c_args},
+     'module': {'sources': sources, 'include_directories': incs, 'c_args': test_udev_rules_dir_c_args + ['-DMM_MODULE_NAME="fibocom"']},
+   }}
+ 
+-- 
+2.34.1
+
