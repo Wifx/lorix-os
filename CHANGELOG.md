@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-593] Update machine-info to 1.0 (Wifx L1 4G support) 
 - [LOR-590] Adapt OS to new product variant specification (LoRa Region )
 - [LOR-594] Reduce log size (syslog/logrotate)
+- [LOR-596] Update Manager to v0.18
  
 ## [1.6.3] - 2024-06-10
 
