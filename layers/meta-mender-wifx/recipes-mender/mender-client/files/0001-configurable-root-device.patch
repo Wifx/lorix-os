@@ -5,16 +5,36 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/support/modules/rootfs-image b/support/modules/rootfs-image
 --- a/support/modules/rootfs-image	(revision 121dbbd87c65344679c287b3f1e249a1372f3c4f)
-+++ b/support/modules/rootfs-image	(date 1730971024482)
-@@ -44,6 +44,7 @@
++++ b/support/modules/rootfs-image	(date 1730997545478)
+@@ -11,11 +11,14 @@
+     JQ_AVAILABLE=0
+ fi
+ 
+-if which mender-flash >/dev/null 2>&1; then
+-    MENDER_FLASH_AVAILABLE=1
+-else
+-    MENDER_FLASH_AVAILABLE=0
+-fi
++#if which mender-flash >/dev/null 2>&1; then
++#    MENDER_FLASH_AVAILABLE=1
++#else
++#    MENDER_FLASH_AVAILABLE=0
++#fi
++
++# Disable mender-flash as it will fail if run before ubiupdatevol
++MENDER_FLASH_AVAILABLE=0
+ 
+ if command -v grub-mender-grubenv-print > /dev/null; then
+     PRINTENV=grub-mender-grubenv-print
+@@ -44,6 +47,7 @@
  parse_conf_file() {
      MENDER_ROOTFS_PART_A=""
      MENDER_ROOTFS_PART_B=""
-+    MENDER_ROOT_MOUNT_PATH="/"
++    MENDER_ROOT_MOUNT_PATH="/data/layers/factory"
      # Try first the fallback config file, which has least precedence
      for CONF_FILE in \
              ${MENDER_DATASTORE_DIR:-/var/lib/mender}/mender.conf \
-@@ -55,6 +56,10 @@
+@@ -55,6 +59,10 @@
              MENDER_ROOTFS_PART_A="${tmp:-${MENDER_ROOTFS_PART_A}}"
              tmp="$(jq -r '.RootfsPartB // empty' < "$CONF_FILE" || true)"
              MENDER_ROOTFS_PART_B="${tmp:-${MENDER_ROOTFS_PART_B}}"
@@ -25,7 +45,7 @@ diff --git a/support/modules/rootfs-image b/support/modules/rootfs-image
          else
              # Fall back to line based parsing. Vulnerable to weird JSON nesting, as well as unexpected
              # newlines, although it is unlikely with a regular configuration file.
-@@ -66,6 +71,11 @@
+@@ -66,6 +74,11 @@
              MATCH="[Rr][Oo][Oo][Tt][Ff][Ss][Pp][Aa][Rr][Tt][Bb]"
              tmp="$(sed -ne '/"'"$MATCH"'" *: *"[^"]*"/ { s/.*"'"$MATCH"'" *: *"\([^"]*\)".*/\1/; p }' "$CONF_FILE" || true)"
              MENDER_ROOTFS_PART_B="${tmp:-${MENDER_ROOTFS_PART_B}}"
@@ -37,7 +57,7 @@ diff --git a/support/modules/rootfs-image b/support/modules/rootfs-image
          fi
      done
  
-@@ -138,7 +148,7 @@
+@@ -138,7 +151,7 @@
  
              # Standardize on the `/dev/` variant. The kernel only accepts an argument without
              # `/dev/`, but all userspace tools use the `/dev/` variant.
@@ -46,7 +66,7 @@ diff --git a/support/modules/rootfs-image b/support/modules/rootfs-image
              if [ "$1" = "$ROOT_DEVICE" ]; then
                  return 0
              else
-@@ -148,7 +158,7 @@
+@@ -148,7 +161,7 @@
              ;;
          *)
              # Match major/minor device number against mounted root device.

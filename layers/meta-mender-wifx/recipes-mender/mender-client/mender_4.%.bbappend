@@ -9,6 +9,7 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 SRC_URI:append = " \
     file://artifact-verify-key.pem \
     file://0001-configurable-root-device.patch \
+    file://0002-remove-unused-modules.patch \
 "
 
 UPX_COMPRESS_FILES:${PN} = "/usr/bin/mender-update /usr/bin/mender-auth"
