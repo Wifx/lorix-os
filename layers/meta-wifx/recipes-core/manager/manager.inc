@@ -12,7 +12,7 @@ RDEPENDS:${PN} += " \
     machine-info \
 "
 
-RRECOMMENDS:${PN} += "manager-gui mender-client networkmanager networkmanager-nmcli"
+RRECOMMENDS:${PN} += "manager-gui mender networkmanager networkmanager-nmcli"
 
 SRC_URI += " \
     file://config.toml \

@@ -9,7 +9,7 @@ supervisor=supervise-daemon
 respawn_delay="${RESPAWN_DELAY:-2}"
 
 command_user="root"
-command="/usr/bin/mender"
+command="/usr/bin/mender-update"
 command_args="daemon"
 command_background=true
 start_stop_daemon_args="--group root"

@@ -1,0 +1,57 @@
+Index: support/modules/rootfs-image
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/support/modules/rootfs-image b/support/modules/rootfs-image
+--- a/support/modules/rootfs-image	(revision 121dbbd87c65344679c287b3f1e249a1372f3c4f)
++++ b/support/modules/rootfs-image	(date 1730971024482)
+@@ -44,6 +44,7 @@
+ parse_conf_file() {
+     MENDER_ROOTFS_PART_A=""
+     MENDER_ROOTFS_PART_B=""
++    MENDER_ROOT_MOUNT_PATH="/"
+     # Try first the fallback config file, which has least precedence
+     for CONF_FILE in \
+             ${MENDER_DATASTORE_DIR:-/var/lib/mender}/mender.conf \
+@@ -55,6 +56,10 @@
+             MENDER_ROOTFS_PART_A="${tmp:-${MENDER_ROOTFS_PART_A}}"
+             tmp="$(jq -r '.RootfsPartB // empty' < "$CONF_FILE" || true)"
+             MENDER_ROOTFS_PART_B="${tmp:-${MENDER_ROOTFS_PART_B}}"
++            tmp="$(jq -r '.RootMountPath // empty' < "$CONF_FILE" || true)"
++            if [ -n "$tmp" ]; then
++              MENDER_ROOT_MOUNT_PATH="${tmp:-${MENDER_ROOT_MOUNT_PATH}}"
++            fi
+         else
+             # Fall back to line based parsing. Vulnerable to weird JSON nesting, as well as unexpected
+             # newlines, although it is unlikely with a regular configuration file.
+@@ -66,6 +71,11 @@
+             MATCH="[Rr][Oo][Oo][Tt][Ff][Ss][Pp][Aa][Rr][Tt][Bb]"
+             tmp="$(sed -ne '/"'"$MATCH"'" *: *"[^"]*"/ { s/.*"'"$MATCH"'" *: *"\([^"]*\)".*/\1/; p }' "$CONF_FILE" || true)"
+             MENDER_ROOTFS_PART_B="${tmp:-${MENDER_ROOTFS_PART_B}}"
++            MATCH="[Rr][Oo][Oo][Tt][Mm][Oo][Uu][Nn][Tt][Pp][Aa][Tt][Hh]"
++            tmp="$(sed -ne '/"'"$MATCH"'" *: *"[^"]*"/ { s/.*"'"$MATCH"'" *: *"\([^"]*\)".*/\1/; p }' "$CONF_FILE" || true)"
++            if [ -n "$tmp" ]; then
++              MENDER_ROOT_MOUNT_PATH="${tmp:-${MENDER_ROOT_MOUNT_PATH}}"
++            fi
+         fi
+     done
+ 
+@@ -138,7 +148,7 @@
+ 
+             # Standardize on the `/dev/` variant. The kernel only accepts an argument without
+             # `/dev/`, but all userspace tools use the `/dev/` variant.
+-            ROOT_DEVICE="$(mount | grep -F ' on / ' | sed -e 's/ .*//; s,^ubi,/dev/ubi,')"
++            ROOT_DEVICE="$(mount | grep -F " on $MENDER_ROOT_MOUNT_PATH " | sed -e 's/ .*//; s,^ubi,/dev/ubi,')"
+             if [ "$1" = "$ROOT_DEVICE" ]; then
+                 return 0
+             else
+@@ -148,7 +158,7 @@
+             ;;
+         *)
+             # Match major/minor device number against mounted root device.
+-            if [ "$(stat -L -c %02t%02T "$1")" = "$(stat -L -c %04D /)" ]; then
++            if [ "$(stat -L -c %02t%02T "$1")" = "$(stat -L -c %04D "$MENDER_ROOT_MOUNT_PATH")" ]; then
+                 return 0
+             else
+                 echo "Mounted root does not match boot loader environment ($1)!" 1>&2
