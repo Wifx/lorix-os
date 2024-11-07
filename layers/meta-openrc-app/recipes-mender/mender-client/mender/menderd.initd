@@ -18,6 +18,7 @@ pidfile="/var/run/${RC_SVCNAME}.pid"
 
 depend() {
         use dns
+        want mender-auth
 }
 
 start_pre() {
