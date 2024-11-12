@@ -22,3 +22,8 @@ IMAGE_CMD:dataimg() {
 do_image_dataimg[respect_exclude_path] = "0"
 
 do_image_dataimg[depends] += " mtd-utils-native:do_populate_sysroot"
+
+do_image_dataimg[prefuncs] += " do_copy_rootfs do_install_bootstrap_artifact"
+do_image_dataimg[postfuncs] += " do_delete_copy_rootfs"
+
+IMAGE_TYPEDEP:dataimg:append = " bootstrap-artifact"
