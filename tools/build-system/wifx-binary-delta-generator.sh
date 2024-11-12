@@ -65,6 +65,11 @@ if [ ! -f $TARGET_ARTIFACT_PATH ]; then
     exit 1
 fi
 
+# Check dependencies
+command -v jq >/dev/null 2>&1 || { echo "jq is required but not installed. Aborting." >&2; exit 1; }
+command -v tar >/dev/null 2>&1 || { echo "tar is required but not installed. Aborting." >&2; exit 1; }
+command -v xdelta3 >/dev/null 2>&1 || { echo "xdelta3 is required but not installed. Aborting." >&2; exit 1; }
+
 SOURCE_DIR_NAME=$(basename $SOURCE_ARTIFACT_PATH .mender)
 TARGET_DIR_NAME=$(basename $TARGET_ARTIFACT_PATH .mender)
 
@@ -153,6 +158,8 @@ if [ -n "$SIGN_KEY_PATH" ]; then
     key_args="--key $SIGN_KEY_PATH"
 fi
 
+output_path="$TARGET_BASE_PATH/$delta_artifact_name.mender"
+
 # Add --device-type argument for each device type
 mender-artifact write module-image \
     --type "wifx-binary-delta" \
@@ -167,15 +174,15 @@ mender-artifact write module-image \
     --clears-provides "rootfs-image.*" \
     --file "$TMP_DIR/delta.ubifs" \
     --meta-data "$TMP_DIR/meta-data.json" \
-    --output-path "$TARGET_BASE_PATH/$delta_artifact_name.mender"
+    --output-path "$output_path"
 
 # Cleanup
 rm -rf $TMP_DIR
 
 if [ -n "$EXTRACT_RESULT" ]; then
-    extract_path=$TARGET_BASE_PATH/$delta_artifact_name
+    extract_path="${output_path%.mender}" # Remove .mender extension
     rm -rf $extract_path
-    extract_artifact $delta_artifact_name.mender $extract_path
+    extract_artifact $output_path $extract_path
 fi
 
 echo "Done"
