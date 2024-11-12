@@ -11,6 +11,14 @@
 #   <source-artifact>  Path to the source Mender artifact.
 #   <target-artifact>  Path to the target Mender artifact.
 #
+# Environment Variables:
+#   - XDELTA_FLAGS  Additional flags to pass to xdelta3.
+#       - Source buffer size          -B  Default=67108864(64M)  [16384(16K) - Unlimited]
+#       - Input window size           -W  Default=8192    ( 8M)  [16384(16K) - 16777216(16M)]
+#       - Instruction buffer size     -I  Default=32768(32KB)    [ min?      - 0 (Unlimited) ]
+#       - Compression duplicates size -P  Default=262144(256KB)  P <= W, Must be power of 2
+#   - SIGN_KEY_PATH  Path to the signing key to use for signing the delta artifact.
+#
 # Description:
 #   This script takes two Mender artifacts as input and generates a binary delta
 #   between them.
@@ -27,7 +35,7 @@
 #   - xdelta3: Binary delta generator.
 #
 # Example:
-#   ./generate-wifx-binary-delta.sh source.mender target.mender
+#   ./wifx-binary-delta-generator.sh source.mender target.mender
 #
 # Author:
 #   Wifx SA <info@iot.wifx.net>
@@ -100,6 +108,7 @@ source_artifact_name=($(get_artifact_name $SOURCE_DIR_NAME))
 target_artifact_name=($(get_artifact_name $TARGET_DIR_NAME))
 
 xdelta3 -e -f \
+    $XDELTA_FLAGS \
     -s $SOURCE_DIR_NAME/data/0000/*.ubifs \
     $TARGET_DIR_NAME/data/0000/*.ubifs \
     delta.ubifs
@@ -120,19 +129,29 @@ echo '{ "target_image_size": "'$target_image_size'" }' > meta-data.json
 
 delta_artifact_name="delta_${source_artifact_name}_${target_artifact_name}"
 
+key_args=""
+if [ -n "$SIGN_KEY_PATH" ]; then
+    key_args="--key $SIGN_KEY_PATH"
+fi
+
 # Add --device-type argument for each device type
 mender-artifact write module-image \
     --type "wifx-binary-delta" \
     $device_types_args \
     $script_args \
-    --artifact-name $delta_artifact_name \
+    $key_args \
+    --artifact-name-depends $source_artifact_name \
+    --artifact-name $target_artifact_name \
     --file delta.ubifs \
     --meta-data meta-data.json \
     --output-path $delta_artifact_name.mender
 
-#extract_artifact $delta_artifact_name.mender $delta_artifact_name
 
 # Clean up
-rm -rf $SOURCE_DIR_NAME $TARGET_DIR_NAME delta.ubifs meta-data.json $delta_artifact_name
+rm -rf $SOURCE_DIR_NAME $TARGET_DIR_NAME delta.ubifs meta-data.json
+
+if [ -n "$EXTRACT_RESULT" ]; then
+    extract_artifact $delta_artifact_name.mender $delta_artifact_name
+fi
 
 echo "Done"
