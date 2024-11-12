@@ -2,4 +2,4 @@
 # All rights reserved.
 
 # Override ubi image generation
-IMAGE_CLASSES += " wifx-ubimg wifx-dataimg wifx-wimg"
+IMAGE_CLASSES += " wifx-ubimg wifx-wimg"

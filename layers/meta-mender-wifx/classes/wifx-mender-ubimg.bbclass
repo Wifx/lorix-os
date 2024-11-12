@@ -45,7 +45,7 @@ IMAGE_CMD:ubimg () {
     cat > ${WORKDIR}/ubimg-${IMAGE_NAME}.cfg <<EOF
 [rootfsA]
 mode=ubi
-image=${IMGDEPLOYDIR}/${IMAGE_BASENAME}-${MACHINE}.ubifs
+image=${IMGDEPLOYDIR}/${IMAGE_LINK_NAME}.ubifs
 vol_id=0
 vol_size=${MENDER_CALC_ROOTFS_SIZE}KiB
 vol_type=dynamic
@@ -53,7 +53,7 @@ vol_name=rootfsa
 
 [rootfsB]
 mode=ubi
-image=${IMGDEPLOYDIR}/${IMAGE_NAME}.emptyimg
+image=${IMGDEPLOYDIR}/${IMAGE_LINK_NAME}.emptyimg
 vol_id=1
 vol_size=${MENDER_CALC_ROOTFS_SIZE}KiB
 vol_type=dynamic
@@ -61,7 +61,7 @@ vol_name=rootfsb
 
 [data]
 mode=ubi
-image=${IMGDEPLOYDIR}/${IMAGE_NAME}.dataimg
+image=${IMGDEPLOYDIR}/${IMAGE_LINK_NAME}.dataimg
 vol_id=2
 vol_size=${MENDER_DATA_PART_SIZE_MB}MiB
 vol_type=dynamic
@@ -81,5 +81,5 @@ EOF
 
 IMAGE_TYPEDEP:ubimg:append = " ubifs emptyimg dataimg"
 
-# So that we can use the files from excluded paths in the full images.
-do_image_ubimg[respect_exclude_path] = "0"
+# We do not want to keep excluded rootfs files for this image
+do_image_ubimg[respect_exclude_path] = "1"

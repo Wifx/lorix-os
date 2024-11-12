@@ -8,41 +8,27 @@ inherit image image_types
 # Default variables
 KERNEL_IMAGETYPE ?= "zImage"
 
-ARCHIVE_DIR ?= "${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.wimg"
-TEMPDIR = "${WORKDIR}/temp_wimg"
-
 IMAGE_TYPES += " wimg"
 
 do_image_wimg[depends] += "zip-native:do_populate_sysroot virtual/firststage:do_populate_sysroot virtual/bootloader:do_populate_sysroot virtual/kernel:do_populate_sysroot mtd-utils-native:do_populate_sysroot"
 IMAGE_TYPEDEP:wimg:append = " ubimg"
 IMAGE_NAME_SUFFIX = ""
 
-do_compress_zip () {
-    cd ${TEMPDIR}
-    zip -r ${IMGDEPLOYDIR}/${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.wimg .
-}
-
 IMAGE_CMD:wimg () {
-    # Delete previous temp directory if exists
-    if [ -d ${TEMPDIR} ]; then
-        rm -rf ${TEMPDIR}
-    fi
-    mkdir -p ${TEMPDIR}
-
     # Copy first state bootloader into the archive directory
-    cp ${DEPLOY_DIR_IMAGE}/at91bootstrap.bin ${TEMPDIR}
+    cp ${DEPLOY_DIR_IMAGE}/at91bootstrap.bin ${_WIMG_TEMP_WORKDIR}
 
     # Copy bootloader into the archive directory
-    cp ${DEPLOY_DIR_IMAGE}/u-boot.bin ${TEMPDIR}
+    cp ${DEPLOY_DIR_IMAGE}/u-boot.bin ${_WIMG_TEMP_WORKDIR}
 
     # Copy bootloader environment into the archive directory
-    cp ${DEPLOY_DIR_IMAGE}/u-boot-env.bin ${TEMPDIR}
+    cp ${DEPLOY_DIR_IMAGE}/u-boot-env.bin ${_WIMG_TEMP_WORKDIR}
 
     # Copy rootfs into the archive directory
-    cp ${IMGDEPLOYDIR}/${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.ubimg ${TEMPDIR}/rootfs.ubi
+    cp ${IMGDEPLOYDIR}/${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.ubimg ${_WIMG_TEMP_WORKDIR}/rootfs.ubi
 
     # Create the metadata configuration file
-    cat > ${TEMPDIR}/metadata.yml <<EOF
+    cat > ${_WIMG_TEMP_WORKDIR}/metadata.yml <<EOF
 version: 1.0
 
 device:
@@ -59,34 +45,69 @@ partitions:
   - label: "AT91bootstrap"
     image: at91bootstrap.bin
     startAddress: 0x00000000
-    checksum-md5: $(md5sum ${TEMPDIR}/at91bootstrap.bin | awk '{ print $1 }')
+    checksum-md5: $(md5sum ${_WIMG_TEMP_WORKDIR}/at91bootstrap.bin | awk '{ print $1 }')
     isBoot: true
 
   - label: "U-boot"
     image: u-boot.bin
     startAddress: 0x00040000
-    checksum-md5: $(md5sum ${TEMPDIR}/u-boot.bin | awk '{ print $1 }')
+    checksum-md5: $(md5sum ${_WIMG_TEMP_WORKDIR}/u-boot.bin | awk '{ print $1 }')
 
   - label: "U-boot env"
     image: u-boot-env.bin
     startAddress: 0x00100000
     size: 0x80000
-    checksum-md5: $(md5sum ${TEMPDIR}/u-boot-env.bin | awk '{ print $1 }')
+    checksum-md5: $(md5sum ${_WIMG_TEMP_WORKDIR}/u-boot-env.bin | awk '{ print $1 }')
 
   - label: "RootFS"
     image: rootfs.ubi
     startAddress: 0x00180000
     size: end
-    checksum-md5: $(md5sum ${TEMPDIR}/rootfs.ubi | awk '{ print $1 }')
+    checksum-md5: $(md5sum ${_WIMG_TEMP_WORKDIR}/rootfs.ubi | awk '{ print $1 }')
 EOF
+
+    # We keep track of latest generated metadata file
+    cp ${_WIMG_TEMP_WORKDIR}/metadata.yml ${WORKDIR}/wimg.metadata.yml
 
     # Apply the zip compression
     do_compress_zip
 
+    chmod 0644 "${WORKDIR}/${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.wimg"
+    mv "${WORKDIR}/${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.wimg" "${IMGDEPLOYDIR}/${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.wimg"
+
+    # Link in release directory with distribution name and version
     rm -rf ${IMGDEPLOYDIR}/release/*.wimg
     ln -sr ${IMGDEPLOYDIR}/${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.wimg ${IMGDEPLOYDIR}/release/${RELEASE_ARTIFACT_NAME}_${MACHINE}.wimg
 }
 do_image_wimg[dirs] = "${IMGDEPLOYDIR}/release"
+do_image_wimg[prefuncs] += " wifx_wimg_create_temp_workdir"
+do_image_wimg[postfuncs] += " wifx_wimg_delete_temp_workdir"
 
-# So that we can use the files from excluded paths in the full images.
-do_image_wimg[respect_exclude_path] = "0"
+do_compress_zip () {
+    cd ${_WIMG_TEMP_WORKDIR}
+    zip -r ${WORKDIR}/${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.wimg .
+}
+
+python wifx_wimg_create_temp_workdir() {
+    import os
+    import subprocess
+
+    _temp_workdir = os.path.realpath(os.path.join(d.getVar("WORKDIR"), "wimg.temp_workdir"))
+
+    # Remove eventual previously existing working directory
+    subprocess.check_call(["rm", "-rf", _temp_workdir])
+    if os.path.exists(_temp_workdir):
+        bb.fatal('Could not remove working directory for wimg generation ("%s")' % _temp_workdir)
+
+    subprocess.check_call(["mkdir", "-p", _temp_workdir])
+
+    d.setVar('_WIMG_TEMP_WORKDIR', _temp_workdir)
+}
+
+python wifx_wimg_delete_temp_workdir() {
+    import subprocess
+
+    _temp_workdir = d.getVar('_WIMG_TEMP_WORKDIR')
+
+    subprocess.check_call(["rm", "-rf", _temp_workdir])
+}

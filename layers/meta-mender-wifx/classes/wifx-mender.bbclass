@@ -30,6 +30,7 @@ ROOTFS_POSTPROCESS_COMMAND:remove = "mender_update_fstab_file;"
 # Create link to mender artifact in release deploy directory
 IMAGE_POSTPROCESS_COMMAND += "final_deploy_link_mender_artifact ;"
 final_deploy_link_mender_artifact() {
+    mkdir -p ${IMGDEPLOYDIR}/release
     rm -rf ${IMGDEPLOYDIR}/release/*.mender
     ln -sr ${IMGDEPLOYDIR}/${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.mender ${IMGDEPLOYDIR}/release/${MENDER_ARTIFACT_NAME}_${MACHINE}.mender
 }
