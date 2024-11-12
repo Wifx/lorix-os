@@ -107,6 +107,15 @@ get_artifact_name() {
 source_artifact_name=($(get_artifact_name $SOURCE_DIR_NAME))
 target_artifact_name=($(get_artifact_name $TARGET_DIR_NAME))
 
+
+get_artifact_checksum() {
+    local artifact_checksum=$(jq -r '.artifact_provides."rootfs-image.checksum"' $1/header/headers/0000/type-info)
+    echo $artifact_checksum
+}
+
+source_artifact_checksum=($(get_artifact_checksum $SOURCE_DIR_NAME))
+target_artifact_checksum=($(get_artifact_checksum $TARGET_DIR_NAME))
+
 xdelta3 -e -f \
     $XDELTA_FLAGS \
     -s $SOURCE_DIR_NAME/data/0000/*.ubifs \
@@ -140,11 +149,15 @@ mender-artifact write module-image \
     $device_types_args \
     $script_args \
     $key_args \
-    --artifact-name-depends $source_artifact_name \
-    --artifact-name $target_artifact_name \
-    --file delta.ubifs \
-    --meta-data meta-data.json \
-    --output-path $delta_artifact_name.mender
+    --artifact-name-depends "$source_artifact_name" \
+    --artifact-name "$target_artifact_name" \
+    --depends "rootfs-image.checksum:$source_artifact_checksum" \
+    --provides "rootfs-image.checksum:$target_artifact_checksum" \
+    --provides "rootfs-image.version:$target_artifact_name" \
+    --clears-provides "rootfs-image.*" \
+    --file "delta.ubifs" \
+    --meta-data "meta-data.json" \
+    --output-path "$delta_artifact_name.mender"
 
 
 # Clean up
