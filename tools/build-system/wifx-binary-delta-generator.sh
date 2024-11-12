@@ -18,6 +18,7 @@
 #       - Instruction buffer size     -I  Default=32768(32KB)    [ min?      - 0 (Unlimited) ]
 #       - Compression duplicates size -P  Default=262144(256KB)  P <= W, Must be power of 2
 #   - SIGN_KEY_PATH  Path to the signing key to use for signing the delta artifact.
+#   - TMP_DIR  Temporary directory to use for extracting artifacts.
 #
 # Description:
 #   This script takes two Mender artifacts as input and generates a binary delta
@@ -44,6 +45,8 @@
 #   All rights reserved.
 #
 
+TMP_DIR=${TMP_DIR:-$(mktemp -d)}
+
 SOURCE_ARTIFACT_PATH=$1
 TARGET_ARTIFACT_PATH=$2
 
@@ -65,28 +68,34 @@ fi
 SOURCE_DIR_NAME=$(basename $SOURCE_ARTIFACT_PATH .mender)
 TARGET_DIR_NAME=$(basename $TARGET_ARTIFACT_PATH .mender)
 
+TARGET_BASE_PATH=$(dirname $TARGET_ARTIFACT_PATH)
+
+SOURCE_DIR_PATH="$TMP_DIR/$SOURCE_DIR_NAME"
+TARGET_DIR_PATH="$TMP_DIR/$TARGET_DIR_NAME"
+
 get_device_types() {
-    local device_types=$(jq -r '.artifact_depends.device_type[]' $1/header/header-info)
+    artifact_dir_path=$1
+    local device_types=$(jq -r '.artifact_depends.device_type[]' $artifact_dir_path/header/header-info)
     device_types=($device_types)
     echo "${device_types[@]}"
 }
 
 extract_artifact() {
     artifact_path=$1
-    directory=$2
-    rm -rf $directory && mkdir $directory
-    tar -xf $artifact_path -C $directory
-    mkdir $directory/header && tar -xf $directory/header.tar.gz -C $directory/header
-    mkdir -p $directory/data/0000 && tar -xf $directory/data/0000.tar.gz -C $directory/data/0000
+    artifact_dir_path=$2
+    mkdir "$artifact_dir_path"
+    tar -xf "$artifact_path" -C "$artifact_dir_path"
+    mkdir "$artifact_dir_path/header" && tar -xf "$artifact_dir_path/header.tar.gz" -C "$artifact_dir_path/header"
+    mkdir -p "$artifact_dir_path/data/0000" && tar -xf "$artifact_dir_path/data/0000.tar.gz" -C "$artifact_dir_path/data/0000"
 }
 
 # Extract artifacts
-extract_artifact $SOURCE_ARTIFACT_PATH $SOURCE_DIR_NAME
-extract_artifact $TARGET_ARTIFACT_PATH $TARGET_DIR_NAME
+extract_artifact $SOURCE_ARTIFACT_PATH $SOURCE_DIR_PATH
+extract_artifact $TARGET_ARTIFACT_PATH $TARGET_DIR_PATH
 
 # Find device types for both artifacts
-source_device_types=($(get_device_types $SOURCE_DIR_NAME))
-target_device_types=($(get_device_types $TARGET_DIR_NAME))
+source_device_types=($(get_device_types $SOURCE_DIR_PATH))
+target_device_types=($(get_device_types $TARGET_DIR_PATH))
 
 # Check that device types are the same for both artifacts
 if [ "${source_device_types[*]}" != "${target_device_types[*]}" ]; then
@@ -100,40 +109,41 @@ for device_type in "${target_device_types[@]}"; do
 done
 
 get_artifact_name() {
-    local artifact_name=$(jq -r '.artifact_provides.artifact_name' $1/header/header-info)
+    artifact_dir_path=$1
+    local artifact_name=$(jq -r '.artifact_provides.artifact_name' $artifact_dir_path/header/header-info)
     echo $artifact_name
 }
 
-source_artifact_name=($(get_artifact_name $SOURCE_DIR_NAME))
-target_artifact_name=($(get_artifact_name $TARGET_DIR_NAME))
+source_artifact_name=($(get_artifact_name $SOURCE_DIR_PATH))
+target_artifact_name=($(get_artifact_name $TARGET_DIR_PATH))
 
 
 get_artifact_checksum() {
-    local artifact_checksum=$(jq -r '.artifact_provides."rootfs-image.checksum"' $1/header/headers/0000/type-info)
+    artifact_dir_path=$1
+    local artifact_checksum=$(jq -r '.artifact_provides."rootfs-image.checksum"' $artifact_dir_path/header/headers/0000/type-info)
     echo $artifact_checksum
 }
 
-source_artifact_checksum=($(get_artifact_checksum $SOURCE_DIR_NAME))
-target_artifact_checksum=($(get_artifact_checksum $TARGET_DIR_NAME))
+source_artifact_checksum=($(get_artifact_checksum $SOURCE_DIR_PATH))
+target_artifact_checksum=($(get_artifact_checksum $TARGET_DIR_PATH))
 
 xdelta3 -e -f \
     $XDELTA_FLAGS \
-    -s $SOURCE_DIR_NAME/data/0000/*.ubifs \
-    $TARGET_DIR_NAME/data/0000/*.ubifs \
-    delta.ubifs
+    -s $SOURCE_DIR_PATH/data/0000/*.ubifs \
+    $TARGET_DIR_PATH/data/0000/*.ubifs \
+    "$TMP_DIR/delta.ubifs"
 
 script_args=""
 # For all files in the target artifact script directory
-for script in $TARGET_DIR_NAME/header/scripts/*; do
+for script in $TARGET_DIR_PATH/header/scripts/*; do
     script_args="$script_args --script $script"
 done
 
 # Get target artifact file size
-target_image_size=$(stat -c %s $TARGET_DIR_NAME/data/0000/*.ubifs)
+target_image_size=$(stat -c %s $TARGET_DIR_PATH/data/0000/*.ubifs)
 
 # Write meta-data file
-rm -f meta-data.json
-echo '{ "target_image_size": "'$target_image_size'" }' > meta-data.json
+echo '{ "target_image_size": "'$target_image_size'" }' > "$TMP_DIR/meta-data.json"
 
 
 delta_artifact_name="delta_${source_artifact_name}_${target_artifact_name}"
@@ -155,16 +165,17 @@ mender-artifact write module-image \
     --provides "rootfs-image.checksum:$target_artifact_checksum" \
     --provides "rootfs-image.version:$target_artifact_name" \
     --clears-provides "rootfs-image.*" \
-    --file "delta.ubifs" \
-    --meta-data "meta-data.json" \
-    --output-path "$delta_artifact_name.mender"
+    --file "$TMP_DIR/delta.ubifs" \
+    --meta-data "$TMP_DIR/meta-data.json" \
+    --output-path "$TARGET_BASE_PATH/$delta_artifact_name.mender"
 
-
-# Clean up
-rm -rf $SOURCE_DIR_NAME $TARGET_DIR_NAME delta.ubifs meta-data.json
+# Cleanup
+rm -rf $TMP_DIR
 
 if [ -n "$EXTRACT_RESULT" ]; then
-    extract_artifact $delta_artifact_name.mender $delta_artifact_name
+    extract_path=$TARGET_BASE_PATH/$delta_artifact_name
+    rm -rf $extract_path
+    extract_artifact $delta_artifact_name.mender $extract_path
 fi
 
 echo "Done"
