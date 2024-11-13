@@ -16,3 +16,6 @@ BAD_RECOMMENDATIONS:append = " \
     pmon-csub-concentratord \
     pmon-helium-upf \
 " 
+
+# For LORIX One machines, the product is the machine
+MACHINE_PRODUCTS_LIST = "${MACHINE}"

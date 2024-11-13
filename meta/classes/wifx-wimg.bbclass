@@ -33,7 +33,7 @@ version: 1.0
 
 device:
   products:
-    - ${MACHINE}
+${@wifx_wimg_machine_products_list_yml(d, 2)}
   arch: SAMA5D4
   nand:
     ioset: 1
@@ -111,3 +111,21 @@ python wifx_wimg_delete_temp_workdir() {
 
     subprocess.check_call(["rm", "-rf", _temp_workdir])
 }
+
+def wifx_wimg_machine_products_list_yml(d, indent):
+    import os
+    import subprocess
+
+    products_list = d.getVar("MACHINE_PRODUCTS_LIST")
+    if not products_list:
+        bb.fatal("List of supported products is not defined for the current machine, please define MACHINE_PRODUCTS_LIST var in machine conf file")
+
+    list = products_list.split()
+    length = len(list)
+
+    output = ""
+    for i in range(length):
+      output += " " * indent * 2 + "- " + list[i]
+      if i < length - 1:
+        output += os.linesep
+    return output
