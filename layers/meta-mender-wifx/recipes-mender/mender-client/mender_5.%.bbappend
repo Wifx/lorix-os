@@ -11,7 +11,6 @@ SRC_URI:append = " \
     file://wifx-binary-delta \
     file://0001-configurable-root-device.patch \
     file://0002-force-ubiupdatevol-use.patch \
-    file://0003-remove-unused-modules.patch \
 "
 
 UPX_COMPRESS_FILES:${PN} = "/usr/bin/mender-update /usr/bin/mender-auth"
