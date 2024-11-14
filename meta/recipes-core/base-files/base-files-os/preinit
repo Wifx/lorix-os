@@ -55,7 +55,7 @@ preinit_dual_partition_read_info() {
     # Detect if update is pending
     UPGRADE_AVAILABLE=$(printenv upgrade_available)
     if [ $? -ne 0 ]; then
-        fail "Failed to read mender_boot_part from u-boot env"
+        fail "Failed to read upgrade_available from u-boot env"
     fi
     if [ $UPGRADE_AVAILABLE -eq 1 ]; then
         echo "Upgrade is available"
