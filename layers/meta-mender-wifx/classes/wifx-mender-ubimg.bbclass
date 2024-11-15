@@ -82,4 +82,4 @@ EOF
 IMAGE_TYPEDEP:ubimg:append = " ubifs emptyimg dataimg"
 
 # We do not want to keep excluded rootfs files for this image
-do_image_ubimg[respect_exclude_path] = "1"
+do_image_ubimg[respect_exclude_path] = "0"
