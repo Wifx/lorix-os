@@ -37,13 +37,9 @@ do_install () {
 
     # Install base boot scripts
     install -m 0700 ${WORKDIR}/preinit ${D}${sysconfdir}/preinit
-
-    # Prepare for the overlayfs and reserve this directory
-    install -d -m 0755 ${D}/data/layers
 }
 
 FILES:${PN} += " \
     ${sysconfdir}/* \
     ${osdir}/* \
-    /data/layers \
 "

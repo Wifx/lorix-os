@@ -76,9 +76,9 @@ preinit_mount_base() {
     mkdir -p /mnt/ubidata/overlay/config/{work,rootfsA,rootfsB}
 
     # Final representation
-    mkdir -p /mnt/rootfs/data/layers/factory
-    mkdir -p /mnt/rootfs/data/layers/user
-    mkdir -p /mnt/rootfs/data/layers/config/{rootfsA,rootfsB}
+    mkdir -p /mnt/rootfs/mnt/layers/factory
+    mkdir -p /mnt/rootfs/mnt/layers/user
+    mkdir -p /mnt/rootfs/mnt/layers/config/{rootfsA,rootfsB}
     return 0
 }
 
@@ -107,14 +107,14 @@ preinit_mount_overlay(){
     cd /mnt/ubidata/overlay/user/merged
 
     # Mount base active partition
-    mount --bind / data/layers/factory
+    mount --bind / mnt/layers/factory
 
     # Mount user diff overlay
-    mount --bind /mnt/ubidata/overlay/user/diff data/layers/user
+    mount --bind /mnt/ubidata/overlay/user/diff mnt/layers/user
 
     # Mount config diff overlay
-    mount --bind /mnt/ubidata/overlay/config/rootfsA data/layers/config/rootfsA
-    mount --bind /mnt/ubidata/overlay/config/rootfsB data/layers/config/rootfsB
+    mount --bind /mnt/ubidata/overlay/config/rootfsA mnt/layers/config/rootfsA
+    mount --bind /mnt/ubidata/overlay/config/rootfsB mnt/layers/config/rootfsB
 
     mount --bind /dev dev
 
@@ -241,9 +241,9 @@ umount /mnt/old/dev
 umount /mnt/old
 umount /mnt
 echo "Remounting overlay diff layers in read-only mode"
-mount -o remount,ro,bind /data/layers/user
-mount -o remount,ro,bind /data/layers/config/rootfsA
-mount -o remount,ro,bind /data/layers/config/rootfsB
+mount -o remount,ro,bind /mnt/layers/user
+mount -o remount,ro,bind /mnt/layers/config/rootfsA
+mount -o remount,ro,bind /mnt/layers/config/rootfsB
 echo "Switching to init process"
 exec /sbin/init
 END
