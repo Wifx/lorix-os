@@ -63,40 +63,40 @@ preinit_dual_partition_read_info() {
 }
 
 preinit_mount_base() {
-    mkdir -p /mnt/{data,rofs,old}
-    echo "Mounting data partition"
-    mount -t ubifs ubi0:data /mnt/data
+    mkdir -p /mnt/{ubidata,rootfs,old}
+    echo "Mounting ubidata partition"
+    mount -t ubifs ubi0:data /mnt/ubidata
     if [ $? -ne 0 ]; then
         echo "Error mounting data partition"
         return 1
     fi
 
     # Real location
-    mkdir -p /mnt/data/overlay/user/{work,diff,merged}
-    mkdir -p /mnt/data/overlay/config/{work,rootfsA,rootfsB}
+    mkdir -p /mnt/ubidata/overlay/user/{work,diff,merged}
+    mkdir -p /mnt/ubidata/overlay/config/{work,rootfsA,rootfsB}
 
     # Final representation
-    mkdir -p /mnt/rofs/data/layers/factory
-    mkdir -p /mnt/rofs/data/layers/user
-    mkdir -p /mnt/rofs/data/layers/config/{rootfsA,rootfsB}
+    mkdir -p /mnt/rootfs/data/layers/factory
+    mkdir -p /mnt/rootfs/data/layers/user
+    mkdir -p /mnt/rootfs/data/layers/config/{rootfsA,rootfsB}
     return 0
 }
 
 preinit_mount_overlay(){
     # Create main user overlay
-    cd /mnt/data/overlay/user
-    mount -t overlay "overlay:user" -olowerdir=/:/mnt/rofs/,upperdir=diff,workdir=work merged
+    cd /mnt/ubidata/overlay/user
+    mount -t overlay "overlay:user" -olowerdir=/:/mnt/rootfs/,upperdir=diff,workdir=work merged
     if [ $? -ne 0 ]; then
         echo "Error mounting overlay user"
         return 1
     fi
 
     # Create user config overlay depending on main running partition
-    cd /mnt/data/overlay/config
+    cd /mnt/ubidata/overlay/config
     if [ $BOOT_PART -eq 0 ]; then
-        mount -t overlay "overlay:config" -olowerdir=/etc,upperdir=rootfsA,workdir=work /mnt/data/overlay/user/merged/etc
+        mount -t overlay "overlay:config" -olowerdir=/etc,upperdir=rootfsA,workdir=work /mnt/ubidata/overlay/user/merged/etc
     else
-        mount -t overlay "overlay:config" -olowerdir=/etc,upperdir=rootfsB,workdir=work /mnt/data/overlay/user/merged/etc
+        mount -t overlay "overlay:config" -olowerdir=/etc,upperdir=rootfsB,workdir=work /mnt/ubidata/overlay/user/merged/etc
     fi
     if [ $? -ne 0 ]; then
         echo "Error mounting overlay config"
@@ -104,17 +104,17 @@ preinit_mount_overlay(){
     fi
 
     # Prepare for pivot_root
-    cd /mnt/data/overlay/user/merged
+    cd /mnt/ubidata/overlay/user/merged
 
     # Mount base active partition
     mount --bind / data/layers/factory
 
     # Mount user diff overlay
-    mount --bind /mnt/data/overlay/user/diff data/layers/user
+    mount --bind /mnt/ubidata/overlay/user/diff data/layers/user
 
     # Mount config diff overlay
-    mount --bind /mnt/data/overlay/config/rootfsA data/layers/config/rootfsA
-    mount --bind /mnt/data/overlay/config/rootfsB data/layers/config/rootfsB
+    mount --bind /mnt/ubidata/overlay/config/rootfsA data/layers/config/rootfsA
+    mount --bind /mnt/ubidata/overlay/config/rootfsB data/layers/config/rootfsB
 
     mount --bind /dev dev
 
@@ -138,21 +138,21 @@ preinit_manage_reset() {
     fi
 
     # Detect boot_state
-    RET=$(eval "$MACHINE_INFO -n -f BOOT_STATE" 2> /dev/null)
+    BOOT_STATE=$(eval "$MACHINE_INFO -n -f BOOT_STATE" 2> /dev/null)
     if [ $? -ne 0 ]; then
         echo "Error trying to read boot state:"
-        echo $RET
+        echo $BOOT_STATE
         echo "abort"
         return 1
     fi
 
-    if [ "$RET" == "factory" ]; then
+    if [ "$BOOT_STATE" == "factory" ]; then
         # we need a factory reset
         echo "Factory reset required, triggered by user"
         RESET_USER=true
     else
         # Test now first init flag presence
-        os_first_init_has_started "/mnt/data/overlay/user/diff/var/lib/os"
+        os_first_init_has_started "/mnt/ubidata/overlay/user/diff/var/lib/os"
         if [ $? -eq 1 ]; then
             # Previous first init sequence has been done but not completed, need overlay cleaning
             echo "Factory reset required, triggered by first init unconsistent state"
@@ -170,9 +170,9 @@ preinit_manage_reset() {
     # Launch the factory-reset script in overlay root
     echo "==== factory-reset ===="
     echo "Removing existing overlay diff content"
-    rm -rf /mnt/data/overlay/user/diff/*
-    rm -rf /mnt/data/overlay/config/rootfsA/*
-    rm -rf /mnt/data/overlay/config/rootfsB/*
+    rm -rf /mnt/ubidata/overlay/user/diff/*
+    rm -rf /mnt/ubidata/overlay/config/rootfsA/*
+    rm -rf /mnt/ubidata/overlay/config/rootfsB/*
     sync
 
     if [ "$RESET_USER" = true ]; then
@@ -235,7 +235,7 @@ fi
 # Start init process (and unmount useless mount points)
 exec chroot . sh -c "$(cat <<END
 echo "Unmounting temporary directories"
-umount /mnt/old/mnt/data
+umount /mnt/old/mnt/ubidata
 umount /mnt/old/mnt
 umount /mnt/old/dev
 umount /mnt/old
