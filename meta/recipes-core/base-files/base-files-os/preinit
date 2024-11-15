@@ -63,7 +63,10 @@ preinit_dual_partition_read_info() {
 }
 
 preinit_mount_base() {
+    # Create temporary work directories
     mkdir -p /mnt/{ubidata,rootfs,old}
+
+    # Mount ubidata partition
     echo "Mounting ubidata partition"
     mount -t ubifs ubi0:data /mnt/ubidata
     if [ $? -ne 0 ]; then
@@ -71,19 +74,16 @@ preinit_mount_base() {
         return 1
     fi
 
-    # Real location
+    # Create overlay directories
     mkdir -p /mnt/ubidata/overlay/user/{work,diff,merged}
     mkdir -p /mnt/ubidata/overlay/config/{work,rootfsA,rootfsB}
 
-    # Final representation
-    mkdir -p /mnt/rootfs/mnt/layers/factory
-    mkdir -p /mnt/rootfs/mnt/layers/user
-    mkdir -p /mnt/rootfs/mnt/layers/config/{rootfsA,rootfsB}
     return 0
 }
 
 preinit_mount_overlay(){
     # Create main user overlay
+    # TODO: is /mnt/rootfs/ still needed? It's empty.
     cd /mnt/ubidata/overlay/user
     mount -t overlay "overlay:user" -olowerdir=/:/mnt/rootfs/,upperdir=diff,workdir=work merged
     if [ $? -ne 0 ]; then
@@ -106,15 +106,16 @@ preinit_mount_overlay(){
     # Prepare for pivot_root
     cd /mnt/ubidata/overlay/user/merged
 
-    # Mount base active partition
-    mount --bind / mnt/layers/factory
+    # Create consulative layers mount points
+    mkdir -p var/lib/os/layers/factory
+    mkdir -p var/lib/os/layers/user
+    mkdir -p var/lib/os/layers/config/{rootfsA,rootfsB}
 
-    # Mount user diff overlay
-    mount --bind /mnt/ubidata/overlay/user/diff mnt/layers/user
-
-    # Mount config diff overlay
-    mount --bind /mnt/ubidata/overlay/config/rootfsA mnt/layers/config/rootfsA
-    mount --bind /mnt/ubidata/overlay/config/rootfsB mnt/layers/config/rootfsB
+    # Mount consulative layers
+    mount --bind / var/lib/os/layers/factory
+    mount --bind /mnt/ubidata/overlay/user/diff var/lib/os/layers/user
+    mount --bind /mnt/ubidata/overlay/config/rootfsA var/lib/os/layers/config/rootfsA
+    mount --bind /mnt/ubidata/overlay/config/rootfsB var/lib/os/layers/config/rootfsB
 
     mount --bind /dev dev
 
@@ -241,9 +242,9 @@ umount /mnt/old/dev
 umount /mnt/old
 umount /mnt
 echo "Remounting overlay diff layers in read-only mode"
-mount -o remount,ro,bind /mnt/layers/user
-mount -o remount,ro,bind /mnt/layers/config/rootfsA
-mount -o remount,ro,bind /mnt/layers/config/rootfsB
+mount -o remount,ro,bind /var/lib/os/layers/user
+mount -o remount,ro,bind /var/lib/os/layers/config/rootfsA
+mount -o remount,ro,bind /var/lib/os/layers/config/rootfsB
 echo "Switching to init process"
 exec /sbin/init
 END

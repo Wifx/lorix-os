@@ -7,7 +7,7 @@ ENV_FILE_PATH=$MENDER_DIR/migration-env
 
 UPGRADE_LOG_DIR=/var/log/upgrade
 UPGRADE_LOG_PERSISTENT_DIR=$MENDER_DIR/upgrade-logs
-LAYERS_DIR_NEW=/mnt/layers
+LAYERS_DIR_NEW=/var/lib/os/layers
 LAYERS_DIR_LEGACY=/data/layers
 
 #distro_metadata#
