@@ -36,7 +36,7 @@ source /etc/os/.functions
 
 # Global variables
 BOOT_PART="0"
-BOOT_PART_NAME="rootfsA"
+#BOOT_PART_NAME="rootfsA"
 UPGRADE_AVAILABLE="0"
 
 preinit_dual_partition_read_info() {
@@ -49,7 +49,7 @@ preinit_dual_partition_read_info() {
         echo "Mounting overlay over ubi0_0 (rootfsA)"
     else
         echo "Mounting overlay over ubi0_1 (rootfsB)"
-        BOOT_PART_NAME="rootfsB"
+        #BOOT_PART_NAME="rootfsB"
     fi
 
     # Detect if update is pending
@@ -62,20 +62,26 @@ preinit_dual_partition_read_info() {
     fi
 }
 
-preinit_mount_base() {
-    mkdir -p /mnt/{data,rofs,old}
+preinit_mount_data() {
     echo "Mounting data partition"
+    mkdir -p /mnt/data
     mount -t ubifs ubi0:data /mnt/data
     if [ $? -ne 0 ]; then
         echo "Error mounting data partition"
         return 1
     fi
+    return 0
+}
+
+preinit_create_mount_points() {
+    # Create root points
+    mkdir -p /mnt/{rofs,old}
 
     # Real location
     mkdir -p /mnt/data/overlay/user/{work,diff,merged}
     mkdir -p /mnt/data/overlay/config/{work,rootfsA,rootfsB}
 
-    # Final representation
+    # Final representation (/mnt/rofs/ becomes /)
     mkdir -p /mnt/rofs/data/layers/factory
     mkdir -p /mnt/rofs/data/layers/user
     mkdir -p /mnt/rofs/data/layers/config/{rootfsA,rootfsB}
@@ -129,7 +135,7 @@ preinit_mount_overlay(){
 }
 
 preinit_manage_reset() {
-    RESET_USER=false
+    RESET_USER=0
 
     MACHINE_INFO=$(which machine-info)
     if [ $? -ne 0 ]; then
@@ -137,7 +143,7 @@ preinit_manage_reset() {
         return 1
     fi
 
-    # Detect boot_state
+    # Detect boot_state from MCU
     RET=$(eval "$MACHINE_INFO -n -f BOOT_STATE" 2> /dev/null)
     if [ $? -ne 0 ]; then
         echo "Error trying to read boot state:"
@@ -149,17 +155,23 @@ preinit_manage_reset() {
     if [ "$RET" == "factory" ]; then
         # we need a factory reset
         echo "Factory reset required, triggered by user"
-        RESET_USER=true
+        RESET_USER=1
     else
-        # Test now first init flag presence
-        os_first_init_has_started "/mnt/data/overlay/user/diff/var/lib/os"
-        if [ $? -eq 1 ]; then
-            # Previous first init sequence has been done but not completed, need overlay cleaning
-            echo "Factory reset required, triggered by first init unconsistent state"
+        FACTORY_RESET_PENDING=$(printenv factory_reset_pending)
+        if [ "$FACTORY_RESET_PENDING" == "1" ]; then
+            # Previous factory reset started but not completed
+            echo "Factory reset required, previous did not complete"
         else
-            echo "Factory reset not required, pass"
-            return 0
-        fi
+            # Test now first init flag presence
+            os_first_init_has_started "/mnt/data/overlay/user/diff/var/lib/os"
+            if [ $? -eq 1 ]; then
+                # Previous first init sequence has been done but not completed, need overlay cleaning
+                echo "Factory reset required, triggered by first init unconsistent state"
+            else
+                echo "Factory reset not required, pass"
+                return 0
+            fi
+        fi 
     fi
 
     # No need to revert the running partition since the factory reset
@@ -169,14 +181,35 @@ preinit_manage_reset() {
 
     # Launch the factory-reset script in overlay root
     echo "==== factory-reset ===="
+    if [ $UPGRADE_AVAILABLE -eq 1 ]; then
+        echo "Upgrade is pending while doing a factory reset, something which should not happen."
+    fi
+    # Keep track of the factory reset inside bootloader to ensure atomic operation
+    echo "Beginning of procedure..."
+    if [ "$FACTORY_RESET_PENDING" != "1" ]; then
+        setenv factory_reset_pending 1
+    fi
     echo "Removing existing overlay diff content"
+    # Start cleaning system
     rm -rf /mnt/data/overlay/user/diff/*
     rm -rf /mnt/data/overlay/config/rootfsA/*
     rm -rf /mnt/data/overlay/config/rootfsB/*
+
+    echo "Sleeping for 20s, you can abort"
+    sleep 20
+
+    echo "Copy back data from original source"
+    rm -rf /mnt/data/*
+    cp -rp /data/* /mnt/data
+
+    echo "Disk synchronization"
     sync
 
-    if [ "$RESET_USER" = true ]; then
-        echo "Clearing factory reset state"
+    echo "Clearing factory reset state (previous)"
+    setenv factory_reset_pending
+
+    if [ $RESET_USER -eq 1 ]; then
+        echo "Clearing factory reset state (mcu)"
 
         RET=$(eval "$MACHINE_INFO --reset" 2> /dev/null)
         if [ $? -ne 0 ]; then
@@ -192,6 +225,7 @@ preinit_manage_reset() {
 }
 
 echo "Switching to preinit script"
+echo "VERSION 2"
 
 # Create a read/write mount point of the rootfs
 mount -t tmpfs none /mnt
@@ -202,10 +236,10 @@ mount -t proc proc /proc
 # Reading bootloader info like active root partition
 preinit_dual_partition_read_info
 
-# Mount the base directory
-preinit_mount_base
+# Mount the data volume
+preinit_mount_data
 if [ $? -ne 0 ]; then
-    fail "Fatal error during preinit initial steps"
+    fail "Fatal error during data volume mounting"
 fi
 
 # Detect machine and clear overlay diff if needed (factory reset)
@@ -214,6 +248,12 @@ fi
 preinit_manage_reset
 if [ $? -ne 0 ]; then
     fail "Fatal error during machine detection"
+fi
+
+# Create remaining mounting points
+preinit_create_mount_points
+if [ $? -ne 0 ]; then
+    fail "Fatal error during mounting points creation"
 fi
 
 # Clean useless mount points before the pivot
