@@ -62,30 +62,30 @@ preinit_dual_partition_read_info() {
     fi
 }
 
-preinit_mount_base() {
-    # Create temporary work directories
-    mkdir -p /mnt/{ubidata,rootfs,old}
+preinit_mount_data_volume() {
+    # Create temporary work directory
+    mkdir -p /mnt/ubidata
 
-    # Mount ubidata partition
-    echo "Mounting ubidata partition"
+    # Mount ubidata volume
+    echo "Mounting ubidata volume"
     mount -t ubifs ubi0:data /mnt/ubidata
+
     if [ $? -ne 0 ]; then
         echo "Error mounting data partition"
         return 1
     fi
-
-    # Create overlay directories
-    mkdir -p /mnt/ubidata/overlay/user/{work,diff,merged}
-    mkdir -p /mnt/ubidata/overlay/config/{work,rootfsA,rootfsB}
-
     return 0
 }
 
 preinit_mount_overlay(){
-    # Create main user overlay
-    # TODO: is /mnt/rootfs/ still needed? It's empty.
+    # Create the required mount points for overlays
+    mkdir -p /mnt/ubidata/overlay/user/{work,diff,merged}
+    mkdir -p /mnt/ubidata/overlay/config/{work,rootfsA,rootfsB}
+
+    # Create main user overlay which is mount on the top of current /
+    # previously mounted on ubi0:rootfsa or ubi0:rootfsb by u-boot.
     cd /mnt/ubidata/overlay/user
-    mount -t overlay "overlay:user" -olowerdir=/:/mnt/rootfs/,upperdir=diff,workdir=work merged
+    mount -t overlay "overlay:user" -olowerdir=/,upperdir=diff,workdir=work merged
     if [ $? -ne 0 ]; then
         echo "Error mounting overlay user"
         return 1
@@ -106,12 +106,12 @@ preinit_mount_overlay(){
     # Prepare for pivot_root
     cd /mnt/ubidata/overlay/user/merged
 
-    # Create consulative layers mount points
+    # Create consultative layers mount points
     mkdir -p var/lib/os/layers/factory
     mkdir -p var/lib/os/layers/user
     mkdir -p var/lib/os/layers/config/{rootfsA,rootfsB}
 
-    # Mount consulative layers
+    # Mount consultative layers
     mount --bind / var/lib/os/layers/factory
     mount --bind /mnt/ubidata/overlay/user/diff var/lib/os/layers/user
     mount --bind /mnt/ubidata/overlay/config/rootfsA var/lib/os/layers/config/rootfsA
@@ -130,7 +130,7 @@ preinit_mount_overlay(){
 }
 
 preinit_manage_reset() {
-    RESET_USER=false
+    RESET_USER=0
 
     MACHINE_INFO=$(which machine-info)
     if [ $? -ne 0 ]; then
@@ -150,7 +150,7 @@ preinit_manage_reset() {
     if [ "$BOOT_STATE" == "factory" ]; then
         # we need a factory reset
         echo "Factory reset required, triggered by user"
-        RESET_USER=true
+        RESET_USER=1
     else
         # Test now first init flag presence
         os_first_init_has_started "/mnt/ubidata/overlay/user/diff/var/lib/os"
@@ -170,13 +170,18 @@ preinit_manage_reset() {
 
     # Launch the factory-reset script in overlay root
     echo "==== factory-reset ===="
+    if [ $UPGRADE_AVAILABLE -eq 1 ]; then
+        echo "Upgrade is pending while doing a factory reset, something which should not happen."
+    fi
     echo "Removing existing overlay diff content"
+    # Start cleaning system
     rm -rf /mnt/ubidata/overlay/user/diff/*
     rm -rf /mnt/ubidata/overlay/config/rootfsA/*
     rm -rf /mnt/ubidata/overlay/config/rootfsB/*
+    echo "Disk synchronization"
     sync
 
-    if [ "$RESET_USER" = true ]; then
+    if [ $RESET_USER -eq 1 ]; then
         echo "Clearing factory reset state"
 
         RET=$(eval "$MACHINE_INFO --reset" 2> /dev/null)
@@ -203,10 +208,10 @@ mount -t proc proc /proc
 # Reading bootloader info like active root partition
 preinit_dual_partition_read_info
 
-# Mount the base directory
-preinit_mount_base
+# Mount the data volume
+preinit_mount_data_volume
 if [ $? -ne 0 ]; then
-    fail "Fatal error during preinit initial steps"
+    fail "Fatal error during data volume mounting"
 fi
 
 # Detect machine and clear overlay diff if needed (factory reset)
