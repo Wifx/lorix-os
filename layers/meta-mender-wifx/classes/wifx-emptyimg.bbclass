@@ -1,8 +1,7 @@
 # Copyright (c) 2022, Wifx Sarl <info@iot.wifx.net>
 # All rights reserved.
 
-# Class to create the "dataimg" type, which contains the data partition as a raw
-# filesystem.
+# Class to create the "emptyimg" type, which contains an empty partition.
 
 IMAGE_CMD:emptyimg() {
     mkfs.ubifs -o "${WORKDIR}/emptyimg.ubifs" -r "${_EMPTYIMG_TEMP_WORKDIR}" ${MKUBIFS_ARGS}

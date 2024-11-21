@@ -16,8 +16,8 @@ MENDER_FEATURES_DISABLE:append = " \
 IMAGE_FSTYPES:remove = "mtdimg"
 
 # Disable image from meta-mender (replaced by ours)
-IMAGE_CLASSES:remove = "mender-ubimg"
-IMAGE_CLASSES:append = " wifx-mender-emptyimg wifx-mender-ubimg"
+IMAGE_CLASSES:remove = "mender-ubimg mender-dataimg"
+IMAGE_CLASSES:append = " wifx-mender-ubimg wifx-emptyimg wifx-dataimg"
 
 # This meta automatically use u-boot-fs-utils from Mender which is more 
 # convenient (u-boot-fw-utils usage is highly tigh to atomic OTA update)
