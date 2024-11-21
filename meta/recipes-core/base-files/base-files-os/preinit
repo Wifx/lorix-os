@@ -45,10 +45,7 @@ preinit_dual_partition_read_info() {
     if [ $? -ne 0 ]; then
         fail "Failed to read mender_boot_part from u-boot env"
     fi
-    if [ $BOOT_PART -eq 0 ]; then
-        echo "Mounting overlay over ubi0_0 (rootfsA)"
-    else
-        echo "Mounting overlay over ubi0_1 (rootfsB)"
+    if [ $BOOT_PART -eq 1 ]; then
         BOOT_PART_NAME="rootfsB"
     fi
 
@@ -79,19 +76,48 @@ preinit_mount_data_volume() {
 
 preinit_mount_overlay(){
     # Create the required mount points for overlays
+    # Ensure work directory is empty (required by overlayfs)
     mkdir -p /mnt/ubidata/overlay/user/{work,diff,merged}
+    rm -rf /mnt/ubidata/overlay/user/work/*
     mkdir -p /mnt/ubidata/overlay/config/{work,rootfsA,rootfsB}
+    rm -rf /mnt/ubidata/overlay/config/work/*
+    mkdir -p /mnt/ubidata/overlay/bootstrap/{work,diff}
+    rm -rf /mnt/ubidata/overlay/bootstrap/work/*
+    # We need to ensure structure containing the bootstrap data is existing
+    mkdir -p /mnt/ubidata/bootstrap/{A,B}
 
-    # Create main user overlay which is mount on the top of current /
+    # Create the static structure we need to add over current rootfs
+    # This includes bootstrap and consultative layers.
+    # NOTE: We could create these directories after the overlay setup but then 
+    # we would modify overlay content. Doing it here keep the overlay pure.
+    STATIC=/mnt/static
+    mkdir -p $STATIC
+    # Bootstrap data
+    mkdir -p $STATIC/var/lib/os/bootstrap
+    # Consultative layers (overlayfs diff)
+    mkdir -p $STATIC/var/lib/os/layers
+    mkdir -p $STATIC/var/lib/os/layers/factory
+    mkdir -p $STATIC/var/lib/os/layers/user
+    mkdir -p $STATIC/var/lib/os/layers/config/{rootfsA,rootfsB}
+    mkdir -p $STATIC/var/lib/os/layers/bootstrap
+
+    # NOTE: It would be ideal to union "/" and bootstrap data as lowerdir
+    # as follow (simplified):
+    # mount --bind /mnt/ubidata/bootstrap /mnt/static/var/lib/os/boostrap
+    # mount -t overlay "overlay:user" -olowerdir=/mnt/static:/,upperdir=diff,workdir=work merged
+    # However this doesn't work because overlayfs doesn't support child bind.
+    # Our approach is then to mount bootstrap overlay over user overlay.
+
+    # Create user overlay which is mounted on the top of current /
     # previously mounted on ubi0:rootfsa or ubi0:rootfsb by u-boot.
     cd /mnt/ubidata/overlay/user
-    mount -t overlay "overlay:user" -olowerdir=/,upperdir=diff,workdir=work merged
+    mount -t overlay "overlay:user" -olowerdir=/mnt/static:/,upperdir=diff,workdir=work merged
     if [ $? -ne 0 ]; then
-        echo "Error mounting overlay user"
+        echo "Error mounting user overlay"
         return 1
     fi
 
-    # Create user config overlay depending on main running partition
+    # Create config overlay depending on main running partition
     cd /mnt/ubidata/overlay/config
     if [ $BOOT_PART -eq 0 ]; then
         mount -t overlay "overlay:config" -olowerdir=/etc,upperdir=rootfsA,workdir=work /mnt/ubidata/overlay/user/merged/etc
@@ -99,33 +125,43 @@ preinit_mount_overlay(){
         mount -t overlay "overlay:config" -olowerdir=/etc,upperdir=rootfsB,workdir=work /mnt/ubidata/overlay/user/merged/etc
     fi
     if [ $? -ne 0 ]; then
-        echo "Error mounting overlay config"
+        echo "Error mounting config overlay"
+        return 1
+    fi
+
+    # Create bootstrap overlay
+    cd /mnt/ubidata/overlay/bootstrap
+    if [ $BOOT_PART -eq 0 ]; then
+        mount -t overlay "overlay:bootstrap" -olowerdir=/mnt/ubidata/bootstrap/A,upperdir=diff,workdir=work /mnt/ubidata/overlay/user/merged/var/lib/os/bootstrap
+    else
+        mount -t overlay "overlay:bootstrap" -olowerdir=/mnt/ubidata/bootstrap/B,upperdir=diff,workdir=work /mnt/ubidata/overlay/user/merged/var/lib/os/bootstrap
+    fi
+    if [ $? -ne 0 ]; then
+        echo "Error mounting bootstrap overlay"
         return 1
     fi
 
     # Prepare for pivot_root
     cd /mnt/ubidata/overlay/user/merged
 
-    # Create consultative layers mount points
-    mkdir -p var/lib/os/layers/factory
-    mkdir -p var/lib/os/layers/user
-    mkdir -p var/lib/os/layers/config/{rootfsA,rootfsB}
-
     # Mount consultative layers
-    mount --bind / var/lib/os/layers/factory
     mount --bind /mnt/ubidata/overlay/user/diff var/lib/os/layers/user
     mount --bind /mnt/ubidata/overlay/config/rootfsA var/lib/os/layers/config/rootfsA
     mount --bind /mnt/ubidata/overlay/config/rootfsB var/lib/os/layers/config/rootfsB
-
+    mount --bind /mnt/ubidata/overlay/bootstrap/diff var/lib/os/layers/bootstrap
     mount --bind /dev dev
 
-    # Keep track of current rootfs
-    local OLD_ROOT=mnt/old
+    # Keep track of current rootfs (old after pivot)
     mount -t tmpfs none mnt
-    mkdir -p $OLD_ROOT
+    mkdir -p mnt/old
 
     # Execute the pivot
-    pivot_root . $OLD_ROOT
+    pivot_root . mnt/old
+
+    # Move system mounting points
+    mount --move /mnt/old/proc /proc
+    mount --move /mnt/old/sys /sys
+
     return 0
 }
 
@@ -189,6 +225,7 @@ preinit_manage_reset() {
     rm -rf /mnt/ubidata/overlay/user/diff/*
     rm -rf /mnt/ubidata/overlay/config/rootfsA/*
     rm -rf /mnt/ubidata/overlay/config/rootfsB/*
+    rm -rf /mnt/ubidata/overlay/bootstrap/diff/*
     echo "Disk synchronization"
     sync
 
@@ -221,6 +258,7 @@ mount -t proc proc /proc
 
 # Reading bootloader info like active root partition
 preinit_dual_partition_read_info
+echo "System running on ubi0:$BOOT_PART_NAME"
 
 # Mount the data volume
 preinit_mount_data_volume
@@ -236,9 +274,6 @@ if [ $? -ne 0 ]; then
     fail "Fatal error during machine detection"
 fi
 
-# Clean useless mount points before the pivot
-umount /sys /proc
-
 # Mount the overlayfs
 preinit_mount_overlay
 if [ $? -ne 0 ]; then
@@ -246,10 +281,8 @@ if [ $? -ne 0 ]; then
 fi
 
 if [ -e /etc/runlevels/default/firstboot ]; then
-    # LED management (blinking if first init) needs the sysfs
-    mount -t sysfs sysfs /sys
+    # LED management (blinking if first init)
     os_mark_first_init_started
-    umount /sys
 fi
 
 # Start init process (and unmount useless mount points)
@@ -258,9 +291,12 @@ echo "Unmounting temporary directories"
 umount /mnt/old/mnt/ubidata
 umount /mnt/old/mnt
 umount /mnt/old/dev
-umount /mnt/old
+mount --move /mnt/old /var/lib/os/layers/factory
+umount /proc
+umount /sys
 umount /mnt
 echo "Remounting overlay diff layers in read-only mode"
+mount -o remount,ro,bind /var/lib/os/layers/bootstrap
 mount -o remount,ro,bind /var/lib/os/layers/user
 mount -o remount,ro,bind /var/lib/os/layers/config/rootfsA
 mount -o remount,ro,bind /var/lib/os/layers/config/rootfsB
