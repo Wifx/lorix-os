@@ -26,9 +26,9 @@ VERSION_MAX="1.0.0"
 ### DO NO CHANGE THE FOLLOWING TWO LINES ###
 
 # Load the work variables (do not change)
-# - $S_ETC : current etc diff, readonly (/data/layers/config/rootfs[A|B])
-# - $D_ETC : current etc diff, readwrite (/data/layers/config/rootfs[A|B] mounted on /var/lib/manager/migration)
-# - $S_ROOT : factory root of the active partition, readonly (/data/layers/factory)
+# - $S_ETC : active etc diff, readonly (/var/lib/os/layers/active/config)
+# - $D_ETC : inactive etc diff, readwrite (/var/lib/os/layers/inactive/config mounted on /var/lib/migration/config)
+# - $S_ROOT : factory root of the active partition, readonly (/var/lib/os/layers/active/factory)
 source /data/mender/migration-env 
 
 # Checks wheteher the migration should be applied or not (do not change)

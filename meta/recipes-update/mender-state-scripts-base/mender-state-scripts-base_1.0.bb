@@ -10,6 +10,7 @@ SRC_URI = " \
     file://migrate.sh;subdir=${BPN}-${PV} \
     file://migrate-cleanup.sh;subdir=${BPN}-${PV} \
     file://migrate-reset-immutables.sh;subdir=${BPN}-${PV} \
+    file://install-bootstrap-artifact.sh;subdir=${BPN}-${PV} \
     file://setup-migration-cleanup.sh;subdir=${BPN}-${PV} \
     file://logs-save.sh;subdir=${BPN}-${PV} \
     file://logs-restore.sh;subdir=${BPN}-${PV} \
@@ -60,7 +61,10 @@ do_compile() {
     TARGET=${MENDER_STATE_SCRIPTS_DIR}/${STAGE}_2
     cp setup-migration.sh ${TARGET}0_Setup-migration
 
-    ## 30 Reserved
+    ## 30 Bootstrap artifact install
+    TARGET=${MENDER_STATE_SCRIPTS_DIR}/${STAGE}_3
+    # File ArtifactInstall_Enter_30_bootstrap.mender.run is installed by mender-artifactimg class
+    cp install-bootstrap-artifact.sh ${TARGET}1_install-bootstrap-artifact
 
     ## 40 Specific pre-migrations
 

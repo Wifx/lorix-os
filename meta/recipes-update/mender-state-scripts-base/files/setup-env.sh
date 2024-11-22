@@ -18,23 +18,31 @@ UPGRADE_LOG_PATH=$UPGRADE_LOG_DIR/$OS_DISTRO_VERSION-$NOW.log
 touch $ENV_FILE_PATH
 echo '#!/bin/sh
 
+if [ ! -d '$LAYERS_DIR_NEW' ]; then
+    LAYERS_DIR='$LAYERS_DIR_LEGACY'
+else
+    LAYERS_DIR='$LAYERS_DIR_NEW'/active
+fi
+
 MOUNT=$(mount)
-PATTERN="lowerdir=/etc,upperdir=(rootfs[AB])"
+
+PATTERN="ubi0_([01]) on $LAYERS_DIR/factory"
 
 if [[ $MOUNT =~ $PATTERN ]]; then
-    ROOTFS_MATCH=${BASH_REMATCH[1]}
+    PARTITION_MATCH=${BASH_REMATCH[1]}
 
-    if [ "$ROOTFS_MATCH" == "rootfsA" ]; then
-        ROOTFS_ACTIVE=rootfsA
-        ROOTFS_INACTIVE=rootfsB
-    elif [ "$ROOTFS_MATCH" == "rootfsB" ]; then
-        ROOTFS_ACTIVE=rootfsB
-        ROOTFS_INACTIVE=rootfsA
+    if [ "$PARTITION_MATCH" == "0" ]; then
+        PARTITION_ACTIVE=A
+        PARTITION_INACTIVE=B
+    elif [ "$PARTITION_MATCH" == "1" ]; then
+        PARTITION_ACTIVE=B
+        PARTITION_INACTIVE=A
     fi
 fi
 
-if [[ -z "$ROOTFS_ACTIVE" || -z "$ROOTFS_INACTIVE" ]]; then
-    echo "Could not determine active rootfs"
+
+if [[ -z "$PARTITION_ACTIVE" || -z "$PARTITION_INACTIVE" ]]; then
+    echo "Could not determine active partition"
     exit 1
 fi
 ' > $ENV_FILE_PATH
@@ -57,16 +65,18 @@ TARGET_DISTRO='$DISTRO'
 TARGET_VERSION='$OS_DISTRO_VERSION'
 TARGET_COMPATIBLE_VERSIONS='$OS_DISTRO_UPGRADE_COMPATIBLE_VERSIONS'
 
-if [ ! -d $LAYERS_DIR_NEW ]; then
-    LAYERS_DIR=$LAYERS_DIR_LEGACY
+if [ -d $LAYERS_DIR_NEW ]; then
+    LAYER_FACTORY=$LAYERS_DIR_NEW/active/factory
+    LAYER_USER=$LAYERS_DIR_NEW/active/user
+    LAYER_USER_CONFIG=$LAYERS_DIR_NEW/active/config
+    LAYER_USER_CONFIG_INACTIVE=$LAYERS_DIR_NEW/inactive/config
 else
-    LAYERS_DIR=$LAYERS_DIR_NEW
+    LAYER_FACTORY=$LAYERS_DIR_LEGACY/factory
+    LAYER_USER=$LAYERS_DIR_LEGACY/user
+    LAYER_USER_CONFIG=$LAYERS_DIR_LEGACY/config/rootfs\$PARTITION_ACTIVE
+    LAYER_USER_CONFIG_INACTIVE=$LAYERS_DIR_LEGACY/config/rootfs\$PARTITION_INACTIVE
 fi
 
-LAYER_FACTORY=$LAYERS_DIR/factory
-LAYER_USER=$LAYERS_DIR/user
-LAYER_USER_CONFIG=$LAYERS_DIR/config/\$ROOTFS_ACTIVE
-LAYER_USER_CONFIG_INACTIVE=$LAYERS_DIR/config/\$ROOTFS_INACTIVE
 LAYER_USER_CONFIG_INACTIVE_RW=/var/lib/migration/config
 
 S_ROOT=\$LAYER_FACTORY
