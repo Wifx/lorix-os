@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PREFIX=MIGRATION-CLEANUP
-source /data/mender/migration-env
+source /data/mender/upgrade/migration-env.sh
 
 # Unmount writable inactive user config
 

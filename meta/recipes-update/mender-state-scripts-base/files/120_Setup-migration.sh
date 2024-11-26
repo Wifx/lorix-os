@@ -1,7 +1,8 @@
 #!/bin/sh
 
 PREFIX=MIGRATION
-source /data/mender/migration-env
+
+source /data/mender/upgrade/migration-env.sh
 
 # Mount writable inactive user config
 

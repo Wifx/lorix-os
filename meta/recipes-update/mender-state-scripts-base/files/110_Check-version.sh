@@ -1,9 +1,9 @@
 #!/bin/sh
 
-VERSION_COMPARE_PATH=/data/mender/version-compare
 PREFIX=CHECK-VERSION
 
-source /data/mender/migration-env
+source /data/mender/upgrade/migration-env.sh
+source /data/mender/upgrade/semver
 
 log $PREFIX "Actual release"
 log $PREFIX "- Distro: ${ORIGIN_DISTRO}"
@@ -17,18 +17,14 @@ log $PREFIX "- Upgradable OS versions: ${TARGET_COMPATIBLE_VERSIONS}"
 # Remove anything after the first + from TARGET_VERSION as version-compare does not support it and it's not used in the comparison
 TARGET_VERSION=$(echo $TARGET_VERSION | cut -d'+' -f1)
 
-VALID=$($VERSION_COMPARE_PATH "${ORIGIN_VERSION}" "${UPDATE_COMPATIBLE_VERSIONS}")
+VALID=$(semver_match_constraints "${ORIGIN_VERSION}" "${TARGET_COMPATIBLE_VERSIONS}")
 
-RESULT=$?
-
-if [ $RESULT -eq 0 ]; then
-    if [ "${VALID}" = true ]; then
-        log $PREFIX "The upgrade from '${ORIGIN_VERSION}' to '${TARGET_VERSION}' is supported"
-        exit 0
-    elif [ "${VALID}" = false ]; then
-        log $PREFIX "The upgrade from '${ORIGIN_VERSION}' to '${TARGET_VERSION}' is not supported"
-        exit 1
-    fi
+if [ "${VALID}" = "1" ]; then
+    log $PREFIX "The upgrade from '${ORIGIN_VERSION}' to '${TARGET_VERSION}' is supported"
+    exit 0
+elif [ "${VALID}" = "0" ]; then
+    log $PREFIX "The upgrade from '${ORIGIN_VERSION}' to '${TARGET_VERSION}' is not supported"
+    exit 1
 fi
 
 log $PREFIX "Upgrade check not supported, skipping"

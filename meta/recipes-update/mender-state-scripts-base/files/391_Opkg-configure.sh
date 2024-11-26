@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PREFIX=OPKG-CFG
-source /data/mender/migration-env
+source /data/mender/upgrade/migration-env.sh
     
 log $PREFIX "Configuring OPKG packages..."
 

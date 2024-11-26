@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PREFIX=RESTORE-LOGS
-source /data/mender/migration-env
+source /data/mender/upgrade/migration-env.sh
 
 if [ -d "$UPGRADE_LOG_PERSISTENT_DIR" ]; then
     log $PREFIX "Restoring upgrade logs"

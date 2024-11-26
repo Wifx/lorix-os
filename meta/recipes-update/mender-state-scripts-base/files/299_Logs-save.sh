@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PREFIX=SAVE-LOGS
-source /data/mender/migration-env
+source /data/mender/upgrade/migration-env.sh
 
 if [ -f "$UPGRADE_LOG_PATH" ]; then
     log $PREFIX "Saving '$UPGRADE_LOG_PATH' to '$UPGRADE_LOG_PERSISTENT_DIR'"

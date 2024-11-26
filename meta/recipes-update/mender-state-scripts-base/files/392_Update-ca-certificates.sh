@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PREFIX=CA-CERT
-source /data/mender/migration-env
+source /data/mender/upgrade/migration-env.sh
     
 log $PREFIX "Updating CA certificates store..."
 

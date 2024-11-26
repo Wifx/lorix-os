@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PREFIX=MIGRATE
-source /data/mender/migration-env
+source /data/mender/upgrade/migration-env.sh
 
 cp -a $S_ETC/* $D_ETC
 RESULT=$?

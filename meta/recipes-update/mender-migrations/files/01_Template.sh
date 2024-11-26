@@ -29,10 +29,10 @@ VERSION_MAX="1.0.0"
 # - $S_ETC : active etc diff, readonly (/var/lib/os/layers/active/config)
 # - $D_ETC : inactive etc diff, readwrite (/var/lib/os/layers/inactive/config mounted on /var/lib/migration/config)
 # - $S_ROOT : factory root of the active partition, readonly (/var/lib/os/layers/active/factory)
-source /data/mender/migration-env 
+source /data/mender/upgrade/migration-env.sh 
 
 # Checks wheteher the migration should be applied or not (do not change)
-source /data/mender/migration-utils 
+source /data/mender/upgrade/version-guard.sh
 
 ### WRITE YOUR MIGRATION FROM HERE ###
 

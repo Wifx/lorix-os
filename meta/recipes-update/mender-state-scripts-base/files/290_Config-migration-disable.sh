@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PREFIX=CFG_MIG_OFF
-source /data/mender/migration-env
+source /data/mender/upgrade/migration-env.sh
 
 # Disable migration only fo the 0.4.0 version
 if [[ "$ORIGIN_VERSION" == "0.4.0-rc.1" || "$ORIGIN_VERSION" == "0.4.0-rc.2" ]]; then

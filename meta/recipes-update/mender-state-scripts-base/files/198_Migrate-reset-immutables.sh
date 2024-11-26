@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PREFIX=MIGRATE-RESET-IMMUTABLES
-source /data/mender/migration-env
+source /data/mender/upgrade/migration-env.sh
 
 # Some files must not be migrated if the user has changed them
 ETC_FILES=( 

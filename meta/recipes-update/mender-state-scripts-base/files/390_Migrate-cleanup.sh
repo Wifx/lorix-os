@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PREFIX=CLEANUP
-source /data/mender/migration-env
+source /data/mender/upgrade/migration-env.sh
 
 # Mount writable inactive user config
 mkdir -p "$LAYER_USER_CONFIG_INACTIVE_RW"

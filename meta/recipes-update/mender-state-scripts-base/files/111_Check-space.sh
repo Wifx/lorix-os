@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PREFIX=CHECK-SPACE
-source /data/mender/migration-env
+source /data/mender/upgrade/migration-env.sh
 
 USER_CONFIG_PATH="/etc"
 

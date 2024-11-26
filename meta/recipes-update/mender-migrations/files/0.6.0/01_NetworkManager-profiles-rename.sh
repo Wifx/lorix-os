@@ -1,10 +1,10 @@
 #!/bin/sh
 
 PREFIX=MIGRATION-NM-PROFILES-RENAME
-source /data/mender/migration-env
+source /data/mender/upgrade/migration-env.sh
 
 VERSION_MAX="0.6.0"
-source /data/mender/migration-utils
+source /data/mender/upgrade/migration-utils.sh
 
 NM_PROFILES_PATH=NetworkManager/system-connections
 PROFILES_DIR_PATH="$D_ETC/$NM_PROFILES_PATH"

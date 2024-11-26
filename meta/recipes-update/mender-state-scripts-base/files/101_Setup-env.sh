@@ -3,10 +3,10 @@
 CURRENT_OS_INFO_PATH=/etc/os-release
 
 MENDER_DIR=/data/mender
-ENV_FILE_PATH=$MENDER_DIR/migration-env
+ENV_FILE_PATH=$MENDER_DIR/upgrade/migration-env.sh
 
 UPGRADE_LOG_DIR=/var/log/upgrade
-UPGRADE_LOG_PERSISTENT_DIR=$MENDER_DIR/upgrade-logs
+UPGRADE_LOG_PERSISTENT_DIR=$MENDER_DIR/upgrade/logs
 LAYERS_DIR_NEW=/var/lib/os/layers
 LAYERS_DIR_LEGACY=/data/layers
 

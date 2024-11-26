@@ -29,10 +29,10 @@ VERSION_MAX="1.2.0"
 # - $S_ETC : current etc diff, readonly (/data/layers/config/rootfs[A|B])
 # - $D_ETC : current etc diff, readwrite (/data/layers/config/rootfs[A|B] mounted on /var/lib/manager/migration)
 # - $S_ROOT : factory root of the active partition, readonly (/data/layers/factory)
-source /data/mender/migration-env 
+source /data/mender/upgrade/migration-env.sh 
 
 # Checks wheteher the migration should be applied or not (do not change)
-source /data/mender/migration-utils 
+source /data/mender/upgrade/version-guard.sh
 
 ### WRITE YOUR MIGRATION FROM HERE ###
 
