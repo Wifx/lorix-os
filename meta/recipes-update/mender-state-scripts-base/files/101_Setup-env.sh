@@ -2,11 +2,11 @@
 
 CURRENT_OS_INFO_PATH=/etc/os-release
 
-MENDER_DIR=/data/mender
-ENV_FILE_PATH=$MENDER_DIR/upgrade/migration-env.sh
+MENDER_UPGRADE_DIR=/data/mender/upgrade
+ENV_FILE_PATH=$MENDER_UPGRADE_DIR/migration-env.sh
 
 UPGRADE_LOG_DIR=/var/log/upgrade
-UPGRADE_LOG_PERSISTENT_DIR=$MENDER_DIR/upgrade/logs
+UPGRADE_LOG_PERSISTENT_DIR=$MENDER_UPGRADE_DIR/logs
 LAYERS_DIR_NEW=/var/lib/os/layers
 LAYERS_DIR_LEGACY=/data/layers
 
@@ -15,6 +15,7 @@ LAYERS_DIR_LEGACY=/data/layers
 NOW=$(date +"%Y-%m-%dT%H:%m:%SZ")
 UPGRADE_LOG_PATH=$UPGRADE_LOG_DIR/$OS_DISTRO_VERSION-$NOW.log
 
+mkdir -p $MENDER_UPGRADE_DIR
 touch $ENV_FILE_PATH
 echo '#!/bin/sh
 

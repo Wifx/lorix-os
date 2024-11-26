@@ -4,7 +4,7 @@ PREFIX=WPF-HW-CFG
 source /data/mender/upgrade/migration-env.sh
 
 VERSION_MAX="0.5.0"
-source /data/mender/upgrade/migration-utils.sh
+source /data/mender/upgrade/version-guard.sh
 
 HARDWARE_DIR_PATH="$D_ETC/opt/wpf/hardware"
 ABSOLUTE_HARDWARE_DIR_PATH="/etc/opt/wpf/hardware"

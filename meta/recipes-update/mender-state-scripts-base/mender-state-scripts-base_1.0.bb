@@ -17,7 +17,8 @@ SRC_URI = " \
     file://391_Opkg-configure.sh;subdir=${BPN}-${PV} \
     file://392_Update-ca-certificates.sh;subdir=${BPN}-${PV} \
     file://810_Config-migration-enable.sh;subdir=${BPN}-${PV} \
-    file://999_Setup-migration-cleanup.sh;subdir=${BPN}-${PV} \
+    file://998_Setup-migration-cleanup.sh;subdir=${BPN}-${PV} \
+    file://999_Final-cleanup.sh;subdir=${BPN}-${PV} \
 "
 
 RDEPENDS:${PN} += "ca-certificates"
@@ -53,8 +54,8 @@ do_compile() {
     include_script 102_Setup-utils.sh                   ArtifactInstall_Enter_02_Setup-utils
 
     ## 10 Checks
-    include_script 110_Check-version.sh                 ArtifactInstall_Enter_10
-    include_script 111_Check-space.sh                   ArtifactInstall_Enter_11
+    include_script 110_Check-version.sh                 ArtifactInstall_Enter_10_Check-version
+    include_script 111_Check-space.sh                   ArtifactInstall_Enter_11_Check-space
 
     ## 20 Migrations setup
     include_script 120_Setup-migration.sh               ArtifactInstall_Enter_20_Setup-migration
@@ -73,7 +74,8 @@ do_compile() {
     ## 90 Migration finalize
     include_script 198_Migrate-reset-immutables.sh      ArtifactInstall_Enter_98_Migrate-reset-immutables
 
-    include_script 999_Setup-migration-cleanup.sh       ArtifactInstall_Enter_99_Setup-migration-cleanup
+    include_script 998_Setup-migration-cleanup.sh       ArtifactInstall_Enter_98_Setup-migration-cleanup
+    #include_script 999_Final-cleanup.sh                 ArtifactInstall_Enter_99_Final-cleanup
 
     # Artifact install leave
     include_script 290_Config-migration-disable.sh      ArtifactInstall_Leave_90_Config-migration-disable
@@ -99,5 +101,6 @@ do_compile() {
     include_script 810_Config-migration-enable.sh       ArtifactFailure_Enter_10_Config-migration-enable
 
     # Artifact failure leave
-    include_script 999_Setup-migration-cleanup.sh       ArtifactFailure_Leave_00_Setup-migration-cleanup
+    include_script 998_Setup-migration-cleanup.sh       ArtifactFailure_Leave_00_Setup-migration-cleanup
+    #include_script 999_Final-cleanup.sh                 ArtifactFailure_Leave_01_Final-cleanup
 }

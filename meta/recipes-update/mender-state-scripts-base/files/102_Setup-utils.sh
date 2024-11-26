@@ -36,12 +36,13 @@ fi
 log "$PREFIX" "Applying migration..."
 EOF
 
-cat << 'EOF' >> $SEMVER_FILE_PATH
+cat << 'EOF' >> $SEMVER_PATH
 #!/bin/bash
 # SPDX-License-Identifier: Apache-2.0
 # https://github.com/fsaintjacques/semver-tool
 
-set -o errexit -o nounset -o pipefail
+#set -o errexit -o nounset -o pipefail
+set -o errexit -o pipefail
 
 SEMVER_NAT='0|[1-9][0-9]*'
 SEMVER_ALPHANUM='[0-9]*[A-Za-z-][0-9A-Za-z-]*'
@@ -86,13 +87,13 @@ function semver_is_null {
     [ -z "$1" ]
 }
 
-function order_nat {
+function semver_order_nat {
     [ "$1" -lt "$2" ] && { echo -1 ; return ; }
     [ "$1" -gt "$2" ] && { echo 1 ; return ; }
     echo 0
 }
 
-function order_string {
+function semver_order_string {
     [[ $1 < $2 ]] && { echo -1 ; return ; }
     [[ $1 > $2 ]] && { echo 1 ; return ; }
     echo 0
@@ -130,10 +131,10 @@ function semver_compare_fields {
         semver_is_null "$left"                     && { echo -1 ; return ; }
                            semver_is_null "$right" && { echo 1  ; return ; }
 
-        semver_is_nat "$left" &&  semver_is_nat "$right" && { order=$(order_nat "$left" "$right") ; continue ; }
+        semver_is_nat "$left" &&  semver_is_nat "$right" && { order=$(semver_order_nat "$left" "$right") ; continue ; }
         semver_is_nat "$left"                     && { echo -1 ; return ; }
                            semver_is_nat "$right" && { echo 1  ; return ; }
-                                              { order=$(order_string "$left" "$right") ; continue ; }
+                                              { order=$(semver_order_string "$left" "$right") ; continue ; }
     done
 }
 
@@ -172,10 +173,6 @@ function semver_compare_version {
   # otherwise, compare the pre-release id's
 
   semver_compare_fields left right
-}
-
-function log {
-  echo -e "$1" >&2
 }
 
 # Function: semver_match_constraints
@@ -271,3 +268,4 @@ function semver_test {
     fi
   done
 }
+EOF

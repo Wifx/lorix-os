@@ -4,7 +4,7 @@ PREFIX=UPF-FROM-WPF
 source /data/mender/upgrade/migration-env.sh
 
 VERSION_MAX="0.6.1"
-source /data/mender/upgrade/migration-utils.sh
+source /data/mender/upgrade/version-guard.sh
 
 WPF_DIR_PATH="opt/wpf"
 UPF_DIR_PATH="opt/udp-packet-forwarder"
