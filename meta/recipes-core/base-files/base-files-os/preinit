@@ -99,10 +99,9 @@ preinit_mount_overlay(){
     mkdir /mnt/scaffold
     # Consultative layers (overlayfs diff)
     mkdir -p /mnt/scaffold/var/lib/os/layers
-    mkdir -p /mnt/scaffold/var/lib/os/layers/factory
-    mkdir -p /mnt/scaffold/var/lib/os/layers/user
-    mkdir -p /mnt/scaffold/var/lib/os/layers/config/{rootfsA,rootfsB}
-    
+    mkdir -p /mnt/scaffold/var/lib/os/layers/active/{factory,user,config}
+    mkdir -p /mnt/scaffold/var/lib/os/layers/inactive/config
+
     # Create user overlay (main rootfs overlay)
     cd /mnt/ubidata/overlay/user
     mount -t overlay "overlay:user" -olowerdir=/mnt/scaffold:/mnt/factory,upperdir=diff,workdir=work /mnt/rootfs
@@ -129,7 +128,7 @@ preinit_mount_overlay(){
     mount -t tmpfs none mnt
     mkdir -p mnt/factory
 
-    # Execute the pivor root
+    # Execute the pivot root
     pivot_root . mnt/factory
     # Our "/" is now the overlay
 
@@ -147,10 +146,17 @@ preinit_mount_overlay(){
     umount /mnt/factory/mnt
 
     # Mount consultative layers
-    mount --move -o ro /mnt/factory /var/lib/os/layers/factory
-    mount --bind -o ro /mnt/ubidata/overlay/user/diff /var/lib/os/layers/user
-    mount --bind -o ro /mnt/ubidata/overlay/config/rootfsA /var/lib/os/layers/config/rootfsA
-    mount --bind -o ro /mnt/ubidata/overlay/config/rootfsB /var/lib/os/layers/config/rootfsB
+    mount --move -o ro /mnt/factory /var/lib/os/layers/active/factory
+    mount --bind -o ro /mnt/ubidata/overlay/user/diff /var/lib/os/layers/active/user
+    if [ $BOOT_PART -eq 0 ]; then
+        # System A (partition 0) is currently running
+        mount --bind -o ro /mnt/ubidata/overlay/config/rootfsA /var/lib/os/layers/active/config
+        mount --bind -o ro /mnt/ubidata/overlay/config/rootfsB /var/lib/os/layers/inactive/config
+    else
+        # System B (partition 1) is currently running
+        mount --bind -o ro /mnt/ubidata/overlay/config/rootfsA /var/lib/os/layers/inactive/config
+        mount --bind -o ro /mnt/ubidata/overlay/config/rootfsB /var/lib/os/layers/active/config
+    fi
 }
 
 preinit_manage_reset() {
