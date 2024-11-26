@@ -18,7 +18,7 @@ pmonitor_service_install() {
 
         for path in $*; do
             svc=$(basename ${path})
-            install -m 755 ${path} ${D}${PMONITOR_SVC_INSTALLDIR}/${svc}
+            install -m 644 ${path} ${D}${PMONITOR_SVC_INSTALLDIR}/${svc}
         done
     fi
 }
@@ -27,7 +27,7 @@ pmonitor_service_enable() {
     local svc
 
     if ${@use_pmonitor(d)}; then
-        [ ! -d ${D}${PMONITOR_SVC_ENABLEDDIR} ] && install -m0755 -d ${D}${PMONITOR_SVC_ENABLEDDIR}
+        [ ! -d ${D}${PMONITOR_SVC_ENABLEDDIR} ] && install -m 0755 -d ${D}${PMONITOR_SVC_ENABLEDDIR}
 
         for svc in $*; do
             ln -snf ${PMONITOR_SVC_INSTALLDIR}/${svc} ${D}${PMONITOR_SVC_ENABLEDDIR}
