@@ -42,22 +42,22 @@ LICENSE = "Apache-2.0 & BSL-1.0 & CC0-1.0 & MIT & Unlicense"
 pkg_postinst_ontarget:${PN}() {
 
     UBIDATA_MOUNT_PATH="/mnt/ubidata"
-    MENDER_BOOTSTRAP_PATH="/var/lib/mender/mender-bootstrap"
+    MENDER_BOOTSTRAP_PATH="/data/mender/mender-bootstrap"
     MENDER_DATA_PATH="/data/mender"
 
     if [ -f $MENDER_DATA_PATH/mender-store ]; then
         echo "Mender store already exists at $MENDER_DATA_PATH/mender-store, skipping bootstrap artifact copy"
-        return
+        exit 0
     fi
 
     if [ -f $MENDER_DATA_PATH/bootstrap.mender ]; then
         echo "Mender bootstrap artifact already exists on $MENDER_DATA_PATH/bootstrap.mender, skipping bootstrap artifact copy"
-        return
+        exit 0
     fi
 
     # Find active and inactive partitions
     MOUNT=$(mount)
-    PATTERN="lowerdir=/etc,upperdir=(rootfs[AB])"
+    PATTERN="overlay:config on \/etc.*upperdir=(rootfs[AB])"
 
     if [[ $MOUNT =~ $PATTERN ]]; then
         ROOTFS_MATCH=${BASH_REMATCH[1]}
