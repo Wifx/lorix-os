@@ -11,7 +11,7 @@ require ../lorix-os/layers/meta-mender/meta-mender-core/recipes-mender/mender-cl
 SRC_URI = "gitsm://github.com/mendersoftware/mender;protocol=https;branch=5.0.x"
 
 # Tag: 
-SRCREV = "5bbe2d3c7e0e22336f09c8ee2dfda063a63ce3ca"
+SRCREV = "5ab2e8f80d6c29f52a24134c4cce8434035ffd63"
 
 # Enable this in Betas, and in branches that cannot carry this major version as
 # default.
