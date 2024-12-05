@@ -215,7 +215,7 @@ pkg_postinst_ontarget:${PN}:append:lorix_one () {
         
         sed -i 's/model=""/model="wifx_lorix_one_'${LORA_REGION}'"/g' $GW_CONFIG_FILE_PATH
 
-        echo "Model set to "$GWID" in file "$GW_CONFIG_FILE_PATH
+        echo "Model set to wifx_lorix_one_"$LORA_REGION" in file "$GW_CONFIG_FILE_PATH
     else
         echo "Gateway config file does not exist ("$GW_CONFIG_FILE_PATH")"
     fi
@@ -231,7 +231,7 @@ pkg_postinst_ontarget:${PN}:append:l1 () {
         
         sed -i 's/model=""/model="wifx_l1_'${LORA_REGION}'"/g' $GW_CONFIG_FILE_PATH
 
-        echo "Model set to "$GWID" in file "$GW_CONFIG_FILE_PATH
+        echo "Model set to wifx_l1_"$LORA_REGION" in file "$GW_CONFIG_FILE_PATH
     else
         echo "Gateway config file does not exist ("$GW_CONFIG_FILE_PATH")"
     fi
