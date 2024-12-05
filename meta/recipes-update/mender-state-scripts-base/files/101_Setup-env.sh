@@ -16,7 +16,7 @@ NOW=$(date +"%Y-%m-%dT%H:%m:%SZ")
 UPGRADE_LOG_PATH=$UPGRADE_LOG_DIR/$OS_DISTRO_VERSION-$NOW.log
 
 mkdir -p $MENDER_UPGRADE_DIR
-touch $ENV_FILE_PATH
+
 echo '#!/bin/sh
 
 if [ ! -d '$LAYERS_DIR_NEW' ]; then
