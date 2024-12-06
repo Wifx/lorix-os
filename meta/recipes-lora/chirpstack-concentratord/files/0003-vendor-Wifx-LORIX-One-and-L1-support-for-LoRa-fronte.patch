@@ -1,34 +1,33 @@
-From e5e5ed801e612caf193115e800fb293fce9c22b2 Mon Sep 17 00:00:00 2001
+From b1227a2008dcb0efae246a42609a4410e2891523 Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
-Date: Thu, 5 Dec 2024 22:23:11 +0100
-Subject: [PATCH 3/3] vendor: Wifx LORIX One and L1 support, support for 8XX
- and 9XX LoRa variant with frontend revision. Only for testing, revision B is
- a copy of revision A for the moment.
+Date: Fri, 6 Dec 2024 13:36:50 +0100
+Subject: [PATCH 3/3] vendor: Wifx LORIX One and L1, support for LoRa frontend
+ revision Only for testing, revision B is currently a copy of revision A.
 
 Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
 ---
  .../src/config/mod.rs                         |   6 +-
- ...orix_one_863_870.rs => lorix_one_8XX_A.rs} |   0
- ...orix_one_902_928.rs => lorix_one_9XX_A.rs} |   0
+ ..._one_863_870.rs => lorix_one_863_870_A.rs} |   0
+ ..._one_902_928.rs => lorix_one_902_928_A.rs} |   0
  .../src/config/vendor/wifx/lorix_one_eu868.rs | 288 ------------------
  .../src/config/vendor/wifx/mod.rs             |   6 +-
  .../src/config/mod.rs                         |   6 +-
- .../wifx/{l1_863_870.rs => l1_8XX_A.rs}       |   0
- .../src/config/vendor/wifx/l1_8XX_B.rs        | 103 +++++++
- .../wifx/{l1_902_928.rs => l1_9XX_A.rs}       |   0
- .../src/config/vendor/wifx/l1_9XX_B.rs        | 103 +++++++
+ .../wifx/{l1_863_870.rs => l1_863_870_A.rs}   |   0
+ .../src/config/vendor/wifx/l1_863_870_B.rs    | 103 +++++++
+ .../wifx/{l1_902_928.rs => l1_902_928_A.rs}   |   0
+ .../src/config/vendor/wifx/l1_902_928_B.rs    | 103 +++++++
  .../src/config/vendor/wifx/mod.rs             |  10 +-
  11 files changed, 224 insertions(+), 298 deletions(-)
- rename chirpstack-concentratord-sx1301/src/config/vendor/wifx/{lorix_one_863_870.rs => lorix_one_8XX_A.rs} (100%)
- rename chirpstack-concentratord-sx1301/src/config/vendor/wifx/{lorix_one_902_928.rs => lorix_one_9XX_A.rs} (100%)
+ rename chirpstack-concentratord-sx1301/src/config/vendor/wifx/{lorix_one_863_870.rs => lorix_one_863_870_A.rs} (100%)
+ rename chirpstack-concentratord-sx1301/src/config/vendor/wifx/{lorix_one_902_928.rs => lorix_one_902_928_A.rs} (100%)
  delete mode 100644 chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_eu868.rs
- rename chirpstack-concentratord-sx1302/src/config/vendor/wifx/{l1_863_870.rs => l1_8XX_A.rs} (100%)
- create mode 100644 chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_B.rs
- rename chirpstack-concentratord-sx1302/src/config/vendor/wifx/{l1_902_928.rs => l1_9XX_A.rs} (100%)
- create mode 100644 chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_B.rs
+ rename chirpstack-concentratord-sx1302/src/config/vendor/wifx/{l1_863_870.rs => l1_863_870_A.rs} (100%)
+ create mode 100644 chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870_B.rs
+ rename chirpstack-concentratord-sx1302/src/config/vendor/wifx/{l1_902_928.rs => l1_902_928_A.rs} (100%)
+ create mode 100644 chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_902_928_B.rs
 
 diff --git a/chirpstack-concentratord-sx1301/src/config/mod.rs b/chirpstack-concentratord-sx1301/src/config/mod.rs
-index eebf67d..855f9da 100644
+index eebf67d..aaf9590 100644
 --- a/chirpstack-concentratord-sx1301/src/config/mod.rs
 +++ b/chirpstack-concentratord-sx1301/src/config/mod.rs
 @@ -202,10 +202,8 @@ pub fn get(filenames: Vec<String>) -> Configuration {
@@ -39,19 +38,19 @@ index eebf67d..855f9da 100644
 -            vendor::wifx::lorix_one_863_870::new(&config)
 -        }
 -        "wifx_lorix_one_902_928" => vendor::wifx::lorix_one_902_928::new(&config),
-+        "wifx_lorix_one_8XX_A" => vendor::wifx::lorix_one_8XX_A::new(&config),
-+        "wifx_lorix_one_9XX_A" => vendor::wifx::lorix_one_9XX_A::new(&config),
++        "wifx_lorix_one_863_870_A" => vendor::wifx::lorix_one_863_870_A::new(&config),
++        "wifx_lorix_one_902_928_A" => vendor::wifx::lorix_one_902_928_A::new(&config),
          _ => panic!("unexpected gateway model: {}", config.gateway.model),
      };
  
-diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_863_870.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_8XX_A.rs
+diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_863_870.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_863_870_A.rs
 similarity index 100%
 rename from chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_863_870.rs
-rename to chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_8XX_A.rs
-diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_902_928.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_9XX_A.rs
+rename to chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_863_870_A.rs
+diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_902_928.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_902_928_A.rs
 similarity index 100%
 rename from chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_902_928.rs
-rename to chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_9XX_A.rs
+rename to chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_902_928_A.rs
 diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_eu868.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_eu868.rs
 deleted file mode 100644
 index 19fa9c4..0000000
@@ -347,18 +346,18 @@ index 19fa9c4..0000000
 -    }
 -}
 diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs
-index 4fdecef..9256aee 100644
+index 4fdecef..bce8867 100644
 --- a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs
 +++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs
 @@ -1,2 +1,4 @@
 -pub mod lorix_one_863_870;
 -pub mod lorix_one_902_928;
 +#[allow(non_snake_case)]
-+pub mod lorix_one_8XX_A;
++pub mod lorix_one_863_870_A;
 +#[allow(non_snake_case)]
-+pub mod lorix_one_9XX_A;
++pub mod lorix_one_902_928_A;
 diff --git a/chirpstack-concentratord-sx1302/src/config/mod.rs b/chirpstack-concentratord-sx1302/src/config/mod.rs
-index b2f41c7..4bb0d32 100644
+index b2f41c7..18da881 100644
 --- a/chirpstack-concentratord-sx1302/src/config/mod.rs
 +++ b/chirpstack-concentratord-sx1302/src/config/mod.rs
 @@ -172,8 +172,10 @@ pub fn get(filenames: Vec<String>) -> Configuration {
@@ -367,22 +366,22 @@ index b2f41c7..4bb0d32 100644
          "rak_2287_us915" => vendor::rak::rak2287_us915::new(&config),
 -        "wifx_l1_863_870" => vendor::wifx::l1_863_870::new(&config),
 -        "wifx_l1_902_928" => vendor::wifx::l1_902_928::new(&config),
-+        "wifx_l1_8XX_A" => vendor::wifx::l1_8XX_A::new(&config),
-+        "wifx_l1_8XX_B" => vendor::wifx::l1_8XX_B::new(&config),
-+        "wifx_l1_9XX_A" => vendor::wifx::l1_9XX_A::new(&config),
-+        "wifx_l1_9XX_B" => vendor::wifx::l1_9XX_B::new(&config),
++        "wifx_l1_863_870_A" => vendor::wifx::l1_863_870_A::new(&config),
++        "wifx_l1_863_870_B" => vendor::wifx::l1_863_870_B::new(&config),
++        "wifx_l1_902_928_A" => vendor::wifx::l1_902_928_A::new(&config),
++        "wifx_l1_902_928_B" => vendor::wifx::l1_902_928_B::new(&config),
          _ => panic!("unexpected gateway model: {}", config.gateway.model),
      };
  
-diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_A.rs
+diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870_A.rs
 similarity index 100%
 rename from chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870.rs
-rename to chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_A.rs
-diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_B.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_B.rs
+rename to chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870_A.rs
+diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870_B.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870_B.rs
 new file mode 100644
 index 0000000..aef2c13
 --- /dev/null
-+++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_B.rs
++++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_863_870_B.rs
 @@ -0,0 +1,103 @@
 +use libloragw_sx1302::hal;
 +
@@ -487,15 +486,15 @@ index 0000000..aef2c13
 +        pwr_idx: pwr_idx,
 +    }
 +}
-diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_902_928.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_A.rs
+diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_902_928.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_902_928_A.rs
 similarity index 100%
 rename from chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_902_928.rs
-rename to chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_A.rs
-diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_B.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_B.rs
+rename to chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_902_928_A.rs
+diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_902_928_B.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_902_928_B.rs
 new file mode 100644
 index 0000000..7526834
 --- /dev/null
-+++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_B.rs
++++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_902_928_B.rs
 @@ -0,0 +1,103 @@
 +use libloragw_sx1302::hal;
 +
@@ -601,20 +600,20 @@ index 0000000..7526834
 +    }
 +}
 diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs
-index b0eb8f6..5138d4a 100644
+index b0eb8f6..2cf1966 100644
 --- a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs
 +++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs
 @@ -1,5 +1,11 @@
 -pub mod l1_863_870;
 -pub mod l1_902_928;
 +#[allow(non_snake_case)]
-+pub mod l1_8XX_A;
++pub mod l1_863_870_A;
 +#[allow(non_snake_case)]
-+pub mod l1_8XX_B;
++pub mod l1_863_870_B;
 +#[allow(non_snake_case)]
-+pub mod l1_9XX_A;
++pub mod l1_902_928_A;
 +#[allow(non_snake_case)]
-+pub mod l1_9XX_B;
++pub mod l1_902_928_B;
  
  use libloragw_sx1302::hal;
  
