@@ -173,47 +173,7 @@ do_install_append_sx1302() {
 }
 
 pkg_postinst_ontarget_${PN} () {
-
     GW_CONFIG_FILE_PATH="${CONF_DIR}/10-gateway.toml"
-
-    ### FREQUENCY PLAN ###
-
-    PRODUCT_FREQUENCY=$(machine-info -n -f "PRODUCT_FREQUENCY")
-    CHANNELS_CONFDIR=/etc/opt/chirpstack-concentratord/channels
-
-    # Set default channel
-    if [ ! -f "$CHANNELS_CONFDIR/channels.toml" ]; then
-
-        cd "$CHANNELS_CONFDIR"
-        echo "Looking for concentratord channels for '$PRODUCT_FREQUENCY' in '$CHANNELS_CONFDIR'"
-
-        # If the region provides a default channel plan, set it
-        if [ -f "$PRODUCT_FREQUENCY/default" ]; then
-            echo "Using default channel"
-            CHANNEL_FILE_NAME=$(readlink "$PRODUCT_FREQUENCY/default")
-            CHANNEL_FILE_PATH="$PRODUCT_FREQUENCY/$CHANNEL_FILE_NAME"
-        else
-            # Otherwise take the first in the list
-            echo "Using first available channel in '$PRODUCT_FREQUENCY'"
-            FILES="$PRODUCT_FREQUENCY/*.toml"
-            for FILE in $FILES; do
-                if [[ -f "$FILE" ]]; then
-                    CHANNEL_FILE_PATH=$FILE
-                    break
-                fi
-            done
-        fi
-
-        if [ ! -z "$CHANNEL_FILE_PATH" ]; then
-            ln -snf "$CHANNEL_FILE_PATH" "channels_conf.toml"
-            echo "concentratord channel has been set to '$CHANNEL_FILE_PATH'"
-        else
-            echo "Could not find any channel"
-        fi
-
-    else
-        echo "concentratord channel already defined"
-    fi
 }
 
 pkg_postinst_ontarget_${PN}_append_lorix_one () {
@@ -240,7 +200,10 @@ pkg_postinst_ontarget_${PN}_append_lorix_one () {
         # replace "-" with "_"
         LORA_FREQUENCY=${LORA_FREQUENCY//-/_}
 
-        MODEL="wifx_lorix_one_${LORA_FREQUENCY}"
+        # retrieve LoRa frontend revision from machine-info
+        LORA_FRONTEND_REV=$(machine-info -e lora -n -f "LORA_IFACE_0_FRONTEND_REV")
+
+        MODEL="wifx_lorix_one_${LORA_FREQUENCY}_${LORA_FRONTEND_REV}"
 
         sed -i 's/model=""/model="'${MODEL}'"/g' $GW_CONFIG_FILE_PATH
 
@@ -261,7 +224,10 @@ pkg_postinst_ontarget_${PN}_append_l1 () {
         # replace "-" with "_"
         LORA_FREQUENCY=${LORA_FREQUENCY//-/_}
 
-        MODEL="wifx_l1_${LORA_FREQUENCY}"
+        # retrieve LoRa frontend revision from machine-info
+        LORA_FRONTEND_REV=$(machine-info -e lora -n -f "LORA_IFACE_0_FRONTEND_REV")
+
+        MODEL="wifx_l1_${LORA_FREQUENCY}_${LORA_FRONTEND_REV}"
         
         sed -i 's/model=""/model="'${MODEL}'"/g' $GW_CONFIG_FILE_PATH
 
