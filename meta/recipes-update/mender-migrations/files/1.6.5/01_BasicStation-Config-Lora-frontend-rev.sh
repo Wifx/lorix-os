@@ -1,9 +1,9 @@
-#!/bin/sh -e
+#!/bin/sh
 
 ### CONFIGURE THE MIGRATION ###
 
 # The prefix will be shown in the logs only. Keep it short. E.g. "NM-PROF-MV"
-PREFIX=BASIC-STATION-LORA-REGION
+PREFIX=BS-CFG-LORA-FRONTEND-REV 
 
 # The following versions description uses semver: https://semver.org/
 # Condition syntax is defined by semver_rs "Range" object: https://docs.rs/semver_rs/0.1.3/semver_rs/struct.Range.html.
@@ -15,9 +15,9 @@ PREFIX=BASIC-STATION-LORA-REGION
 # VERSION_MIN="0.6.0" 
 
 # Defines what is the highest version (excluded) of the source system for the migration to be applied (semver).
-# This is generally set to the current version. If the user has this version (or higher), the migration is done and not usefull anymore.
+# This is generally set to the current version. If the user has this version (or higher), the migration is already done and not useful anymore.
 # Must not be empty. Can be left undefined.
-VERSION_MAX="1.7.0" 
+VERSION_MAX="1.6.5" 
 
 # Condition that will be finally be checked to know if the migration will be applied.
 # Is automatically generated with VERSION_MIN and VERSION_MAX if not defined. If defined VERSION_MIN/MAX are ignored
@@ -40,12 +40,11 @@ source /data/mender/migration-utils
 # WARNING - Path to files MUST not contain /etc (would refer to the currently mounted config)
 cd $D_ETC
 
-BASICSTATION_PATH="opt/lora-basic-station"
-BASICSTATION_CONFIG_PATH="$BASICSTATION_PATH/station.conf" # Refers to /etc/opt/lora-basic-station/station.conf
+CONFIG_SYMLINK_PATH="opt/lora-basic-station/station.conf"
 
-# It is generally a good thing to check wheter the migration should be applied or not depending on the FS state
-if [[ ! -f "$BASICSTATION_CONFIG_PATH" ]]; then
-    log $PREFIX "No configuration file found at $BASICSTATION_CONFIG_PATH, skipping migration"
+# Only apply if symlink exists
+if [[ ! -L "$CONFIG_SYMLINK_PATH" ]]; then
+    log $PREFIX "No config link to migrate"
     exit 0
 fi
 
@@ -55,16 +54,27 @@ log $PREFIX "Migrating..."
 # - Pre-migration : copy files from $S_ETC to $D_ETC, edit them but not rename them
 # - Post-migration : add, edit or remove files in $D_ETC
 
+LORA_FRONTEND_REV="A"
 
-# Read the symlink target (e.g. /etc/opt/lora-basic-station/config/863-870/A/station_4dBi.conf)
-SYMLINK_TARGET=$(readlink $BASICSTATION_CONFIG_PATH)
+# Update the symlink to the new config file
+log "Migrating BasicStation config file for LoRa frontend revision"
 
-# Replace "863-870" by "8XX" and "902-928" by "9XX" in the symlink target
-SYMLINK_TARGET=$(echo $SYMLINK_TARGET | sed -e 's/863-870/8XX/g' -e 's/902-928/9XX/g')
+# Read existing symlink target
+OLD_CONFIG=$(readlink "$CONFIG_SYMLINK_PATH")
 
-# Replace the symlink target
-ln -sf $SYMLINK_TARGET $BASICSTATION_CONFIG_PATH
+# Split filename from path
+OLD_CONFIG_FILENAME=$(basename "$OLD_CONFIG")
+OLD_CONFIG_PATH=$(dirname "$OLD_CONFIG")
 
-log $PREFIX "Migration done"
+# Remove the old symlink
+rm -f "$CONFIG_SYMLINK_PATH"
+
+# Create new config target path
+NEW_CONFIG_PATH="$OLD_CONFIG_PATH/$LORA_FRONTEND_REV/$OLD_CONFIG_FILENAME"
+
+# Create the new symlink
+ln -s $NEW_CONFIG_PATH "$CONFIG_SYMLINK_PATH"
+
+log $PREFIX "Config link updated with LoRa frontend revision to $NEW_CONFIG_PATH"
 
 exit 0

@@ -19,26 +19,34 @@ SRC_URI += " \
 
 SRC_URI:append:lorix-one = " \
     file://setup-lorix.gmk \
-    file://resources-lorix-one/8XX/station_2dBi.conf \
-    file://resources-lorix-one/8XX/station_3dBi.conf \
-    file://resources-lorix-one/8XX/station_4dBi.conf \
-    file://resources-lorix-one/8XX/station_5dBi.conf \
-    file://resources-lorix-one/9XX/station_2dBi.conf \
-    file://resources-lorix-one/9XX/station_3dBi.conf \
-    file://resources-lorix-one/9XX/station_4dBi.conf \
-    file://resources-lorix-one/9XX/station_5dBi.conf \
+    file://resources-lorix-one/8XX/A/station_2dBi.conf \
+    file://resources-lorix-one/8XX/A/station_3dBi.conf \
+    file://resources-lorix-one/8XX/A/station_4dBi.conf \
+    file://resources-lorix-one/8XX/A/station_5dBi.conf \
+    file://resources-lorix-one/9XX/A/station_2dBi.conf \
+    file://resources-lorix-one/9XX/A/station_3dBi.conf \
+    file://resources-lorix-one/9XX/A/station_4dBi.conf \
+    file://resources-lorix-one/9XX/A/station_5dBi.conf \
 "
 
 SRC_URI:append:l1 = " \
     file://setup-l1.gmk \
-    file://resources-l1/8XX/station_2dBi.conf \
-    file://resources-l1/8XX/station_3dBi.conf \
-    file://resources-l1/8XX/station_4dBi.conf \
-    file://resources-l1/8XX/station_5dBi.conf \
-    file://resources-l1/9XX/station_2dBi.conf \
-    file://resources-l1/9XX/station_3dBi.conf \
-    file://resources-l1/9XX/station_4dBi.conf \
-    file://resources-l1/9XX/station_5dBi.conf \
+    file://resources-l1/8XX/A/station_2dBi.conf \
+    file://resources-l1/8XX/A/station_3dBi.conf \
+    file://resources-l1/8XX/A/station_4dBi.conf \
+    file://resources-l1/8XX/A/station_5dBi.conf \
+    file://resources-l1/8XX/B/station_2dBi.conf \
+    file://resources-l1/8XX/B/station_3dBi.conf \
+    file://resources-l1/8XX/B/station_4dBi.conf \
+    file://resources-l1/8XX/B/station_5dBi.conf \
+    file://resources-l1/9XX/A/station_2dBi.conf \
+    file://resources-l1/9XX/A/station_3dBi.conf \
+    file://resources-l1/9XX/A/station_4dBi.conf \
+    file://resources-l1/9XX/A/station_5dBi.conf \
+    file://resources-l1/9XX/B/station_2dBi.conf \
+    file://resources-l1/9XX/B/station_3dBi.conf \
+    file://resources-l1/9XX/B/station_4dBi.conf \
+    file://resources-l1/9XX/B/station_5dBi.conf \
 "
 
 # Workaround for network access issue during compile step

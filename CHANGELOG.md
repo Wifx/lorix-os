@@ -24,6 +24,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-594] Reduce log size (syslog/logrotate)
 - [LOR-596] Update Manager to v0.18
  
+## [1.6.5] - Unreleased
+
+## Added
+
+- [LOR-620] Add basic station config file symlink migration for LoRa frontend revision
+- [LOR-616] Add concentratord model config migration for LoRa frontend revision
+
+### Changed
+
+- [LOR-615] Adapt concentratord integration (postinstall) for new model format containing LoRa frontend revision
+
+## [1.6.4] - 2024-08-28
+
+### Fixed
+
+- [LOR-592] Concentratord has 8XX model configured by default on 9XX gateways
+
 ## [1.6.3] - 2024-06-10
 
 ### Changed
