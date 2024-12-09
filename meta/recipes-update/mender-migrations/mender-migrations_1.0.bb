@@ -16,6 +16,7 @@ SRC_URI = " \
     file://1.6.0/01_concentratord-location.sh;subdir=${BPN}-${PV} \
     file://1.6.0/02_iptables-add-eth-usb.sh;subdir=${BPN}-${PV} \
     file://1.6.4/01_Concentratord-Model-9XX.sh;subdir=${BPN}-${PV} \
+    file://1.6.5/01_BasicStation-Config-Lora-frontend-rev.sh;subdir=${BPN}-${PV} \
 "
 
 LICENSE = "Proprietary"
@@ -69,4 +70,6 @@ do_compile() {
     cp 1.6.0/02_iptables-add-eth-usb.sh ${TARGET}_Migration_1.6.0_02_iptables-add-eth-usb
 
     cp 1.6.4/01_Concentratord-Model-9XX.sh ${TARGET}_Migration_1.6.4_01_Concentratord-Model-9XX
+
+    cp 1.6.5/01_BasicStation-Config-Lora-frontend-rev.sh ${TARGET}_Migration_1.6.5_01_BasicStation-Config-Lora-frontend-rev
 }

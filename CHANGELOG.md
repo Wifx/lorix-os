@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.6.5] - Unreleased
 
+## Added
+
+- [LOR-620] Add basic station config file symlink migration for LoRa frontend revision
+
 ### Changed
 
 - [LOR-615] Adapt concentratord integration (postinstall) for new model format containing LoRa frontend revision
