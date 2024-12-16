@@ -5,16 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.6.5] - Unreleased
+## [1.6.5] - 2024-12-16
 
 ## Added
 
-- [LOR-620] Add basic station config file symlink migration for LoRa frontend revision
+- [LOR-612] Provide new LoRa concentrator power config for Rev B RF frontend
 - [LOR-616] Add concentratord model config migration for LoRa frontend revision
+- [LOR-620] Add basic station config file symlink migration for LoRa frontend revision
 
 ### Changed
 
+- [LOR-613] machine-info v0.7.1 with LORA_IFACE_n_FRONTEND_REV support
+- [LOR-614] Update ChirpStack concentratord with frontend revision B (8XX and 9XX)
 - [LOR-615] Adapt concentratord integration (postinstall) for new model format containing LoRa frontend revision
+- [LOR-617] Update manager to v0.17.1
 
 ## [1.6.4] - 2024-08-28
 
