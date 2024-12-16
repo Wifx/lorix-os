@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.6.5] - 2024-12-16
 
-## Added
+### Added
 
 - [LOR-612] Provide new LoRa concentrator power config for Rev B RF frontend
 - [LOR-616] Add concentratord model config migration for LoRa frontend revision
