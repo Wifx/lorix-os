@@ -1,21 +1,21 @@
-From 5502b201ae09f6fd66ac7cc64f0fce4d237731e8 Mon Sep 17 00:00:00 2001
+From b89fb6cdd257e00cc17e0f12b06db9631cf67abc Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
 Date: Mon, 7 Feb 2022 14:44:35 +0100
-Subject: [PATCH 1/2] vendor: LORIX One support, version 8XX and 9XX
- hardware with dynamic antenna gain
+Subject: [PATCH 1/4] vendor: LORIX One support, version 8XX and 9XX hardware
+ with dynamic antenna gain
 
 Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
 ---
  .../src/config/mod.rs                         |  5 +-
- .../config/vendor/wifx/lorix_one_8XX.rs   | 89 +++++++++++++++++++
- .../config/vendor/wifx/lorix_one_9XX.rs   | 89 +++++++++++++++++++
+ .../src/config/vendor/wifx/lorix_one_8XX.rs   | 89 +++++++++++++++++++
+ .../src/config/vendor/wifx/lorix_one_9XX.rs   | 89 +++++++++++++++++++
  .../src/config/vendor/wifx/mod.rs             |  3 +-
  4 files changed, 184 insertions(+), 2 deletions(-)
  create mode 100644 chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_8XX.rs
  create mode 100644 chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_9XX.rs
 
 diff --git a/chirpstack-concentratord-sx1301/src/config/mod.rs b/chirpstack-concentratord-sx1301/src/config/mod.rs
-index 672a17e..eebf67d 100644
+index 672a17e..3997ba9 100644
 --- a/chirpstack-concentratord-sx1301/src/config/mod.rs
 +++ b/chirpstack-concentratord-sx1301/src/config/mod.rs
 @@ -202,7 +202,10 @@ pub fn get(filenames: Vec<String>) -> Configuration {
@@ -221,7 +221,7 @@ index 0000000..413f4eb
 +    entries.as_slice()[start_index..].to_vec()
 +}
 diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs
-index ab9f708..4fdecef 100644
+index ab9f708..b0ea39d 100644
 --- a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs
 +++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs
 @@ -1 +1,2 @@
@@ -229,5 +229,5 @@ index ab9f708..4fdecef 100644
 +pub mod lorix_one_8XX;
 +pub mod lorix_one_9XX;
 -- 
-2.25.1
+2.34.1
 

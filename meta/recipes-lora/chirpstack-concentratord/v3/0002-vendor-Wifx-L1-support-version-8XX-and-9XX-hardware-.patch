@@ -1,15 +1,15 @@
-From 36e6c681684546e3577f52a248b674fcf0eb46e2 Mon Sep 17 00:00:00 2001
+From 7b82b02c060738ff20533f1c8c6209c571b41e5c Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
 Date: Mon, 21 Mar 2022 09:46:14 +0100
-Subject: [PATCH 2/2] vendor: Wifx L1 support, version 8XX and 9XX
- hardware with dynamic antenna gain
+Subject: [PATCH 2/4] vendor: Wifx L1 support, version 8XX and 9XX hardware
+ with dynamic antenna gain
 
 Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
 ---
  .../src/config/mod.rs                         |   2 +
  .../src/config/vendor/mod.rs                  |   1 +
- .../src/config/vendor/wifx/l1_8XX.rs      | 103 ++++++++++++++++++
- .../src/config/vendor/wifx/l1_9XX.rs      | 103 ++++++++++++++++++
+ .../src/config/vendor/wifx/l1_8XX.rs          | 103 ++++++++++++++++++
+ .../src/config/vendor/wifx/l1_9XX.rs          | 103 ++++++++++++++++++
  .../src/config/vendor/wifx/mod.rs             |  38 +++++++
  5 files changed, 247 insertions(+)
  create mode 100644 chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX.rs
@@ -17,7 +17,7 @@ Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
  create mode 100644 chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs
 
 diff --git a/chirpstack-concentratord-sx1302/src/config/mod.rs b/chirpstack-concentratord-sx1302/src/config/mod.rs
-index ad54401..b2f41c7 100644
+index ad54401..298af9c 100644
 --- a/chirpstack-concentratord-sx1302/src/config/mod.rs
 +++ b/chirpstack-concentratord-sx1302/src/config/mod.rs
 @@ -172,6 +172,8 @@ pub fn get(filenames: Vec<String>) -> Configuration {
@@ -261,7 +261,7 @@ index 0000000..7526834
 +}
 diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs
 new file mode 100644
-index 0000000..b0eb8f6
+index 0000000..f96657f
 --- /dev/null
 +++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs
 @@ -0,0 +1,38 @@
@@ -304,5 +304,5 @@ index 0000000..b0eb8f6
 +    entries.as_slice()[start_index..].to_vec()
 +}
 -- 
-2.25.1
+2.34.1
 
