@@ -57,7 +57,7 @@ log $PREFIX "Migrating..."
 LORA_FRONTEND_REV="A"
 
 # Update the symlink to the new config file
-log "Migrating BasicStation config file for LoRa frontend revision"
+log $PREFIX "Migrating BasicStation config file for LoRa frontend revision"
 
 # Read existing symlink target
 OLD_CONFIG=$(readlink "$CONFIG_SYMLINK_PATH")
