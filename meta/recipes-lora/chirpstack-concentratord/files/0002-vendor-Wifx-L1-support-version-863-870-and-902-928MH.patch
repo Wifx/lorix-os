@@ -1,7 +1,7 @@
 From 36e6c681684546e3577f52a248b674fcf0eb46e2 Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
 Date: Mon, 21 Mar 2022 09:46:14 +0100
-Subject: [PATCH 2/3] vendor: Wifx L1 support, version 863-870 and 902-928MHz
+Subject: [PATCH 2/4] vendor: Wifx L1 support, version 863-870 and 902-928MHz
  hardware with dynamic antenna gain
 
 Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
