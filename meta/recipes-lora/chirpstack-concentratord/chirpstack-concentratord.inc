@@ -184,38 +184,38 @@ do_install:append:sx1302() {
 }
 
 pkg_postinst_ontarget:${PN} () {
-
     GW_CONFIG_FILE_PATH="${CONF_DIR}/10-gateway.toml"
-
-    ### GATEWAY ID ### 
-    PRODUCT_MODEL=$(machine-info -n -f "PRODUCT_MODEL")
-
-    if [ "$PRODUCT_MODEL" = "lorix-one" ]; then
-        
-        if [ -f "$GW_CONFIG_FILE_PATH" ]; then
-            # retrieve gateway ID from machine-info
-            GWID=$(machine-info -e lora -n -f "LORA_GATEWAY_ID")
-            
-            sed -i 's/gateway_id=""/gateway_id="'${GWID}'"/g' $GW_CONFIG_FILE_PATH
-
-            echo "Gateway ID set to "$GWID" in file "$GW_CONFIG_FILE_PATH
-        else
-            echo "Gateway config file does not exist ("$GW_CONFIG_FILE_PATH")"
-        fi
-    fi
 }
 
 pkg_postinst_ontarget:${PN}:append:lorix_one () {
     
+    ### GATEWAY ID ### 
+
+    if [ -f "$GW_CONFIG_FILE_PATH" ]; then
+        # retrieve gateway ID from machine-info
+        GWID=$(machine-info -e lora -n -f "LORA_GATEWAY_ID")
+        
+        sed -i 's/gateway_id=""/gateway_id="'${GWID}'"/g' $GW_CONFIG_FILE_PATH
+
+        echo "Gateway ID set to "$GWID" in file "$GW_CONFIG_FILE_PATH
+    else
+        echo "Gateway config file does not exist ("$GW_CONFIG_FILE_PATH")"
+    fi
+
     ### MODEL ###
 
     if [ -f "$GW_CONFIG_FILE_PATH" ]; then
         # retrieve LoRa Region from machine-info
         LORA_REGION=$(machine-info -n -f "PRODUCT_VARIANT_ATTR_LORA_REGION")
-        
-        sed -i 's/model=""/model="wifx_lorix_one_'${LORA_REGION}'"/g' $GW_CONFIG_FILE_PATH
 
-        echo "Model set to wifx_lorix_one_"$LORA_REGION" in file "$GW_CONFIG_FILE_PATH
+        # retrieve LoRa frontend revision from machine-info
+        LORA_FRONTEND_REV=$(machine-info -e lora -n -f "LORA_IFACE_0_FRONTEND_REV")
+
+        MODEL="wifx_lorix_one_${LORA_REGION}_${LORA_FRONTEND_REV}"
+
+        sed -i 's/model=""/model="'${MODEL}'"/g' $GW_CONFIG_FILE_PATH
+
+        echo "Model set to "$MODEL" in file "$GW_CONFIG_FILE_PATH
     else
         echo "Gateway config file does not exist ("$GW_CONFIG_FILE_PATH")"
     fi
@@ -229,9 +229,14 @@ pkg_postinst_ontarget:${PN}:append:l1 () {
         # retrieve LoRa Region from machine-info
         LORA_REGION=$(machine-info -n -f "PRODUCT_VARIANT_ATTR_LORA_REGION")
         
-        sed -i 's/model=""/model="wifx_l1_'${LORA_REGION}'"/g' $GW_CONFIG_FILE_PATH
+        # retrieve LoRa frontend revision from machine-info
+        LORA_FRONTEND_REV=$(machine-info -e lora -n -f "LORA_IFACE_0_FRONTEND_REV")
 
-        echo "Model set to wifx_l1_"$LORA_REGION" in file "$GW_CONFIG_FILE_PATH
+        MODEL="wifx_l1_${LORA_REGION}_${LORA_FRONTEND_REV}"
+        
+        sed -i 's/model=""/model="'${MODEL}'"/g' $GW_CONFIG_FILE_PATH
+
+        echo "Model set to "$MODEL" in file "$GW_CONFIG_FILE_PATH
     else
         echo "Gateway config file does not exist ("$GW_CONFIG_FILE_PATH")"
     fi
