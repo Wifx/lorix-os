@@ -54,14 +54,14 @@ log $PREFIX "Migrating..."
 # - Pre-migration : copy files from $S_ETC to $D_ETC, edit them but not rename them
 # - Post-migration : add, edit or remove files in $D_ETC
 
-log "Migrating Concentratord config file for LoRa frontend revision"
+log $PREFIX "Migrating Concentratord config file for LoRa frontend revision"
 
 LORA_FRONTEND_REV="A"
 
 # Add the LoRa frontend revision to the model in the Concentratord config
 sed -i -E "s/model=\"(.*)\"/model=\"\1_$LORA_FRONTEND_REV\"/" $GW_CONFIG_FILE_PATH
 
-log "Model updated with LoRa frontend revision in file "$GW_CONFIG_FILE_PATH
+log $PREFIX "Model updated with LoRa frontend revision in file "$GW_CONFIG_FILE_PATH
 
 log $PREFIX "Migration done"
 
