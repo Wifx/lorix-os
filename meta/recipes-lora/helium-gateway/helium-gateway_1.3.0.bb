@@ -1,6 +1,6 @@
 require helium-gateway.inc
 
 SRC_URI += "git://github.com/helium/gateway-rs.git;protocol=https;branch=main"
-SRCREV = "3b894d6d2ddb467de1259f2729a754bb79bae4c0"
+SRCREV = "3bdab3e955468c616fbb70b70a37577c4c77cd17"
 
-PR = "r0"
+PR = "r1"
