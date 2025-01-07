@@ -21,20 +21,13 @@ OPT_DIR = "${optdir}/helium-gateway"
 S = "${WORKDIR}/git"
 
 do_install() {
-
-    if [ "${CARGO_BUILD_TYPE}" = "--release" ]; then
-        local cargo_bindir="${CARGO_RELEASE_DIR}"
-    else
-        local cargo_bindir="${CARGO_DEBUG_DIR}"
-    fi
-
     # Config
     install -m 0755 -d ${D}${CONF_DIR}
     install_config settings.toml
 
     # Bin directory
     install -m 0755 -d ${D}${OPT_DIR}
-    install -m 0755 ${cargo_bindir}/helium_gateway ${D}${OPT_DIR}/helium-gateway
+    install -m 0755 ${CARGO_BINDIR}/helium_gateway ${D}${OPT_DIR}/helium-gateway
 }
 
 install_config() {

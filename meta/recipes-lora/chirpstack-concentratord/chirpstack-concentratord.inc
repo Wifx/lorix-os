@@ -54,13 +54,6 @@ CONF_DIR = "${sysconfoptdir}/chirpstack-concentratord"
 S = "${WORKDIR}/git"
 
 do_install() {
-
-    if [ "${CARGO_BUILD_TYPE}" = "--release" ]; then
-        local cargo_bindir="${CARGO_RELEASE_DIR}"
-    else
-        local cargo_bindir="${CARGO_DEBUG_DIR}"
-    fi
-
     install_configs
 
     install_channels
@@ -174,11 +167,11 @@ set_default() {
 
 
 do_install:append:sx1301() {
-    install -m 0755 ${cargo_bindir}/chirpstack-concentratord-sx1301 ${D}${optdir}/chirpstack-concentratord/chirpstack-concentratord
+    install -m 0755 ${CARGO_BINDIR}/chirpstack-concentratord-sx1301 ${D}${optdir}/chirpstack-concentratord/chirpstack-concentratord
 }
 
 do_install:append:sx1302() {
-    install -m 0755 ${cargo_bindir}/chirpstack-concentratord-sx1302 ${D}${optdir}/chirpstack-concentratord/chirpstack-concentratord
+    install -m 0755 ${CARGO_BINDIR}/chirpstack-concentratord-sx1302 ${D}${optdir}/chirpstack-concentratord/chirpstack-concentratord
 }
 
 pkg_postinst_ontarget:${PN} () {
