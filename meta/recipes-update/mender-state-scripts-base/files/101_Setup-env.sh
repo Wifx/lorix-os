@@ -15,7 +15,10 @@ LAYERS_DIR_LEGACY=/data/layers
 NOW=$(date +"%Y-%m-%dT%H:%m:%SZ")
 UPGRADE_LOG_PATH=$UPGRADE_LOG_DIR/$OS_DISTRO_VERSION-$NOW.log
 
+# Create and cleanup upgrade directory
+rm -rf $MENDER_UPGRADE_DIR
 mkdir -p $MENDER_UPGRADE_DIR
+mkdir -p $UPGRADE_LOG_PERSISTENT_DIR
 
 echo '#!/bin/sh
 

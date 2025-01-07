@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-427] Add wpa-supplicant for 802.1x support
 - [LOR-577] Add Wifx L1 4G support in kernel
 - [LOR-577] Add ModemManager
+- [LOR-621] Update : post-reboot scripts execution system (mender-standalone-scripts)
 
 ### Changed
 
@@ -23,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-590] Adapt OS to new product variant specification (LoRa Region )
 - [LOR-594] Reduce log size (syslog/logrotate)
 - [LOR-596] Update Manager to v0.18
+- [LOR-601] Run opkg configure at boot time after an update
  
 ## [1.6.5] - Unreleased
 
