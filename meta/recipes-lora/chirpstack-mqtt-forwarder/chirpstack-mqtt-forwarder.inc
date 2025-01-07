@@ -37,13 +37,6 @@ CONF_DIR = "${sysconfoptdir}/chirpstack-mqtt-forwarder"
 S = "${WORKDIR}/git"
 
 do_install() {
-
-    if [ "${CARGO_BUILD_TYPE}" = "--release" ]; then
-        local cargo_bindir="${CARGO_RELEASE_DIR}"
-    else
-        local cargo_bindir="${CARGO_DEBUG_DIR}"
-    fi
-
     # Configuration
     install -m 0755 -d ${D}${CONF_DIR}
     install_config 10-general.toml
@@ -54,7 +47,7 @@ do_install() {
     
     # Bin directory
     install -m 0755 -d ${D}${optdir}/chirpstack-mqtt-forwarder
-    install -m 0755 ${cargo_bindir}/chirpstack-mqtt-forwarder ${D}${optdir}/chirpstack-mqtt-forwarder/chirpstack-mqtt-forwarder
+    install -m 0755 ${CARGO_BINDIR}/chirpstack-mqtt-forwarder ${D}${optdir}/chirpstack-mqtt-forwarder/chirpstack-mqtt-forwarder
 }
 
 install_config() {

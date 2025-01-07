@@ -26,13 +26,6 @@ CONF_DIR = "${sysconfoptdir}/chirpstack-udp-bridge"
 S = "${WORKDIR}/git"
 
 do_install() {
-
-    if [ "${CARGO_BUILD_TYPE}" = "--release" ]; then
-        local cargo_bindir="${CARGO_RELEASE_DIR}"
-    else
-        local cargo_bindir="${CARGO_DEBUG_DIR}"
-    fi
-
     # Configuration
     install -m 0755 -d ${D}${CONF_DIR}
     install_config 00-concentratord.toml
@@ -41,7 +34,7 @@ do_install() {
     
     # Bin directory
     install -m 0755 -d ${D}${optdir}/chirpstack-udp-bridge
-    install -m 0755 ${cargo_bindir}/chirpstack-udp-bridge ${D}${optdir}/chirpstack-udp-bridge/chirpstack-udp-bridge
+    install -m 0755 ${CARGO_BINDIR}/chirpstack-udp-bridge ${D}${optdir}/chirpstack-udp-bridge/chirpstack-udp-bridge
 }
 
 install_config() {
