@@ -7,6 +7,7 @@ SRC_URI:append = " \
     file://0002-force-ubiupdatevol-use.patch \
 "
 
+DEFAULT_PREFERENCE = "0"
 
 pkg_postinst_ontarget:${PN}() {
 
