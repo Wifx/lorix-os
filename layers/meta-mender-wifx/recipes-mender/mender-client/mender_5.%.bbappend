@@ -9,6 +9,8 @@ SRC_URI:append = " \
 
 DEFAULT_PREFERENCE = "0"
 
+RDEPENDS:mender-update:append = " boost-log"
+
 pkg_postinst_ontarget:${PN}() {
 
     UBIDATA_MOUNT_PATH="/mnt/ubidata"
