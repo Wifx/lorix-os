@@ -3,7 +3,7 @@ DESCRIPTION = "Provides the LORIX Manager daemon and REST API"
 AUTHOR = "Wifx Sàrl"
 
 LICENSE = "Proprietary"
-LIC_FILES_CHKSUM = "file://src/${GO_IMPORT}/LICENSE;md5=ffdb0a8bda31b45fc5b72d3774d715e2"
+LIC_FILES_CHKSUM = "file://src/${GO_IMPORT}/LICENSE;md5=87c23dc0a84b7a881d4f06967744168f"
 
 RDEPENDS:${PN} += " \
     openssl-bin \
