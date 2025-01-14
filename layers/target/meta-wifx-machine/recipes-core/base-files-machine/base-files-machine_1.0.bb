@@ -57,7 +57,7 @@ pkg_postinst_ontarget:lorix_one () {
 
 pkg_postinst_ontarget:l1 () {
     # get lower case serial
-    SERIAL_LABEL=$(machine-info --field "PRODUCT_SERIAL" --noheader)
+    SERIAL_LABEL=$(machine-info read "PRODUCT_SERIAL")
 
     SERIAL=$(echo "${SERIAL_LABEL//-/}" | awk '{print tolower($0)}')
     

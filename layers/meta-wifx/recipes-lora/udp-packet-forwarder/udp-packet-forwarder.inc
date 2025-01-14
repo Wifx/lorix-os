@@ -137,7 +137,7 @@ pkg_postinst_ontarget:${PN} () {
     # Update gateway ID in general config files
 
     # retrieve gateway ID from machine-info
-    GWID=$(machine-info -e lora -n -f "LORA_GATEWAY_ID")
+    GWID=$(machine-info read "LORA_GATEWAY_ID")
 
     cd ${sysconfoptdir}/udp-packet-forwarder/gateway
     for file in $(find . -type f -name '*.json' -o -name '*.json.sample'); do

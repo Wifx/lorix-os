@@ -1,9 +1,9 @@
 #!/bin/sh
 
-product=$(machine-info --field "PRODUCT_LABEL_LONG" --noheader)
-model=$(machine-info --field "PRODUCT_MODEL" --noheader)
-lora_region=$(machine-info --field "PRODUCT_VARIANT_ATTR_LORA_REGION" --noheader)
-serial=$(machine-info --field "PRODUCT_SERIAL" --noheader)
+product=$(machine-info read "PRODUCT_LABEL_LONG")
+model=$(machine-info read "PRODUCT_MODEL")
+lora_region=$(machine-info read "PRODUCT_VARIANT_ATTR_LORA_REGION")
+serial=$(machine-info read "PRODUCT_SERIAL")
 
 echo " Product information"
 printf "  Product:\t%s\n" "$product"
@@ -11,7 +11,7 @@ printf "  LoRa Region:\t%s\n" "$lora_region"
 
 # If model is l1-4g, print the LTE region
 if [ "$model" = "l1-4g" ]; then
-    lte_region=$(machine-info --field "PRODUCT_VARIANT_ATTR_LTE_REGION" --noheader)
+    lte_region=$(machine-info read "PRODUCT_VARIANT_ATTR_LTE_REGION")
     printf "  LTE Region:\t%s\n" "$lte_region"
 fi
 

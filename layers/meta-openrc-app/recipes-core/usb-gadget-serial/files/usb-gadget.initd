@@ -17,7 +17,7 @@ start_pre() {
         return 1
     fi
 
-    serial=$(machine-info -n -f PRODUCT_SERIAL)
+    serial=$(machine-info read PRODUCT_SERIAL)
 
     modprobe libcomposite
 }

@@ -128,7 +128,7 @@ pkg_postinst_ontarget:${PN} () {
 
     if [ ! -f "$file" ]; then
         # retrieve gateway ID from machine-info
-        GWID=$(machine-info -e lora -n -f "LORA_GATEWAY_ID")
+        GWID=$(machine-info read "LORA_GATEWAY_ID")
         echo "$GWID" > "$file"
         echo "Gateway ID set to "$GWID" in file "$file
     else

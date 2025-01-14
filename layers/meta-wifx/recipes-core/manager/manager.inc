@@ -91,7 +91,7 @@ EOM
     # Generating certificates
     if [ ! -f "${sysconfdir}/manager/keys/default.key" ] || [ ! -f "${sysconfdir}/manager/certs/default.crt" ]; then
         echo "Generating certificate..."
-        PRODUCT_LABEL=$(machine-info -n -f "PRODUCT_LABEL")
+        PRODUCT_LABEL=$(machine-info read "PRODUCT_LABEL")
         openssl req -new -newkey rsa:2048 -days 30 -nodes -x509 -subj "/CN=${PRODUCT_LABEL}" -keyout "${sysconfdir}/manager/keys/default.key" -out "${sysconfdir}/manager/certs/default.crt"
         chmod 600 ${sysconfdir}/manager/keys/default.key
         echo "done"

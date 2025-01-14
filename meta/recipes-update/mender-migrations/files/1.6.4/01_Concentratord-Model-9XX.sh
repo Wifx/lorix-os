@@ -56,7 +56,7 @@ log $PREFIX "Migrating..."
 # - Post-migration : add, edit or remove files in $D_ETC
 
 # retrieve LoRa frequency from machine-info
-LORA_FREQUENCY=$(machine-info -n -f "PRODUCT_FREQUENCY")
+LORA_FREQUENCY=$(machine-info read "PRODUCT_FREQUENCY")
 
 # If LoRa frequency is not 902-928, skip migration
 if [[ "$LORA_FREQUENCY" != "902-928" ]]; then
@@ -64,7 +64,7 @@ if [[ "$LORA_FREQUENCY" != "902-928" ]]; then
     exit 0
 fi
 
-PRODUCT_MODEL=$(machine-info -n -f "PRODUCT_MODEL")
+PRODUCT_MODEL=$(machine-info read "PRODUCT_MODEL")
 
 # replace "-" with "_"
 LORA_FREQUENCY=${LORA_FREQUENCY//-/_}

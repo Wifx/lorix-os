@@ -184,7 +184,7 @@ pkg_postinst_ontarget:${PN}:append:lorix_one () {
 
     if [ -f "$GW_CONFIG_FILE_PATH" ]; then
         # retrieve gateway ID from machine-info
-        GWID=$(machine-info -e lora -n -f "LORA_GATEWAY_ID")
+        GWID=$(machine-info read "LORA_GATEWAY_ID")
         
         sed -i 's/gateway_id=""/gateway_id="'${GWID}'"/g' $GW_CONFIG_FILE_PATH
 
@@ -197,10 +197,10 @@ pkg_postinst_ontarget:${PN}:append:lorix_one () {
 
     if [ -f "$GW_CONFIG_FILE_PATH" ]; then
         # retrieve LoRa Region from machine-info
-        LORA_REGION=$(machine-info -n -f "PRODUCT_VARIANT_ATTR_LORA_REGION")
+        LORA_REGION=$(machine-info read "PRODUCT_VARIANT_ATTR_LORA_REGION")
 
         # retrieve LoRa frontend revision from machine-info
-        LORA_FRONTEND_REV=$(machine-info -e lora -n -f "LORA_IFACE_0_FRONTEND_REV")
+        LORA_FRONTEND_REV=$(machine-info read "LORA_IFACE_0_FRONTEND_REV")
 
         MODEL="wifx_lorix_one_${LORA_REGION}_${LORA_FRONTEND_REV}"
 
@@ -218,10 +218,10 @@ pkg_postinst_ontarget:${PN}:append:l1 () {
 
     if [ -f "$GW_CONFIG_FILE_PATH" ]; then
         # retrieve LoRa Region from machine-info
-        LORA_REGION=$(machine-info -n -f "PRODUCT_VARIANT_ATTR_LORA_REGION")
+        LORA_REGION=$(machine-info read "PRODUCT_VARIANT_ATTR_LORA_REGION")
         
         # retrieve LoRa frontend revision from machine-info
-        LORA_FRONTEND_REV=$(machine-info -e lora -n -f "LORA_IFACE_0_FRONTEND_REV")
+        LORA_FRONTEND_REV=$(machine-info read "LORA_IFACE_0_FRONTEND_REV")
 
         MODEL="wifx_l1_${LORA_REGION}_${LORA_FRONTEND_REV}"
         

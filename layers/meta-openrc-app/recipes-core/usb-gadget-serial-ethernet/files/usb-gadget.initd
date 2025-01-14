@@ -16,7 +16,7 @@ start_pre() {
         return 1
     fi
 
-    serial=$(machine-info -n -f PRODUCT_SERIAL)
+    serial=$(machine-info read PRODUCT_SERIAL)
     # Construct the hostname based on last 3 Bytes of eth0 MAC address
     mac=$(cat /sys/class/net/eth0/address)
     addr_dev=$(echo $mac | awk -F':' '{$1="02"; printf "%s:%s:%s:%s:%s:%s",$1,$2,$3,$4,$5,$6}')
