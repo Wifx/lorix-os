@@ -169,7 +169,7 @@ preinit_manage_reset() {
     fi
 
     # Detect boot_state from MCU
-    BOOT_STATE=$(eval "$MACHINE_INFO -n -f BOOT_STATE" 2> /dev/null)
+    BOOT_STATE=$(eval "$MACHINE_INFO read --noheader BOOT_STATE" 2> /dev/null)
     if [ $? -ne 0 ]; then
         echo "Error trying to read boot state:"
         echo $BOOT_STATE
