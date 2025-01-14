@@ -169,7 +169,7 @@ preinit_manage_reset() {
     fi
 
     # Detect boot_state from MCU
-    BOOT_STATE=$(eval "$MACHINE_INFO read --noheader BOOT_STATE" 2> /dev/null)
+    BOOT_STATE=$(eval "$MACHINE_INFO read BOOT_STATE" 2> /dev/null)
     if [ $? -ne 0 ]; then
         echo "Error trying to read boot state:"
         echo $BOOT_STATE
@@ -225,7 +225,7 @@ preinit_manage_reset() {
     if [ $RESET_USER -eq 1 ]; then
         echo "Clearing factory reset state (mcu)"
 
-        RET=$(eval "$MACHINE_INFO --reset" 2> /dev/null)
+        RET=$(eval "$MACHINE_INFO clear BOOT_STATE" 2> /dev/null)
         if [ $? -ne 0 ]; then
             echo "Failed to clear factory reset state:"
             echo $RET
