@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-596] Update Manager to v0.18
 - [LOR-601] Run opkg configure at boot time after an update
 - [LOR-623] Update machine-info to 1.3.0 (support for FRONTEND_REV param)
+- [LOR-626] Update concentratord to support LoRa frontend revision
 - [LOR-628] Update rust to 1.83.0
 - [LOR-630] Update Chirpstack MQTT forwarder to 4.3.1
 - [LOR-631] Update helium gateway to 1.3.0 r1 (same version, latest commit)
