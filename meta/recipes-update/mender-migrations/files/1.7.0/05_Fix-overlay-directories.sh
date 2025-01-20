@@ -24,7 +24,7 @@ PREFIX=FIX-OVERLAY-DIRS
 # Defines what is the highest version (excluded) of the source system for the migration to be applied (semver).
 # This is generally set to the current version. If the user has this version (or higher), the migration is already done and not useful anymore.
 # Must not be empty. Can be left undefined.
-VERSION_MAX="1.6.0" 
+VERSION_MAX="1.7.0" 
 
 # Condition that will be finally be checked to know if the migration will be applied.
 # Is automatically generated with VERSION_MIN and VERSION_MAX if not defined. If defined VERSION_MIN/MAX are ignored
