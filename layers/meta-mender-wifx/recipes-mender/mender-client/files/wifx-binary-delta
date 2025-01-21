@@ -38,7 +38,7 @@ resolve_rootfs() {
 parse_conf_file() {
     MENDER_ROOTFS_PART_A=""
     MENDER_ROOTFS_PART_B=""
-    MENDER_ROOT_MOUNT_PATH="/var/lib/os/layers/factory"
+    MENDER_ROOT_MOUNT_PATH="/var/lib/os/layers/active/factory"
     # Try first the fallback config file, which has least precedence
     for CONF_FILE in \
             ${MENDER_DATASTORE_DIR:-/var/lib/mender}/mender.conf \
