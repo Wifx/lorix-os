@@ -134,7 +134,7 @@ IMAGE_CMD:mender () {
             "${WORKDIR}/bootstrap-artifact/ArtifactInstall_Enter_30_bootstrap.mender.run" \
             "Bootstrap Artifact" \
             echo "Mender bootstrap artifact decompressed"
-        cp "${WORKDIR}/bootstrap-artifact/ArtifactInstall_Enter_30_bootstrap.mender.run" "${IMGDEPLOYDIR}/bootstrap.mender.run"
+        #cp "${WORKDIR}/bootstrap-artifact/ArtifactInstall_Enter_30_bootstrap.mender.run" "${IMGDEPLOYDIR}/bootstrap.mender.run"
         extra_args="$extra_args -s ${WORKDIR}/bootstrap-artifact/ArtifactInstall_Enter_30_bootstrap.mender.run"
     fi
 
