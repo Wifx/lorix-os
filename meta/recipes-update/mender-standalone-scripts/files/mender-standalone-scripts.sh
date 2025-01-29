@@ -18,9 +18,18 @@ fi
 
 # If no upgrade is pending, exit
 if [ "$UPGRADE_AVAILABLE" != "1" ]; then
-    log "No update in progress"
+    log "Not starting an updated system (not pending)"
+    log "Checking update status"
+    if [ -f /data/mender/upgrade/migration-env.sh ]; then
+        log "Update in progress, executing rollback..."
+        mender-update rollback
+    else
+        log "No update in progress"
+    fi
     exit 0
 fi
+
+log "An update is pending"
 
 # Read prefix from args and check
 if [ -z "$1" ]; then
