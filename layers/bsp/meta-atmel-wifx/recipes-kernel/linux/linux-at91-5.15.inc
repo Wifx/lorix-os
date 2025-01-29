@@ -23,11 +23,6 @@ SRC_URI += " \
     file://kernel-features/wireguard/wireguard.scc;type=kmeta;destsuffix=kernel-meta \
     file://kernel-features/wireguard/wireguard.cfg \
     ${@bb.utils.contains('MACHINE_FEATURES', 'wwan', 'file://cdc-ether.cfg', '', d)} \
-    file://0001-cleanup-remove-serial-write-access-and-some-code-cle.patch \
-    file://0002-lte-add-Fibocom-L610-MC610-support-in-option-driver.patch \
-    file://0003-wifx-l1-4g-add-product-detection-support.patch \
-    file://0004-wifx-l1-l1-4g-support-for-product-information-in-mcu.patch \
-    file://0005-wifx-l1-l1-4g-product-detection-resilience-small-ref.patch \
 "
 
 SRC_URI:append:l1 = " \
