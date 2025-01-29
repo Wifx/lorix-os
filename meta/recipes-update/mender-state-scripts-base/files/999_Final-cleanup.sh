@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [[ ! -f /data/mender/upgrade/migration-env.sh ]]; then
-    log $PREFIX "migration-env.sh does not exist, probably performing rollback"
+    echo $PREFIX "migration-env.sh does not exist, skipping"
     exit 0
 fi
 
