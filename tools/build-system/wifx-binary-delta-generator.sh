@@ -73,6 +73,9 @@ command -v xdelta3 >/dev/null 2>&1 || { echo "xdelta3 is required but not instal
 SOURCE_DIR_NAME=$(basename $SOURCE_ARTIFACT_PATH .mender)
 TARGET_DIR_NAME=$(basename $TARGET_ARTIFACT_PATH .mender)
 
+SOURCE_FILE_NAME=$(basename -a --suffix=".mender" $SOURCE_ARTIFACT_PATH )
+TARGET_FILE_NAME=$(basename -a --suffix=".mender" $TARGET_ARTIFACT_PATH )
+
 TARGET_BASE_PATH=$(dirname $TARGET_ARTIFACT_PATH)
 
 SOURCE_DIR_PATH="$TMP_DIR/$SOURCE_DIR_NAME"
@@ -151,14 +154,14 @@ target_image_size=$(stat -c %s $TARGET_DIR_PATH/data/0000/*.ubifs)
 echo '{ "target_image_size": "'$target_image_size'" }' > "$TMP_DIR/meta-data.json"
 
 
-delta_artifact_name="delta_${source_artifact_name}_${target_artifact_name}"
+delta_artifact_name="${TARGET_FILE_NAME}.delta-${SOURCE_FILE_NAME}.mender"
 
 key_args=""
 if [ -n "$SIGN_KEY_PATH" ]; then
     key_args="--key $SIGN_KEY_PATH"
 fi
 
-output_path="$TARGET_BASE_PATH/$delta_artifact_name.mender"
+output_path="$TARGET_BASE_PATH/$delta_artifact_name"
 
 # Add --device-type argument for each device type
 mender-artifact write module-image \
@@ -185,4 +188,16 @@ if [ -n "$EXTRACT_RESULT" ]; then
     extract_artifact $output_path $extract_path
 fi
 
-echo "Done"
+# Create metadata file containing filename / size / sha256 / depends in yaml format
+meta_file="$output_path.meta"
+{
+    echo "type: delta-artifact"
+    echo "depends:"
+    echo "  rootfs-image.version: $source_artifact_name"
+    echo "  rootfs-image.checksum: $source_artifact_checksum"
+    echo "url: $delta_artifact_name"
+    echo "sha256: $(sha256sum $output_path | cut -d ' ' -f 1)"
+    echo "size: $(stat -c %s $output_path)"
+} > "$meta_file"
+
+echo "Delta artifact generated at $output_path"

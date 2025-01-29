@@ -17,7 +17,7 @@ SRC_URI = " \
     file://391_Update-ca-certificates.sh;subdir=${BPN}-${PV} \
     file://392_Opkg-configure.sh;subdir=${BPN}-${PV} \
     file://490_Migrate-cleanup.sh;subdir=${BPN}-${PV} \
-    file://810_Config-migration-enable.sh;subdir=${BPN}-${PV} \
+    file://810_Config-migration-restore.sh;subdir=${BPN}-${PV} \
     file://998_Setup-migration-cleanup.sh;subdir=${BPN}-${PV} \
     file://999_Final-cleanup.sh;subdir=${BPN}-${PV} \
 "
@@ -98,14 +98,14 @@ do_compile() {
     include_script 490_Migrate-cleanup.sh                   ArtifactCommit_Leave_90_Migrate-cleanup
 
     # Artifact rollback enter
-    include_script 810_Config-migration-enable.sh           ArtifactRollback_Enter_10_Config-migration-enable
+    include_script 810_Config-migration-restore.sh          ArtifactRollback_Enter_10_Config-migration-enable
 
     # Artifact rollback leave
 
     # Artifact failure enter
-    include_script 810_Config-migration-enable.sh           ArtifactFailure_Enter_10_Config-migration-enable
+    include_script 810_Config-migration-restore.sh          ArtifactFailure_Enter_10_Config-migration-enable
 
     # Artifact failure leave
     include_script 998_Setup-migration-cleanup.sh           ArtifactFailure_Leave_00_Setup-migration-cleanup
-    #include_script 999_Final-cleanup.sh                    ArtifactFailure_Leave_01_Final-cleanup
+    include_script 999_Final-cleanup.sh                    ArtifactFailure_Leave_01_Final-cleanup
 }

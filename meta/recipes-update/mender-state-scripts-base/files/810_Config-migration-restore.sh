@@ -3,13 +3,13 @@
 PREFIX=CFG_MIG_ON
 
 if [[ ! -f /data/mender/upgrade/migration-env.sh ]]; then
-    log $PREFIX "migration-env.sh does not exist, probably performing rollback"
+    echo $PREFIX "migration-env.sh does not exist, skipping"
     exit 0
 fi
 
 source /data/mender/upgrade/migration-env.sh
 
-# Disable migration only for the 0.4.0 version
+# Restore migration only for the 0.4.0 version
 if [[ "$ORIGIN_VERSION" == "0.4.0-rc.1" || "$ORIGIN_VERSION" == "0.4.0-rc.2" ]]; then
 
     LAYER_USER_CONFIG_INACTIVE_BK=${LAYER_USER_CONFIG_INACTIVE}-bk
