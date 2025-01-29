@@ -25,7 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-594] Reduce log size (syslog/logrotate)
 - [LOR-596] Update Manager to v0.18
 - [LOR-601] Run opkg configure at boot time after an update
-- [LOR-623] Update machine-info to 1.3.0 (support for FRONTEND_REV param)
+- [LOR-608] Update machine-info to 1.4.0 (overall cleanup and optimization)
+- [LOR-623] Add support for FRONTEND_REV in machine-info
 - [LOR-626] Update concentratord to support LoRa frontend revision
 - [LOR-628] Update rust to 1.83.0
 - [LOR-630] Update Chirpstack MQTT forwarder to 4.3.1
