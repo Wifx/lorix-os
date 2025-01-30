@@ -3,7 +3,7 @@
 PREFIX=INSTALL-BOOTSTRAP-ARTIFACT
 error=false
 
-UBIDATA_MOUNT_PATH=/var/lib/migration/ubidata
+UBIDATA_MOUNT_PATH=/mnt/ubidata
 
 source /data/mender/upgrade/migration-env.sh
 
@@ -15,21 +15,21 @@ mkdir -p $UBIDATA_MOUNT_PATH
 mount -t ubifs ubi0:data $UBIDATA_MOUNT_PATH
 
 # Copy bootstrap artifact
-BOOTSTRAP_ARTIFACT_PATH=$UBIDATA_MOUNT_PATH/boostrap-artifact/$PARTITION_INACTIVE
+MENDER_BOOTSTRAP_DIR=$UBIDATA_MOUNT_PATH/mender-bootstrap/$PARTITION_INACTIVE
 
-mkdir -p $BOOTSTRAP_ARTIFACT_PATH
-rm -f $BOOTSTRAP_ARTIFACT_PATH/*
+mkdir -p $MENDER_BOOTSTRAP_DIR
+rm -f $MENDER_BOOTSTRAP_DIR/*
 
-cp /tmp/mender/bootstrap-artifact/bootstrap.mender $BOOTSTRAP_ARTIFACT_PATH
+cp /tmp/mender/bootstrap-artifact/bootstrap.mender $MENDER_BOOTSTRAP_DIR
 if [ $? -ne 0 ]; then
-    log $PREFIX "Failed to copy bootstrap artifact to $BOOTSTRAP_ARTIFACT_PATH"
+    log $PREFIX "Failed to copy bootstrap artifact to $MENDER_BOOTSTRAP_DIR"
     error=true
 else
-    log $PREFIX "Copied bootstrap artifact to $BOOTSTRAP_ARTIFACT_PATH"
+    log $PREFIX "Copied bootstrap artifact to $MENDER_BOOTSTRAP_DIR"
 fi
 
 # Cleanup
-rm -rf /tmp/bootstrap-artifact
+rm -rf /tmp/mender/bootstrap-artifact
 umount $UBIDATA_MOUNT_PATH
 rm -rf $UBIDATA_MOUNT_PATH
 

@@ -13,17 +13,20 @@ RDEPENDS:mender-update:append = " boost-log"
 
 pkg_postinst_ontarget:${PN}() {
 
+    error=false
+    
     UBIDATA_MOUNT_PATH="/mnt/ubidata"
-    MENDER_BOOTSTRAP_PATH="/data/mender/mender-bootstrap"
+    MENDER_BOOTSTRAP_SOURCE_DIR="$UBIDATA_MOUNT_PATH/mender-bootstrap"
     MENDER_DATA_PATH="/data/mender"
+    MENDER_BOOTSTRAP_TARGET_PATH="$MENDER_DATA_PATH/bootstrap.mender"
 
     if [ -f $MENDER_DATA_PATH/mender-store ]; then
         echo "Mender store already exists at $MENDER_DATA_PATH/mender-store, skipping bootstrap artifact copy"
         exit 0
     fi
 
-    if [ -f $MENDER_DATA_PATH/bootstrap.mender ]; then
-        echo "Mender bootstrap artifact already exists on $MENDER_DATA_PATH/bootstrap.mender, skipping bootstrap artifact copy"
+    if [ -f $MENDER_BOOTSTRAP_TARGET_PATH ]; then
+        echo "Mender bootstrap artifact already exists on $MENDER_BOOTSTRAP_TARGET_PATH, skipping bootstrap artifact copy"
         exit 0
     fi
 
@@ -52,33 +55,25 @@ pkg_postinst_ontarget:${PN}() {
         exit 1
     fi
 
-    mkdir -p $MENDER_BOOTSTRAP_PATH
-    mount --bind $UBIDATA_MOUNT_PATH/mender-bootstrap/$ROOTFS_ACTIVE $MENDER_BOOTSTRAP_PATH
-    if [ $? -ne 0 ]; then
-        echo "Failed to mount $UBIDATA_MOUNT_PATH/mender-bootstrap/$ROOTFS_ACTIVE on $MENDER_BOOTSTRAP_PATH"
-        rmdir $MENDER_BOOTSTRAP_PATH
-        umount $UBIDATA_MOUNT_PATH
-        rmdir $UBIDATA_MOUNT_PATH
-        exit 1
-    fi
+    MENDER_BOOTSTRAP_SOURCE_PATH="$MENDER_BOOTSTRAP_SOURCE_DIR/$ROOTFS_ACTIVE/bootstrap.mender"
 
-
-    if [ -f $MENDER_BOOTSTRAP_PATH/bootstrap.mender ]; then
+    if [ -f $MENDER_BOOTSTRAP_SOURCE_PATH ]; then
 
         # Copy mender bootstrap artifact
-        cp $MENDER_BOOTSTRAP_PATH/bootstrap.mender $MENDER_DATA_PATH/bootstrap.mender
+        cp $MENDER_BOOTSTRAP_SOURCE_PATH $MENDER_BOOTSTRAP_TARGET_PATH
         if [ $? -ne 0 ]; then
-            echo "Failed to copy $MENDER_BOOTSTRAP_PATH/bootstrap.mender to $MENDER_DATA_PATH/bootstrap.mender"
-            exit 1
+            echo "Failed to copy $MENDER_BOOTSTRAP_SOURCE_PATH to $MENDER_BOOTSTRAP_TARGET_PATH"
+            error=true
+        else
+            echo "Mender bootstrap artifact copied to $MENDER_BOOTSTRAP_TARGET_PATH"
         fi
-
-        echo "Mender bootstrap artifact copied to $MENDER_DATA_PATH/bootstrap.mender"
     fi
 
     # Cleanup
-    umount $MENDER_BOOTSTRAP_PATH
-    rmdir $MENDER_BOOTSTRAP_PATH
-
     umount $UBIDATA_MOUNT_PATH
     rmdir $UBIDATA_MOUNT_PATH
+
+    if [ "$error" == "true" ]; then
+        exit 1
+    fi
 }
