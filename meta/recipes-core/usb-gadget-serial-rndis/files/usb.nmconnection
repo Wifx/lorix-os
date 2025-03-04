@@ -12,10 +12,12 @@ mac-address-blacklist=
 address1=172.20.20.1/24
 dns-search=
 method=manual
+route-metric=10000
 
 [ipv6]
 addr-gen-mode=stable-privacy
 dns-search=
 method=disabled
+route-metric=10000
 
 [proxy]
