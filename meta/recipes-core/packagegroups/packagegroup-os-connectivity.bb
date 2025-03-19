@@ -17,6 +17,7 @@ inherit packagegroup
 NETWORK_MANAGER_PACKAGES ?= " \
     networkmanager-daemon \
     networkmanager-nmcli \
+    networkmanager-nmcli-bash-completion \
     networkmanager-openvpn \
     ${@bb.utils.contains('MACHINE_FEATURES','wwan','networkmanager-wwan mobile-broadband-provider-info','',d)} \
 "
@@ -46,7 +47,7 @@ CONNECTIVITY_PACKAGES = " \
     connection-profiles \
     ${@bb.utils.contains('DISTRO_FEATURES','wireguard','wireguard-tools','', d)} \
     ${@bb.utils.contains('MACHINE_FEATURES','gnss','gpsd gpsd-udev gpsd-conf gpsd-gpsctl gps-utils','',d)} \
-    ${@bb.utils.contains('MACHINE_FEATURES','wwan','modemmanager','',d)} \
+    ${@bb.utils.contains('MACHINE_FEATURES','wwan','modemmanager modemmanager-bash-completion','',d)} \
 "
 
 RDEPENDS:${PN} = " \
