@@ -11,7 +11,7 @@ SRC_URI += " \
 inherit update-alternatives
 
 ALTERNATIVE_PRIORITY = "60"
-ALTERNATIVE:${PN} = "net-interfaces"
+ALTERNATIVE:${PN}-daemon = "net-interfaces"
 ALTERNATIVE_LINK_NAME[net-interfaces] = "${sysconfdir}/network/interfaces"
 ALTERNATIVE_TARGET[net-interfaces] = "${sysconfdir}/network/interfaces.networkmanager"
 
@@ -38,4 +38,4 @@ do_install:append() {
     fi
 }
 
-CONFFILES:${PN} = "${sysconfdir}/network/interfaces.networkmanager"
+CONFFILES:${PN}-daemon = "${sysconfdir}/network/interfaces.networkmanager"

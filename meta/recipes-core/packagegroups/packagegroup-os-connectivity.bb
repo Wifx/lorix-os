@@ -15,7 +15,7 @@ inherit packagegroup
 
 # By default, the OS uses networkmanager
 NETWORK_MANAGER_PACKAGES ?= " \
-    networkmanager \
+    networkmanager-daemon \
     networkmanager-nmcli \
     networkmanager-openvpn \
     ${@bb.utils.contains('MACHINE_FEATURES','wwan','networkmanager-wwan mobile-broadband-provider-info','',d)} \

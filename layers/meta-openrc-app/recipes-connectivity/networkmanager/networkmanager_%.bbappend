@@ -7,9 +7,9 @@ SRC_URI += " \
 "
 
 inherit openrc
-
-OPENRC_SERVICE:${PN} = "NetworkManager"
-OPENRC_SERVICE:${PN} = "NetworkManager"
+OPENRC_PACKAGES = "${PN}-daemon"
+OPENRC_SERVICE:${PN}-daemon = "NetworkManager"
+OPENRC_SERVICE:${PN}-daemon = "NetworkManager"
 OPENRC_RUNLEVEL:NetworkManager = "default"
 
 do_install[vardeps] += "MACHINE_PRETTY_NAME"
@@ -31,7 +31,7 @@ do_install:append() {
         ${D}${datadir}/polkit-1/rules.d/
 }
 
-FILES:${PN} += " \
+FILES:${PN}-daemon += " \
     ${OPENRC_INITDIR}/* \
     ${OPENRC_CONFDIR}/* \
     ${sysconfdir}/NetworkManager/dispatcher.d/10-openrc-status \
