@@ -3,19 +3,17 @@ id=usb
 uuid=29507c57-efc6-4da7-90ed-d4d9148ddd6a
 type=ethernet
 interface-name=usb0
-permissions=
 
 [ethernet]
-mac-address-blacklist=
 
 [ipv4]
 address1=172.20.20.1/24
-dns-search=
 method=manual
+never-default=true
 
 [ipv6]
 addr-gen-mode=stable-privacy
-dns-search=
 method=disabled
+never-default=true
 
 [proxy]

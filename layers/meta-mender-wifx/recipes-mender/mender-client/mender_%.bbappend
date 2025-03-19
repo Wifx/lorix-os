@@ -9,6 +9,7 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 SRC_URI:append = " \
     file://artifact-verify-key.pem \
     file://wifx-binary-delta \
+    file://mender-inventory-machine.sh \
 "
 
 UPX_COMPRESS_FILES:${PN} = "/usr/bin/mender-update /usr/bin/mender-auth"
@@ -25,7 +26,7 @@ FILES:mender-update += "\
 
 do_install:append() {
     install -m 755 -d ${D}/${datadir}/mender/inventory
-    ln -s /usr/sbin/machine-info ${D}/${datadir}/mender/inventory/mender-inventory-machine
+    install -m 755 -d ${WORKDIR}/mender-inventory-machine.sh ${D}/${datadir}/mender/inventory/mender-inventory-machine
 
     install -m 755 -d ${D}/${datadir}/mender/modules/v3
     install -m 755 ${WORKDIR}/wifx-binary-delta ${D}/${datadir}/mender/modules/v3/wifx-binary-delta

@@ -6,6 +6,9 @@ SRC_URI += " \
     file://00-no-systemd-resolved.conf \
     file://15-resolv.conf \
     file://20-connectivity.conf \
+    file://01-vpn-autoconnect.sh \
+    file://02-vpn-reconnect.sh \
+    file://vpn-reconnect.cron \
 "
 
 inherit update-alternatives
@@ -32,10 +35,27 @@ do_install:append() {
     install -m 0644 ${WORKDIR}/15-resolv.conf ${D}${sysconfdir}/NetworkManager/conf.d/15-resolv.conf
     install -m 0644 ${WORKDIR}/20-connectivity.conf ${D}${sysconfdir}/NetworkManager/conf.d/20-connectivity.conf
 
+    # Install dispatcher files
+    install -d ${D}${sysconfdir}/NetworkManager/dispatcher.d
+    install -m 0755 ${WORKDIR}/01-vpn-autoconnect.sh ${D}${sysconfdir}/NetworkManager/dispatcher.d/01-vpn-autoconnect
+    install -m 0755 ${WORKDIR}/02-vpn-reconnect.sh ${D}${sysconfdir}/NetworkManager/dispatcher.d/02-vpn-reconnect
+
+    # Install vpn-reconnect cron script
+    install -d ${D}${sysconfdir}/cron.d
+    install -p -m 0644 ${WORKDIR}/vpn-reconnect.cron ${D}${sysconfdir}/cron.d/vpn-reconnect
+
     # Replace original 85-nm-unmanaged.rules files to manage gadget interfaces
     if [ -e ${D}/lib/udev/rules.d/85-nm-unmanaged.rules ]; then
         sed -e '/ENV{DEVTYPE}=="gadget"\,\ ENV{NM_UNMANAGED}="1"/ s/^#*/#/' -i ${D}/lib/udev/rules.d/85-nm-unmanaged.rules
     fi
 }
 
-CONFFILES:${PN}-daemon = "${sysconfdir}/network/interfaces.networkmanager"
+CONFFILES:${PN}-daemon += " \
+    ${sysconfdir}/network/interfaces.networkmanager \
+    ${sysconfdir}/NetworkManager/conf.d/00-no-systemd-resolved.conf \
+    ${sysconfdir}/NetworkManager/conf.d/15-resolv.conf \
+    ${sysconfdir}/NetworkManager/conf.d/20-connectivity.conf \
+    ${sysconfdir}/NetworkManager/dispatcher.d/01-vpn-autoconnect \
+    ${sysconfdir}/NetworkManager/dispatcher.d/02-vpn-reconnect \
+    ${sysconfdir}/cron.d/vpn-reconnect \
+"
