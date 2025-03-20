@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-642] Lower Ethernet over USB connection priority by changing route metric 
 - [LOR-653] Update NetworkManager to v1.52 and nm-openvpn to 1.12
 
+### Fixed
+
+- [LOR-650] WWAN auto-connect stops when trying to reconnect when modem state is "disconnecting" (modem init failure)
+
 ## [1.7.0] - 2024-02-03
 
 ### Added
