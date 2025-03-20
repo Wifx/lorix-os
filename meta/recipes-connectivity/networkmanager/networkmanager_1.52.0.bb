@@ -1,4 +1,15 @@
-SUMMARY = "NetworkManager"
+SUMMARY = "NetworkManager is a program for providing detection and \
+configuration for systems to automatically connect to networks."
+
+DESCRIPTION = "NetworkManager is a program for providing detection and \
+configuration for systems to automatically connect to networks. \
+NetworkManager's functionality can be useful for both wireless and wired \
+networks. For wireless networks, NetworkManager prefers known wireless \
+networks and has the ability to switch to the most reliable network. \
+NetworkManager-aware applications can switch from online and offline mode. \
+NetworkManager also prefers wired connections over wireless ones, has support \
+for modem connections and certain types of VPN."
+
 HOMEPAGE = "https://wiki.gnome.org/Projects/NetworkManager"
 SECTION = "net/misc"
 
@@ -8,6 +19,8 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
 "
 
 DEPENDS = " \
+    glib-2.0 \
+    python3-pygobject-native \
     coreutils-native \
     intltool-native \
     libxslt-native \
@@ -15,19 +28,19 @@ DEPENDS = " \
     udev \
     util-linux \
     libndp \
-    libnewt \
     curl \
     dbus \
 "
 DEPENDS:append:class-target = " bash-completion"
 
-GNOMEBASEBUILDCLASS = "meson"
-inherit gnomebase gettext update-rc.d systemd gobject-introspection gtk-doc update-alternatives upstream-version-is-even
+inherit gettext update-rc.d systemd gobject-introspection gtk-doc update-alternatives upstream-version-is-even meson
 
 SRC_URI = " \
-    ${GNOME_MIRROR}/NetworkManager/${@gnome_verdir("${PV}")}/NetworkManager-${PV}.tar.xz \
+    https://gitlab.freedesktop.org/NetworkManager/NetworkManager/-/archive/${PV}/NetworkManager-${PV}.tar.gz \
 "
-SRC_URI[sha256sum] = "722649e25362693b334371473802a729b0ec9ee283375096905f868808e74068"
+SRC_URI:append:libc-musl = "${@bb.utils.contains('DISTRO_FEATURES', 'ld-is-lld', ' file://0001-linker-scripts-Do-not-export-_IO_stdin_used.patch', '', d)}"
+
+SRC_URI[sha256sum] = "2ebe60a1497a9650d58336b73413d838189b04543365b3dbc22e1eb8023d205f"
 
 S = "${WORKDIR}/NetworkManager-${PV}"
 
@@ -44,32 +57,19 @@ NETWORKMANAGER_FIREWALL_DEFAULT ??= "nftables"
 EXTRA_OEMESON = "\
     -Difcfg_rh=false \
     -Dtests=yes \
-    -Dnmtui=true \
     -Dudev_dir=${nonarch_base_libdir}/udev \
     -Dlibpsl=false \
     -Dqt=false \
     -Dconfig_dns_rc_manager_default=${NETWORKMANAGER_DNS_RC_MANAGER_DEFAULT} \
     -Dconfig_dhcp_default=${NETWORKMANAGER_DHCP_DEFAULT} \
-    -Ddhcpcanon=false \
     -Diptables=${sbindir}/iptables \
     -Dnft=${sbindir}/nft \
 "
 
-# stolen from https://github.com/void-linux/void-packages/blob/master/srcpkgs/NetworkManager/template
-# avoids:
-# | ../NetworkManager-1.16.0/libnm-core/nm-json.c:106:50: error: 'RTLD_DEEPBIND' undeclared (first use in this function); did you mean 'RTLD_DEFAULT'?
-CFLAGS:append:libc-musl = " \
-    -DRTLD_DEEPBIND=0 \
-"
-
-do_compile:prepend() {
-    export GI_TYPELIB_PATH="${B}}/src/libnm-client-impl${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
-}
-
 PACKAGECONFIG ??= "readline nss ifupdown dnsmasq nmcli vala \
     ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'systemd', bb.utils.contains('DISTRO_FEATURES', 'x11', 'consolekit', '', d), d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'bluetooth', 'bluez5', '', d)} \
-    ${@bb.utils.filter('DISTRO_FEATURES', 'wifi polkit', d)} \
+    ${@bb.utils.filter('DISTRO_FEATURES', 'wifi polkit ppp', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'selinux', 'selinux audit', '', d)} \
 "
 
@@ -95,15 +95,20 @@ PACKAGECONFIG[iwd] = "-Diwd=true,-Diwd=false"
 PACKAGECONFIG[ifupdown] = "-Difupdown=true,-Difupdown=false"
 PACKAGECONFIG[cloud-setup] = "-Dnm_cloud_setup=true,-Dnm_cloud_setup=false"
 PACKAGECONFIG[nmcli] = "-Dnmcli=true,-Dnmcli=false"
+PACKAGECONFIG[nmtui] = "-Dnmtui=true,-Dnmtui=false,libnewt"
 PACKAGECONFIG[readline] = "-Dreadline=libreadline,,readline"
 PACKAGECONFIG[libedit] = "-Dreadline=libedit,,libedit"
 PACKAGECONFIG[ovs] = "-Dovs=true,-Dovs=false,jansson"
 PACKAGECONFIG[audit] = "-Dlibaudit=yes,-Dlibaudit=no"
 PACKAGECONFIG[selinux] = "-Dselinux=true,-Dselinux=false,libselinux"
 PACKAGECONFIG[vala] = "-Dvapi=true,-Dvapi=false"
-PACKAGECONFIG[dhcpcd] = "-Ddhcpcd=yes,-Ddhcpcd=no,,dhcpcd"
+PACKAGECONFIG[dhcpcd] = "-Ddhcpcd=${base_sbindir}/dhcpcd,-Ddhcpcd=no,,dhcpcd"
 PACKAGECONFIG[dhclient] = "-Ddhclient=yes,-Ddhclient=no,,dhcp"
 PACKAGECONFIG[concheck] = "-Dconcheck=true,-Dconcheck=false"
+PACKAGECONFIG[adsl] = ",,"
+PACKAGECONFIG[wwan] = ",,"
+# The following PACKAGECONFIG is used to determine whether NM is managing /etc/resolv.conf itself or not
+PACKAGECONFIG[man-resolv-conf] = ",,"
 
 
 PACKAGES =+ " \
@@ -255,9 +260,9 @@ SYSTEMD_SERVICE:${PN}-daemon = "\
 "
 RCONFLICTS:${PN}-daemon += "connman"
 ALTERNATIVE_PRIORITY = "100"
-ALTERNATIVE:${PN}-daemon = "${@bb.utils.contains('DISTRO_FEATURES','systemd','resolv-conf','',d)}"
-ALTERNATIVE_TARGET[resolv-conf] = "${@bb.utils.contains('DISTRO_FEATURES','systemd','${sysconfdir}/resolv-conf.NetworkManager','',d)}"
-ALTERNATIVE_LINK_NAME[resolv-conf] = "${@bb.utils.contains('DISTRO_FEATURES','systemd','${sysconfdir}/resolv.conf','',d)}"
+ALTERNATIVE:${PN}-daemon = "${@bb.utils.contains('PACKAGECONFIG','man-resolv-conf','resolv-conf','',d)}"
+ALTERNATIVE_TARGET[resolv-conf] = "${@bb.utils.contains('PACKAGECONFIG','man-resolv-conf','${sysconfdir}/resolv-conf.NetworkManager','',d)}"
+ALTERNATIVE_LINK_NAME[resolv-conf] = "${@bb.utils.contains('PACKAGECONFIG','man-resolv-conf','${sysconfdir}/resolv.conf','',d)}"
 
 
 # The networkmanager package is an empty meta package which weakly depends on all the compiled features.
@@ -279,4 +284,22 @@ RRECOMMENDS:${PN} += "\
 
 do_install:append() {
     rm -rf ${D}/run ${D}${localstatedir}/run
+
+    if ${@bb.utils.contains('PACKAGECONFIG','man-resolv-conf','true','false',d)}; then
+        # For read-only filesystem, do not create links during bootup
+        ln -sf ../run/NetworkManager/resolv.conf ${D}${sysconfdir}/resolv-conf.NetworkManager
+
+        # systemd v210 and newer do not need this rule file
+        rm ${D}/${nonarch_base_libdir}/udev/rules.d/84-nm-drivers.rules
+    fi
+
+    # Enable iwd if compiled
+    if ${@bb.utils.contains('PACKAGECONFIG','iwd','true','false',d)}; then
+        install -Dm 0644 ${UNPACKDIR}/enable-iwd.conf ${D}${nonarch_libdir}/NetworkManager/conf.d/enable-iwd.conf
+    fi
+
+    # Enable dhcpd if compiled
+    if ${@bb.utils.contains('PACKAGECONFIG','dhcpcd','true','false',d)}; then
+        install -Dm 0644 ${UNPACKDIR}/enable-dhcpcd.conf ${D}${nonarch_libdir}/NetworkManager/conf.d/enable-dhcpcd.conf
+    fi
 }

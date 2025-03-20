@@ -18,7 +18,19 @@ ALTERNATIVE:${PN} = "net-interfaces"
 ALTERNATIVE_LINK_NAME[net-interfaces] = "${sysconfdir}/network/interfaces"
 ALTERNATIVE_TARGET[net-interfaces] = "${sysconfdir}/network/interfaces.networkmanager"
 
-PACKAGECONFIG ?= "nss ifupdown dnsmasq nmcli modemmanager \
+DEPENDS += " \
+    modemmanager \
+    cronie \
+    udev \
+"
+
+RDEPENDS:${PN} += " \
+    cronie \
+    udev \
+"
+
+PACKAGECONFIG ?= "nss ifupdown dnsmasq nmcli \
+    ${@bb.utils.contains('MACHINE_FEATURES', 'wwan', 'modemmanager', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'systemd', bb.utils.contains('DISTRO_FEATURES', 'x11', 'consolekit', '', d), d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'bluetooth', 'bluez5', '', d)} \
     ${@bb.utils.filter('DISTRO_FEATURES', 'wifi polkit', d)} \
