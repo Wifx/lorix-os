@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - [LOR-650] WWAN auto-connect stops when trying to reconnect when modem state is "disconnecting" (modem init failure)
+- [LOR-649] Workaround modem init failures by resetting modem if USB device is not available anymore
 
 ## [1.7.0] - 2024-02-03
 

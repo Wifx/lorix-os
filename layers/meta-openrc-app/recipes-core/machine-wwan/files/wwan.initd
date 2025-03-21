@@ -2,6 +2,8 @@
 # Copyright (c) 2023, Wifx Sarl <info@iot.wifx.net>
 # All rights reserved.
 
+INHIBIT_FILE="/run/wwan-modem-check.inhibit"
+
 depend() {
     need sysfs
     after modules-load
@@ -9,12 +11,20 @@ depend() {
 
 start() {
     ebegin "Powering up the WWAN modem"
+
     # should be abstracted through machine-info
     gpioset gpiochip3 18=1
+
+    # Restore wwan check
+    rm -f $INHIBIT_FILE
 }
 
 stop() {
     ebegin "Powering down the WWAN modem"
+    
+    # Inhibit wwan check
+    touch $INHIBIT_FILE
+
     # should be abstracted through machine-info
     gpioset gpiochip3 18=0
 }
