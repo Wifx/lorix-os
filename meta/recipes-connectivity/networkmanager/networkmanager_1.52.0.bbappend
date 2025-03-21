@@ -30,11 +30,8 @@ RDEPENDS:${PN} += " \
     udev \
 "
 
-PACKAGECONFIG ?= "nss ifupdown dnsmasq nmcli \
+PACKAGECONFIG:append = " \
     ${@bb.utils.contains('MACHINE_FEATURES', 'wwan', 'modemmanager', '', d)} \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'systemd', bb.utils.contains('DISTRO_FEATURES', 'x11', 'consolekit', '', d), d)} \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'bluetooth', 'bluez5', '', d)} \
-    ${@bb.utils.filter('DISTRO_FEATURES', 'wifi polkit', d)} \
 "
 
 do_install:append() {
