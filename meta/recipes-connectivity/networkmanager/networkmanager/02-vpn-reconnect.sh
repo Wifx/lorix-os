@@ -51,6 +51,11 @@ for file in $VPN_AUTOCONNECT_ENABLED_CONFIG_DIR/*; do
     # For each carrier connection
     for CARRIER_CONNECTION_UUID in "${CARRIER_CONNECTION_UUIDS[@]}"; do
 
+      # Ignore if null
+      if [ -z "$CARRIER_CONNECTION_UUID" ]; then
+        continue
+      fi
+
       # Check if the carrier connection is active
       if nmcli -g GENERAL.STATE connection show "$CARRIER_CONNECTION_UUID" 2>/dev/null | grep -q "activated"; then
         CARRIER_NAME=$(nmcli -g connection.id connection show "$CARRIER_CONNECTION_UUID" 2>/dev/null || echo "$CARRIER_CONNECTION_UUID")
