@@ -9,6 +9,8 @@ SRC_URI = " \
     file://LICENSE \
     file://78-mm-fibocom-setup-ecm.rules \
     file://fibocom-mc610-setup-ecm.sh \
+    file://wwan-modem-check.sh \
+    file://99-wwan-modem.rules \
 "
 
 PR = "r0"
@@ -25,16 +27,22 @@ do_install:l1() {
     # Install script called by udev
     install -d ${D}${nonarch_base_libdir}/os/wwan
     install -m 0755 ${WORKDIR}/fibocom-mc610-setup-ecm.sh ${D}${nonarch_base_libdir}/os/wwan
+    install -m 0755 ${WORKDIR}/wwan-modem-check.sh ${D}${nonarch_base_libdir}/os/wwan
 
     # Install udev rules to setup modem
     install -d ${D}${nonarch_base_libdir}/udev/rules.d
+
     install -m 0644 ${WORKDIR}/78-mm-fibocom-setup-ecm.rules ${D}/${nonarch_base_libdir}/udev/rules.d
-    sed -i -e 's,@SCRIPT@,${nonarch_base_libdir}/os/wwan/fibocom-mc610-setup-ecm.sh,g' \
-           ${D}/${nonarch_base_libdir}/udev/rules.d/78-mm-fibocom-setup-ecm.rules
+    sed -i -e 's,@SCRIPT@,${nonarch_base_libdir}/os/wwan/fibocom-mc610-setup-ecm.sh,g' ${D}/${nonarch_base_libdir}/udev/rules.d/78-mm-fibocom-setup-ecm.rules
+
+    install -p -m 0644 ${WORKDIR}/99-wwan-modem.rules ${D}${nonarch_base_libdir}/udev/rules.d
+    sed -i -e 's,@SCRIPT@,${nonarch_base_libdir}/os/wwan/wwan-modem-check.sh,g' ${D}${nonarch_base_libdir}/udev/rules.d/99-wwan-modem.rules
+    sed -i -e 's,@DEVPATH@,/devices/platform/ahb/600000.ehci/usb1/1-2,g' ${D}${nonarch_base_libdir}/udev/rules.d/99-wwan-modem.rules
 }
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 FILES:${PN} += " \
     ${nonarch_base_libdir}/os/wwan/* \
+    ${nonarch_base_libdir}/udev/rules.d/* \
 "

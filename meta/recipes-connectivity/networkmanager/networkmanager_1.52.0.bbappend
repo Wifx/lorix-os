@@ -9,6 +9,7 @@ SRC_URI += " \
     file://01-vpn-autoconnect.sh \
     file://02-vpn-reconnect.sh \
     file://vpn-reconnect.cron \
+    file://0000-fix-modem-broadband-reconnect-fail-autoconnect-block.patch \
 "
 
 inherit update-alternatives
@@ -18,10 +19,19 @@ ALTERNATIVE:${PN}-daemon = "net-interfaces"
 ALTERNATIVE_LINK_NAME[net-interfaces] = "${sysconfdir}/network/interfaces"
 ALTERNATIVE_TARGET[net-interfaces] = "${sysconfdir}/network/interfaces.networkmanager"
 
-PACKAGECONFIG ?= "nss ifupdown dnsmasq nmcli modemmanager \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'systemd', bb.utils.contains('DISTRO_FEATURES', 'x11', 'consolekit', '', d), d)} \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'bluetooth', 'bluez5', '', d)} \
-    ${@bb.utils.filter('DISTRO_FEATURES', 'wifi polkit', d)} \
+DEPENDS += " \
+    modemmanager \
+    cronie \
+    udev \
+"
+
+RDEPENDS:${PN} += " \
+    cronie \
+    udev \
+"
+
+PACKAGECONFIG:append = " \
+    ${@bb.utils.contains('MACHINE_FEATURES', 'wwan', 'modemmanager', '', d)} \
 "
 
 do_install:append() {
