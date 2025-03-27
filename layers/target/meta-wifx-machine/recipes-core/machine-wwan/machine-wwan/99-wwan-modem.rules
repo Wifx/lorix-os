@@ -1,0 +1,1 @@
+SUBSYSTEM=="usb", ACTION=="remove", ENV{PRODUCT}=="1782/4d11/0", DEVPATH=="@DEVPATH@", RUN+="@SCRIPT@ /sys%p %E{ACTION}"

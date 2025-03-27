@@ -1,8 +1,8 @@
 FROM ubuntu:22.04
 
-MAINTAINER Wifx "support@iot.wifx.net"
+LABEL org.opencontainers.image.authors="Wifx <support@iot.wifx.net>"
 
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
 ARG WORKDIR=/root
 
@@ -23,6 +23,6 @@ RUN rm sdk-installer.sh
 
 # Setup
 WORKDIR $WORKDIR
-ENV TOOLCHAIN_PATH ${TOOLCHAIN_PATH}
+ENV TOOLCHAIN_PATH=${TOOLCHAIN_PATH}
 
 ENTRYPOINT . ${TOOLCHAIN_PATH}/environment-setup-cortexa5t2hf-neon-vfpv4-lorixos-linux-gnueabi && /bin/bash

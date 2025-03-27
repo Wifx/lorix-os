@@ -22,6 +22,7 @@ SRC_URI = " \
     file://1.7.0/02_BasicStation-LoraRegion.sh;subdir=${BPN}-${PV} \
     file://1.7.0/03_CSCD-LoraRegion.sh;subdir=${BPN}-${PV} \
     file://1.7.0/05_Fix-overlay-directories.sh;subdir=${BPN}-${PV} \
+    file://1.7.1/01_VPN-autoconnect.sh;subdir=${BPN}-${PV} \
 "
 
 LICENSE = "Proprietary"
@@ -83,4 +84,6 @@ do_compile() {
     cp 1.7.0/02_BasicStation-LoraRegion.sh  ${TARGET}_Migration_1.7.0_02_BasicStation-LoraRegion
     cp 1.7.0/03_CSCD-LoraRegion.sh  ${TARGET}_Migration_1.7.0_03_CSCD-LoraRegion
     cp 1.7.0/05_Fix-overlay-directories.sh  ${TARGET}_Migration_1.7.0_05_Fix-overlay-directories
+
+    cp 1.7.1/01_VPN-autoconnect.sh ${TARGET}_Migration_1.7.1_01_VPN-autoconnect
 }

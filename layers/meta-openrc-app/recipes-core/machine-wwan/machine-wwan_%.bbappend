@@ -3,16 +3,18 @@
 
 FILESEXTRAPATHS:append := "${THISDIR}/files:"
 
-SRC_URI += "file://cellular.initd"
+SRC_URI += " \
+    file://wwan.initd \
+"
 
 inherit openrc
 
-OPENRC_SERVICE:${PN} = "cellular"
-OPENRC_RUNLEVEL:cellular = "boot"
+OPENRC_SERVICE:${PN} = "wwan"
+OPENRC_RUNLEVEL:wwan = "boot"
 
 do_install:append:l1() {
     # Install OpenRC script
-    openrc_install_script ${WORKDIR}/cellular.initd
+    openrc_install_script ${WORKDIR}/wwan.initd
 }
 
 FILES:${PN} += " \

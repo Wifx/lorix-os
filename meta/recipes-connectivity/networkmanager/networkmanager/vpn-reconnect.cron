@@ -1,0 +1,2 @@
+#  m  h  dom mon dow user	command
+   *  *     * * *    root   /etc/NetworkManager/dispatcher.d/02-vpn-reconnect vpn force-reconnect
