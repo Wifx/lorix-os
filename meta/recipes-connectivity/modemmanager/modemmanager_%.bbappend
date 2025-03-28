@@ -11,6 +11,7 @@ SRC_URI += " \
     file://0005-fibocom-cleanup-load-unlock-retries-callback.patch \
     file://0006-fibocom-add-ready-check-after-pin-unlock-in-case-of-.patch \
     file://0007-fibocom-improve-SIM-hot-swap-mecanism.patch \
+    file://0008-fibocom-start-in-flight-mode-to-avoid-network-regist.patch \
 "
 
 # Disable MBIM and QMI features
