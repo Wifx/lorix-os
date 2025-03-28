@@ -7,10 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.7.1] - Unreleased
 
+### Added
+
+- Add bash auto-completion packages for NetworkManager and ModemManager
+- [LOR-638] Add iperf3 package by default
+
 ### Changed
 
 - [LOR-642] Disable default route on Ethernet over USB connection
 - [LOR-653] Update NetworkManager to v1.52 and nm-openvpn to 1.12
+- [LOR-654] ZLP support for Fibocom MC610 in wwan kernel driver
 
 ### Fixed
 
