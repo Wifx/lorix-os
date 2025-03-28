@@ -8,6 +8,9 @@ SRC_URI += " \
     file://0002-fibocom-add-support-for-SIM-hot-swap.patch \
     file://0003-Fix-timeout-on-CPIN-command-following-SIM-card-inser.patch \
     file://0004-fibocom-Add-supported-and-current-modes-feature.patch \
+    file://0005-fibocom-cleanup-load-unlock-retries-callback.patch \
+    file://0006-fibocom-add-ready-check-after-pin-unlock-in-case-of-.patch \
+    file://0007-fibocom-improve-SIM-hot-swap-mecanism.patch \
 "
 
 # Disable MBIM and QMI features

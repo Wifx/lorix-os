@@ -1,0 +1,304 @@
+From e03ef72138bbb3df12d492e91cbb07096c8aa134 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Fri, 28 Mar 2025 10:48:44 +0100
+Subject: [PATCH 7/7] fibocom: improve SIM hot swap mecanism
+
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
+---
+ src/mm-broadband-modem.c                      |   6 +
+ src/mm-broadband-modem.h                      |   1 +
+ src/mm-iface-modem.c                          |  12 +-
+ .../fibocom/mm-broadband-modem-fibocom.c      | 130 +++++++++++++-----
+ 4 files changed, 107 insertions(+), 42 deletions(-)
+
+diff --git a/src/mm-broadband-modem.c b/src/mm-broadband-modem.c
+index 384d94a4..a4e4e20f 100644
+--- a/src/mm-broadband-modem.c
++++ b/src/mm-broadband-modem.c
+@@ -509,6 +509,12 @@ mm_broadband_modem_sim_hot_swap_ports_context_init (MMBroadbandModem  *self,
+     return TRUE;
+ }
+ 
++gboolean
++mm_broadband_modem_sim_hot_swap_ports_context_is_init (MMBroadbandModem *self)
++{
++    return self->priv->sim_hot_swap_ports_ctx != NULL;
++}
++
+ void
+ mm_broadband_modem_sim_hot_swap_ports_context_reset (MMBroadbandModem *self)
+ {
+diff --git a/src/mm-broadband-modem.h b/src/mm-broadband-modem.h
+index e1c7cdfd..efa5bf3e 100644
+--- a/src/mm-broadband-modem.h
++++ b/src/mm-broadband-modem.h
+@@ -133,6 +133,7 @@ void     mm_broadband_modem_unlock_sms_storages      (MMBroadbandModem *self,
+ /* Helper to update SIM hot swap */
+ gboolean mm_broadband_modem_sim_hot_swap_ports_context_init  (MMBroadbandModem  *self,
+                                                               GError           **error);
++gboolean mm_broadband_modem_sim_hot_swap_ports_context_is_init (MMBroadbandModem *self);
+ void     mm_broadband_modem_sim_hot_swap_ports_context_reset (MMBroadbandModem  *self);
+ 
+ /* Helper to manage multiplexed bearers */
+diff --git a/src/mm-iface-modem.c b/src/mm-iface-modem.c
+index 54063c47..2fd2ee61 100644
+--- a/src/mm-iface-modem.c
++++ b/src/mm-iface-modem.c
+@@ -75,9 +75,6 @@ typedef struct {
+ 
+     /* Initialization restart support */
+     guint restart_initialize_idle_id;
+-
+-    /* SIM hot swap setup done flag */
+-    gboolean sim_hot_swap_configured;
+ } Private;
+ 
+ static void
+@@ -5071,11 +5068,9 @@ setup_sim_hot_swap_ready (MMIfaceModem *self,
+                           GAsyncResult *res,
+                           GTask        *task)
+ {
+-    Private               *priv;
+     InitializationContext *ctx;
+     g_autoptr(GError)      error = NULL;
+ 
+-    priv = get_private (self);
+     ctx  = g_task_get_task_data (task);
+ 
+     MM_IFACE_MODEM_GET_INTERFACE (self)->setup_sim_hot_swap_finish (self, res, &error);
+@@ -5083,7 +5078,6 @@ setup_sim_hot_swap_ready (MMIfaceModem *self,
+         mm_obj_info (self, "SIM hot swap setup failed: %s", error->message);
+     else {
+         mm_obj_info (self, "SIM hot swap setup succeeded");
+-        priv->sim_hot_swap_configured = TRUE;
+     }
+ 
+     /* Go on to next step */
+@@ -5809,11 +5803,7 @@ interface_initialization_step (GTask *task)
+     } /* fall-through */
+ 
+     case INITIALIZATION_STEP_SIM_HOT_SWAP: {
+-        Private *priv;
+-
+-        priv = get_private (self);
+-        if (!priv->sim_hot_swap_configured &&
+-            MM_IFACE_MODEM_GET_INTERFACE (self)->setup_sim_hot_swap &&
++        if (MM_IFACE_MODEM_GET_INTERFACE (self)->setup_sim_hot_swap &&
+             MM_IFACE_MODEM_GET_INTERFACE (self)->setup_sim_hot_swap_finish) {
+             MM_IFACE_MODEM_GET_INTERFACE (self)->setup_sim_hot_swap (
+                 MM_IFACE_MODEM (self),
+diff --git a/src/plugins/fibocom/mm-broadband-modem-fibocom.c b/src/plugins/fibocom/mm-broadband-modem-fibocom.c
+index 7a2a0055..4b5e393b 100644
+--- a/src/plugins/fibocom/mm-broadband-modem-fibocom.c
++++ b/src/plugins/fibocom/mm-broadband-modem-fibocom.c
+@@ -46,12 +46,17 @@ typedef enum {
+ 
+ struct _MMBroadbandModemFibocomPrivate {
+     FeatureSupport  gtrndis_support;
+-    GRegex         *sim_ready_regex;
+     FeatureSupport  initial_eps_bearer_support;
+ 
++    /* Ignore +SIM READY */
++    GRegex         *sim_ready_regex;
++    /* Ignore +SIM DROP*/
++    GRegex         *sim_drop_regex;
+     /* Ignore SIM hotswap msg, until ready */
+-    GRegex *sim_hs_regex;
+-
++    GRegex         *sim_hot_swap_regex;
++    
++    gboolean        sim_hot_swap_processing;
++    
+     /* Initial EPS bearer context number */
+     gint            initial_eps_bearer_cid;
+ };
+@@ -257,7 +262,7 @@ modem_after_sim_unlock (MMIfaceModem *self,
+                         GAsyncReadyCallback callback,
+                         gpointer user_data)
+ {
+-     GTask *task;
++    GTask *task;
+     task = g_task_new (self, NULL, callback, user_data);
+ 
+     /* Fibocom MC610 can be very long after SIM is enabled as it proceed
+@@ -453,20 +458,73 @@ modem_load_unlock_retries (MMIfaceModem *self,
+ /*****************************************************************************/
+ /* SIM hot swap setup (Modem interface) */
+ 
++static void
++fibocom_sim_test_ready (MMBaseModem *_self,
++                        GAsyncResult *res,
++                        gpointer _data)
++{
++    MMBroadbandModemFibocom *self = MM_BROADBAND_MODEM_FIBOCOM (_self);
++    GError *error = NULL;
++    const gchar *response;
++
++    response = mm_base_modem_at_command_finish (_self, res, &error);
++    if (!response) {
++        mm_obj_warn (self, "SIM has been removed during processing, abort");
++        g_object_unref (_self);
++        return;
++    }
++
++    // if no error, SIM is present
++    if (self->priv->sim_hot_swap_processing) {
++        mm_obj_warn (self, "SIM hot swap processing is already on-going, abort");
++        g_object_unref (_self);
++        return;
++    }
++
++    mm_obj_info (self, "SIM presence confirmed, triggering SIM card processing");
++    self->priv->sim_hot_swap_processing = TRUE;
++    mm_iface_modem_process_sim_event (MM_IFACE_MODEM (self));
++    g_object_unref (_self);
++}
++
++static gboolean
++fibocom_sim_wait_ready (MMBaseModem *self)
++{
++    mm_base_modem_at_command (self,
++                              "+TPIN?",
++                              30,
++                              FALSE,
++                              (GAsyncReadyCallback) fibocom_sim_test_ready,
++                              NULL);
++    return G_SOURCE_REMOVE;
++}
++
+ static void
+ fibocom_sim_unsolicited_handler (MMPortSerialAt *port,
+-                                    GMatchInfo *match_info,
+-                                    MMBroadbandModemFibocom *self)
++                                 GMatchInfo *match_info,
++                                 MMBroadbandModemFibocom *self)
+ {
+     gchar *sim_status;
+ 
+     sim_status = mm_get_string_unquoted_from_match_info (match_info, 1);
+-    
+-    mm_obj_info (self, "MSMPD: SIM hot swap detected: '%s'", sim_status);
++    mm_obj_dbg (self, "MSMPD: SIM hot swap detected: '%s'", sim_status);
++
++    if (self->priv->sim_hot_swap_processing) {
++        mm_obj_warn (self, "SIM hot swap processing is already on-going, abort");
++        return;
++    }
+ 
+-    if ((g_ascii_strcasecmp (sim_status, "Inserted") == 0) ||
+-        (g_ascii_strcasecmp (sim_status, "Removed") == 0)) {
++    if (g_ascii_strcasecmp (sim_status, "Removed") == 0) {
++        mm_obj_info (self, "SIM card has been removed, triggering SIM card processing");
++        self->priv->sim_hot_swap_processing = TRUE;
+         mm_iface_modem_process_sim_event (MM_IFACE_MODEM (self));
++    } else if (g_ascii_strcasecmp (sim_status, "Inserted") == 0) {
++        mm_obj_info (self, "SIM card has been inserted, check status in 1s");
++        // in case of insertion, we want to wait a bit before checking again
++        // if SIM is still present
++        g_timeout_add_seconds(1,
++                              (GSourceFunc) fibocom_sim_wait_ready, 
++                              g_object_ref(MM_BASE_MODEM(self)));
+     } else {
+         mm_obj_warn (self, "(%s) MSMPD: unable to determine SIM insert status: %s",
+                      mm_port_get_device (MM_PORT (port)),
+@@ -489,8 +547,8 @@ fibocom_hot_swap_init_ready (MMBaseModem  *_self,
+ {
+     MMBroadbandModemFibocom *self = MM_BROADBAND_MODEM_FIBOCOM (_self);
+     g_autoptr(GError)        error = NULL;
+-    MMPortSerialAt          *primary;
+-    MMPortSerialAt          *secondary;
++    MMPortSerialAt          *ports[2];
++    guint                    i;
+ 
+     if (!mm_base_modem_at_command_finish (_self, res, &error)) {
+         g_prefix_error (&error, "Could not enable MSMPD: ");
+@@ -501,24 +559,21 @@ fibocom_hot_swap_init_ready (MMBaseModem  *_self,
+ 
+     mm_obj_dbg (self, "SIM hot swap detect successfully enabled");
+ 
+-    primary = mm_base_modem_peek_port_primary (MM_BASE_MODEM (self));
+-    mm_port_serial_at_add_unsolicited_msg_handler (
+-        primary,
+-        self->priv->sim_hs_regex,
+-        (MMPortSerialAtUnsolicitedMsgFn) fibocom_sim_unsolicited_handler,
+-        self,
+-        NULL);
++    ports[0] = mm_base_modem_peek_port_primary   (MM_BASE_MODEM (self));
++    ports[1] = mm_base_modem_peek_port_secondary (MM_BASE_MODEM (self));
+ 
+-    secondary = mm_base_modem_peek_port_secondary (MM_BASE_MODEM (self));
+-    if (secondary)
+-        mm_port_serial_at_add_unsolicited_msg_handler (
+-            secondary,
+-            self->priv->sim_hs_regex,
+-            (MMPortSerialAtUnsolicitedMsgFn) fibocom_sim_unsolicited_handler,
+-            self,
+-            NULL);
++    for (i = 0; i < G_N_ELEMENTS (ports); i++) {
++        if (ports[i])
++            mm_port_serial_at_add_unsolicited_msg_handler (
++                ports[i],
++                self->priv->sim_hot_swap_regex,
++                (MMPortSerialAtUnsolicitedMsgFn) fibocom_sim_unsolicited_handler,
++                self,
++                NULL);
++    }
+ 
+-    if (!mm_broadband_modem_sim_hot_swap_ports_context_init (MM_BROADBAND_MODEM (self), &error))
++    if (!mm_broadband_modem_sim_hot_swap_ports_context_is_init(MM_BROADBAND_MODEM (self)) &&
++        !mm_broadband_modem_sim_hot_swap_ports_context_init (MM_BROADBAND_MODEM (self), &error))
+         mm_obj_warn (self, "failed to initialize SIM hot swap ports context: %s", error->message);
+ 
+     g_task_return_boolean (task, TRUE);
+@@ -539,7 +594,7 @@ modem_setup_sim_hot_swap (MMIfaceModem *self,
+     mm_base_modem_at_command (MM_BASE_MODEM (self),
+                               "+MSMPD=1",
+                               2,
+-                              TRUE,
++                              FALSE,
+                               (GAsyncReadyCallback) fibocom_hot_swap_init_ready,
+                               task);
+ }
+@@ -999,6 +1054,14 @@ setup_ports (MMBroadbandModem *_self)
+             ports[i],
+             self->priv->sim_ready_regex,
+             NULL, NULL, NULL);
++        mm_port_serial_at_add_unsolicited_msg_handler (
++            ports[i],
++            self->priv->sim_drop_regex,
++            NULL, NULL, NULL);
++        mm_port_serial_at_add_unsolicited_msg_handler (
++            ports[i],
++            self->priv->sim_hot_swap_regex,
++            NULL, NULL, NULL);
+     }
+ }
+ 
+@@ -1035,9 +1098,13 @@ mm_broadband_modem_fibocom_init (MMBroadbandModemFibocom *self)
+     self->priv->gtrndis_support = FEATURE_SUPPORT_UNKNOWN;
+     self->priv->sim_ready_regex = g_regex_new ("\\r\\n\\+SIM READY\\r\\n",
+                                                G_REGEX_RAW | G_REGEX_OPTIMIZE, 0, NULL);
+-    self->priv->sim_hs_regex = g_regex_new ("\\r\\n\\+SIM: \\s*(\\w+)\\r\\n",
++    self->priv->sim_drop_regex = g_regex_new ("\\r\\n\\+SIM DROP\\r\\n",
++                                              G_REGEX_RAW | G_REGEX_OPTIMIZE, 0, NULL);
++    self->priv->sim_hot_swap_regex = g_regex_new ("\\r\\n\\+SIM: (\\w+)\\r\\n",
+                                             G_REGEX_RAW | G_REGEX_OPTIMIZE, 0, NULL);
++
+     self->priv->initial_eps_bearer_support = FEATURE_SUPPORT_UNKNOWN;
++    self->priv->sim_hot_swap_processing = FALSE;
+ }
+ 
+ static void
+@@ -1046,7 +1113,8 @@ finalize (GObject *object)
+     MMBroadbandModemFibocom *self = MM_BROADBAND_MODEM_FIBOCOM (object);
+ 
+     g_regex_unref (self->priv->sim_ready_regex);
+-    g_regex_unref (self->priv->sim_hs_regex);
++    g_regex_unref (self->priv->sim_drop_regex);
++    g_regex_unref (self->priv->sim_hot_swap_regex);
+ 
+     G_OBJECT_CLASS (mm_broadband_modem_fibocom_parent_class)->finalize (object);
+ }
+-- 
+2.34.1
+
