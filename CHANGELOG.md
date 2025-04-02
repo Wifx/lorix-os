@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-642] Disable default route on Ethernet over USB connection
 - [LOR-653] Update NetworkManager to v1.52 and nm-openvpn to 1.12
 - [LOR-654] ZLP support for Fibocom MC610 in wwan kernel driver
+- [LOR-664] Update mender client to 5.0.1
 
 ### Fixed
 
