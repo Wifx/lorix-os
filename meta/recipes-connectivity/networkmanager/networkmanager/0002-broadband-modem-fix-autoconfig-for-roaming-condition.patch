@@ -1,0 +1,63 @@
+From e629016876bd4671795b71dd4352c45ea8046627 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Wed, 2 Apr 2025 14:59:15 +0200
+Subject: [PATCH 2/2] broadband modem: fix autoconfig for roaming condition,
+ match SIM MCC/MNC instead of current network, APN lookup with operator name
+ filter
+
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
+---
+ src/core/devices/wwan/nm-modem-broadband.c | 28 +++++++---------------
+ 1 file changed, 8 insertions(+), 20 deletions(-)
+
+diff --git a/src/core/devices/wwan/nm-modem-broadband.c b/src/core/devices/wwan/nm-modem-broadband.c
+index 5047cc34f8..993ae8ce80 100644
+--- a/src/core/devices/wwan/nm-modem-broadband.c
++++ b/src/core/devices/wwan/nm-modem-broadband.c
+@@ -515,27 +515,16 @@ try_create_connect_properties(NMModemBroadband *self)
+         NMSettingGsm *s_gsm = nm_connection_get_setting_gsm(ctx->connection);
+ 
+         if (!s_gsm || nm_setting_gsm_get_auto_config(s_gsm)) {
+-            gs_unref_object MMModem3gpp *modem_3gpp = NULL;
+-            const char                  *network_id = NULL;
+-
+-            s_gsm = nm_connection_get_setting_gsm(ctx->connection);
+-            if (s_gsm)
+-                network_id = nm_setting_gsm_get_network_id(s_gsm);
+-            if (!network_id) {
+-                if (mm_modem_get_state(self->_priv.modem_iface) < MM_MODEM_STATE_REGISTERED)
+-                    return FALSE;
+-                modem_3gpp = mm_object_get_modem_3gpp(priv->modem_object);
+-                network_id = mm_modem_3gpp_get_operator_code(modem_3gpp);
+-            }
+-            if (!network_id) {
+-                _LOGW("failed to connect '%s': unable to determine the network id",
+-                      nm_connection_get_id(ctx->connection));
+-                goto out;
+-            }
++            const char *operator_id = NULL;
++            const char *operator_name = NULL;
++
++            /* the APN is never tied to hosting operator but to SIM's one */
++            operator_id = mm_sim_get_operator_identifier(priv->sim_iface);
++            operator_name = mm_sim_get_operator_name(priv->sim_iface);
+ 
+             nm_service_providers_find_gsm_apn(MOBILE_BROADBAND_PROVIDER_INFO_DATABASE,
+-                                              network_id,
+-                                              NULL,
++                                              operator_id,
++                                              operator_name,
+                                               ctx->cancellable,
+                                               find_gsm_apn_cb,
+                                               self);
+@@ -558,7 +547,6 @@ try_create_connect_properties(NMModemBroadband *self)
+               nm_connection_get_id(ctx->connection));
+     }
+ 
+-out:
+     nm_modem_emit_prepare_result(NM_MODEM(self), FALSE, NM_DEVICE_STATE_REASON_MODEM_INIT_FAILED);
+     connect_context_clear(self);
+     return TRUE;
+-- 
+2.45.2
+

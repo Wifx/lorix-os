@@ -9,7 +9,8 @@ SRC_URI += " \
     file://01-vpn-autoconnect.sh \
     file://02-vpn-reconnect.sh \
     file://vpn-reconnect.cron \
-    file://0000-fix-modem-broadband-reconnect-fail-autoconnect-block.patch \
+    file://0001-service-provider-add-optionnal-operator-name-filter-.patch \
+    file://0002-broadband-modem-fix-autoconfig-for-roaming-condition.patch \
 "
 
 inherit update-alternatives
