@@ -1,0 +1,300 @@
+From 5f5ae0db523b4143045023388852822515f8e593 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Wed, 2 Apr 2025 14:58:36 +0200
+Subject: [PATCH 1/2] service provider: add optionnal operator name filter for
+ APN lookup
+
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
+---
+ src/core/devices/wwan/nm-modem-broadband.c    |  1 +
+ src/core/devices/wwan/nm-service-providers.c  | 34 +++++--
+ src/core/devices/wwan/nm-service-providers.h  |  1 +
+ .../wwan/tests/test-service-providers.c       | 94 ++++++++++++++++++-
+ .../wwan/tests/test-service-providers.xml     | 18 +++-
+ 5 files changed, 138 insertions(+), 10 deletions(-)
+
+diff --git a/src/core/devices/wwan/nm-modem-broadband.c b/src/core/devices/wwan/nm-modem-broadband.c
+index 018e53066c..5047cc34f8 100644
+--- a/src/core/devices/wwan/nm-modem-broadband.c
++++ b/src/core/devices/wwan/nm-modem-broadband.c
+@@ -535,6 +535,7 @@ try_create_connect_properties(NMModemBroadband *self)
+ 
+             nm_service_providers_find_gsm_apn(MOBILE_BROADBAND_PROVIDER_INFO_DATABASE,
+                                               network_id,
++                                              NULL,
+                                               ctx->cancellable,
+                                               find_gsm_apn_cb,
+                                               self);
+diff --git a/src/core/devices/wwan/nm-service-providers.c b/src/core/devices/wwan/nm-service-providers.c
+index 83f215655a..a2af5fbf8c 100644
+--- a/src/core/devices/wwan/nm-service-providers.c
++++ b/src/core/devices/wwan/nm-service-providers.c
+@@ -23,6 +23,7 @@ typedef enum {
+ 
+ typedef struct {
+     char                            *mccmnc;
++    const char                      *provider;
+     NMServiceProvidersGsmApnCallback callback;
+     gpointer                         user_data;
+     GCancellable                    *cancellable;
+@@ -33,6 +34,7 @@ typedef struct {
+     ParseContextState state;
+ 
+     gboolean mccmnc_matched;
++    gboolean provider_matched;
+     gboolean found_internet_apn;
+     char    *apn;
+     char    *username;
+@@ -76,6 +78,7 @@ parser_country_start(ParseContext *parse_context,
+                      const char  **attribute_names,
+                      const char  **attribute_values)
+ {
++    parse_context->provider_matched = FALSE;
+     if (strcmp(name, "provider") == 0)
+         parse_context->state = PARSER_PROVIDER;
+ }
+@@ -214,7 +217,11 @@ parser_country_end(ParseContext *parse_context, const char *name)
+ static void
+ parser_provider_end(ParseContext *parse_context, const char *name)
+ {
+-    if (strcmp(name, "provider") == 0) {
++    if (strcmp(name, "name") == 0) {
++        if (g_strcmp0(parse_context->provider, parse_context->text_buffer) == 0)
++            parse_context->provider_matched = TRUE;
++        nm_clear_g_free(&parse_context->text_buffer);
++    } else if (strcmp(name, "provider") == 0) {
+         nm_clear_g_free(&parse_context->text_buffer);
+         parse_context->state = PARSER_COUNTRY;
+     }
+@@ -247,7 +254,9 @@ parser_gsm_apn_end(ParseContext *parse_context, const char *name)
+     } else if (strcmp(name, "apn") == 0) {
+         nm_clear_g_free(&parse_context->text_buffer);
+ 
+-        if (parse_context->mccmnc_matched && parse_context->found_internet_apn)
++        if (parse_context->mccmnc_matched && 
++            (!parse_context->provider || parse_context->provider_matched) &&
++            parse_context->found_internet_apn)
+             parse_context->state = PARSER_DONE;
+         else
+             parse_context->state = PARSER_METHOD_GSM;
+@@ -371,11 +380,20 @@ stream_read_cb(GObject *source_object, GAsyncResult *res, gpointer user_data)
+     }
+ 
+     if (len == 0) {
+-        g_set_error(&error,
+-                    NM_UTILS_ERROR,
+-                    NM_UTILS_ERROR_UNKNOWN,
+-                    "Operator ID '%s' not found in service provider database",
+-                    parse_context->mccmnc);
++        if (parse_context->provider) {
++            g_set_error(&error,
++                NM_UTILS_ERROR,
++                NM_UTILS_ERROR_UNKNOWN,
++                "Operator with ID '%s' and name '%s' not found in service provider database",
++                parse_context->mccmnc,
++                parse_context->provider);
++        } else {
++            g_set_error(&error,
++                NM_UTILS_ERROR,
++                NM_UTILS_ERROR_UNKNOWN,
++                "Operator ID '%s' not found in service provider database",
++                parse_context->mccmnc);
++        }
+         finish_parse_context(parse_context, error);
+         g_clear_error(&error);
+         return;
+@@ -433,6 +451,7 @@ file_read_cb(GObject *source_object, GAsyncResult *res, gpointer user_data)
+ void
+ nm_service_providers_find_gsm_apn(const char                      *service_providers,
+                                   const char                      *mccmnc,
++                                  const char                      *provider,
+                                   GCancellable                    *cancellable,
+                                   NMServiceProvidersGsmApnCallback callback,
+                                   gpointer                         user_data)
+@@ -442,6 +461,7 @@ nm_service_providers_find_gsm_apn(const char                      *service_provi
+ 
+     parse_context              = g_slice_new0(ParseContext);
+     parse_context->mccmnc      = g_strdup(mccmnc);
++    parse_context->provider    = provider;
+     parse_context->cancellable = cancellable;
+     parse_context->callback    = callback;
+     parse_context->user_data   = user_data;
+diff --git a/src/core/devices/wwan/nm-service-providers.h b/src/core/devices/wwan/nm-service-providers.h
+index cf90ef1e41..473c8d4a7d 100644
+--- a/src/core/devices/wwan/nm-service-providers.h
++++ b/src/core/devices/wwan/nm-service-providers.h
+@@ -17,6 +17,7 @@ typedef void (*NMServiceProvidersGsmApnCallback)(const char   *apn,
+ 
+ void nm_service_providers_find_gsm_apn(const char                      *service_providers,
+                                        const char                      *mccmnc,
++                                       const char                      *provider,
+                                        GCancellable                    *cancellable,
+                                        NMServiceProvidersGsmApnCallback callback,
+                                        gpointer                         user_data);
+diff --git a/src/core/devices/wwan/tests/test-service-providers.c b/src/core/devices/wwan/tests/test-service-providers.c
+index e808b39135..d06ce34daa 100644
+--- a/src/core/devices/wwan/tests/test-service-providers.c
++++ b/src/core/devices/wwan/tests/test-service-providers.c
+@@ -46,6 +46,7 @@ test_positive(void)
+                                       "/src/core/devices/wwan/tests/test-service-providers.xml",
+                                       "13337",
+                                       NULL,
++                                      NULL,
+                                       test_positive_cb,
+                                       loop);
+     g_main_loop_run(loop);
+@@ -54,6 +55,94 @@ test_positive(void)
+ 
+ /*****************************************************************************/
+ 
++static void
++test_positive_multiple_provider_a_cb(const char   *apn,
++                 const char   *username,
++                 const char   *password,
++                 const char   *gateway,
++                 const char   *auth_method,
++                 const GSList *dns,
++                 GError       *error,
++                 gpointer      user_data)
++{
++    GMainLoop *loop = user_data;
++
++    g_main_loop_quit(loop);
++    g_assert_no_error(error);
++    g_assert_cmpstr(apn, ==, "a.example.com");
++    g_assert_null(username);
++    g_assert_null(password);
++    
++    g_assert_nonnull(dns);
++    g_assert_cmpstr(dns->data, ==, "192.0.2.2");
++    dns = dns->next;
++    g_assert_nonnull(dns);
++    g_assert_cmpstr(dns->data, ==, "192.0.2.1");
++    g_assert_null(dns->next);
++}
++
++static void
++test_positive_multiple_provider_a(void)
++{
++    GMainLoop *loop = g_main_loop_new(NULL, FALSE);
++
++    nm_service_providers_find_gsm_apn(NM_BUILD_SRCDIR
++                                      "/src/core/devices/wwan/tests/test-service-providers.xml",
++                                      "666999",
++                                      "Personal A",
++                                      NULL,
++                                      test_positive_multiple_provider_a_cb,
++                                      loop);
++    g_main_loop_run(loop);
++    g_main_loop_unref(loop);
++}
++
++/*****************************************************************************/
++
++static void
++test_positive_multiple_provider_b_cb(const char   *apn,
++                 const char   *username,
++                 const char   *password,
++                 const char   *gateway,
++                 const char   *auth_method,
++                 const GSList *dns,
++                 GError       *error,
++                 gpointer      user_data)
++{
++    GMainLoop *loop = user_data;
++
++    g_main_loop_quit(loop);
++    g_assert_no_error(error);
++    g_assert_cmpstr(apn, ==, "b.example.com");
++    g_assert_null(username);
++    g_assert_null(password);
++    
++    g_assert_nonnull(dns);
++    g_assert_cmpstr(dns->data, ==, "192.0.2.2");
++    dns = dns->next;
++    g_assert_nonnull(dns);
++    g_assert_cmpstr(dns->data, ==, "192.0.2.1");
++    g_assert_null(dns->next);
++}
++
++static void
++test_positive_multiple_provider_b(void)
++{
++    GMainLoop *loop = g_main_loop_new(NULL, FALSE);
++
++    nm_service_providers_find_gsm_apn(NM_BUILD_SRCDIR
++                                      "/src/core/devices/wwan/tests/test-service-providers.xml",
++                                      "666999",
++                                      "Personal B",
++                                      NULL,
++                                      test_positive_multiple_provider_b_cb,
++                                      loop);
++    g_main_loop_run(loop);
++    g_main_loop_unref(loop);
++}
++
++/*****************************************************************************/
++
+ static void
+ test_negative_cb(const char   *apn,
+                  const char   *username,
+@@ -79,6 +168,7 @@ test_negative(void)
+                                       "/src/core/devices/wwan/tests/test-service-providers.xml",
+                                       "78130",
+                                       NULL,
++                                      NULL,
+                                       test_negative_cb,
+                                       loop);
+     g_main_loop_run(loop);
+@@ -108,7 +198,7 @@ test_nonexistent(void)
+ {
+     GMainLoop *loop = g_main_loop_new(NULL, FALSE);
+ 
+-    nm_service_providers_find_gsm_apn("nonexistent.xml", "13337", NULL, test_nonexistent_cb, loop);
++    nm_service_providers_find_gsm_apn("nonexistent.xml", "13337", NULL, NULL, test_nonexistent_cb, loop);
+     g_main_loop_run(loop);
+     g_main_loop_unref(loop);
+ }
+@@ -123,6 +213,8 @@ main(int argc, char **argv)
+     nmtst_init_assert_logging(&argc, &argv, "INFO", "DEFAULT");
+ 
+     g_test_add_func("/service-providers/positive", test_positive);
++    g_test_add_func("/service-providers/positive-multiple-a", test_positive_multiple_provider_a);
++    g_test_add_func("/service-providers/positive-multiple-b", test_positive_multiple_provider_b);
+     g_test_add_func("/service-providers/negative", test_negative);
+     g_test_add_func("/service-providers/nonexistent", test_nonexistent);
+ 
+diff --git a/src/core/devices/wwan/tests/test-service-providers.xml b/src/core/devices/wwan/tests/test-service-providers.xml
+index f0ca2debce..de3a487cb0 100644
+--- a/src/core/devices/wwan/tests/test-service-providers.xml
++++ b/src/core/devices/wwan/tests/test-service-providers.xml
+@@ -55,10 +55,24 @@
+ 	</provider>
+ 
+ 	<provider>
+-		<name>Personal</name>
++		<name>Personal A</name>
+ 		<gsm>
+ 			<network-id mcc="666" mnc="999"/>
+-			<apn value="access.example.com">
++			<apn value="a.example.com">
++				<plan type="postpaid"/>
++				<usage type="internet"/>
++				<name>APN</name>
++				<dns>192.0.2.1</dns>
++				<dns>192.0.2.2</dns>
++			</apn>
++		</gsm>
++	</provider>
++
++	<provider>
++		<name>Personal B</name>
++		<gsm>
++			<network-id mcc="666" mnc="999"/>
++			<apn value="b.example.com">
+ 				<plan type="postpaid"/>
+ 				<usage type="internet"/>
+ 				<name>APN</name>
+-- 
+2.45.2
+
