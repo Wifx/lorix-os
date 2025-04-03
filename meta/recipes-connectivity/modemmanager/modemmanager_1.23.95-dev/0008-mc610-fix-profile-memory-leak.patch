@@ -1,0 +1,131 @@
+From 63d3b8c8ec20c0cc45c0f8338a2d6c56454c73fa Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Mon, 31 Mar 2025 12:01:03 +0200
+Subject: [PATCH 08/11] mc610: fix profile memory leak
+
+---
+ .../mm-broadband-modem-fibocom-mc610.c        | 34 ++++++++-----------
+ 1 file changed, 15 insertions(+), 19 deletions(-)
+
+diff --git a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+index 56e9d842..04c7da08 100644
+--- a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
++++ b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+@@ -77,7 +77,7 @@ typedef enum {
+ } FeatureSupport;
+ 
+ struct _MMBroadbandModemFibocomMc610Private {
+-    FeatureSupport gtrndis_support;
++    FeatureSupport  gtrndis_support;
+     FeatureSupport  initial_eps_bearer_support;
+ 
+     /* Ignore +SIM READY */
+@@ -93,7 +93,6 @@ struct _MMBroadbandModemFibocomMc610Private {
+     gint            initial_eps_bearer_cid;
+ 
+     MM3gppProfile  *profile0;
+-    gboolean        profile0_stored;
+ };
+ 
+ /*****************************************************************************/
+@@ -848,19 +847,20 @@ profile_manager_parent_list_profiles_ready (MMIfaceModem3gppProfileManager *self
+     ctx = g_slice_new0 (ListProfilesContext);
+     g_task_set_task_data (task, ctx, (GDestroyNotify) list_profiles_context_free);
+ 
++    // we retrieve profiles detected from parent implementation
+     if (!iface_modem_3gpp_profile_manager_parent->list_profiles_finish (self, res, &ctx->profiles, &error)) {
+         g_task_return_error (task, error);
+         g_object_unref (task);
+         return;
+     }
+ 
+-    // look if profile0 is returned by the modem
++    // look if profile0 is included in the list of profiles
+     if (ctx->profiles) {
+         for (l = ctx->profiles; l; l = l->next) {
+             MM3gppProfile *profile = MM_3GPP_PROFILE (l->data);
+             // TODO: replace 0 by mm_broadband_modem_get_initial_eps_bearer_cid (fibocom) ?
+             if (0 == mm_3gpp_profile_get_profile_id (profile)) {
+-                found = g_object_ref (profile);
++                found = profile;
+                 break;
+             }
+         }
+@@ -869,34 +869,27 @@ profile_manager_parent_list_profiles_ready (MMIfaceModem3gppProfileManager *self
+     if (found) {
+         // profile 0 found in modem, update local storage
+         mm_obj_dbg_red (self, "profile 0 fetched from modem");
+-        if (fibocom->priv->profile0_stored && fibocom->priv->profile0) {
++        if (fibocom->priv->profile0) {
+             g_object_unref (fibocom->priv->profile0);
+         }
+         fibocom->priv->profile0 = g_object_ref (found);
+-        fibocom->priv->profile0_stored = TRUE;
+     } else {
+         // profil 0 doesn't exist in modem, check if we have it locally
+-        if (fibocom->priv->profile0_stored) {
++        if (fibocom->priv->profile0) {
+             mm_obj_dbg_red (self, "profile 0 fetched from local store");
++            // add this profile to profiles list
+             ctx->profiles = g_list_prepend (ctx->profiles, g_object_ref (fibocom->priv->profile0));
+         } else {
+             // profile 0 not found in modem or local store, create a minimal profile 0
+             mm_obj_dbg_red (self, "profile 0 not found in modem or local store, creating minimal profile 0");
+             fibocom->priv->profile0 = mm_3gpp_profile_new ();
+             mm_3gpp_profile_set_profile_id (fibocom->priv->profile0, 0);
++            // TODO: we should probably not define APN
+             mm_3gpp_profile_set_apn (fibocom->priv->profile0, "internet");
+-            fibocom->priv->profile0_stored = TRUE;
++            // add this profile to profiles list
+             ctx->profiles = g_list_prepend (ctx->profiles, g_object_ref (fibocom->priv->profile0));
+         }
+     }
+-    // if profile0 has not been stored already, we create a minimal profil
+-    if (!fibocom->priv->profile0_stored) {
+-        mm_obj_dbg_red (self, "creating minimal profile 0");
+-        fibocom->priv->profile0 = mm_3gpp_profile_new ();
+-        mm_3gpp_profile_set_profile_id (fibocom->priv->profile0, 0);
+-        mm_3gpp_profile_set_apn (fibocom->priv->profile0, "internet");
+-        fibocom->priv->profile0_stored = TRUE;
+-    }
+ 
+     g_task_return_boolean (task, TRUE);
+     g_object_unref (task);
+@@ -1214,14 +1207,12 @@ modem_3gpp_profile_manager_store_profile (MMIfaceModem3gppProfileManager  *self,
+     mm_log_3gpp_profile (self, MM_LOG_LEVEL_DEBUG, "  ", profile);
+ 
+     if (profile_id == 0) {
+-        mm_obj_dbg_red (self, "Storing profile 0 for later use");
++        mm_obj_dbg_red (self, "storing profile 0 for later use");
+ 
+         if (self_mm->priv->profile0) {
+             g_object_unref (self_mm->priv->profile0);
+         }
+-
+         self_mm->priv->profile0 = g_object_ref (profile);
+-        self_mm->priv->profile0_stored = TRUE;
+     }
+ 
+     task = g_task_new (self, NULL, callback, user_data);
+@@ -1360,6 +1351,7 @@ mm_broadband_modem_fibocom_mc610_init (MMBroadbandModemFibocomMc610 *self)
+ 
+     self->priv->initial_eps_bearer_support = FEATURE_SUPPORT_UNKNOWN;
+     self->priv->sim_hot_swap_processing = FALSE;
++    self->priv->profile0 = NULL;
+ }
+ 
+ static void
+@@ -1371,6 +1363,10 @@ finalize (GObject *object)
+     g_regex_unref (self->priv->sim_drop_regex);
+     g_regex_unref (self->priv->sim_hot_swap_regex);
+ 
++    if (self->priv->profile0) {
++        g_object_unref (self->priv->profile0);
++    }
++
+     G_OBJECT_CLASS (mm_broadband_modem_fibocom_mc610_parent_class)->finalize (object);
+ }
+ 
+-- 
+2.45.2
+

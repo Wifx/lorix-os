@@ -1,0 +1,51 @@
+From ccc2e1b9264d1fda12fb6a745b20fdc859018b50 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Thu, 3 Apr 2025 14:13:04 +0200
+Subject: [PATCH 11/11] iface modem 3gpp: disable profile reload verification
+ to make it work with mc610
+
+---
+ src/mm-iface-modem-3gpp.c                                  | 7 +++++--
+ .../fibocom_mc610/mm-broadband-modem-fibocom-mc610.c       | 1 -
+ 2 files changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/src/mm-iface-modem-3gpp.c b/src/mm-iface-modem-3gpp.c
+index 3dc93e3b..478770b9 100644
+--- a/src/mm-iface-modem-3gpp.c
++++ b/src/mm-iface-modem-3gpp.c
+@@ -1258,15 +1258,18 @@ handle_set_initial_eps_bearer_settings_reload_ready (MMIfaceModem3gpp
+     g_assert (!ctx->saved_error);
+ 
+     new_config = MM_IFACE_MODEM_3GPP_GET_IFACE (self)->load_initial_eps_bearer_settings_finish (self, res, &ctx->saved_error);
+-    if (ctx->saved_error)
++    if (ctx->saved_error) {
+         mm_obj_warn (self, "failed reloading initial EPS bearer settings after update: %s", ctx->saved_error->message);
+-    else if (!mm_bearer_properties_cmp (new_config, ctx->config, MM_BEARER_PROPERTIES_CMP_FLAGS_EPS)) {
++    // we simply do not check if reloaded profile is same as before as it is completely buggy and not really useful
++#if 0
++    else if (!mm_bearer_properties_cmp (new_config, ctx->config, MM_BEARER_PROPERTIES_CMP_FLAGS_EPS_RELOAD)) {
+         mm_obj_warn (self, "requested and reloaded initial EPS bearer settings don't match");
+         mm_obj_info (self, "reloaded initial EPS bearer settings:");
+         mm_log_bearer_properties (self, MM_LOG_LEVEL_INFO, "  ", new_config);
+         mm_log_bearer_properties (self, MM_LOG_LEVEL_INFO, "  ", ctx->config);
+         ctx->saved_error = g_error_new_literal (MM_CORE_ERROR, MM_CORE_ERROR_FAILED,
+                                                 "Initial EPS bearer settings were not updated");
++#endif
+     } else {
+         dictionary = mm_bearer_properties_get_dictionary (new_config);
+         mm_gdbus_modem3gpp_set_initial_eps_bearer_settings (ctx->skeleton, dictionary);
+diff --git a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+index f3153fd4..c01518ba 100644
+--- a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
++++ b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+@@ -1355,7 +1355,6 @@ profile_manager_store_profile_auth_settings (GTask *task)
+         password = mm_3gpp_profile_get_password (ctx->profile);
+         allowed_auth = mm_3gpp_profile_get_allowed_auth (ctx->profile);
+ 
+-        /* Both user and password are required; otherwise firmware returns an error */
+         if (!user || !password || allowed_auth == MM_BEARER_ALLOWED_AUTH_NONE) {
+             mm_obj_dbg (self, "not using authentication");
+             ctx->cmd = g_strdup_printf ("+MGAUTH=%d,0", ctx->profile_id);
+-- 
+2.45.2
+

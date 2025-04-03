@@ -1,0 +1,44 @@
+From 64216c1eb665f58e7226e892fd4369102217b9b8 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Sun, 30 Mar 2025 23:52:34 +0200
+Subject: [PATCH 02/11] mm-broadband-modem: add fct to check if hot swap
+ context is already init
+
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
+---
+ src/mm-broadband-modem.c | 6 ++++++
+ src/mm-broadband-modem.h | 1 +
+ 2 files changed, 7 insertions(+)
+
+diff --git a/src/mm-broadband-modem.c b/src/mm-broadband-modem.c
+index 5e026449..64614fe6 100644
+--- a/src/mm-broadband-modem.c
++++ b/src/mm-broadband-modem.c
+@@ -523,6 +523,12 @@ mm_broadband_modem_sim_hot_swap_ports_context_init (MMBroadbandModem  *self,
+     return TRUE;
+ }
+ 
++gboolean
++mm_broadband_modem_sim_hot_swap_ports_context_is_init (MMBroadbandModem *self)
++{
++    return self->priv->sim_hot_swap_ports_ctx != NULL;
++}
++
+ void
+ mm_broadband_modem_sim_hot_swap_ports_context_reset (MMBroadbandModem *self)
+ {
+diff --git a/src/mm-broadband-modem.h b/src/mm-broadband-modem.h
+index f820e045..91e1ffaa 100644
+--- a/src/mm-broadband-modem.h
++++ b/src/mm-broadband-modem.h
+@@ -141,6 +141,7 @@ void     mm_broadband_modem_unlock_sms_storages      (MMBroadbandModem *self,
+ /* Helper to update SIM hot swap */
+ gboolean mm_broadband_modem_sim_hot_swap_ports_context_init  (MMBroadbandModem  *self,
+                                                               GError           **error);
++gboolean mm_broadband_modem_sim_hot_swap_ports_context_is_init (MMBroadbandModem *self);
+ void     mm_broadband_modem_sim_hot_swap_ports_context_reset (MMBroadbandModem  *self);
+ 
+ /* Helper to manage multiplexed bearers */
+-- 
+2.45.2
+

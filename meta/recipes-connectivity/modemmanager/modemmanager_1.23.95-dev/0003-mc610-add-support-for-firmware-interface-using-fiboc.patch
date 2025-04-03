@@ -1,0 +1,99 @@
+From f988ffc74ab5442c2af4a52d8ee5e40476cdcd64 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Sun, 30 Mar 2025 23:54:59 +0200
+Subject: [PATCH 03/11] mc610: add support for firmware interface using
+ fibocom-shared code
+
+---
+ .../mm-broadband-modem-fibocom-mc610.c        | 40 +++++++++++++++++--
+ src/plugins/meson.build                       |  4 +-
+ 2 files changed, 40 insertions(+), 4 deletions(-)
+
+diff --git a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+index 49d9661f..efbdf458 100644
+--- a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
++++ b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+@@ -22,13 +22,20 @@
+ #include "mm-broadband-modem.h"
+ #include "mm-base-modem-at.h"
+ #include "mm-iface-modem.h"
++#include "mm-iface-modem-firmware.h"
+ #include "mm-log.h"
+ #include "mm-shared-fibocom.h"
+ 
+ static void iface_modem_init          (MMIfaceModemInterface         *iface);
++static void iface_modem_firmware_init (MMIfaceModemFirmwareInterface *iface);
++static void shared_fibocom_init       (MMSharedFibocomInterface      *iface);
++
++static MMIfaceModemFirmwareInterface *iface_modem_firmware_parent;
+ 
+ G_DEFINE_TYPE_EXTENDED (MMBroadbandModemFibocomMc610, mm_broadband_modem_fibocom_mc610, MM_TYPE_BROADBAND_MODEM, 0,
+-                        G_IMPLEMENT_INTERFACE (MM_TYPE_IFACE_MODEM, iface_modem_init))
++                        G_IMPLEMENT_INTERFACE (MM_TYPE_IFACE_MODEM, iface_modem_init)
++                        G_IMPLEMENT_INTERFACE (MM_TYPE_SHARED_FIBOCOM,  shared_fibocom_init)
++                        G_IMPLEMENT_INTERFACE (MM_TYPE_IFACE_MODEM_FIRMWARE, iface_modem_firmware_init))
+ 
+ typedef enum {
+     FEATURE_SUPPORT_UNKNOWN,
+@@ -348,14 +355,41 @@ iface_modem_init (MMIfaceModemInterface *iface)
+     iface->modem_power_off_finish = modem_common_power_finish;
+ }
+ 
++static void
++iface_modem_firmware_init (MMIfaceModemFirmwareInterface *iface)
++{
++    iface_modem_firmware_parent = g_type_interface_peek_parent (iface);
++
++    iface->load_update_settings = mm_shared_fibocom_firmware_load_update_settings;
++    iface->load_update_settings_finish = mm_shared_fibocom_firmware_load_update_settings_finish;
++}
++
++static MMIfaceModemFirmwareInterface *
++peek_parent_firmware_interface (MMSharedFibocom *self)
++{
++    return iface_modem_firmware_parent;
++}
++
++static MMBaseModemClass *
++peek_parent_class (MMSharedFibocom *self)
++{
++    return MM_BASE_MODEM_CLASS (mm_broadband_modem_fibocom_mc610_parent_class);
++}
++
++static void
++shared_fibocom_init (MMSharedFibocomInterface *iface)
++{
++    iface->peek_parent_class = peek_parent_class;
++    iface->peek_parent_firmware_interface = peek_parent_firmware_interface;
++}
++
+ static void
+ mm_broadband_modem_fibocom_mc610_class_init (MMBroadbandModemFibocomMc610Class *klass)
+ {
+     GObjectClass *object_class = G_OBJECT_CLASS (klass);
+     MMBroadbandModemClass *broadband_modem_class = MM_BROADBAND_MODEM_CLASS (klass);
+ 
+-    g_type_class_add_private (G_OBJECT_CLASS (klass),
+-                              sizeof (MMBroadbandModemFibocomMc610Private));
++    g_type_class_add_private (object_class, sizeof (MMBroadbandModemFibocomMc610Private));
+ 
+     /* Virtual methods */
+     object_class->finalize = finalize;
+diff --git a/src/plugins/meson.build b/src/plugins/meson.build
+index e86bb85f..7804e979 100644
+--- a/src/plugins/meson.build
++++ b/src/plugins/meson.build
+@@ -477,7 +477,9 @@ if plugins_options['fibocom_mc610']
+     'fibocom_mc610/mm-plugin-fibocom-mc610.c',
+     'fibocom_mc610/mm-broadband-modem-fibocom-mc610.c',
+     'fibocom_mc610/mm-modem-helpers-fibocom-mc610.c',
+-    'fibocom/mm-broadband-bearer-fibocom-ecm.c'
++    'fibocom/mm-broadband-bearer-fibocom-ecm.c',
++    'fibocom/mm-shared-fibocom.c',
++    'fibocom/mm-shared.c',
+   )
+   plugins += {'plugin-fibocom-mc610': {
+     'plugin': true,
+-- 
+2.45.2
+
