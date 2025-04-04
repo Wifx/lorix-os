@@ -3,21 +3,21 @@
 ### CONFIGURE THE MIGRATION ###
 
 # The prefix will be shown in the logs only. Keep it short. E.g. "NM-PROF-MV"
-PREFIX=TEMPLATE 
+PREFIX=WWAN-AUTOCONNECT 
 
 # The following versions description uses semver: https://semver.org/
 # Condition syntax is defined by semver_rs "Range" object: https://docs.rs/semver_rs/0.1.3/semver_rs/struct.Range.html.
 
 # Defines what is the lowest version (included) of the source system for the migration to be applied (semver).
 # You should set this if an old version does not have the software/files you try to migrate.
-# WARNING: remember that a beta/rc is older (<) than a release
+# WARNING: rember that a beta/rc is older (<) than a release
 # Must not be empty. Can be left undefined.
 # VERSION_MIN="0.6.0" 
 
 # Defines what is the highest version (excluded) of the source system for the migration to be applied (semver).
 # This is generally set to the current version. If the user has this version (or higher), the migration is already done and not useful anymore.
 # Must not be empty. Can be left undefined.
-VERSION_MAX="1.0.0" 
+VERSION_MAX="1.7.1" 
 
 # Condition that will be finally be checked to know if the migration will be applied.
 # Is automatically generated with VERSION_MIN and VERSION_MAX if not defined. If defined VERSION_MIN/MAX are ignored
@@ -31,7 +31,7 @@ VERSION_MAX="1.0.0"
 # - $S_ROOT : factory root of the active partition, readonly (/var/lib/os/layers/active/factory)
 source /data/mender/upgrade/migration-env.sh 
 
-# Checks whether the migration should be applied or not (do not change)
+# Checks wheteher the migration should be applied or not (do not change)
 source /data/mender/upgrade/version-guard.sh
 
 ### WRITE YOUR MIGRATION FROM HERE ###
@@ -40,20 +40,34 @@ source /data/mender/upgrade/version-guard.sh
 # WARNING - Path to files MUST not contain /etc (would refer to the currently mounted config)
 cd $D_ETC
 
-SOMEAPP_CONFIG_PATH="someapp/config.yml" # Refers to a file at /etc/someapp/config.yml
+WWAN_CONFIG_PATH="NetworkManager/system-connections/wwan.nmconnection"
 
-# It is generally a good thing to check wheter the migration should be applied or not depending on the FS state
-if [[ ! -f "$SOMEAPP_CONFIG_PATH" ]]; then
-    log $PREFIX "No config to migrate"
+# Check if the Ethernet configuration file exists
+if [ ! -f "$WWAN_CONFIG_PATH" ]; then
+    log $PREFIX "No WWAN configuration file found at $WWAN_CONFIG_PATH. Skipping migration."
     exit 0
 fi
 
 log $PREFIX "Migrating..."
 
-# The migration steps will depend on the type of migration. Prefer post-migration.
-# - Pre-migration : copy files from $S_ETC to $D_ETC, edit them but not rename them
-# - Post-migration : add, edit or remove files in $D_ETC
+# Add autoconnect properties to the [connection] section
+if grep -q "^\[connection\]" "$WWAN_CONFIG_PATH"; then
+    if ! grep -q "^autoconnect-priority=" "$WWAN_CONFIG_PATH"; then
+        sed -i '/^\[connection\]/a autoconnect-priority=1' "$WWAN_CONFIG_PATH"
+        log $PREFIX "Added autoconnect-priority=1 to [connection] section"
+    fi
+    if ! grep -q "^autoconnect-retries=" "$WWAN_CONFIG_PATH"; then
+        sed -i '/^\[connection\]/a autoconnect-retries=0' "$WWAN_CONFIG_PATH"
+        log $PREFIX "Added autoconnect-retries=0 to [connection] section"
+    fi
+    if ! grep -q "^autoconnect=" "$WWAN_CONFIG_PATH"; then
+        sed -i '/^\[connection\]/a autoconnect=true' "$WWAN_CONFIG_PATH"
+        log $PREFIX "Added autoconnect=true to [connection] section"
+    fi
+else
+    log $PREFIX "No [connection] section found in $WWAN_CONFIG_PATH"
+fi
 
-log $PREFIX "Migration done"
+log $PREFIX "Migration completed for $WWAN_CONFIG_PATH"
 
 exit 0
