@@ -23,7 +23,7 @@ SRC_URI = " \
     file://1.7.0/03_CSCD-LoraRegion.sh;subdir=${BPN}-${PV} \
     file://1.7.0/05_Fix-overlay-directories.sh;subdir=${BPN}-${PV} \
     file://1.7.1/01_VPN-autoconnect.sh;subdir=${BPN}-${PV} \
-    file://1.7.1/ 02_wwan_auto-connect.sh;subdir=${BPN}-${PV} \
+    file://1.7.1/02_wwan_auto-connect.sh;subdir=${BPN}-${PV} \
 "
 
 LICENSE = "Proprietary"

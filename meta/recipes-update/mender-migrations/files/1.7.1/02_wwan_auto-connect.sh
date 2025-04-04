@@ -52,18 +52,8 @@ log $PREFIX "Migrating..."
 
 # Add autoconnect properties to the [connection] section
 if grep -q "^\[connection\]" "$WWAN_CONFIG_PATH"; then
-    if ! grep -q "^autoconnect-priority=" "$WWAN_CONFIG_PATH"; then
-        sed -i '/^\[connection\]/a autoconnect-priority=1' "$WWAN_CONFIG_PATH"
-        log $PREFIX "Added autoconnect-priority=1 to [connection] section"
-    fi
-    if ! grep -q "^autoconnect-retries=" "$WWAN_CONFIG_PATH"; then
-        sed -i '/^\[connection\]/a autoconnect-retries=0' "$WWAN_CONFIG_PATH"
-        log $PREFIX "Added autoconnect-retries=0 to [connection] section"
-    fi
-    if ! grep -q "^autoconnect=" "$WWAN_CONFIG_PATH"; then
-        sed -i '/^\[connection\]/a autoconnect=true' "$WWAN_CONFIG_PATH"
-        log $PREFIX "Added autoconnect=true to [connection] section"
-    fi
+    sed -i '/^\[connection\]/a autoconnect=true\nautoconnect-priority=1\nautoconnect-retries=0' "$WWAN_CONFIG_PATH"
+    log $PREFIX "Updated [connection] section with autoconnect properties"
 else
     log $PREFIX "No [connection] section found in $WWAN_CONFIG_PATH"
 fi
