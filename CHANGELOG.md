@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add bash auto-completion packages for NetworkManager and ModemManager
 - [LOR-638] Add iperf3 package by default
 - [LOR-661] LTE: fix roaming and restrict APN information to matching operator ID and name
+- [LOR-666] Add wwan connection auto-connect status watcher
 
 ### Changed
 
