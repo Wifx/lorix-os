@@ -61,6 +61,12 @@ if [ -z "$UUID" ]; then
     exit 1
 fi
 
+# Check if file contains "secondaries"
+if ! grep -q "^secondaries=" "$ETH0_CONFIG_PATH"; then
+    log $PREFIX "Secondaries setting not found in $ETH0_CONFIG_PATH, nothing to migrate"
+    exit 0
+fi
+
 # Extract the secondaries and remove the line from the file
 SECONDARIES=$(grep "^secondaries=" "$ETH0_CONFIG_PATH" | cut -d'=' -f2)
 if [ -z "$SECONDARIES" ]; then
