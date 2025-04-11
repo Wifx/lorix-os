@@ -13,6 +13,7 @@ RDEPENDS:${PN} = " \
     iptables \
     bridge-utils \
     bind-utils \
+    iperf3 \
     \
     openssl \
     openssl-misc \

@@ -9,13 +9,14 @@ SRC_URI += " \
     file://01-vpn-autoconnect.sh \
     file://02-vpn-reconnect.sh \
     file://vpn-reconnect.cron \
-    file://0000-fix-modem-broadband-reconnect-fail-autoconnect-block.patch \
+    file://0001-service-provider-add-optionnal-operator-name-filter-.patch \
+    file://0002-broadband-modem-fix-autoconfig-for-roaming-condition.patch \
 "
 
 inherit update-alternatives
 
 ALTERNATIVE_PRIORITY = "60"
-ALTERNATIVE:${PN} = "net-interfaces"
+ALTERNATIVE:${PN}-daemon = "net-interfaces"
 ALTERNATIVE_LINK_NAME[net-interfaces] = "${sysconfdir}/network/interfaces"
 ALTERNATIVE_TARGET[net-interfaces] = "${sysconfdir}/network/interfaces.networkmanager"
 
@@ -60,7 +61,7 @@ do_install:append() {
     fi
 }
 
-CONFFILES:${PN} += " \
+CONFFILES:${PN}-daemon += " \
     ${sysconfdir}/network/interfaces.networkmanager \
     ${sysconfdir}/NetworkManager/conf.d/00-no-systemd-resolved.conf \
     ${sysconfdir}/NetworkManager/conf.d/15-resolv.conf \

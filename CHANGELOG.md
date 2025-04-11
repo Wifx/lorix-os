@@ -5,19 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.7.1] - Unreleased
+## [1.7.1] - 2025-04-07
+
+### Added
+
+- Add bash auto-completion packages for NetworkManager and ModemManager
+- [LOR-638] Add iperf3 package by default
+- [LOR-661] LTE: fix roaming and restrict APN information to matching operator ID and name
+- [LOR-666] Add wwan connection auto-connect status watcher
 
 ### Changed
 
 - [LOR-642] Disable default route on Ethernet over USB connection
 - [LOR-653] Update NetworkManager to v1.52 and nm-openvpn to 1.12
+- [LOR-654] ZLP support for Fibocom MC610 in wwan kernel driver
+- [LOR-664] Update mender client to 5.0.1
+- [LOR-648] Update Manager to v0.19
 
 ### Fixed
 
 - [LOR-650] WWAN auto-connect stops when trying to reconnect when modem state is "disconnecting" (modem init failure)
 - [LOR-649] Workaround modem init failures by resetting modem if USB device is not available anymore
 
-## [1.7.0] - 2024-02-03
+## [1.7.0] - 2025-02-03
 
 ### Added
 

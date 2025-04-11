@@ -1,7 +1,9 @@
 # Copyright (c) 2022, Wifx Sarl <info@iot.wifx.net>
 # All rights reserved.
 
-RDEPENDS:${PN} += "xdelta3 machine-info"
+RDEPENDS:${PN} += "xdelta3 machine-info bash"
+
+RDEPENDS:mender-update += "bash"
 
 RPROVIDES:${PN} += "virtual/updater"
 
@@ -26,7 +28,7 @@ FILES:mender-update += "\
 
 do_install:append() {
     install -m 755 -d ${D}/${datadir}/mender/inventory
-    install -m 755 -d ${WORKDIR}/mender-inventory-machine.sh ${D}/${datadir}/mender/inventory/mender-inventory-machine
+    install -m 755 ${WORKDIR}/mender-inventory-machine.sh ${D}/${datadir}/mender/inventory/mender-inventory-machine
 
     install -m 755 -d ${D}/${datadir}/mender/modules/v3
     install -m 755 ${WORKDIR}/wifx-binary-delta ${D}/${datadir}/mender/modules/v3/wifx-binary-delta

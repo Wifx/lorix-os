@@ -11,6 +11,8 @@ SRC_URI = " \
     file://fibocom-mc610-setup-ecm.sh \
     file://wwan-modem-check.sh \
     file://99-wwan-modem.rules \
+    file://wwan-autoconnect-unblock.cron \
+    file://wwan-autoconnect-unblock.sh \
 "
 
 PR = "r0"
@@ -21,7 +23,8 @@ do_patch[noexec] = "1"
 do_configure[noexec] = "1"
 do_compile[noexec] = "1"
 
-RDEPENDS:${PN} += "bash networkmanager modemmanager"
+DEPDENDS:${PN} += "cronie"
+RDEPENDS:${PN} += "bash networkmanager modemmanager cronie jq"
 
 do_install:l1() {
     # Install script called by udev
@@ -38,6 +41,12 @@ do_install:l1() {
     install -p -m 0644 ${WORKDIR}/99-wwan-modem.rules ${D}${nonarch_base_libdir}/udev/rules.d
     sed -i -e 's,@SCRIPT@,${nonarch_base_libdir}/os/wwan/wwan-modem-check.sh,g' ${D}${nonarch_base_libdir}/udev/rules.d/99-wwan-modem.rules
     sed -i -e 's,@DEVPATH@,/devices/platform/ahb/600000.ehci/usb1/1-2,g' ${D}${nonarch_base_libdir}/udev/rules.d/99-wwan-modem.rules
+
+    install -d -m 755 ${D}${sysconfdir}/cron.d
+    install -p -m 0644 ${WORKDIR}/wwan-autoconnect-unblock.cron ${D}${sysconfdir}/cron.d/wwan-autoconnect-unblock
+
+    install -d -m 755 ${D}${sysconfdir}/cron.script
+    install -p -m 0755 ${WORKDIR}/wwan-autoconnect-unblock.sh ${D}${sysconfdir}/cron.script/wwan-autoconnect-unblock.sh
 }
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
@@ -45,4 +54,6 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 FILES:${PN} += " \
     ${nonarch_base_libdir}/os/wwan/* \
     ${nonarch_base_libdir}/udev/rules.d/* \
+    ${sysconfdir}/cron.d/wwan-autoconnect-unblock \
+    ${sysconfdir}/cron.script/wwan-autoconnect-unblock.sh \
 "
