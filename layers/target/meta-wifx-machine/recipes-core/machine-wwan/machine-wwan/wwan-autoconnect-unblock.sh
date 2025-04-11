@@ -15,7 +15,7 @@ if [[ "$AUTOCONNECT" != "yes" ]]; then
 fi
 
 # Check modem state
-MODEM_STATE=$(mmcli -m any | grep "state:" | head -n 1 | awk '{print $3}')
+MODEM_STATE=$(mmcli -J -m any | jq -r .modem.generic.state)
 if [[ $? -ne 0 ]]; then
     logger -p daemon.error -t wwan-autoconnect-unblock "Failed to retrieve modem state"
     exit 1
@@ -31,7 +31,7 @@ logger -p daemon.debug -t wwan-autoconnect-unblock "Modem is in registered state
 sleep 5
 
 # Check if the modem is still in registered state
-MODEM_STATE=$(mmcli -m any | grep "state:" | head -n 1 | awk '{print $3}')
+MODEM_STATE=$(mmcli -J -m any | jq -r .modem.generic.state)
 if [[ $? -ne 0 ]]; then
     logger -p daemon.error -t wwan-autoconnect-unblock "Failed to retrieve modem state after waiting"
     exit 1

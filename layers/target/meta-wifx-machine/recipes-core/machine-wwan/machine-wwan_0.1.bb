@@ -24,7 +24,7 @@ do_configure[noexec] = "1"
 do_compile[noexec] = "1"
 
 DEPDENDS:${PN} += "cronie"
-RDEPENDS:${PN} += "bash networkmanager modemmanager cronie"
+RDEPENDS:${PN} += "bash networkmanager modemmanager cronie jq"
 
 do_install:l1() {
     # Install script called by udev
