@@ -14,3 +14,8 @@ do_install:append() {
     install -d -m 755 ${D}${sysconfdir}/cron.script
     install -p -m 0755 ${S}/examples/logrotate.cron ${D}${sysconfdir}/cron.script/logrotate.sh
 }
+
+FILES:${PN} += " \
+    ${sysconfdir}/cron.d/logrotate \
+    ${sysconfdir}/cron.script/logrotate.sh \
+"

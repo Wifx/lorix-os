@@ -13,6 +13,8 @@ RDEPENDS:${PN} += " \
 "
 RPROVIDES:${PN} += "virtual/udp-packet-forwarder"
 
+INSANE_SKIP:${PN} += "file-rdeps"
+
 SRC_URI += " \
     file://udp-packet-forwarder-generic.yml \
     file://channels/AS920/AS_920_923.json \
