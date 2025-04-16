@@ -1,7 +1,7 @@
 From e629016876bd4671795b71dd4352c45ea8046627 Mon Sep 17 00:00:00 2001
 From: Yannick Lanz <yannick.lanz@wifx.net>
 Date: Wed, 2 Apr 2025 14:59:15 +0200
-Subject: [PATCH 2/2] broadband modem: fix autoconfig for roaming condition,
+Subject: [PATCH 2/3] broadband modem: fix autoconfig for roaming condition,
  match SIM MCC/MNC instead of current network, APN lookup with operator name
  filter
 
