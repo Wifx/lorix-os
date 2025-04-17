@@ -5,6 +5,7 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_1.23.95-dev:"
 SRC_URI += " \
     file://78-mm-allowlist-internal-model.rules \
     file://0001-mc610-add-support-for-Fibocom-MC610-specific-plugin.patch \
+    file://0002-mc610-fix-SIM-hot-swap-handling-following-1.24-upgra.patch \
 "
 
 # Disable MBIM and QMI features
