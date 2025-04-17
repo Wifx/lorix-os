@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Update ModemManager to 1.24
 - [LOR-611] Implement support for custom APN including EPS bearer on Wifx L1 4G
+- [LOR-647] Update mobile-broadband-provider-info to 20240407
 
 ## [1.7.1] - 2025-04-07
 
