@@ -14,6 +14,7 @@ RDEPENDS:${PN} = " \
     bridge-utils \
     bind-utils \
     iperf3 \
+    nethogs \
     \
     openssl \
     openssl-misc \

@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.7.3] - Unreleased
 
+### Added
+
+- [LOR-671] Add NetHogs networking utility by default
+
 ### Fixed
 
 - [LOR-673] Basic Station config file path is not migrated properly when both BASIC-STATION-LORA-REGION and BS-CFG-LORA-FRONTEND-REV are done
+
 
 ## [1.7.2] - 2025-04-17
 
