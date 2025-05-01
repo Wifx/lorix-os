@@ -44,7 +44,7 @@ BASICSTATION_PATH="opt/lora-basic-station"
 BASICSTATION_CONFIG_PATH="$BASICSTATION_PATH/station.conf" # Refers to /etc/opt/lora-basic-station/station.conf
 
 # It is generally a good thing to check wheter the migration should be applied or not depending on the FS state
-if [[ ! -f "$BASICSTATION_CONFIG_PATH" ]]; then
+if [[ ! -L "$BASICSTATION_CONFIG_PATH" ]]; then
     log $PREFIX "No configuration file found at $BASICSTATION_CONFIG_PATH, skipping migration"
     exit 0
 fi
