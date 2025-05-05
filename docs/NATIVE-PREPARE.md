@@ -17,6 +17,14 @@ build-essential chrpath socat cpio python python3 python3-pip python3-pexpect \
 xz-utils debianutils iputils-ping
 ```
 
+### Increase git buffer size
+
+As some git repositories are quite big, it could be necessary to increase the buffer size:
+```
+git config --global http.postBuffer 1048576000
+git config --global https.postBuffer 1048576000
+```
+
 ## Create cache folders
 
 By default, the Yocto configuration of LORIX OS will put its cache in /yocto. Therefore, you have to create this folder and give access right to the user that will build the image.
