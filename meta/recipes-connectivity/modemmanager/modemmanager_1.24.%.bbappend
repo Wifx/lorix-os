@@ -6,6 +6,7 @@ SRC_URI += " \
     file://78-mm-allowlist-internal-model.rules \
     file://0001-mc610-add-support-for-Fibocom-MC610-specific-plugin.patch \
     file://0002-mc610-fix-SIM-hot-swap-handling-following-1.24-upgra.patch \
+    file://0003-mc610-reset-PDP-context-0-during-modem-init.patch \
 "
 
 # Disable MBIM and QMI features
