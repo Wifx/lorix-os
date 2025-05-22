@@ -1,0 +1,134 @@
+From 3dd0a4ddf39928437472d69d16df56bc23285c79 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Thu, 22 May 2025 15:37:44 +0200
+Subject: [PATCH 4/4] broadband modem: improve APN autoconfig with
+ operator/MCC/MNC filter then MCC/MNC then fallback
+
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
+---
+ src/core/devices/wwan/nm-modem-broadband.c | 84 ++++++++++++++++++----
+ 1 file changed, 70 insertions(+), 14 deletions(-)
+
+diff --git a/src/core/devices/wwan/nm-modem-broadband.c b/src/core/devices/wwan/nm-modem-broadband.c
+index 993ae8ce80..1bb7f7436d 100644
+--- a/src/core/devices/wwan/nm-modem-broadband.c
++++ b/src/core/devices/wwan/nm-modem-broadband.c
+@@ -475,26 +475,72 @@ send_pin_ready(MMSim *sim, GAsyncResult *result, NMModemBroadband *self)
+ }
+ 
+ static void
+-find_gsm_apn_cb(const char   *apn,
+-                const char   *username,
+-                const char   *password,
+-                const char   *gateway,
+-                const char   *auth_method,
+-                const GSList *dns,
+-                GError       *error,
+-                gpointer      user_data)
++find_gsm_apn_from_id_cb(const char   *apn,
++                        const char   *username,
++                        const char   *password,
++                        const char   *gateway,
++                        const char   *auth_method,
++                        const GSList *dns,
++                        GError       *error,
++                        gpointer      user_data)
+ {
+     NMModemBroadband        *self = user_data;
+     NMModemBroadbandPrivate *priv = NM_MODEM_BROADBAND_GET_PRIVATE(self);
+     ConnectContext          *ctx  = priv->ctx;
+ 
+     if (error) {
+-        _LOGW("failed to connect '%s': APN not found: %s",
+-              nm_connection_get_id(ctx->connection),
+-              error->message);
++        _LOGW("%s", error->message);
+ 
+-        nm_modem_emit_prepare_result(NM_MODEM(self), FALSE, NM_DEVICE_STATE_REASON_GSM_APN_FAILED);
+-        connect_context_clear(self);
++        _LOGI("trying APN fallback config for connection '%s' with APN 'internet'",
++            nm_connection_get_id(ctx->connection)
++        );
++
++        /* Fallback implementation */
++        ctx->connect_properties =
++            create_gsm_connect_properties(ctx->connection, "internet", NULL, NULL);
++        g_return_if_fail(ctx->connect_properties);
++        connect_context_step(self);
++        return;
++    }
++
++    /* Blank APN ("") means the default subscription APN */
++    ctx->connect_properties =
++        create_gsm_connect_properties(ctx->connection, apn, username, password);
++    g_return_if_fail(ctx->connect_properties);
++    connect_context_step(self);
++}
++
++static void
++find_gsm_apn_from_id_name_cb(const char   *apn,
++                             const char   *username,
++                             const char   *password,
++                             const char   *gateway,
++                             const char   *auth_method,
++                             const GSList *dns,
++                             GError       *error,
++                             gpointer      user_data)
++{
++    NMModemBroadband        *self = user_data;
++    NMModemBroadbandPrivate *priv = NM_MODEM_BROADBAND_GET_PRIVATE(self);
++    ConnectContext          *ctx  = priv->ctx;
++    const char              *operator_id = NULL;
++
++    if (error) {
++        _LOGW("%s", error->message);
++
++        operator_id = mm_sim_get_operator_identifier(priv->sim_iface);
++
++        _LOGI("trying APN autoconfig for connection '%s' with ID '%s' only",
++            nm_connection_get_id(ctx->connection),
++            operator_id
++        );
++
++        nm_service_providers_find_gsm_apn(MOBILE_BROADBAND_PROVIDER_INFO_DATABASE,
++                                          operator_id,
++                                          NULL,
++                                          ctx->cancellable,
++                                          find_gsm_apn_from_id_cb,
++                                          self);
+         return;
+     }
+ 
+@@ -522,11 +568,17 @@ try_create_connect_properties(NMModemBroadband *self)
+             operator_id = mm_sim_get_operator_identifier(priv->sim_iface);
+             operator_name = mm_sim_get_operator_name(priv->sim_iface);
+ 
++            _LOGI("trying APN autoconfig for connection '%s' with ID '%s' and name '%s'",
++                nm_connection_get_id(ctx->connection),
++                operator_id,
++                operator_name
++            );
++
+             nm_service_providers_find_gsm_apn(MOBILE_BROADBAND_PROVIDER_INFO_DATABASE,
+                                               operator_id,
+                                               operator_name,
+                                               ctx->cancellable,
+-                                              find_gsm_apn_cb,
++                                              find_gsm_apn_from_id_name_cb,
+                                               self);
+         } else {
+             ctx->connect_properties =
+@@ -660,6 +712,10 @@ connect_context_step(NMModemBroadband *self)
+             const char   *username  = nm_setting_gsm_get_initial_eps_username(s_gsm);
+             const char   *password  = nm_setting_gsm_get_initial_eps_password(s_gsm);
+ 
++            _LOGD("initial EPS bearer settings: apn='%s', username='%s', password='%s'",
++                  apn ?: "", username ?: "", password ?: "");
++            _LOGD("initial EPS bearer settings: do_config=%d", do_config);
++
+             /* assume do_config is true if an APN is set */
+             if (apn || do_config) {
+ #if MM_SUPPORTS_INITIAL_EPS_BEARER_SETTINGS
+-- 
+2.45.2
+
