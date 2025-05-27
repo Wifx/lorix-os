@@ -1,0 +1,101 @@
+# Logging.
+[logging]
+
+  # Log level.
+  #
+  # Options are: trace, debug, info, warn error.
+  level = "info"
+
+
+# SQLite configuration.
+#
+# Note: this option is only available to ChirpStack with SQLite support.
+[sqlite]
+
+  # Sqlite DB path.
+  #
+  # Make sure the path exists and that the ChirpStack process has read-write
+  # access to it. If the database file does not exists, it will be created the
+  # first time ChirpStack starts.
+  #
+  # Format example: sqlite:///<DATABASE>.
+  path="sqlite://chirpstack.sqlite"
+
+  # Max open connections.
+  #
+  # This sets the max. number of open connections that are allowed in the
+  # SQLite connection pool.
+  max_open_connections=4
+
+  # PRAGMAs.
+  #
+  # This configures the list of PRAGMAs that are executed to prepare the
+  # SQLite library. For a full list of available PRAGMAs see:
+  # https://www.sqlite.org/pragma.html
+  pragmas=[
+    "busy_timeout = 1000",
+    "foreign_keys = ON",
+  ]
+
+
+# Redis configuration.
+[redis]
+
+  # Server address or addresses.
+  #
+  # Set multiple addresses when connecting to a cluster.
+  servers = ["redis://localhost/"]
+
+  # Redis Cluster.
+  #
+  # Set this to true when the provided URLs are pointing to a Redis Cluster
+  # instance.
+  cluster = false
+
+
+# Network related configuration.
+[network]
+
+  # Network identifier (NetID, 3 bytes) encoded as HEX (e.g. 010203).
+  net_id = "000000"
+
+  # Enabled regions.
+  #
+  # Multiple regions can be enabled simultaneously. Each region must match
+  # the 'name' parameter of the region configuration in '[[regions]]'.
+  enabled_regions = [
+    "as923",
+    "as923_2",
+    "as923_3",
+    "as923_4",
+    "au915_0",
+    "eu868",
+    "in865",
+    "kr920",
+    "ru864",
+    "us915_0",
+    "us915_1",
+  ]
+
+
+# API interface configuration.
+[api]
+
+  # interface:port to bind the API interface to.
+  bind = "0.0.0.0:8090"
+
+  # Secret.
+  #
+  # This secret is used for generating login and API tokens, make sure this
+  # is never exposed. Changing this secret will invalidate all login and API
+  # tokens. The following command can be used to generate a random secret:
+  #   openssl rand -base64 32
+  secret = "you-must-replace-this"
+
+
+[integration]
+  enabled = ["mqtt"]
+
+  [integration.mqtt]
+    server = "tcp://localhost:1883/"
+    json = true
