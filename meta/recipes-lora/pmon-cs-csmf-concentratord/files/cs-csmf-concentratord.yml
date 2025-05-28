@@ -1,0 +1,71 @@
+description: ChirpStack
+autostart: true
+log: true
+jobs:
+    redis:
+        description: Redis server used by the ChirpStack LNS
+        boot-order: 0
+        process:
+            run-mode: exec
+            program-path: /usr/bin/redis-server
+            program-arguments: >-
+              /etc/redis/redis.conf
+            delays:
+                start: 2000
+                term: 1000
+                restart: 5000
+    mosquitto:
+        description: MOSQUITTO broker used by the ChirpStack LNS
+        boot-order: 1
+        process:
+            run-mode: exec
+            program-path: /usr/sbin/mosquitto
+            program-arguments: >-
+              -c /etc/mosquitto/mosquitto.conf
+            delays:
+                start: 2000
+                term: 1000
+                restart: 5000
+    concentratord:
+        description: The daemon receiving data from the LoRa concentrator (SX13XX) and forwarding to the Gateway Bridge
+        boot-order: 2
+        process:
+            run-mode: exec
+            program-path: /opt/chirpstack-concentratord/chirpstack-concentratord
+            program-arguments: >-
+              -c /etc/opt/chirpstack-concentratord/00-concentratord.toml
+              -c /etc/opt/chirpstack-concentratord/10-gateway.toml
+              -c /etc/opt/chirpstack-concentratord/11-location.toml
+              -c /etc/opt/chirpstack-concentratord/channels/channels.toml
+            delays:
+                start: 3000
+                term: 1000
+                restart: 5000
+    forwarder:
+        description: ChirpStack MQTT Forwarder
+        boot-order: 3
+        process:
+            run-mode: exec
+            program-path: /opt/chirpstack-mqtt-forwarder/chirpstack-mqtt-forwarder
+            program-arguments: >-
+              -c /etc/opt/chirpstack-mqtt-forwarder/10-general.toml
+              -c /etc/opt/chirpstack-mqtt-forwarder/20-lns.toml
+              -c /etc/opt/chirpstack-mqtt-forwarder/30-backend.toml
+              -c /etc/opt/chirpstack-mqtt-forwarder/40-metadata.toml
+              -c /etc/opt/chirpstack-mqtt-forwarder/50-commands.toml
+            delays:
+                start: 1000
+                term: 1000
+                restart: 5000
+    chirpstack:
+        description: ChirpStack LNS
+        boot-order: 4
+        process:
+            run-mode: exec
+            program-path: /opt/chirpstack/chirpstack
+            program-arguments: -c /etc/opt/chirpstack
+            execution-directory: /etc/opt/chirpstack
+            delays:
+                start: 1000
+                term: 1000
+                restart: 5000
