@@ -64,7 +64,7 @@ jobs:
             run-mode: exec
             program-path: /opt/chirpstack/chirpstack
             program-arguments: -c /etc/opt/chirpstack
-            execution-directory: /etc/opt/chirpstack
+            execution-directory: /opt/chirpstack
             delays:
                 start: 1000
                 term: 1000
