@@ -1,0 +1,26 @@
+From d58329f5f30a44981bfe64f020ccd317c486b1d4 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Mon, 2 Jun 2025 09:27:32 +0200
+Subject: [PATCH 4/4] mc610: reduce modem mode support to only ECM to avoid
+ modem detection before switch to ECM
+
+---
+ src/plugins/fibocom_mc610/mm-plugin-fibocom-mc610.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/plugins/fibocom_mc610/mm-plugin-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-plugin-fibocom-mc610.c
+index 9f838168..26880ae3 100644
+--- a/src/plugins/fibocom_mc610/mm-plugin-fibocom-mc610.c
++++ b/src/plugins/fibocom_mc610/mm-plugin-fibocom-mc610.c
+@@ -59,7 +59,7 @@ mm_plugin_create_fibocom_mc610 (void)
+ {
+     static const gchar *subsystems[] = { "tty", "net", "usbmisc", NULL };
+     static const guint16 vendor_ids[] = { 0x1782, 0 };
+-    static const guint16 product_ids[] = { 0x4d10, 0x4d11, 0 };
++    static const guint16 product_ids[] = { 0x4d11, 0 };
+ 
+     return MM_PLUGIN (
+         g_object_new (MM_TYPE_PLUGIN_FIBOCOM_MC610,
+-- 
+2.45.2
+
