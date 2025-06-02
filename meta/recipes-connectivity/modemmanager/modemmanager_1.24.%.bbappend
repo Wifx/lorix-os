@@ -1,7 +1,6 @@
 # Copyright (c) 2023, Wifx Sarl <info@iot.wifx.net>
 # All rights reserved.
 
-FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_1.23.95-dev:"
 SRC_URI += " \
     file://78-mm-allowlist-internal-model.rules \
     file://0001-mc610-add-support-for-Fibocom-MC610-specific-plugin.patch \
