@@ -22,6 +22,11 @@ SRC_URI = " \
     file://999_Final-cleanup.sh;subdir=${BPN}-${PV} \
 "
 
+DEPENDS += " \
+    makeself-native \
+    opkg-status-diff \
+"
+
 RDEPENDS:${PN} += "ca-certificates"
 
 LICENSE = "Proprietary"
@@ -37,6 +42,27 @@ DISTRO_METADATA = " \
     OS_DISTRO_UPGRADE_COMPATIBLE_VERSIONS='${OS_DISTRO_UPGRADE_COMPATIBLE_VERSIONS}' \
 "
 
+do_compile() {
+    include_extra_tools
+    include_scripts
+}
+
+include_extra_tools() {
+    package_and_include_opkg_status_diff
+}
+
+package_and_include_opkg_status_diff() {
+    mkdir -p "${S}/tools/opkg-status-diff"
+    cp "${STAGING_DIR_TARGET}${bindir}/opkg-status-diff" "${S}/tools/opkg-status-diff/"
+
+    makeself.sh --noprogress \
+        --target "/data/mender/upgrade/tools" \
+        "${S}/tools/opkg-status-diff" \
+        "${MENDER_STATE_SCRIPTS_DIR}/ArtifactInstall_Enter_30_opkg-status-diff.run" \
+        "opkg-status-diff" \
+        echo "opkg-status-diff decompressed"
+}
+
 include_script() {
     file=$1
     name=$2
@@ -44,7 +70,7 @@ include_script() {
     cp $file ${MENDER_STATE_SCRIPTS_DIR}/${name}
 }
 
-do_compile() {
+include_scripts() {
 
     # Artifact install enter
 
