@@ -4,10 +4,17 @@
 # All rights reserved.
 
 SCRIPTS_PATH="/data/mender/scripts"
+INHIBIT_FILE_PATH="/data/mender/upgrade/inhibit-reboot-script-standalone"
 
 function log {
     echo "$1"
 }
+
+# Check if process is inhibited
+if [ -f "$INHIBIT_FILE_PATH" ]; then
+    log "Reboot script is inhibited by $INHIBIT_FILE_PATH"
+    exit 0
+fi
 
 # Check if an update is pending
 UPGRADE_AVAILABLE=$(fw_printenv upgrade_available -n)
