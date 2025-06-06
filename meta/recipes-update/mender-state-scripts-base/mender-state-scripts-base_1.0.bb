@@ -6,7 +6,7 @@ SRC_URI = " \
     file://102_Setup-utils.sh;subdir=${BPN}-${PV} \
     file://110_Check-version.sh;subdir=${BPN}-${PV} \
     file://111_Check-space.sh;subdir=${BPN}-${PV} \
-    file://120_Setup-migration.sh;subdir=${BPN}-${PV} \
+    file://120_Migration-context-setup.sh;subdir=${BPN}-${PV} \
     file://131_Install-bootstrap-artifact.sh;subdir=${BPN}-${PV} \
     file://150_Migrate.sh;subdir=${BPN}-${PV} \
     file://170_Migrate-opkg-status-diff.sh;subdir=${BPN}-${PV} \
@@ -18,11 +18,11 @@ SRC_URI = " \
     file://391_Update-ca-certificates.sh;subdir=${BPN}-${PV} \
     file://395_Migrate-opkg-status-apply.sh;subdir=${BPN}-${PV} \
     file://396_Opkg-configure.sh;subdir=${BPN}-${PV} \
-    file://490_Migrate-cleanup.sh;subdir=${BPN}-${PV} \
+    file://490_Cleanup-inactive-user-data.sh;subdir=${BPN}-${PV} \
     file://800_Migrate-opkg-status-restore.sh;subdir=${BPN}-${PV} \
     file://810_Config-migration-restore.sh;subdir=${BPN}-${PV} \
-    file://998_Setup-migration-cleanup.sh;subdir=${BPN}-${PV} \
-    file://999_Final-cleanup.sh;subdir=${BPN}-${PV} \
+    file://998_Migration-context-cleanup.sh;subdir=${BPN}-${PV} \
+    file://999_Upgrade-cleanup.sh;subdir=${BPN}-${PV} \
 "
 
 DEPENDS += " \
@@ -88,7 +88,7 @@ include_scripts() {
     include_script 111_Check-space.sh                       ArtifactInstall_Enter_11_Check-space
 
     ## 20 Migrations setup
-    include_script 120_Setup-migration.sh                   ArtifactInstall_Enter_20_Setup-migration
+    include_script 120_Migration-context-setup.sh           ArtifactInstall_Enter_20_Migration-context-setup
 
     ## 30 Bootstrap artifact install
     # File ArtifactInstall_Enter_30_bootstrap.mender.run is installed by mender-artifactimg class
@@ -108,7 +108,7 @@ include_scripts() {
     ## 90 Migration finalize
     include_script 198_Migrate-reset-immutables.sh          ArtifactInstall_Enter_98_Migrate-reset-immutables
 
-    include_script 998_Setup-migration-cleanup.sh           ArtifactInstall_Enter_98_Setup-migration-cleanup
+    include_script 998_Migration-context-cleanup.sh         ArtifactInstall_Enter_98_Migration-context-cleanup
 
     # Artifact install leave
     include_script 290_Config-migration-disable.sh          ArtifactInstall_Leave_90_Config-migration-disable
@@ -129,7 +129,8 @@ include_scripts() {
     # Artifact commit enter
 
     # Artifact commit leave
-    include_script 490_Migrate-cleanup.sh                   ArtifactCommit_Leave_90_Migrate-cleanup
+    include_script 490_Cleanup-inactive-user-data.sh        ArtifactCommit_Leave_90_Cleanup-inactive-user-data
+    include_script 999_Upgrade-cleanup.sh                   ArtifactCommit_Leave_99_Upgrade-cleanup
 
     # Artifact rollback enter
     include_script 800_Migrate-opkg-status-restore.sh       ArtifactRollback_Enter_00_Migrate-opkg-status-restore
@@ -141,6 +142,5 @@ include_scripts() {
     include_script 810_Config-migration-restore.sh          ArtifactFailure_Enter_10_Config-migration-enable
 
     # Artifact failure leave
-    include_script 998_Setup-migration-cleanup.sh           ArtifactFailure_Leave_00_Setup-migration-cleanup
-    include_script 999_Final-cleanup.sh                     ArtifactFailure_Leave_01_Final-cleanup
+    include_script 998_Migration-context-cleanup.sh         ArtifactFailure_Leave_00_Migration-context-cleanup
 }
