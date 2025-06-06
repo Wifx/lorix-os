@@ -9,14 +9,17 @@ SRC_URI = " \
     file://120_Setup-migration.sh;subdir=${BPN}-${PV} \
     file://131_Install-bootstrap-artifact.sh;subdir=${BPN}-${PV} \
     file://150_Migrate.sh;subdir=${BPN}-${PV} \
+    file://170_Migrate-opkg-status-diff.sh;subdir=${BPN}-${PV} \
     file://198_Migrate-reset-immutables.sh;subdir=${BPN}-${PV} \
     file://290_Config-migration-disable.sh;subdir=${BPN}-${PV} \
     file://299_Logs-save.sh;subdir=${BPN}-${PV} \
     file://300_Inhibit-reboot-script-standalone.sh;subdir=${BPN}-${PV} \
     file://390_Logs-restore.sh;subdir=${BPN}-${PV} \
     file://391_Update-ca-certificates.sh;subdir=${BPN}-${PV} \
-    file://392_Opkg-configure.sh;subdir=${BPN}-${PV} \
+    file://395_Migrate-opkg-status-apply.sh;subdir=${BPN}-${PV} \
+    file://396_Opkg-configure.sh;subdir=${BPN}-${PV} \
     file://490_Migrate-cleanup.sh;subdir=${BPN}-${PV} \
+    file://800_Migrate-opkg-status-restore.sh;subdir=${BPN}-${PV} \
     file://810_Config-migration-restore.sh;subdir=${BPN}-${PV} \
     file://998_Setup-migration-cleanup.sh;subdir=${BPN}-${PV} \
     file://999_Final-cleanup.sh;subdir=${BPN}-${PV} \
@@ -97,12 +100,15 @@ include_scripts() {
     include_script 150_Migrate.sh                           ArtifactInstall_Enter_50_Migrate
 
     ## 60 Specific post-migrations
+    # Installed by mender-migrations recipe
+
+    ## 70 Persistent post-migration
+    include_script 170_Migrate-opkg-status-diff.sh          ArtifactInstall_Enter_70_Migrate-opkg-status-diff
 
     ## 90 Migration finalize
     include_script 198_Migrate-reset-immutables.sh          ArtifactInstall_Enter_98_Migrate-reset-immutables
 
     include_script 998_Setup-migration-cleanup.sh           ArtifactInstall_Enter_98_Setup-migration-cleanup
-    #include_script 999_Final-cleanup.sh                     ArtifactInstall_Enter_99_Final-cleanup
 
     # Artifact install leave
     include_script 290_Config-migration-disable.sh          ArtifactInstall_Leave_90_Config-migration-disable
@@ -116,7 +122,9 @@ include_scripts() {
     # Artifact reboot leave (executed either by mender client or init script)
     include_script 390_Logs-restore.sh                      ArtifactReboot_Leave_00_Logs-restore
     include_script 391_Update-ca-certificates.sh            ArtifactReboot_Leave_01_Update-ca-certificates
-    include_script 392_Opkg-configure.sh                    ArtifactReboot_Leave_02_OPKG-configure
+
+    include_script 395_Migrate-opkg-status-apply.sh         ArtifactReboot_Leave_05_Migrate-opkg-status-apply
+    include_script 396_Opkg-configure.sh                    ArtifactReboot_Leave_06_OPKG-configure
 
     # Artifact commit enter
 
@@ -124,6 +132,7 @@ include_scripts() {
     include_script 490_Migrate-cleanup.sh                   ArtifactCommit_Leave_90_Migrate-cleanup
 
     # Artifact rollback enter
+    include_script 800_Migrate-opkg-status-restore.sh       ArtifactRollback_Enter_00_Migrate-opkg-status-restore
     include_script 810_Config-migration-restore.sh          ArtifactRollback_Enter_10_Config-migration-enable
 
     # Artifact rollback leave
@@ -133,5 +142,5 @@ include_scripts() {
 
     # Artifact failure leave
     include_script 998_Setup-migration-cleanup.sh           ArtifactFailure_Leave_00_Setup-migration-cleanup
-    include_script 999_Final-cleanup.sh                    ArtifactFailure_Leave_01_Final-cleanup
+    include_script 999_Final-cleanup.sh                     ArtifactFailure_Leave_01_Final-cleanup
 }
