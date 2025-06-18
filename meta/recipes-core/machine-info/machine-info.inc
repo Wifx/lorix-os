@@ -15,13 +15,14 @@ inherit unpack-online-assets
 STAGING_ASSETS = "${WORKDIR}/staging-assets"
 
 do_install(){
-    install -m 0755 -d ${D}${sbindir}
-    install -m 0755 ${STAGING_ASSETS}/${sbindir}/machine-info ${D}${sbindir}/machine-info
-
     do_install_base
 }
 
 do_install_base(){
+    install -m 0755 -d ${D}${sbindir}
+    install -m 0755 ${STAGING_ASSETS}/${sbindir}/machine-info ${D}${sbindir}/machine-info
+    ln -sf ${sbindir}/machine-info ${D}${sbindir}/machine-info-init
+
     # Install udev rule
     install -m 755 -d ${D}${sysconfdir}/udev/rules.d
     install -m 644 ${WORKDIR}/30-machine-info.rules ${D}${sysconfdir}/udev/rules.d/30-machine-info.rules
