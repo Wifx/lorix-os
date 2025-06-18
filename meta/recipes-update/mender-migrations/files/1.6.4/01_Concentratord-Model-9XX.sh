@@ -56,15 +56,27 @@ log $PREFIX "Migrating..."
 # - Post-migration : add, edit or remove files in $D_ETC
 
 # retrieve LoRa frequency from machine-info
-LORA_FREQUENCY=$(machine-info read "PRODUCT_FREQUENCY")
+MI_VERSION=$(machine-info --version 2>&1 | awk '{print $NF}')
+
+# Function to compare versions (returns 0 if $1 >= $2)
+version_gte() {
+    [ "$1" = "$2" ] && return 0
+    [ "$(printf '%s\n' "$1" "$2" | sort -V | head -n1)" = "$2" ]
+}
+
+if version_gte "$MI_VERSION" "1.0.0"; then
+    LORA_FREQUENCY=$(machine-info read "PRODUCT_FREQUENCY")
+    PRODUCT_MODEL=$(machine-info read "PRODUCT_MODEL")
+else
+    LORA_FREQUENCY=$(machine-info | awk -F= '/^PRODUCT_FREQUENCY=/ {print $2}')
+    PRODUCT_MODEL=$(machine-info | awk -F= '/^PRODUCT_MODEL=/ {print $2}')
+fi
 
 # If LoRa frequency is not 902-928, skip migration
 if [[ "$LORA_FREQUENCY" != "902-928" ]]; then
     log $PREFIX "LoRa frequency is not 902-928, skipping migration."
     exit 0
 fi
-
-PRODUCT_MODEL=$(machine-info read "PRODUCT_MODEL")
 
 # replace "-" with "_"
 LORA_FREQUENCY=${LORA_FREQUENCY//-/_}
