@@ -9,4 +9,4 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
 inherit unpack-online-assets
 
-STAGING_ASSETS = "${WORKDIR}/staging-assets"
+SYSROOT_DIRS += "${bindir}"
