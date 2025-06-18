@@ -9,7 +9,11 @@ inherit unpack-online-assets
 
 STAGING_ASSETS = "${WORKDIR}/staging-assets"
 
-do_install(){
+do_install_base(){
     install -m 0755 -d ${D}${sbindir}
     install -m 0755 ${STAGING_ASSETS}/${sbindir}/wgw-ec-util ${D}${sbindir}/wgw-ec-util
+}
+
+do_install(){
+    do_install_base
 }
