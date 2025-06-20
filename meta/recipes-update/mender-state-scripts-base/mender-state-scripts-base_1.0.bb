@@ -137,6 +137,7 @@ include_scripts() {
     include_script 810_Config-migration-restore.sh          ArtifactRollback_Enter_10_Config-migration-enable
 
     # Artifact rollback leave
+    include_script 299_Logs-save.sh                         ArtifactRollback_Leave_99_Logs-save
 
     # Artifact failure enter
     include_script 810_Config-migration-restore.sh          ArtifactFailure_Enter_10_Config-migration-enable
