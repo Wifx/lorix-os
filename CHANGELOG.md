@@ -11,8 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [LOR-671] Add NetHogs networking utility by default
 
+### Changed
+
+- [LOR-674] Update Manager to v0.19.2
+- [LOR-678]	Improve LTE APN autoconnect
+
 ### Fixed
 
+- [LOR-636] Migrate opkg packages status
 - [LOR-673] Basic Station config file path is not migrated properly when both BASIC-STATION-LORA-REGION and BS-CFG-LORA-FRONTEND-REV are done
 
 
