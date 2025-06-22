@@ -14,7 +14,6 @@ RDEPENDS:${PN} = " \
     bridge-utils \
     bind-utils \
     iperf3 \
-    nethogs \
     \
     openssl \
     openssl-misc \
@@ -23,4 +22,5 @@ RDEPENDS:${PN} = " \
 RRECOMMENDS:${PN} += " \
     net-snmp-server \
     zabbix \
+    nethogs \
 "
