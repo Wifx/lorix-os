@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [LOR-674] Update Manager to v0.19.2
 - [LOR-678]	Improve LTE APN autoconnect
+- [LOR-674]	Update Manager to v0.19.2
 
 ### Fixed
 
