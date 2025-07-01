@@ -1,0 +1,27 @@
+From 41f5f577ceeb964cc416ab36100ebe654167dc86 Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Thu, 22 May 2025 14:33:43 +0200
+Subject: [PATCH 3/3] mc610: reset PDP context 0 during modem init
+
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
+---
+ src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+index 9363d5e9..5e43d05d 100644
+--- a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
++++ b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+@@ -1291,6 +1291,9 @@ static const gchar *primary_init_sequence[] = {
+     "&C1",
+     /* Disable radio to avoid network automatic registration during init */
+     "+CFUN=4",
++    /* Clear eventual PDP context 0 for automatic registration */
++    "+MGAUTH=0,0",
++    "+CGDCONT=0",
+     NULL
+ };
+ 
+-- 
+2.45.2
+

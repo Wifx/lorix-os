@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.3] - 2025-06-26
+
+### Added
+
+- [LOR-671] Add NetHogs networking utility by default
+
+### Changed
+
+- [LOR-674] Update Manager to v0.19.2
+- [LOR-678] Improve LTE APN autoconnect
+
+### Fixed
+
+- [LOR-636] Migrate opkg packages status
+- [LOR-673] Basic Station config file path is not migrated properly when both BASIC-STATION-LORA-REGION and BS-CFG-LORA-FRONTEND-REV are done
+
+
+## [1.7.2] - 2025-04-17
+
+### Changed
+
+- Update ModemManager to 1.24
+- [LOR-611] Implement support for custom APN including EPS bearer on Wifx L1 4G
+- [LOR-647] Update mobile-broadband-provider-info to 20240407
+- [LOR-669] Update Manager to v0.19.1
+
 ## [1.7.1] - 2025-04-07
 
 ### Added

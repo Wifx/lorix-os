@@ -1,0 +1,61 @@
+From d032308b2876a3be9c0ad1bcb5aa75a358d8657b Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Thu, 17 Apr 2025 22:00:20 +0200
+Subject: [PATCH 2/2] mc610: fix SIM hot swap handling following 1.24 upgrade
+
+Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
+---
+ .../mm-broadband-modem-fibocom-mc610.c           | 16 ++++++++++++----
+ 1 file changed, 12 insertions(+), 4 deletions(-)
+
+diff --git a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+index 8e5c1227..9363d5e9 100644
+--- a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
++++ b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+@@ -60,6 +60,7 @@ struct _MMBroadbandModemFibocomMc610Private {
+     GRegex         *sim_hot_swap_regex;
+ 
+     gboolean        sim_hot_swap_processing;
++    gboolean        sim_hot_swap_handler_installed;
+ 
+     /* Initial EPS bearer context number */
+     gint            initial_eps_bearer_cid;
+@@ -544,6 +545,9 @@ mc610_hot_swap_init_ready (MMBaseModem  *_self,
+         !mm_broadband_modem_sim_hot_swap_ports_context_init (MM_BROADBAND_MODEM (self), &error))
+         mm_obj_warn (self, "failed to initialize SIM hot swap ports context: %s", error->message);
+ 
++    // mark SIM hot swap as installed to avoid override by setup_port
++    self->priv->sim_hot_swap_handler_installed = TRUE;
++
+     g_task_return_boolean (task, TRUE);
+     g_object_unref (task);
+ }
+@@ -1344,10 +1348,13 @@ setup_ports (MMBroadbandModem *_self)
+             ports[i],
+             any_service_regex,
+             NULL, NULL, NULL);
+-        mm_port_serial_at_add_unsolicited_msg_handler (
+-            ports[i],
+-            self->priv->sim_hot_swap_regex,
+-            NULL, NULL, NULL);
++        // we don't want to override handler installed by SIM hot swap setting
++        if (!self->priv->sim_hot_swap_handler_installed) {
++            mm_port_serial_at_add_unsolicited_msg_handler (
++                ports[i],
++                self->priv->sim_hot_swap_regex,
++                NULL, NULL, NULL);
++        }
+     }
+ }
+ 
+@@ -1386,6 +1393,7 @@ mm_broadband_modem_fibocom_mc610_init (MMBroadbandModemFibocomMc610 *self)
+ 
+     self->priv->initial_eps_bearer_support = FEATURE_SUPPORT_UNKNOWN;
+     self->priv->sim_hot_swap_processing = FALSE;
++    self->priv->sim_hot_swap_handler_installed = FALSE;
+     self->priv->profile0 = NULL;
+ }
+ 
+-- 
+2.45.2
+

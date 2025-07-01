@@ -4,10 +4,22 @@
 # All rights reserved.
 
 SCRIPTS_PATH="/data/mender/scripts"
+LOG_FILENAME="$(date -u +'%Y-%m-%dT%H:%M:%SZ')-mender-standalone-scripts.log"
+LOG_DIR="/var/log/upgrade"
+LOG_FILE="$LOG_DIR/$LOG_FILENAME"
+LOG_PERSISTENT_DIR="/data/mender/upgrade/logs"
+INHIBIT_FILE_PATH="/data/mender/upgrade/inhibit-reboot-script-standalone"
 
-function log {
-    echo "$1"
+log() {
+    local message="$1"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $message" >> "$LOG_FILE"
 }
+
+# Check if process is inhibited
+if [ -f "$INHIBIT_FILE_PATH" ]; then
+    log "Reboot script is inhibited by $INHIBIT_FILE_PATH"
+    exit 0
+fi
 
 # Check if an update is pending
 UPGRADE_AVAILABLE=$(fw_printenv upgrade_available -n)
@@ -23,8 +35,6 @@ if [ "$UPGRADE_AVAILABLE" != "1" ]; then
     if [ -f /data/mender/upgrade/migration-env.sh ]; then
         log "Update in progress, executing rollback..."
         mender-update rollback
-    else
-        log "No update in progress"
     fi
     exit 0
 fi
@@ -57,9 +67,33 @@ for script in $SCRIPTS_PATH/$SCRIPTS_PREFIX*; do
         # If script fails, rollback the update
         if [ $? -ne 0 ]; then
             log "Error executing $script"
+
             log "Rolling back update"
             mender-update rollback
-            log "Rebooting"
+            if [ $? -ne 0 ]; then
+                log "Failed to rollback update"
+            fi
+
+            # Create persistent log directory if it does not exist
+            if [ ! -d "$LOG_PERSISTENT_DIR" ]; then
+                mkdir -p "$LOG_PERSISTENT_DIR"
+
+                if [ $? -ne 0 ]; then
+                    log "Failed to create persistent log directory at $LOG_PERSISTENT_DIR"
+                fi
+            fi
+
+            # Save log files
+            if [ ! -d "$LOG_PERSISTENT_DIR" ]; then
+                cp "$LOG_FILE" "$LOG_PERSISTENT_DIR/$LOG_FILENAME"
+                if [ $? -ne 0 ]; then
+                    log "Failed to save log file to persistent storage"
+                else
+                    log "Log file saved to $LOG_PERSISTENT_DIR"
+                fi
+            fi
+
+            log "Rollback completed, rebooting system"
             shutdown -r now "The extra $SCRIPTS_PREFIX tasks of the pending update failed" 
             exit 0
         fi

@@ -22,4 +22,5 @@ RDEPENDS:${PN} = " \
 RRECOMMENDS:${PN} += " \
     net-snmp-server \
     zabbix \
+    nethogs \
 "

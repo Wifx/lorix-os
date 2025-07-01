@@ -11,6 +11,8 @@ SRC_URI += " \
     file://vpn-reconnect.cron \
     file://0001-service-provider-add-optionnal-operator-name-filter-.patch \
     file://0002-broadband-modem-fix-autoconfig-for-roaming-condition.patch \
+    file://0003-gsm-settings-fix-EPS-bearer-password-not-handled-if-.patch \
+    file://0004-broadband-modem-improve-APN-autoconfig-with-operator.patch \
 "
 
 inherit update-alternatives

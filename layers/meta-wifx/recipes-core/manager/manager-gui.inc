@@ -3,7 +3,7 @@ DESCRIPTION = "Provides the LORIX Manager web GUI files to be served by the daem
 AUTHOR = "Wifx Sàrl"
 
 LICENSE = "Proprietary"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=7b29896a760c7f57013dc1412764b30c"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=6094780bf42aa355f8bf4e2c199c407b"
 
 PROVIDES = "manager-gui"
 RDEPENDS:${PN}  += "manager"
