@@ -4,15 +4,13 @@ Date: Fri, 22 Nov 2019 22:07:51 +0100
 Subject: [PATCH] Moved binary hardware database location from /etc/udev to
  /lib/udev
 
+Upstream-Status: Inappropriate [oe specific]
 ---
- configure.ac | 12 +++++++++++-
- 1 file changed, 11 insertions(+), 1 deletion(-)
-
 diff --git a/configure.ac b/configure.ac
-index bc3737c..a6645df 100644
+index 0d9a135bc..6407cbf9d 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -173,8 +173,17 @@ AC_SUBST([udevlibexecdir], [${rootlibexecdir}])
+@@ -171,8 +171,17 @@ AC_SUBST([udevlibexecdir], [${rootlibexecdir}])
  # sysconfdir paths
  AC_SUBST([udevconfdir],[${sysconfdir}/udev])
  AC_SUBST([udevconffile],[${udevconfdir}/udev.conf])
@@ -31,14 +29,11 @@ index bc3737c..a6645df 100644
  
  # udevlibexecdir paths
  AC_SUBST([udevkeymapdir],[${udevlibexecdir}/keymaps])
-@@ -373,6 +382,7 @@ AC_MSG_RESULT([
-         udevconfdir:             ${udevconfdir}
-         udevconffile:            ${udevconffile}
-         udevhwdbdir:             ${udevhwdbdir}
-+        udevhwdbbindir:          ${udevhwdbbindir}
-         udevhwdbbin:             ${udevhwdbbin}
-         udevlibexecdir:          ${udevlibexecdir}
-         udevkeymapdir:           ${udevkeymapdir}
--- 
-2.17.1
-
+@@ -334,6 +343,7 @@ AC_MSG_RESULT([
+ 	udevconfdir:             ${udevconfdir}
+ 	udevconffile:            ${udevconffile}
+ 	udevhwdbdir:             ${udevhwdbdir}
++	udevhwdbbindir:          ${udevhwdbbindir}
+ 	udevhwdbbin:             ${udevhwdbbin}
+ 	udevlibexecdir:          ${udevlibexecdir}
+ 	udevkeymapdir:           ${udevkeymapdir}

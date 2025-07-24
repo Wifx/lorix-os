@@ -1,4 +1,3 @@
-DEPDENDS:${PN} += "cronie"
 RDEPENDS:${PN} += "cronie"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"

@@ -14,20 +14,15 @@ do_install:append() {
     # Recreate empty directory for local user eudev hardware conf files
     install -m 0755 -d ${D}${sysconfdir}/udev/hwdb.d
 }
-FILES:eudev-hwdb = "${base_libdir}/udev/hwdb.d"
+FILES:${PN}-hwdb = "${base_libdir}/udev/hwdb.d"
 
 # Modify hwdb location
 EXTRA_OECONF += "--with-hwdbbindir=${base_libdir}/udev"
 
-pkg_postinst:eudev-hwdb () {
-    if test -n "$D"; then
-        ${@qemu_run_binary(d, '$D', '${bindir}/udevadm')} hwdb --update --root $D
-        chown root:root $D${base_libdir}/udev/hwdb.bin
-    else
-        udevadm hwdb --update
-    fi
+pkg_postinst:${PN}-hwdb () {
+    $INTERCEPT_DIR/postinst_intercept update_udev_hwdb ${PKG} mlprefix=${MLPREFIX} binprefix=${MLPREFIX}
 }
 
-pkg_prerm:eudev-hwdb () {
-        rm -f $D${base_libdir}/udev/hwdb.bin
+pkg_prerm:${PN}-hwdb () {
+    rm -f $D${base_libdir}/udev/hwdb.bin
 }

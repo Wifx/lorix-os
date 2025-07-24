@@ -6,6 +6,6 @@ SRC_URI += " \
     file://0001-vendor-LORIX-One-support-version-8XX-and-9XX.patch \
     file://0002-vendor-Wifx-L1-support-version-8XX-and-9XX.patch \
 "
-SRCREV = "d716f2c7a9deff6334b14be51f81f90ea643b78e"
+SRCREV = "f60f98f1d6c789cf60d49b1822570dca249a18eb"
 
 PR = "r0"

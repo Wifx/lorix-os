@@ -19,7 +19,7 @@ do_patch[noexec] = "1"
 do_configure[noexec] = "1"
 do_compile[noexec] = "1"
 
-RPROVIDES:${PN} += "virtual/usb-gadget"
+RPROVIDES:${PN} += "usb-gadget"
 RDEPENDS:${PN} += " \
     kernel-module-libcomposite \
     kernel-module-usb-f-acm kernel-module-u-serial \

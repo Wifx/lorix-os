@@ -45,10 +45,13 @@ inherit cargo_bin
 # Enable network for the compile task allowing cargo to download dependencies
 do_compile[network] = "1"
 
+#export BINDGEN_EXTRA_CLANG_ARGS="--sysroot=${STAGING_DIR_TARGET}"
 export BINDGEN_EXTRA_CLANG_ARGS="-I${STAGING_INCDIR}"
  
-CARGO_BUILD_FLAGS:append:sx1301 = " -p libconcentratord -p chirpstack-concentratord-sx1301 -p libloragw-sx1301"
-CARGO_BUILD_FLAGS:append:sx1302 = " -p libconcentratord -p chirpstack-concentratord-sx1302 -p libloragw-sx1302" 
+CARGO_BUILD_FLAGS:append = " -p libconcentratord"
+
+CARGO_BUILD_FLAGS:append:sx1301 = " -p chirpstack-concentratord-sx1301 -p libloragw-sx1301"
+CARGO_BUILD_FLAGS:append:sx1302 = " -p chirpstack-concentratord-sx1302 -p libloragw-sx1302" 
 
 CONF_DIR = "${sysconfoptdir}/chirpstack-concentratord"
 S = "${WORKDIR}/git"

@@ -6,6 +6,8 @@ Subject: [PATCH 2/2] Display the contents of /etc/legal as part of the MOTD,
  possible to prevent repeat displays.
 
 Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
+
+Upstream-Status: Inappropriate [oe specific]
 ---
  modules/pam_motd/pam_motd.c | 64 +++++++++++++++++++++++++++++++++++++
  1 file changed, 64 insertions(+)

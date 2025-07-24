@@ -31,6 +31,8 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=60704a74c6a3bb355a519fd3d3592955"
 
 inherit mender-state-scripts
 
+ALLOW_EMPTY:${PN} = "1"
+
 RDEPENDS:${PN} += "machine-info busybox sed"
 
 # 1.6.0/01_concentratord-location.sh

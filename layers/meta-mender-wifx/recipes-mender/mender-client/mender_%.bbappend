@@ -5,7 +5,7 @@ RDEPENDS:${PN} += "xdelta3 machine-info bash"
 
 RDEPENDS:mender-update += "bash"
 
-RPROVIDES:${PN} += "virtual/updater"
+RPROVIDES:${PN} += "updater"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 SRC_URI:append = " \

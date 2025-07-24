@@ -10,6 +10,7 @@ IMAGE_FEATURES += " package-management"
 MENDER_PACKAGES = " \
     mender-migrations \    
     mender-state-scripts-base \
+    mender-standalone-scripts \
 "
 
 # Don't use default CORE_IMAGE_BASE_INSTALL in IMAGE_INSTALL
@@ -17,7 +18,7 @@ IMAGE_INSTALL = " \
     packagegroup-os \
     ${@bb.utils.contains('DISTRO_FEATURES', 'mender', '${MENDER_PACKAGES}', '', d)} \
     ${CORE_IMAGE_EXTRA_INSTALL} \
-    virtual/usb-gadget \
+    usb-gadget \
 "
 
 BAD_RECOMMENDATIONS:append = " \

@@ -5,6 +5,8 @@ Subject: [PATCH 1/2] Provide a more dynamic MOTD, based on the short-lived
  update-motd project.
 
 Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
+
+Upstream-Status: Inappropriate [oe specific]
 ---
  modules/pam_motd/pam_motd.8.xml | 11 +++++++++++
  modules/pam_motd/pam_motd.c     | 18 ++++++++++++++++++

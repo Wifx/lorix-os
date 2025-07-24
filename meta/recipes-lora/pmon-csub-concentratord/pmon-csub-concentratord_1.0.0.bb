@@ -17,7 +17,7 @@ SRC_URI = " \
     file://csub-concentratord.yml \
 "
 
-RPROVIDES:${PN} += "virtual/udp-packet-forwarder"
+RPROVIDES:${PN} += "udp-packet-forwarder"
 
 S = "${WORKDIR}"
 
