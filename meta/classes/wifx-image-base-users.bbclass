@@ -14,4 +14,5 @@ PWD = "\$5\$oMzTaptCua3XzAjm\$E.TMGgrEDuJ.xF23NDcc/CIly0GqMxKD1cKZDTSyXQA"
 
 EXTRA_USERS_PARAMS = " useradd -u 1000 admin; \
                        usermod -p '${PWD}' admin; \
-                       usermod -a -G sudo admin;"
+                       usermod -a -G sudo admin; \
+                       passwd-expire admin;"
