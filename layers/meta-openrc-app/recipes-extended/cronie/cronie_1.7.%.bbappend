@@ -10,17 +10,17 @@ SRC_URI += " \
 
 inherit openrc
 
-OPENRC_SERVICE:${PN} = "crond"
+OPENRC_SERVICES:${PN} = "crond"
 OPENRC_RUNLEVEL:crond = "default"
 
 do_install:append() {
     # Install OpenRC conf script
-    openrc_install_config ${WORKDIR}/crond.confd
+    openrc_install_confd ${WORKDIR}/crond.confd
     rm -rf ${D}${sysconfdir}/sysconfig/crond
     rm -rf ${D}${sysconfdir}/sysconfig
 
     # Install OpenRC script
-    openrc_install_script ${WORKDIR}/crond.initd
+    openrc_install_initd ${WORKDIR}/crond.initd
 }
 
 FILES:${PN}:remove = "${sysconfdir}/sysconfig/crond"

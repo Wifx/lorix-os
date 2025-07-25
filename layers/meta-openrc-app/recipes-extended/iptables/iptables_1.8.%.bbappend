@@ -11,25 +11,25 @@ SRC_URI += " \
 
 inherit openrc
 
-OPENRC_SERVICE:${PN} = "iptables ${@bb.utils.contains('DISTRO_FEATURES', 'ipv6', 'ip6tables', '', d)}"
+OPENRC_SERVICES:${PN} = "iptables ${@bb.utils.contains('DISTRO_FEATURES', 'ipv6', 'ip6tables', '', d)}"
 
 OPENRC_RUNLEVEL:iptables = "default"
 OPENRC_RUNLEVEL:ip6tables = "default"
 
 do_install:append() {
     # Install OpenRC conf script
-    openrc_install_config ${WORKDIR}/iptables.confd
+    openrc_install_confd ${WORKDIR}/iptables.confd
 
     # Install OpenRC script
-    openrc_install_script ${WORKDIR}/iptables.initd
+    openrc_install_initd ${WORKDIR}/iptables.initd
 
     if ${@bb.utils.contains('DISTRO_FEATURES', 'ipv6', 'true', 'false', d)}; then
         # Install OpenRC conf script for IPv6
-        openrc_install_config ${WORKDIR}/ip6tables.confd
+        openrc_install_confd ${WORKDIR}/ip6tables.confd
 
         # Install OpenRC script for IPv6
         cp -f ${WORKDIR}/iptables.initd ${WORKDIR}/ip6tables.initd
-        openrc_install_script ${WORKDIR}/ip6tables.initd
+        openrc_install_initd ${WORKDIR}/ip6tables.initd
     fi
 }
 

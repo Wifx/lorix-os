@@ -10,10 +10,10 @@ inherit openrc
 
 RDEPENDS:${PN} += "machine-info"
 
-OPENRC_SERVICE:${PN} = "usb-gadget"
+OPENRC_SERVICES:${PN} = "usb-gadget"
 OPENRC_RUNLEVEL:usb-gadget = "default"
 
 do_install:append() {
     # Install OpenRC script
-    openrc_install_script ${WORKDIR}/usb-gadget.initd
+    openrc_install_initd ${WORKDIR}/usb-gadget.initd
 }

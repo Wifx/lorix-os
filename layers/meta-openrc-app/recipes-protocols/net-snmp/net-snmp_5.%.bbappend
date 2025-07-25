@@ -13,20 +13,18 @@ SRC_URI += " \
 inherit openrc
 
 OPENRC_PACKAGES = "${PN}-server-snmpd ${PN}-server-snmptrapd"
-# Services not enabled by default
-#OPENRC_SERVICE:${PN}-server-snmpd = "snmpd"
-#OPENRC_SERVICE:${PN}-server-snmptrapd = "snmptrapd"
-#OPENRC_RUNLEVEL:snmpd = "default"
-#OPENRC_RUNLEVEL:snmptrapd = "default"
+OPENRC_SERVICES:${PN}-server-snmpd = "snmpd"
+OPENRC_SERVICES:${PN}-server-snmptrapd = "snmptrapd"
+OPENRC_AUTO_ENABLE = "false"
 
 do_install:append() {
     # Install OpenRC conf script
-    openrc_install_config ${WORKDIR}/snmpd.confd
-    openrc_install_config ${WORKDIR}/snmptrapd.confd
+    openrc_install_confd ${WORKDIR}/snmpd.confd
+    openrc_install_confd ${WORKDIR}/snmptrapd.confd
 
     # Install OpenRC script
-    openrc_install_script ${WORKDIR}/snmpd.initd
-    openrc_install_script ${WORKDIR}/snmptrapd.initd
+    openrc_install_initd ${WORKDIR}/snmpd.initd
+    openrc_install_initd ${WORKDIR}/snmptrapd.initd
 }
 
 FILES:${PN}-server-snmpd += " \

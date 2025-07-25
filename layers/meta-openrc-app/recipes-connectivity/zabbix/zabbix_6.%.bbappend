@@ -10,14 +10,14 @@ SRC_URI += " \
 
 inherit openrc
 
-OPENRC_PACKAGES = "${PN}"
+OPENRC_SERVICES:${PN} = "zabbix-agent"
 
 do_install:append() {
     # Install OpenRC conf script
-    openrc_install_config ${WORKDIR}/zabbix-agent.confd
+    openrc_install_confd ${WORKDIR}/zabbix-agent.confd
 
     # Install OpenRC script
-    openrc_install_script ${WORKDIR}/zabbix-agent.initd
+    openrc_install_initd ${WORKDIR}/zabbix-agent.initd
 }
 
 FILES:${PN} += " \

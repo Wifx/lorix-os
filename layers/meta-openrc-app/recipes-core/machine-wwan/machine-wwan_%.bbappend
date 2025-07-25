@@ -9,12 +9,12 @@ SRC_URI += " \
 
 inherit openrc
 
-OPENRC_SERVICE:${PN} = "wwan"
+OPENRC_SERVICES:${PN} = "wwan"
 OPENRC_RUNLEVEL:wwan = "boot"
 
 do_install:append:l1() {
     # Install OpenRC script
-    openrc_install_script ${WORKDIR}/wwan.initd
+    openrc_install_initd ${WORKDIR}/wwan.initd
 }
 
 FILES:${PN} += " \

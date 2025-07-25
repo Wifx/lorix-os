@@ -7,18 +7,18 @@ SRC_URI += " \
 "
 
 inherit openrc
-OPENRC_PACKAGES:${PN} = "menderd mender-auth"
+OPENRC_SERVICES:${PN} = "menderd mender-auth"
 
 do_install:append() {
     # Install OpenRC conf script
-    openrc_install_config ${WORKDIR}/menderd.confd
+    openrc_install_confd ${WORKDIR}/menderd.confd
 
     # Install OpenRC script
-    openrc_install_script ${WORKDIR}/menderd.initd
+    openrc_install_initd ${WORKDIR}/menderd.initd
 
     # Install OpenRC conf script
-    openrc_install_config ${WORKDIR}/mender-auth.confd
+    openrc_install_confd ${WORKDIR}/mender-auth.confd
 
     # Install OpenRC script
-    openrc_install_script ${WORKDIR}/mender-auth.initd
+    openrc_install_initd ${WORKDIR}/mender-auth.initd
 }

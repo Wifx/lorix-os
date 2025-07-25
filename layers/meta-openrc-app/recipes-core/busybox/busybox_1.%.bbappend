@@ -14,18 +14,18 @@ SRC_URI += " \
 inherit openrc
 
 OPENRC_PACKAGES = "${PN}-syslog"
-OPENRC_SERVICE:${PN}-syslog = "busybox-klogd busybox-syslogd"
+OPENRC_SERVICES:${PN}-syslog = "busybox-klogd busybox-syslogd"
 OPENRC_RUNLEVEL:busybox-syslogd = "default"
 OPENRC_RUNLEVEL:busybox-klogd = "default"
 
 do_install:append() {
     # Install OpenRC conf script
-    openrc_install_config ${WORKDIR}/busybox-klogd.confd
-    openrc_install_config ${WORKDIR}/busybox-syslogd.confd
+    openrc_install_confd ${WORKDIR}/busybox-klogd.confd
+    openrc_install_confd ${WORKDIR}/busybox-syslogd.confd
 
     # Install OpenRC script
-    openrc_install_script ${WORKDIR}/busybox-klogd.initd
-    openrc_install_script ${WORKDIR}/busybox-syslogd.initd
+    openrc_install_initd ${WORKDIR}/busybox-klogd.initd
+    openrc_install_initd ${WORKDIR}/busybox-syslogd.initd
 
     # Remove useless files
     rm -rf ${D}${sysconfdir}/syslog-startup.conf

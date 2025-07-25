@@ -8,17 +8,17 @@ SRC_URI += " \
 
 inherit openrc
 OPENRC_PACKAGES = "${PN}-daemon"
-OPENRC_SERVICE:${PN}-daemon = "NetworkManager"
-OPENRC_SERVICE:${PN}-daemon = "NetworkManager"
+OPENRC_SERVICES:${PN}-daemon = "NetworkManager"
+OPENRC_SERVICES:${PN}-daemon = "NetworkManager"
 OPENRC_RUNLEVEL:NetworkManager = "default"
 
 do_install[vardeps] += "MACHINE_PRETTY_NAME"
 do_install:append() {
     # Install OpenRC conf script
-    openrc_install_config ${WORKDIR}/NetworkManager.confd
+    openrc_install_confd ${WORKDIR}/NetworkManager.confd
 
     # Install OpenRC script
-    openrc_install_script ${WORKDIR}/NetworkManager.initd
+    openrc_install_initd ${WORKDIR}/NetworkManager.initd
 
     # Install connectivity checker script
     install -d -m 755 ${D}${sysconfdir}/NetworkManager/dispatcher.d/

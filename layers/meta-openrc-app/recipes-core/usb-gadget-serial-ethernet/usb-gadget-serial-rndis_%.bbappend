@@ -11,14 +11,14 @@ inherit openrc
 
 RDEPENDS:${PN} += "machine-info"
 
-OPENRC_SERVICE:${PN} = "usb-dhcp usb-gadget"
+OPENRC_SERVICES:${PN} = "usb-dhcp usb-gadget"
 OPENRC_RUNLEVEL:usb-dhcp = "default"
 OPENRC_RUNLEVEL:usb-gadget = "default"
 
 do_install:append() {
     # Install OpenRC script
-    openrc_install_script ${WORKDIR}/usb-dhcp.initd
-    openrc_install_script ${WORKDIR}/usb-gadget.initd
+    openrc_install_initd ${WORKDIR}/usb-dhcp.initd
+    openrc_install_initd ${WORKDIR}/usb-gadget.initd
 }
 
 python do_fill_script() {

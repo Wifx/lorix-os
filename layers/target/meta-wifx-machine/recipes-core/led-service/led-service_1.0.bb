@@ -20,12 +20,12 @@ do_compile[noexec] = "1"
 
 inherit openrc
 
-OPENRC_SERVICE:${PN} = "led-service"
+OPENRC_SERVICES:${PN} = "led-service"
 OPENRC_RUNLEVEL:led-service = "default"
 
 do_install:l1() {
     # Install OpenRC script
-    openrc_install_script ${WORKDIR}/led-service.initd
+    openrc_install_initd ${WORKDIR}/led-service.initd
 }
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
