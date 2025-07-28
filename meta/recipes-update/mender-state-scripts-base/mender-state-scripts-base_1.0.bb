@@ -28,6 +28,8 @@ SRC_URI = " \
 DEPENDS += " \
     makeself-native \
     opkg-status-diff \
+    libarchive-native \
+    bzip2-replacement-native \
 "
 
 RDEPENDS:${PN} += "ca-certificates"
