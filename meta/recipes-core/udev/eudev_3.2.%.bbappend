@@ -13,6 +13,11 @@ do_install:append() {
     mv ${D}${sysconfdir}/udev/hwdb.d ${D}${base_libdir}/udev/hwdb.d
     # Recreate empty directory for local user eudev hardware conf files
     install -m 0755 -d ${D}${sysconfdir}/udev/hwdb.d
+
+    # should be merged upstream into meta-openrc/recipes-appends/oe-core/eudev_%.bbappend
+    if ${@bb.utils.contains('DISTRO_FEATURES', 'openrc', 'true', 'false', d)}; then
+        rm -f ${D}${sysconfdir}/init.d/udev
+    fi
 }
 FILES:${PN}-hwdb = "${base_libdir}/udev/hwdb.d"
 

@@ -32,3 +32,7 @@ BAD_RECOMMENDATIONS:append = " \
 PACKAGE_EXCLUDE:append = " \
     udev-hwdb \
 "
+
+OPENRC_SERVICES += " \
+    ${@oe.utils.conditional('VIRTUAL-RUNTIME_dev_manager', 'udev', 'sysinit:udev-trigger default:udev-settle', '', d)} \
+"
