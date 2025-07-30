@@ -11,6 +11,7 @@ inherit openrc
 
 OPENRC_SERVICES:${PN} = "chronyd"
 OPENRC_RUNLEVEL:chronyd = "default"
+OPENRC_AUTO_ENABLE = "enable"
 
 do_install:append() {
     # Install OpenRC conf script

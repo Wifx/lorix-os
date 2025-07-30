@@ -9,6 +9,7 @@ inherit openrc
 OPENRC_SERVICES:${PN} = "ssh-key sshd"
 OPENRC_RUNLEVEL:ssh-key = "boot"
 OPENRC_RUNLEVEL:sshd = "default"
+OPENRC_AUTO_ENABLE = "enable"
 
 do_install:append() {
     # Install OpenRC script

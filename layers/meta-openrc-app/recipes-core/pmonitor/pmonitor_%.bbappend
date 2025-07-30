@@ -8,6 +8,7 @@ inherit openrc
 
 OPENRC_SERVICES:${PN} = "pmonitord"
 OPENRC_RUNLEVEL:pmonitord = "default"
+OPENRC_AUTO_ENABLE = "enable"
 
 do_install:append() {
     # Install OpenRC conf script

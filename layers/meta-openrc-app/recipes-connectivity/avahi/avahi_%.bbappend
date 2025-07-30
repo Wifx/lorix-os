@@ -3,12 +3,13 @@ SRC_URI += "file://avahi-daemon.initd"
 
 inherit openrc
 
-RDEPENDS:avahi-daemon:append = " openrc"
-RDEPENDS:avahi-dnsconfd:append = " openrc"
+RDEPENDS:${PN}-daemon:append = " openrc"
+RDEPENDS:${PN}-dnsconfd:append = " openrc"
 
 OPENRC_PACKAGES = "${PN}-daemon"
 OPENRC_SERVICES:${PN}-daemon = "avahi-daemon"
 OPENRC_RUNLEVEL:avahi-daemon = "default"
+OPENRC_AUTO_ENABLE = "enable"
 
 do_install:append() {
     # Install OpenRC script

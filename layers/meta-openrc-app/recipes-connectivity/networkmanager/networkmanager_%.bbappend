@@ -7,10 +7,12 @@ SRC_URI += " \
 "
 
 inherit openrc
+RDEPENDS:${PN}-daemon:append = " openrc"
+
 OPENRC_PACKAGES = "${PN}-daemon"
 OPENRC_SERVICES:${PN}-daemon = "NetworkManager"
-OPENRC_SERVICES:${PN}-daemon = "NetworkManager"
 OPENRC_RUNLEVEL:NetworkManager = "default"
+OPENRC_AUTO_ENABLE = "enable"
 
 do_install[vardeps] += "MACHINE_PRETTY_NAME"
 do_install:append() {

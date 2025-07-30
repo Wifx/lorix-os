@@ -17,6 +17,7 @@ OPENRC_PACKAGES = "${PN}-syslog"
 OPENRC_SERVICES:${PN}-syslog = "busybox-klogd busybox-syslogd"
 OPENRC_RUNLEVEL:busybox-syslogd = "default"
 OPENRC_RUNLEVEL:busybox-klogd = "default"
+OPENRC_AUTO_ENABLE = "enable"
 
 do_install:append() {
     # Install OpenRC conf script

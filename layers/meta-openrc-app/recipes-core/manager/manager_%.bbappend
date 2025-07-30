@@ -10,6 +10,7 @@ inherit openrc
 
 OPENRC_SERVICES:${PN} = "managerd"
 OPENRC_RUNLEVEL:managerd = "default"
+OPENRC_AUTO_ENABLE = "enable"
 
 do_install:append() {
     # Install OpenRC conf script

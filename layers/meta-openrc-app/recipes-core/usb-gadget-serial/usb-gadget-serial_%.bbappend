@@ -12,6 +12,7 @@ RDEPENDS:${PN} += "machine-info"
 
 OPENRC_SERVICES:${PN} = "usb-gadget"
 OPENRC_RUNLEVEL:usb-gadget = "default"
+OPENRC_AUTO_ENABLE = "enable"
 
 do_install:append() {
     # Install OpenRC script

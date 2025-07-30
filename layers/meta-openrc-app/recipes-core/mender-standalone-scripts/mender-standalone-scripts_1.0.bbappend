@@ -9,6 +9,7 @@ inherit openrc
 
 OPENRC_SERVICES:${PN} = "mender-standalone-scripts"
 OPENRC_RUNLEVEL:mender-standalone-scripts = "boot"
+OPENRC_AUTO_ENABLE = "enable"
 
 do_install:append() {
     # Install OpenRC conf script

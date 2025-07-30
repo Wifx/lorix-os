@@ -11,6 +11,7 @@ inherit openrc
 
 OPENRC_SERVICES:${PN} = "wwan"
 OPENRC_RUNLEVEL:wwan = "boot"
+OPENRC_AUTO_ENABLE = "enable"
 
 do_install:append:l1() {
     # Install OpenRC script

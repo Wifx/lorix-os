@@ -11,6 +11,7 @@ SRC_URI += " \
 inherit openrc
 
 OPENRC_SERVICES:${PN} = "zabbix-agent"
+OPENRC_AUTO_ENABLE = "enable"
 
 do_install:append() {
     # Install OpenRC conf script

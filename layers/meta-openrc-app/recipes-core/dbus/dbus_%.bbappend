@@ -5,6 +5,7 @@ inherit openrc
 
 OPENRC_SERVICES:${PN} = "dbus"
 OPENRC_RUNLEVEL:dbus = "default"
+OPENRC_AUTO_ENABLE = "enable"
 
 do_install:append() {
 	if [ "${PN}" = "${BPN}" ]; then

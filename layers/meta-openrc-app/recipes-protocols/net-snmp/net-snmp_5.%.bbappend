@@ -15,7 +15,7 @@ inherit openrc
 OPENRC_PACKAGES = "${PN}-server-snmpd ${PN}-server-snmptrapd"
 OPENRC_SERVICES:${PN}-server-snmpd = "snmpd"
 OPENRC_SERVICES:${PN}-server-snmptrapd = "snmptrapd"
-OPENRC_AUTO_ENABLE = "false"
+OPENRC_AUTO_ENABLE = "disabled"
 
 do_install:append() {
     # Install OpenRC conf script

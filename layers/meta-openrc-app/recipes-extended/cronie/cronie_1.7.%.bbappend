@@ -12,6 +12,7 @@ inherit openrc
 
 OPENRC_SERVICES:${PN} = "crond"
 OPENRC_RUNLEVEL:crond = "default"
+OPENRC_AUTO_ENABLE = "enable"
 
 do_install:append() {
     # Install OpenRC conf script
