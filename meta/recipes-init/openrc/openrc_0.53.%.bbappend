@@ -18,4 +18,10 @@ do_install:append() {
 
     # Install volatiles configuration file
     install -m 644 ${WORKDIR}/volatiles.confd ${D}${OPENRC_CONFDIR}/volatiles
+
+    # Modify rc.conf options
+    sed -i \
+        -e 's|#rc_parallel="NO"|rc_parallel="YES"|' \
+        -e 's|#rc_logger="NO"|rc_logger="YES"|' \
+        ${D}/${sysconfdir}/rc.conf
 }
