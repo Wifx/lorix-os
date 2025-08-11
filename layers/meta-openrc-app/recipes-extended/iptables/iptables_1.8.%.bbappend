@@ -40,3 +40,9 @@ FILES:${PN} += " \
     ${sysconfdir}/runlevels \
     ${@bb.utils.contains('DISTRO_FEATURES', 'ipv6', '${OPENRC_INITDIR}/ip6tables ${OPENRC_CONFDIR}/ip6tables', '', d)} \
 "
+
+CONFFILES:${PN} += " \
+    ${OPENRC_CONFDIR}/iptables \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'ipv6', '${OPENRC_CONFDIR}/ip6tables', '', d)} \
+"
+

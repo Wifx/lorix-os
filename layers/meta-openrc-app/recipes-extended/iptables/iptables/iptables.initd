@@ -6,7 +6,6 @@ extra_commands="check save help"
 extra_started_commands="reload"
 
 iptables_lock_wait_time=${IPTABLES_LOCK_WAIT_TIME:-"60"}
-iptables_lock_wait_interval=${IPTABLES_LOCK_WAIT_INTERVAL:-"100000"}
 
 iptables_name=${SVCNAME}
 case ${iptables_name} in
@@ -38,7 +37,7 @@ set_table_policy() {
 
 	local chain
 	for chain in ${chains} ; do
-		${iptables_bin} --wait ${iptables_lock_wait_time} --wait-interval ${iptables_lock_wait_interval} -t ${table} -P ${chain} ${policy}
+		${iptables_bin} --wait ${iptables_lock_wait_time} -t ${table} -P ${chain} ${policy}
 		[ $? -ne 0 ] && has_errors=1
 	done
 
@@ -69,7 +68,7 @@ start_pre() {
 
 start() {
 	ebegin "Loading ${iptables_name} state and starting firewall"
-	${iptables_bin}-restore --wait ${iptables_lock_wait_time} --wait-interval ${iptables_lock_wait_interval} ${SAVE_RESTORE_OPTIONS} < "${iptables_save}"
+	${iptables_bin}-restore --wait ${iptables_lock_wait_time} ${SAVE_RESTORE_OPTIONS} < "${iptables_save}"
 	eend $?
 }
 
@@ -88,10 +87,10 @@ stop() {
 		set_table_policy $a ACCEPT
 		[ $? -ne 0 ] && has_errors=1
 
-		${iptables_bin} --wait ${iptables_lock_wait_time} --wait-interval ${iptables_lock_wait_interval} -F -t $a
+		${iptables_bin} --wait ${iptables_lock_wait_time} -F -t $a
 		[ $? -ne 0 ] && has_errors=1
 
-		${iptables_bin} --wait ${iptables_lock_wait_time} --wait-interval ${iptables_lock_wait_interval} -X -t $a
+		${iptables_bin} --wait ${iptables_lock_wait_time} -X -t $a
 		[ $? -ne 0 ] && has_errors=1
 	done
 	eend ${has_errors}
@@ -103,10 +102,10 @@ reload() {
 	ebegin "Flushing firewall"
 	local has_errors=0 a
 	for a in $(cat ${iptables_proc}) ; do
-		${iptables_bin} --wait ${iptables_lock_wait_time} --wait-interval ${iptables_lock_wait_interval} -F -t $a
+		${iptables_bin} --wait ${iptables_lock_wait_time} -F -t $a
 		[ $? -ne 0 ] && has_errors=1
 
-		${iptables_bin} --wait ${iptables_lock_wait_time} --wait-interval ${iptables_lock_wait_interval} -X -t $a
+		${iptables_bin} --wait ${iptables_lock_wait_time} -X -t $a
 		[ $? -ne 0 ] && has_errors=1
 	done
 	eend ${has_errors}
