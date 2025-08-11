@@ -6,7 +6,8 @@ SRC_URI += " \
 
 inherit openrc
 
-OPENRC_SERVICES:${PN} = "ssh-key sshd"
+OPENRC_PACKAGES = "openssh-sshd"
+OPENRC_SERVICES:openssh-sshd = "ssh-key sshd"
 OPENRC_RUNLEVEL:ssh-key = "boot"
 OPENRC_RUNLEVEL:sshd = "default"
 OPENRC_AUTO_ENABLE = "enable"
