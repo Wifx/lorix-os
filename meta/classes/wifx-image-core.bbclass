@@ -33,6 +33,12 @@ PACKAGE_EXCLUDE:append = " \
     udev-hwdb \
 "
 
-OPENRC_SERVICES += " \
-    ${@oe.utils.conditional('VIRTUAL-RUNTIME_dev_manager', 'udev', 'sysinit:udev-trigger default:udev-settle', '', d)} \
+# Cleanup unwanted services
+# - agetty: duplicates getty
+# - netmount: not used, network is managed by NetworkManager
+# - networkmanager: duplicates NetworkManager init script
+OPENRC_DELETED_SERVICES += " \
+    agetty \
+    netmount \
+    networkmanager \
 "
