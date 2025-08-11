@@ -8,6 +8,7 @@ SRC_URI += " \
 
 inherit openrc
 OPENRC_SERVICES:${PN} = "menderd mender-auth"
+OPENRC_AUTO_ENABLE = "enable"
 
 do_install:append() {
     # Install OpenRC conf script
