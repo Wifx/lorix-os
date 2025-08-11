@@ -48,11 +48,16 @@ pkg_postinst_ontarget:lorix_one () {
         # Construct the hostname based on last 3 Bytes of eth0 MAC address
         mac=$(cat /sys/class/net/eth0/address)
         id=$(echo $mac | awk -F':' '{print $4$5$6}')
-        echo "lorix-one-$id" > /etc/hostname
+        HOSTNAME="lorix-one-$id"
         # Set LORIX One hostname to "lorix-one-xxxxxx" to have unique hostname (for mDNS for example)
     else
-        echo "lorix-one" > /etc/hostname
+        HOSTNAME="lorix-one"
     fi
+
+    # Update system's hostname
+    echo "$HOSTNAME" > /etc/hostname
+    hostname "$HOSTNAME"
+    export HOSTNAME
 }
 
 pkg_postinst_ontarget:l1 () {
@@ -62,7 +67,12 @@ pkg_postinst_ontarget:l1 () {
     SERIAL=$(echo "${SERIAL_LABEL//-/}" | awk '{print tolower($0)}')
     
     # Set gateway hostname to "gw<serial>" to have unique hostname (for mDNS for example)
-    echo "gw$SERIAL" > /etc/hostname
+    HOSTNAME="gw$SERIAL"
+
+    # Update system's hostname
+    echo "$HOSTNAME" > /etc/hostname
+    hostname "$HOSTNAME"
+    export HOSTNAME
 }
 
 PACKAGESPLITFUNCS:prepend = "populate_packages_lorix "
