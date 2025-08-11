@@ -1,2 +1,0 @@
-# Print error and higher to console
-KLOGD_OPTS="-c 4"
