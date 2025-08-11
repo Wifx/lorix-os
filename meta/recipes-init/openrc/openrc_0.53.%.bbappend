@@ -1,6 +1,9 @@
 # Copyright (c) 2025, Wifx SA <info@iot.wifx.net>
 # All rights reserved.
 
+# newnet is incompatible with NetworkManager, so we disable it
+PACKAGECONFIG:remove = "newnet"
+
 # The volatiles init script from meta-openrc doesn't handle default
 # files/directories/link creation.
 # Our version does.
