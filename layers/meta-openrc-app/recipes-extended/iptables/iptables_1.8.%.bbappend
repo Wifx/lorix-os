@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Wifx Sàrl <info@wifx.net>
+# Copyright (c) 2025, Wifx SA <info@iot.wifx.net>
 # All rights reserved.
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
@@ -15,6 +15,7 @@ OPENRC_SERVICES:${PN} = "iptables ${@bb.utils.contains('DISTRO_FEATURES', 'ipv6'
 
 OPENRC_RUNLEVEL:iptables = "default"
 OPENRC_RUNLEVEL:ip6tables = "default"
+OPENRC_AUTO_ENABLE = "enable"
 
 do_install:append() {
     # Install OpenRC conf script
