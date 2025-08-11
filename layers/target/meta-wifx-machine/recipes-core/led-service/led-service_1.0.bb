@@ -22,6 +22,7 @@ inherit openrc
 
 OPENRC_SERVICES:${PN} = "led-service"
 OPENRC_RUNLEVEL:led-service = "default"
+OPENRC_AUTO_ENABLE = "enable"
 
 do_install:l1() {
     # Install OpenRC script
