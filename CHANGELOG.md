@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [LOR-651] Update pvisor to v0.3.3
 
+### Fixed
+
+- [LOR-688] ChirpStack Gateway Bridge accidentally reverted to v3.14.3 (v3.14.8 restored)
+
 ## [1.7.3] - 2025-06-26
 
 ### Added
