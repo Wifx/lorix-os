@@ -5,12 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.7.4] - unreleased
+## [1.7.4] - Unreleased
 
 ### Changed
 
+- [LOR-651] Update pvisor to v0.3.3
 - [LOR-689] Update mobile-broadband-provider-info to 20250613
 - [LOR-683] Add 1NCE operator in mobile-broadband-provider-info database
+
+### Fixed
+
+- [LOR-688] ChirpStack Gateway Bridge accidentally reverted to v3.14.3 (v3.14.8 restored)
 
 ## [1.7.3] - 2025-06-26
 
@@ -21,8 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - [LOR-674] Update Manager to v0.19.2
-- [LOR-678]	Improve LTE APN autoconnect
-- [LOR-674]	Update Manager to v0.19.2
+- [LOR-678] Improve LTE APN autoconnect
 
 ### Fixed
 
