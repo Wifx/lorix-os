@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - [LOR-688] ChirpStack Gateway Bridge accidentally reverted to v3.14.3 (v3.14.8 restored)
+- [LOR-686] mender-standalone-scripts errors at boot in rc log
 
 ## [1.7.3] - 2025-06-26
 
