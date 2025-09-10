@@ -1,3 +1,12 @@
+From 417711a7d30538d47dab255383b0a4cb090e5a7e Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Christian=20M=C3=BCller?= <christian.muller@wifx.net>
+Date: Mon, 8 Sep 2025 10:53:54 +0200
+Subject: [PATCH 2/3] No null in json
+
+---
+ src/structs.rs | 2 ++
+ 1 file changed, 2 insertions(+)
+
 diff --git a/src/structs.rs b/src/structs.rs
 index aac0832..72b18e1 100644
 --- a/src/structs.rs
@@ -18,3 +27,6 @@ index aac0832..72b18e1 100644
      pub tmms: Option<u64>,
      /// Internal timestamp of "RX finished" event (32b unsigned)
      pub tmst: u32,
+-- 
+2.43.0
+

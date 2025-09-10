@@ -1,4 +1,5 @@
 require chirpstack-concentratord-v3.inc
+require chirpstack-concentratord-crates_${PV}.inc
 
 SRC_URI += " \
     git://github.com/brocaar/chirpstack-concentratord.git;protocol=https;branch=master \

@@ -1,11 +1,15 @@
+# Copyright (c) 2025, Wifx SA <info@iot.wifx.net>
+# All rights reserved.
+
 HOMEPAGE = "https://www.chirpstack.io/"
 DESCRIPTION = "ChirpStack UDP Bridge"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=09fe2246a30dca84af09ac8608093cd7"
 
 SRC_URI += "\
-    file://000-ignore_trailing_null_bytes_on_downlink_packet.patch \
-    file://001-no-null-in-json.patch \
+    file://0001-Ignore-trailing-null-bytes-on-downlink-packet.patch \
+    file://0002-No-null-in-json.patch \
+    file://0003-Update-Prometheus-crate-version-to-fix-build-with-ca.patch \
     file://00-concentratord.toml \
     file://10-udp-bridge.toml \
     file://20-servers.toml \
@@ -14,11 +18,24 @@ SRC_URI += "\
 UPX_COMPRESS_FILES:${PN} = "/opt/chirpstack-udp-bridge/chirpstack-udp-bridge"
 inherit upx
 
-## meta-rust-bin
-inherit cargo_bin
+DEPENDS += " \
+    protobuf-native \
+    clang-native \
+    protobuf \
+    cmake-native \
+"
 
-# Enable network for the compile task allowing cargo to download dependencies
-do_compile[network] = "1"
+## meta-rust
+inherit cargo cargo-update-recipe-crates
+
+# Fix panic static and configure options (SQLite based)
+RUST_PANIC_STRATEGY = "abort"
+
+# Remove TMPDIR reference in C based crates
+DEBUG_PREFIX_MAP:append = " \
+    -fmacro-prefix-map=${WORKDIR}=/usr/src/debug/${PN}/${EXTENDPE}${PV}-${PR} \
+    -fdebug-prefix-map=${WORKDIR}=/usr/src/debug/${PN}/${EXTENDPE}${PV}-${PR} \
+"
 
 export BINDGEN_EXTRA_CLANG_ARGS="-I${STAGING_INCDIR}"
 
@@ -31,10 +48,10 @@ do_install() {
     install_config 00-concentratord.toml
     install_config 10-udp-bridge.toml
     install_config 20-servers.toml
-    
+
     # Bin directory
     install -m 0755 -d ${D}${optdir}/chirpstack-udp-bridge
-    install -m 0755 ${CARGO_BINDIR}/chirpstack-udp-bridge ${D}${optdir}/chirpstack-udp-bridge/chirpstack-udp-bridge
+    install -m 0755 ${B}/target/${CARGO_TARGET_SUBDIR}/chirpstack-udp-bridge ${D}${optdir}/chirpstack-udp-bridge/chirpstack-udp-bridge
 }
 
 install_config() {

@@ -1,0 +1,66 @@
+From deb659adf24c4a91cee5906f994ec39009be70b2 Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yseraf-git@pm.me>
+Date: Mon, 1 Sep 2025 21:35:06 +0200
+Subject: [PATCH] Change private distant crates as local dependencies
+
+Signed-off-by: Yannick Serafini <yseraf-git@pm.me>
+---
+ Cargo.lock | 3 ---
+ Cargo.toml | 6 +++---
+ 2 files changed, 3 insertions(+), 6 deletions(-)
+
+diff --git a/Cargo.lock b/Cargo.lock
+index 7accadf..30502cc 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -222,7 +222,6 @@ checksum = "9ba43ea6f343b788c8764558649e08df62f86c6ef251fdaeb1ffd010a9ae50a2"
+ [[package]]
+ name = "beacon"
+ version = "0.1.0"
+-source = "git+https://github.com/helium/proto?branch=master#c828e0399f88ebbd6d13c8de39c25d70b9440f5b"
+ dependencies = [
+  "base64 0.21.4",
+  "byteorder",
+@@ -693,7 +692,6 @@ dependencies = [
+ [[package]]
+ name = "exponential-backoff"
+ version = "1.2.0"
+-source = "git+https://github.com/yoshuawuyts/exponential-backoff?branch=master#5e889c9ba87a836456667c3bdeaf19888f89b7e0"
+ dependencies = [
+  "rand",
+ ]
+@@ -994,7 +992,6 @@ dependencies = [
+ [[package]]
+ name = "helium-proto"
+ version = "0.1.0"
+-source = "git+https://github.com/helium/proto?branch=master#c828e0399f88ebbd6d13c8de39c25d70b9440f5b"
+ dependencies = [
+  "bytes",
+  "prost",
+diff --git a/Cargo.toml b/Cargo.toml
+index 87c6dcd..cc605ea 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -18,7 +18,7 @@ members = ["lorawan"]
+ byteorder = "1"
+ serde = { version = "1", features = ["rc", "derive"] }
+ rust_decimal = { version = "1", features = ["serde-with-float"] }
+-helium-proto = { git = "https://github.com/helium/proto", branch = "master", features = [
++helium-proto = { path = "../deps/helium-proto", features = [
+     "services",
+ ] }
+ rand = "0.8"
+@@ -71,8 +71,8 @@ signature = { version = "1", features = ["std"] }
+ async-trait = "0"
+ angry-purple-tiger = "0"
+ lorawan = { package = "lorawan", path = "lorawan" }
+-beacon = { git = "https://github.com/helium/proto", branch = "master" }
+-exponential-backoff = { git = "https://github.com/yoshuawuyts/exponential-backoff", branch = "master" }
++beacon = { path = "../deps/helium-proto/beacon" }
++exponential-backoff = { path = "../deps/exponential-backoff" }
+ semtech-udp = { version = ">=0.12", default-features = false, features = [
+     "server",
+ ] }
+-- 
+2.43.0
+

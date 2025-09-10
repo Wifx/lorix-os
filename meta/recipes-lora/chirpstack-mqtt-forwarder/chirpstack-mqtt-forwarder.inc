@@ -1,5 +1,8 @@
-HOMEPAGE = "https://www.chirpstack.io/"
+# Copyright (c) 2025, Wifx SA <info@iot.wifx.net>
+# All rights reserved.
+
 DESCRIPTION = "ChirpStack MQTT Forwarder"
+HOMEPAGE = "https://www.chirpstack.io/"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=bc4546f147d6f9892ca1b7d23bf41196"
 
@@ -14,27 +17,32 @@ SRC_URI += "\
 UPX_COMPRESS_FILES:${PN} = "/opt/chirpstack-mqtt-forwarder/chirpstack-mqtt-forwarder"
 inherit upx
 
-## meta-rust-bin
-inherit cargo_bin
-
-# Enable network for the compile task allowing cargo to download dependencies
-do_compile[network] = "1"
-
-DEPENDS = " \
-    openssl \
-    protobuf-native \
-    protobuf \
-    protobuf-c \
-    clang-native \
-    cmake-native \
-"
-
-INSANE_SKIP:${PN} += "already-stripped"
-
-export BINDGEN_EXTRA_CLANG_ARGS="-I${STAGING_INCDIR}"
-
 CONF_DIR = "${sysconfoptdir}/chirpstack-mqtt-forwarder"
 S = "${WORKDIR}/git"
+
+# Required to build chirpstack_api
+DEPENDS = " \
+    protobuf-native \
+"
+
+## meta-rust
+inherit cargo cargo-update-recipe-crates
+
+# Fix panic static and configure options (SQLite based)
+RUST_PANIC_STRATEGY = "abort"
+
+# Remove TMPDIR reference in C based crates
+DEBUG_PREFIX_MAP:append = " \
+    -fmacro-prefix-map=${WORKDIR}=/usr/src/debug/${PN}/${EXTENDPE}${PV}-${PR} \
+    -fdebug-prefix-map=${WORKDIR}=/usr/src/debug/${PN}/${EXTENDPE}${PV}-${PR} \
+"
+
+do_fix_strip() {
+    # This is not the sources's job to strip binaries as Yocto does it very well
+    # and allow to keep unstripped binaries in ${PN}-dev pkg.
+    sed -i "s/strip = true/strip = false/" ${S}/Cargo.toml
+}
+addtask fix_strip after do_patch before do_configure
 
 do_install() {
     # Configuration
@@ -44,10 +52,10 @@ do_install() {
     install_config 30-backend.toml
     install_config 40-metadata.toml
     install_config 50-commands.toml 
-    
+
     # Bin directory
     install -m 0755 -d ${D}${optdir}/chirpstack-mqtt-forwarder
-    install -m 0755 ${CARGO_BINDIR}/chirpstack-mqtt-forwarder ${D}${optdir}/chirpstack-mqtt-forwarder/chirpstack-mqtt-forwarder
+    install -m 0755 ${B}/target/${CARGO_TARGET_SUBDIR}/chirpstack-mqtt-forwarder ${D}${optdir}/chirpstack-mqtt-forwarder/chirpstack-mqtt-forwarder
 }
 
 install_config() {
