@@ -4,6 +4,7 @@ LICENSE = "MIT | Apache-2.0"
 SECTION = "devel"
 
 DEPENDS = "openssl zlib curl ca-certificates libssh2"
+DEPENDS:class-native += "zlib-native"
 
 LIC_FILES_CHKSUM = " \
     file://LICENSE-MIT;md5=b377b220f43d747efdec40d69fcaa69d \
