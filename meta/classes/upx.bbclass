@@ -1,6 +1,6 @@
 DEPENDS:append = " upx-native"
 
-python package_do_compress() {
+python package_do_compress_upx() {
     import subprocess
 
     compress = d.getVar('COMPRESS_BINARIES_UPX')
@@ -35,5 +35,6 @@ python package_do_compress() {
     else:
         bb.warn('No file to compress have been defined but upx has been inherited. You should define UPX_COMPRESS_FILES:${PN} or remove upx inheritance.')
 }
+PACKAGE_PREPROCESS_FUNCS += "package_do_compress_upx"
 
-PACKAGEBUILDPKGD += "package_do_compress"
+INSANE_SKIP:${PN} += "${@'already-stripped' if bb.utils.to_boolean(d.getVar('COMPRESS_BINARIES_UPX')) else ''}"
