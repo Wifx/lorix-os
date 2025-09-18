@@ -1,7 +1,7 @@
 # Copyright (c) 2025, Wifx SA <info@iot.wifx.net>
 # All rights reserved.
 
-SRCREV = "955fc0040804483b12379a153c9670711feec336"
+SRCREV = "0bd5642144567821d10c2241d91816980618f30a"
 SRC_URI += " \
     git://github.com/chirpstack/chirpstack-mqtt-forwarder.git;protocol=https;branch=master \
 "
