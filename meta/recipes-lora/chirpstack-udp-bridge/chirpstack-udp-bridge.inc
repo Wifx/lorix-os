@@ -15,8 +15,8 @@ SRC_URI += "\
     file://20-servers.toml \
 "
 
-UPX_COMPRESS_FILES:${PN} = "/opt/chirpstack-udp-bridge/chirpstack-udp-bridge"
 inherit upx
+UPX_COMPRESS_FILES:${PN} = "${optdir}/chirpstack-udp-bridge/chirpstack-udp-bridge"
 
 DEPENDS += " \
     protobuf-native \

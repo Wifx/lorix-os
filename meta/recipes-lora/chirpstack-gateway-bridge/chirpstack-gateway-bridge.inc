@@ -20,8 +20,8 @@ SRC_URI += " \
     file://99-custom.toml \
 "
 
-UPX_COMPRESS_FILES:${PN} = "/opt/chirpstack-gateway-bridge/chirpstack-gateway-bridge"
 inherit upx
+UPX_COMPRESS_FILES:${PN} = "${optdir}/chirpstack-gateway-bridge/chirpstack-gateway-bridge"
 
 inherit goarch
 

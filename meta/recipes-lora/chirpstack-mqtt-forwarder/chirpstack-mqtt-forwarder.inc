@@ -14,8 +14,8 @@ SRC_URI += "\
     file://50-commands.toml \
 "
 
-UPX_COMPRESS_FILES:${PN} = "/opt/chirpstack-mqtt-forwarder/chirpstack-mqtt-forwarder"
 inherit upx
+UPX_COMPRESS_FILES:${PN} = "${optdir}/chirpstack-mqtt-forwarder/chirpstack-mqtt-forwarder"
 
 CONF_DIR = "${sysconfoptdir}/chirpstack-mqtt-forwarder"
 S = "${WORKDIR}/git"
