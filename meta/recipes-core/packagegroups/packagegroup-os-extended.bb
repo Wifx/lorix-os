@@ -16,7 +16,6 @@ RDEPENDS:${PN} = " \
     iperf3 \
     \
     openssl \
-    openssl-misc \
     ca-certificates \
 "
 RRECOMMENDS:${PN} += " \
