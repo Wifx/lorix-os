@@ -7,9 +7,11 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=070df97663cffadabf677115eb41db93"
 
 SRC_URI += "\
-    file://10-general.toml \
+    file://10-logging.toml \
     file://20-mesh.toml \
     file://30-backend.toml \
+    file://40-events.toml \
+    file://30-commands.toml \
 "
 
 UPX_COMPRESS_FILES:${PN} = "/opt/chirpstack-gateway-mesh/chirpstack-gateway-mesh"
@@ -45,9 +47,11 @@ addtask fix_strip after do_patch before do_configure
 do_install() {
     # Configuration
     install -m 0755 -d ${D}${CONF_DIR}
-    install_config 10-general.toml
+    install_config 10-logging.toml
     install_config 20-mesh.toml
     install_config 30-backend.toml
+    install_config 40-events.toml
+    install_config 50-commands.toml
 
     # Bin directory
     install -m 0755 -d ${D}${optdir}/chirpstack-gateway-mesh
