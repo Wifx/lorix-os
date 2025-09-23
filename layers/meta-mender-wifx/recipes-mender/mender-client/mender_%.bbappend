@@ -14,8 +14,9 @@ SRC_URI:append = " \
     file://mender-inventory-machine.sh \
 "
 
-UPX_COMPRESS_FILES:${PN} = "/usr/bin/mender-update /usr/bin/mender-auth"
 inherit upx
+UPX_COMPRESS_FILES:${PN}-auth = "${bindir}/mender-auth"
+UPX_COMPRESS_FILES:${PN}-update = "${bindir}/mender-update"
 
 MENDER_SERVER_URL = "https://hosted.mender.io"
 

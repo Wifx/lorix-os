@@ -48,8 +48,8 @@ DEPENDS:append:sx1302 = " libloragw-sx1302"
 
 RDEPENDS:${PN} += "machine-info"
 
-UPX_COMPRESS_FILES:${PN} = "/opt/chirpstack-concentratord/chirpstack-concentratord"
 inherit upx
+UPX_COMPRESS_FILES:${PN} = "${optdir}/chirpstack-concentratord/chirpstack-concentratord"
 
 CONF_DIR = "${sysconfoptdir}/chirpstack-concentratord"
 S = "${WORKDIR}/git"
