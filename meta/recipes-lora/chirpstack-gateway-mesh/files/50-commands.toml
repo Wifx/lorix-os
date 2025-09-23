@@ -1,0 +1,13 @@
+# Commands configuration (Relay only).
+[commands]
+
+  # Commands.
+  #
+  # On receiving a command, the Gateway Mesh will execute the command matching
+  # the command type (128 - 255 is for proprietary commands). The payload will
+  # be provided to the command using stdin. The returned stdout will be sent
+  # back as event (using the same type). Example:
+  #
+  #   "129" = ["/path/to/command", "arg1", "arg2"]
+  #
+  [commands.commands]

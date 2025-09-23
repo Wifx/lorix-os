@@ -1,0 +1,89 @@
+
+# Mesh configuration.
+[mesh]
+
+  # Mesh root key (AES128, HEX encoded).
+  #
+  # This key is used to derive the signing and encryption keys. The same key
+  # must be configured on every Border and Relay gateway.
+  root_key=""
+
+  # Border Gateway.
+  #
+  # If this is set to true, then the ChirpStack Gateway Mesh will consider
+  # this gateway as a Border Gateway, meaning that it will unwrap relayed
+  # uplinks and forward these to the proxy API, rather than relaying these.
+  border_gateway = false
+
+  # Max hop count.
+  #
+  # This defines the maximum number of hops a relayed payload will pass.
+  max_hop_count = 1
+
+  # Ignore direct uplinks (Border Gateway).
+  #
+  # If this is set to true, then direct uplinks (uplinks that are not relay
+  # encapsulated) will be silently ignored. This option is especially useful
+  # for testing, in which case you want to set this to true for the Border
+  # Gateway.
+  border_gateway_ignore_direct_uplinks = false
+
+  # Mesh frequencies.
+  #
+  # The ChirpStack Gateway Mesh will randomly use one of the configured
+  # frequencies when relaying uplink and downlink messages.
+  frequencies=[
+    868100000,
+    868300000,
+    868500000,
+  ]
+
+  # TX Power (EIRP).
+  #
+  # The TX Power in EIRP used when relaying uplink and downlink messages.
+  tx_power = 16
+
+  # Data-rate properties.
+  #
+  # The data-rate properties when relaying uplink and downlink messages.
+  [mesh.data_rate]
+
+    # Modulation.
+    #
+    # Valid options are: LORA, FSK
+    modulation = "LORA"
+
+    # Spreading-factor (LoRa).
+    spreading_factor = 7
+
+    # Bandwidth (LoRa).
+    bandwidth = 125000
+
+    # Code-rate (LoRa).
+    code_rate = "4/5"
+
+    # Bitrate (FSK).
+    bitrate = 0
+
+
+  # Proxy API configuration.
+  #
+  # If the gateway is configured to operate as Border Gateway. It
+  # will unwrap relayed uplink frames, and will wrap downlink payloads that
+  # must be relayed. In this case the ChirpStack MQTT Forwarder must be
+  # configured to use the proxy API instead of the Concentratord API.
+  #
+  # Payloads of devices that are under the direct coverage of this gateway
+  # are transparently proxied between the ChirpStack MQTT Forwarder and
+  # ChirpStack Concentratord.
+  #
+  # This configuration is only used when the border_gateway option is set
+  # to true.
+  [mesh.proxy_api]
+
+    # Event PUB socket bind.
+    event_bind = "ipc:///tmp/gateway_relay_event"
+
+    # Command REP socket bind.
+    command_bind = "ipc:///tmp/gateway_relay_command"
+

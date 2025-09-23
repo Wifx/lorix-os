@@ -1,0 +1,28 @@
+# Events configuration (Relay only).
+[events]
+
+  # Heartbeat interval (Relay Gateway only).
+  #
+  # This defines the interval in which a Relay Gateway (border_gateway=false)
+  # will emit heartbeat messages.
+  heartbeat_interval="5m"
+
+  # Commands.
+  #
+  # This configures for each event type the command that must be executed. The
+  # stdout of the command will be used as event payload. Example:
+  #
+  #   128 = ["/path/to/command", "arg1", "arg2"]
+  #
+  [events.commands]
+
+
+  # Event sets (can be repeated).
+  #
+  # This configures sets of events that will be periodically sent by the
+  # relay. Example:
+  #
+  #  [[events.sets]]
+  #    interval = "5min"
+  #    events = [128, 129, 130]
+  #

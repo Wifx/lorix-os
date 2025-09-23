@@ -4,6 +4,7 @@ log: true
 jobs:
     concentratord:
         description: The daemon receiving data from the LoRa concentrator (SX13XX) and forwarding to the Gateway Bridge
+        enabled: true
         boot-order: 0
         process:
             run-mode: exec
@@ -17,9 +18,27 @@ jobs:
                 start: 3000
                 term: 1000
                 restart: 5000
-    gateway-bridge:
-        description: MQTT Forwarder receiveing the concentrator daemon packets and sending them to the ChirpStack Network Server
+    gateway-mesh:
+        description: Gateway Mesh is in between the concentrator daemon and the MQTT Forwarder, handling mesh network if configured
+        enabled: true
         boot-order: 1
+        process:
+            run-mode: exec
+            program-path: /opt/chirpstack-gateway-mesh/chirpstack-gateway-mesh
+            program-arguments: >-
+              -c /etc/opt/chirpstack-gateway-mesh/10-general.toml
+              -c /etc/opt/chirpstack-gateway-mesh/20-mesh.toml
+              -c /etc/opt/chirpstack-gateway-mesh/30-backend.toml
+              -c /etc/opt/chirpstack-gateway-mesh/40-events.toml
+              -c /etc/opt/chirpstack-gateway-mesh/50-commands.toml
+            delays:
+                start: 1000
+                term: 1000
+                restart: 5000
+    mqtt-forwarder:
+        description: MQTT Forwarder receiveing the concentrator daemon packets and sending them to the ChirpStack Network Server
+        enabled: true
+        boot-order: 2
         process:
             run-mode: exec
             program-path: /opt/chirpstack-mqtt-forwarder/chirpstack-mqtt-forwarder
