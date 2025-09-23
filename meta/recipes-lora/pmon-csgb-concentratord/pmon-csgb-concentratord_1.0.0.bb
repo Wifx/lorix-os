@@ -9,7 +9,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=83564c4ad755d0edeaa1ba4b3918b365"
 RDEPENDS:${PN} += " \
     pmonitor \
     chirpstack-gateway-bridge \
-    chirpstack-concentratord \
+    chirpstack-concentratord-legacy \
 "
 
 SRC_URI = " \

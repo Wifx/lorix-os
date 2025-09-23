@@ -1,0 +1,27 @@
+# +++
+# name: Australia 915-928 MHz, FSB 6
+# description: Frequency plan for Australia, using sub-band 6, which overlaps with Asia 923-925 MHz
+# countries: [br, cl, nz, ar, au]
+# +++
+
+
+# LoRa concentrator configuration.
+[gateway.concentrator]
+
+    # Multi spreading-factor channels (LoRa).
+    multi_sf_channels=[
+        923200000,
+        923400000,
+        923600000,
+        923800000,
+        924000000,
+        924200000,
+        924400000,
+        924600000,
+    ]
+
+    # LoRa std channel (single spreading-factor).
+    [gateway.concentrator.lora_std]
+        frequency=923900000
+        bandwidth=500000
+        spreading_factor=8

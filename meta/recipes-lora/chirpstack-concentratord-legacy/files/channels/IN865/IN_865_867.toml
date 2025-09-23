@@ -1,0 +1,21 @@
+# +++
+# name: India 865-867 MHz
+# description: Default frequency plan for India
+# countries: [in]
+# +++
+
+
+# LoRa concentrator configuration.
+[gateway.concentrator]
+
+    # Multi spreading-factor channels (LoRa).
+    multi_sf_channels=[
+        865062500,
+        865402500,
+        865985000,
+        865232500,
+        866185000,
+        866385000,
+        866585000,
+        866785000,
+    ]

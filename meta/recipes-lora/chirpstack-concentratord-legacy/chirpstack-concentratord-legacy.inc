@@ -4,10 +4,10 @@
 HOMEPAGE = "https://www.chirpstack.io/"
 DESCRIPTION = "ChirpStack Concentratord"
 LICENSE = "MIT"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=bc4546f147d6f9892ca1b7d23bf41196"
 
-FILESEXTRAPATHS:prepend := "${THISDIR}/v4:"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=99e425257f8a67b7efd81dc0009ed8ff"
 
+FILESEXTRAPATHS:prepend := "${THISDIR}/v3:"
 SRC_URI += "\
     file://concentratord.toml \
     file://gateways/gateway-l1.toml \
@@ -37,10 +37,7 @@ SRC_URI += "\
     file://channels/US915/US_902_928_FSB_8.toml \
 "
 
-DEPENDS = " \
-    protobuf-native \
-    clang-native \
-"
+DEPENDS += "clang-native"
 ASSUME_PROVIDED:remove = "cmake-native"
 
 DEPENDS:append:sx1301 = " libloragw-sx1301"
@@ -48,10 +45,10 @@ DEPENDS:append:sx1302 = " libloragw-sx1302"
 
 RDEPENDS:${PN} += "machine-info"
 
-UPX_COMPRESS_FILES:${PN} = "/opt/chirpstack-concentratord/chirpstack-concentratord"
+UPX_COMPRESS_FILES:${PN} = "/opt/chirpstack-concentratord-legacy/chirpstack-concentratord-legacy"
 inherit upx
 
-CONF_DIR = "${sysconfoptdir}/chirpstack-concentratord"
+CONF_DIR = "${sysconfoptdir}/chirpstack-concentratord-legacy"
 S = "${WORKDIR}/git"
 
 ## meta-rust
@@ -79,7 +76,7 @@ do_install() {
     install_channels
 
     # Bin directory
-    install -m 0755 -d ${D}${optdir}/chirpstack-concentratord
+    install -m 0755 -d ${D}${optdir}/chirpstack-concentratord-legacy
 }
 
 do_install:append:lorix-one() {
@@ -93,11 +90,11 @@ do_install:append:l1() {
 }
 
 do_install:append:sx1301() {
-    install -m 0755 ${B}/target/${CARGO_TARGET_SUBDIR}/chirpstack-concentratord-sx1301 ${D}${optdir}/chirpstack-concentratord/chirpstack-concentratord
+    install -m 0755 ${B}/target/${CARGO_TARGET_SUBDIR}/chirpstack-concentratord-sx1301 ${D}${optdir}/chirpstack-concentratord-legacy/chirpstack-concentratord-legacy
 }
 
 do_install:append:sx1302() {
-    install -m 0755 ${B}/target/${CARGO_TARGET_SUBDIR}/chirpstack-concentratord-sx1302 ${D}${optdir}/chirpstack-concentratord/chirpstack-concentratord
+    install -m 0755 ${B}/target/${CARGO_TARGET_SUBDIR}/chirpstack-concentratord-sx1302 ${D}${optdir}/chirpstack-concentratord-legacy/chirpstack-concentratord-legacy
 }
 
 install_configs() {
@@ -256,7 +253,7 @@ pkg_postinst_ontarget:${PN}:append:l1 () {
 
 FILES:${PN} += " \
     ${CONF_DIR}/ \
-    ${optdir}/chirpstack-concentratord/chirpstack-concentratord \
+    ${optdir}/chirpstack-concentratord-legacy/chirpstack-concentratord-legacy \
 "
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"

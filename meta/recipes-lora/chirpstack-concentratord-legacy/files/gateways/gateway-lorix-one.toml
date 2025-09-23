@@ -10,14 +10,14 @@
   # Public LoRaWAN network.
   lorawan_public=true
 
+  # Gateway ID
+  #
+  # Unique identifier of this gateway. Base on the hardware MAC address.
+  # The gateways are generally references into the LoRa Network Server under this ID.
+  # This file has been generated automatically at first boot, do not edit.
+  gateway_id=""
+
   # Antenna gain (dB).
   antenna_gain=0
   
   model=""
-
-  # Region.
-  #
-  # The region of the gateway. Options:
-  #  EU868, IN865, RU864
-  #  US915, AU915, AS923, AS923_2, AS923_3, AS923_4,
-  region=""
