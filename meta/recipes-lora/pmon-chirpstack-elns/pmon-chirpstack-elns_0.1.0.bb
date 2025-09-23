@@ -16,7 +16,7 @@ RDEPENDS:${PN} += " \
 
 SRC_URI = " \
     file://LICENSE \
-    file://cs-csmf-concentratord.yml \
+    file://chirpstack-elns.yml \
 "
 
 S = "${WORKDIR}"
@@ -30,5 +30,5 @@ inherit pmonitor
 
 do_install() {
     # Pmonitor service configuration files
-    pmonitor_service_install ${WORKDIR}/cs-csmf-concentratord.yml
+    pmonitor_service_install ${WORKDIR}/chirpstack-elns.yml
 }
