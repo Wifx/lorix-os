@@ -10,6 +10,7 @@ SRC_URI += "\
     file://10-logging.toml \
     file://20-mqtt.toml \
     file://30-backend.toml \
+    file://31-filters.toml \
     file://40-metadata.toml \
     file://50-commands.toml \
     file://60-callbacks.toml \
@@ -51,6 +52,7 @@ do_install() {
     install_config 10-logging.toml
     install_config 20-mqtt.toml
     install_config 30-backend.toml
+    install_config 31-filters.toml
     install_config 40-metadata.toml
     install_config 50-commands.toml
     install_config 60-callbacks.toml

@@ -6,7 +6,7 @@
   #
   # This key is used to derive the signing and encryption keys. The same key
   # must be configured on every Border and Relay gateway.
-  root_key=""
+  root_key="00000000000000000000000000000000"
 
   # Border Gateway.
   #
@@ -64,26 +64,3 @@
 
     # Bitrate (FSK).
     bitrate = 0
-
-
-  # Proxy API configuration.
-  #
-  # If the gateway is configured to operate as Border Gateway. It
-  # will unwrap relayed uplink frames, and will wrap downlink payloads that
-  # must be relayed. In this case the ChirpStack MQTT Forwarder must be
-  # configured to use the proxy API instead of the Concentratord API.
-  #
-  # Payloads of devices that are under the direct coverage of this gateway
-  # are transparently proxied between the ChirpStack MQTT Forwarder and
-  # ChirpStack Concentratord.
-  #
-  # This configuration is only used when the border_gateway option is set
-  # to true.
-  [mesh.proxy_api]
-
-    # Event PUB socket bind.
-    event_bind = "ipc:///tmp/gateway_relay_event"
-
-    # Command REP socket bind.
-    command_bind = "ipc:///tmp/gateway_relay_command"
-

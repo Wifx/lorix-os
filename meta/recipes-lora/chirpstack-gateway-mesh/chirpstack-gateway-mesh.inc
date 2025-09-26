@@ -9,9 +9,10 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=070df97663cffadabf677115eb41db93"
 SRC_URI += "\
     file://10-logging.toml \
     file://20-mesh.toml \
+    file://21-mesh-proxy-api.toml \
     file://30-backend.toml \
     file://40-events.toml \
-    file://30-commands.toml \
+    file://50-commands.toml \
 "
 
 UPX_COMPRESS_FILES:${PN} = "/opt/chirpstack-gateway-mesh/chirpstack-gateway-mesh"
@@ -49,6 +50,7 @@ do_install() {
     install -m 0755 -d ${D}${CONF_DIR}
     install_config 10-logging.toml
     install_config 20-mesh.toml
+    install_config 21-mesh-proxy-api.toml
     install_config 30-backend.toml
     install_config 40-events.toml
     install_config 50-commands.toml

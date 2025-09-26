@@ -1,24 +1,8 @@
-
 # Backend configuration.
 [backend]
 
   # ChirpStack Concentratord configuration (end-device communication).
   [backend.concentratord]
-
-    # Event API URL.
-    event_url = "ipc:///tmp/concentratord_event"
-
-    # Command API URL.
-    command_url = "ipc:///tmp/concentratord_command"
-
-
-  # ChirpStack Concentratord configuration (mesh communication).
-  #
-  # While not required, this configuration makes it possible to use a different
-  # Concentratord instance for the mesh communication. E.g. this
-  # makes it possible to use ISM2400 for mesh communication and EU868 for
-  # communication with the end-devices.
-  [backend.mesh_concentratord]
 
     # Event API URL.
     event_url = "ipc:///tmp/concentratord_event"

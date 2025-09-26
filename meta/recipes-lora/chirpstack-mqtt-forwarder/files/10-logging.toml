@@ -10,7 +10,7 @@
   #   * WARN
   #   * ERROR
   #   * OFF
-  level="info"
+  level="INFO"
 
   # Log to syslog.
   #

@@ -28,6 +28,7 @@ jobs:
             program-arguments: >-
               -c /etc/opt/chirpstack-gateway-mesh/10-general.toml
               -c /etc/opt/chirpstack-gateway-mesh/20-mesh.toml
+              -c /etc/opt/chirpstack-gateway-mesh/21-mesh-proxy-api.toml
               -c /etc/opt/chirpstack-gateway-mesh/30-backend.toml
               -c /etc/opt/chirpstack-gateway-mesh/40-events.toml
               -c /etc/opt/chirpstack-gateway-mesh/50-commands.toml
@@ -43,11 +44,13 @@ jobs:
             run-mode: exec
             program-path: /opt/chirpstack-mqtt-forwarder/chirpstack-mqtt-forwarder
             program-arguments: >-
-              -c /etc/opt/chirpstack-mqtt-forwarder/10-general.toml
-              -c /etc/opt/chirpstack-mqtt-forwarder/20-lns.toml
+              -c /etc/opt/chirpstack-mqtt-forwarder/10-logging.toml
+              -c /etc/opt/chirpstack-mqtt-forwarder/20-mqtt.toml
               -c /etc/opt/chirpstack-mqtt-forwarder/30-backend.toml
+              -c /etc/opt/chirpstack-mqtt-forwarder/31-filters.toml
               -c /etc/opt/chirpstack-mqtt-forwarder/40-metadata.toml
               -c /etc/opt/chirpstack-mqtt-forwarder/50-commands.toml
+              -c /etc/opt/chirpstack-mqtt-forwarder/60-callbacks.toml
             delays:
                 start: 1000
                 term: 1000

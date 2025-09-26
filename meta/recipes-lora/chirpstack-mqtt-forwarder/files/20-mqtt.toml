@@ -23,7 +23,7 @@
   json=false
 
   # MQTT server (e.g. scheme://host:port where scheme is tcp, ssl or ws)
-  server="tcp://127.0.0.1:1883"
+  server=""
 
   # Connect with the given username (optional)
   username=""
@@ -72,5 +72,5 @@
   #
   # This defines the reconnection interval to the MQTT broker in case of
   # network issues.
-  reconnect_interval=""
+  reconnect_interval="5s"
   
