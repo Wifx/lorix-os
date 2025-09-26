@@ -2,21 +2,19 @@
 # All rights reserved.
 
 HOMEPAGE = "https://www.chirpstack.io/"
-DESCRIPTION = "ChirpStack UDP Bridge"
+DESCRIPTION = "ChirpStack UDP Forwarder"
 LICENSE = "MIT"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=09fe2246a30dca84af09ac8608093cd7"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=bc4546f147d6f9892ca1b7d23bf41196"
 
 SRC_URI += "\
     file://0001-Ignore-trailing-null-bytes-on-downlink-packet.patch \
-    file://0002-No-null-in-json.patch \
-    file://0003-Update-Prometheus-crate-version-to-fix-build-with-ca.patch \
     file://00-concentratord.toml \
-    file://10-udp-bridge.toml \
+    file://10-udp-forwarder.toml \
     file://20-servers.toml \
 "
 
 inherit upx
-UPX_COMPRESS_FILES:${PN} = "${optdir}/chirpstack-udp-bridge/chirpstack-udp-bridge"
+UPX_COMPRESS_FILES:${PN} = "${optdir}/chirpstack-udp-forwarder/chirpstack-udp-forwarder"
 
 DEPENDS += " \
     protobuf-native \
@@ -37,21 +35,28 @@ DEBUG_PREFIX_MAP:append = " \
     -fdebug-prefix-map=${WORKDIR}=/usr/src/debug/${PN}/${EXTENDPE}${PV}-${PR} \
 "
 
+do_fix_strip() {
+    # This is not the sources's job to strip binaries as Yocto does it very well
+    # and allow to keep unstripped binaries in ${PN}-dev pkg.
+    sed -i "s/strip = true/strip = false/" ${S}/Cargo.toml
+}
+addtask fix_strip after do_patch before do_configure
+
 export BINDGEN_EXTRA_CLANG_ARGS="-I${STAGING_INCDIR}"
 
-CONF_DIR = "${sysconfoptdir}/chirpstack-udp-bridge"
+CONF_DIR = "${sysconfoptdir}/chirpstack-udp-forwarder"
 S = "${WORKDIR}/git"
 
 do_install() {
     # Configuration
     install -m 0755 -d ${D}${CONF_DIR}
     install_config 00-concentratord.toml
-    install_config 10-udp-bridge.toml
+    install_config 10-udp-forwarder.toml
     install_config 20-servers.toml
 
     # Bin directory
-    install -m 0755 -d ${D}${optdir}/chirpstack-udp-bridge
-    install -m 0755 ${B}/target/${CARGO_TARGET_SUBDIR}/chirpstack-udp-bridge ${D}${optdir}/chirpstack-udp-bridge/chirpstack-udp-bridge
+    install -m 0755 -d ${D}${optdir}/chirpstack-udp-forwarder
+    install -m 0755 ${B}/target/${CARGO_TARGET_SUBDIR}/chirpstack-udp-forwarder ${D}${optdir}/chirpstack-udp-forwarder/chirpstack-udp-forwarder
 }
 
 install_config() {
@@ -69,6 +74,6 @@ install_config() {
 }
 
 FILES:${PN} += " \
-    ${CONF_DIR}/udp-bridge.toml \
-    ${optdir}/chirpstack-udp-bridge/chirpstack-udp-bridge \
+    ${CONF_DIR}/udp-forwarder.toml \
+    ${optdir}/chirpstack-udp-forwarder/chirpstack-udp-forwarder \
 "

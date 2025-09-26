@@ -1,5 +1,5 @@
-# UDP Bridge configuration.
-[udp_bridge]
+# UDP Forwarder configuration.
+[udp_forwarder]
 
   # Log level.
   #

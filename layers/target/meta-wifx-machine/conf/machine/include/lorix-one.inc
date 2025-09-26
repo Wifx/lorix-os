@@ -13,7 +13,7 @@ MACHINE_PRETTY_NAME = "LORIX One"
 
 BAD_RECOMMENDATIONS:append = " \
     pmon-csgb-concentratord \
-    pmon-csub-concentratord \
+    pmon-csuf-concentratord \
     pmon-helium-upf \
 " 
 

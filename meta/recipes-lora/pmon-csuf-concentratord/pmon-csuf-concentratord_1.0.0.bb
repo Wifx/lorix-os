@@ -1,5 +1,5 @@
-SUMMARY = "ChirpStack concentratord/UDP bridge package"
-DESCRIPTION = "Configuration setup for interfacing the ChirpStack Concentratord with the Chripstack UDP Bridge."
+SUMMARY = "ChirpStack concentratord/UDP Forwarder package"
+DESCRIPTION = "Configuration setup for interfacing the ChirpStack Concentratord with the Chripstack UDP Forwarder."
 AUTHOR = "Wifx Sàrl"
 SECTION = "base"
 
@@ -9,12 +9,12 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=83564c4ad755d0edeaa1ba4b3918b365"
 RDEPENDS:${PN} += " \
     pmonitor \
     chirpstack-concentratord \
-    chirpstack-udp-bridge \
+    chirpstack-udp-forwarder \
 "
 
 SRC_URI = " \
     file://LICENSE \
-    file://csub-concentratord.yml \
+    file://csuf-concentratord.yml \
 "
 
 RPROVIDES:${PN} += "udp-packet-forwarder"
@@ -30,5 +30,5 @@ inherit pmonitor
 
 do_install() {
     # Pmonitor service configuration files
-    pmonitor_service_install ${WORKDIR}/csub-concentratord.yml
+    pmonitor_service_install ${WORKDIR}/csuf-concentratord.yml
 }
