@@ -20,13 +20,13 @@ jobs:
                 restart: 5000
     gateway-mesh:
         description: Gateway Mesh is in between the concentrator daemon and the MQTT Forwarder, handling mesh network if configured
-        enabled: true
+        enabled: false
         boot-order: 1
         process:
             run-mode: exec
             program-path: /opt/chirpstack-gateway-mesh/chirpstack-gateway-mesh
             program-arguments: >-
-              -c /etc/opt/chirpstack-gateway-mesh/10-general.toml
+              -c /etc/opt/chirpstack-gateway-mesh/10-logging.toml
               -c /etc/opt/chirpstack-gateway-mesh/20-mesh.toml
               -c /etc/opt/chirpstack-gateway-mesh/21-mesh-proxy-api.toml
               -c /etc/opt/chirpstack-gateway-mesh/30-backend.toml
