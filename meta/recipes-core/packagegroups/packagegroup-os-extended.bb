@@ -11,15 +11,14 @@ inherit packagegroup
 RDEPENDS:${PN} = " \
     iproute2 \
     iptables \
-    bridge-utils \
-    bind-utils \
-    iperf3 \
-    \
     openssl \
     ca-certificates \
 "
 RRECOMMENDS:${PN} += " \
+    bind-utils \
+    bridge-utils \
     net-snmp-server \
-    zabbix \
     nethogs \
+    iperf3 \
+    zabbix \
 "

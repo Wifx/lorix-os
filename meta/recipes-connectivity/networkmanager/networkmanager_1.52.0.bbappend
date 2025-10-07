@@ -37,6 +37,10 @@ PACKAGECONFIG:append = " \
     ${@bb.utils.contains('MACHINE_FEATURES', 'wwan', 'modemmanager', '', d)} \
 "
 
+# Replace default crypto lib, nss (8MB!!!) by gnutls (1.2MB)
+PACKAGECONFIG:remove = "nss"
+PACKAGECONFIG:append = " gnutls"
+
 do_install:append() {
     # Add the ifupdown atlernative file
     install -d ${D}${sysconfdir}/network
