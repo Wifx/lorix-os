@@ -1,15 +1,5 @@
-
 # Filters.
 [backend.filters]
-
-  # Forward CRC ok.
-  forward_crc_ok=true
-
-  # Forward CRC invalid.
-  forward_crc_invalid=false
-
-  # Forward CRC missing.
-  forward_crc_missing=false
 
   # DevAddr prefix filters.
   #
@@ -34,4 +24,13 @@
   # disables filtering on JoinEUI.
   join_eui_prefixes=[
   ]
+
+  # Forward CRC ok.
+  forward_crc_ok=true
+
+  # Forward CRC invalid.
+  forward_crc_invalid=false
+
+  # Forward CRC missing.
+  forward_crc_missing=false
 
