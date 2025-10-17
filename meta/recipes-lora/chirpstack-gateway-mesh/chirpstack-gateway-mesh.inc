@@ -13,6 +13,16 @@ SRC_URI += "\
     file://30-backend.toml \
     file://40-events.toml \
     file://50-commands.toml \
+    file://mappings/AS923.toml \
+    file://mappings/AS923_2.toml \
+    file://mappings/AS923_3.toml \
+    file://mappings/AS923_4.toml \
+    file://mappings/AU915.toml \
+    file://mappings/EU868.toml \
+    file://mappings/IN865.toml \
+    file://mappings/KR920.toml \
+    file://mappings/RU864.toml \
+    file://mappings/US915.toml \
 "
 
 UPX_COMPRESS_FILES:${PN} = "/opt/chirpstack-gateway-mesh/chirpstack-gateway-mesh"
@@ -55,6 +65,8 @@ do_install() {
     install_config 40-events.toml
     install_config 50-commands.toml
 
+    install_mappings
+
     # Bin directory
     install -m 0755 -d ${D}${optdir}/chirpstack-gateway-mesh
     install -m 0755 ${B}/target/${CARGO_TARGET_SUBDIR}/chirpstack-gateway-mesh ${D}${optdir}/chirpstack-gateway-mesh/chirpstack-gateway-mesh
@@ -74,6 +86,30 @@ install_config() {
     install -m 0644 ${WORKDIR}/$1 ${D}${CONF_DIR}/${DEST}
 }
 
+
+install_mappings() {
+    install -m 0755 -d ${D}${CONF_DIR}/mappings
+    install_mapping AS923.toml
+    install_mapping AS923_2.toml
+    install_mapping AS923_3.toml
+    install_mapping AS923_4.toml
+    install_mapping AU915.toml
+    install_mapping EU868.toml
+    install_mapping IN865.toml
+    install_mapping KR920.toml
+    install_mapping RU864.toml
+    install_mapping US915.toml
+}
+
+install_mapping() {
+    if [ -z "$1" ]; then
+        bbfatal "Usage install_mapping <source> [dest]"
+    fi
+
+    install -m 0644 ${WORKDIR}/mappings/$1 ${D}${CONF_DIR}/mappings/$1
+}
+
 FILES:${PN} += " \
     ${optdir}/chirpstack-gateway-mesh/chirpstack-gateway-mesh \
+    ${CONF_DIR} \
 "

@@ -32,6 +32,7 @@ jobs:
               -c /etc/opt/chirpstack-gateway-mesh/30-backend.toml
               -c /etc/opt/chirpstack-gateway-mesh/40-events.toml
               -c /etc/opt/chirpstack-gateway-mesh/50-commands.toml
+              -c /etc/opt/chirpstack-gateway-mesh/mappings.toml
             delays:
                 start: 1000
                 term: 1000
