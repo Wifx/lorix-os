@@ -1,53 +1,88 @@
-diff --git a/chirpstack-concentratord-sx1301/src/config/mod.rs b/chirpstack-concentratord-sx1301/src/config/mod.rs
-index 90c4f68..fa1bbd6 100644
---- a/chirpstack-concentratord-sx1301/src/config/mod.rs
-+++ b/chirpstack-concentratord-sx1301/src/config/mod.rs
-@@ -279,7 +279,8 @@ pub fn get(filenames: Vec<String>) -> Configuration {
-         "rak_2247" => vendor::rak::rak2247::new(&config).unwrap(),
-         "risinghf_rhf0m301" => vendor::risinghf::rhf0m301::new(&config).unwrap(),
-         "sandbox_lorago_port" => vendor::sandbox::lorago_port::new(&config).unwrap(),
--        "wifx_lorix_one" => vendor::wifx::lorix_one::new(&config).unwrap(),
-+        "wifx_lorix_one_8XX_A" => vendor::wifx::lorix_one_8XX_A::new(&config).unwrap(),
-+        "wifx_lorix_one_9XX_A" => vendor::wifx::lorix_one_9XX_A::new(&config).unwrap(),
-         _ => panic!("unexpected gateway model: {}", config.gateway.model),
-     };
- 
+Subject: [PATCH] Update LORIX One configuration Add Wifx L1 configuration
+---
+Index: chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one.rs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
 diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one.rs
-deleted file mode 100644
-index 0ccdb41..0000000
---- a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one.rs
-+++ /dev/null
-@@ -1,300 +0,0 @@
--use anyhow::Result;
--use libloragw_sx1301::hal;
--
+--- a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one.rs	(revision f60f98f1d6c789cf60d49b1822570dca249a18eb)
++++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one.rs	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
+@@ -1,300 +1,73 @@
++use super::super::Configuration;
++use super::{lorix_one_8XX, lorix_one_9XX};
++use crate::config;
++use crate::config::Region;
+ use anyhow::Result;
++use libconcentratord::{gnss, region};
+ use libloragw_sx1301::hal;
+ 
 -use super::super::super::super::config::{self, Region};
 -use super::super::Configuration;
 -use libconcentratord::region;
--
++#[derive(Debug, Clone, Copy, PartialEq, Eq)]
++pub enum ModelLoraRegion {
++    V8XX,
++    V9XX,
++}
+ 
 -// source:
 -// https://github.com/Wifx/meta-wifx/blob/krogoth/recipes-connectivity/packet-forwarder/files/configs/global_conf_EU868_2dBi_indoor.json
 -// https://github.com/Wifx/meta-wifx/blob/krogoth/recipes-connectivity/packet-forwarder/files/configs/global_conf_EU868_4dBi_outdoor.json
--pub fn new(conf: &config::Configuration) -> Result<Configuration> {
+ pub fn new(conf: &config::Configuration) -> Result<Configuration> {
 -    let region = conf.gateway.region.unwrap_or(Region::EU868);
--
++    let flags = &conf.gateway.model_flags;
++
++    let model_lora_region = if flags.contains(&"lora_region-8XX".to_string()) {
++        ModelLoraRegion::V8XX
++    } else if flags.contains(&"lora_region-9XX".to_string()) {
++        ModelLoraRegion::V9XX
++    } else {
++        return Err(anyhow!(
++            "You must specify a lora_region flag: lora_region-8XX or lora_region-9XX"
++        ));
++    };
+ 
 -    let tx_min_max_freqs = match region {
 -        Region::EU868 => region::eu868::TX_MIN_MAX_FREQS.to_vec(),
 -        _ => return Err(anyhow!("Region is not supported: {}", region)),
--    };
--
--    let enforce_duty_cycle = conf.gateway.model_flags.contains(&"ENFORCE_DC".to_string());
--
--    Ok(Configuration {
++    let region = conf
++        .gateway
++        .region
++        .ok_or_else(|| anyhow!("You must specify a region"))?;
++
++    let tx_min_max_freqs = match model_lora_region {
++        ModelLoraRegion::V8XX => match region {
++            Region::EU868 => region::eu868::TX_MIN_MAX_FREQS.to_vec(),
++            Region::IN865 => region::in865::TX_MIN_MAX_FREQS.to_vec(),
++            Region::RU864 => region::ru864::TX_MIN_MAX_FREQS.to_vec(),
++            _ => return Err(anyhow!("Region is not supported: {}", region)),
++        },
++        ModelLoraRegion::V9XX => match region {
++            Region::AS923 | Region::AS923_2 | Region::AS923_3 | Region::AS923_4 => {
++                region::as923::TX_MIN_MAX_FREQS.to_vec()
++            }
++            Region::AU915 => region::au915::TX_MIN_MAX_FREQS.to_vec(),
++            Region::US915 => region::us915::TX_MIN_MAX_FREQS.to_vec(),
++            _ => return Err(anyhow!("Region is not supported: {}", region)),
++        },
+     };
+ 
+     let enforce_duty_cycle = conf.gateway.model_flags.contains(&"ENFORCE_DC".to_string());
+ 
+     Ok(Configuration {
 -        tx_min_max_freqs,
--        enforce_duty_cycle,
--        radio_count: 2,
--        clock_source: 1,
+         enforce_duty_cycle,
+         radio_count: 2,
+         clock_source: 1,
 -        radio_rssi_offset: vec![-164.0, -164.0],
--        radio_tx_enabled: vec![true, false],
--        radio_type: vec![hal::RadioType::SX1257, hal::RadioType::SX1257],
++        radio_rssi_offset: vec![-166.0, -166.0],
+         radio_tx_enabled: vec![true, false],
+         radio_type: vec![hal::RadioType::SX1257, hal::RadioType::SX1257],
 -        radio_tx_notch_freq: vec![129000, 0],
--        lora_multi_sf_bandwidth: 125000,
++        tx_min_max_freqs,
++        radio_tx_notch_freq: vec![0, 0],
+         lora_multi_sf_bandwidth: 125000,
 -        tx_gain_table: if conf.gateway.antenna_gain == 2 {
 -            vec![
 -                // 0
@@ -314,172 +349,108 @@ index 0ccdb41..0000000
 -            panic!("Invalid antenna_gain: {}", conf.gateway.antenna_gain);
 -        },
 -        spidev_path: conf.gateway.get_com_dev_path("/dev/spidev0.0"),
--        reset_pin: conf.gateway.get_sx1301_reset_pin("/dev/gpiochip0", 1),
--        ..Default::default()
--    })
--}
-diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_8XX_A.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_8XX_A.rs
-new file mode 100644
-index 0000000..8714f79
---- /dev/null
-+++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_8XX_A.rs
-@@ -0,0 +1,70 @@
-+use anyhow::Result;
-+use libloragw_sx1301::hal;
-+use libconcentratord::{gnss, region};
-+
-+use super::super::super::super::config::{self, Region};
-+use super::super::{Configuration};
-+
-+pub fn new(conf: &config::Configuration) -> Result<Configuration> {
-+    let region = conf
-+        .gateway
-+        .region
-+        .ok_or_else(|| anyhow!("You must specify a region"))?;
-+
-+    let tx_min_max_freqs = match region {
-+        Region::EU868 => region::eu868::TX_MIN_MAX_FREQS.to_vec(),
-+        Region::IN865 => region::in865::TX_MIN_MAX_FREQS.to_vec(),
-+        Region::RU864 => region::ru864::TX_MIN_MAX_FREQS.to_vec(),
-+        _ => return Err(anyhow!("Region is not supported: {}", region)),
-+    };
-+
-+    let enforce_duty_cycle = conf.gateway.model_flags.contains(&"ENFORCE_DC".to_string());
-+
-+    let tx_gain_config = match region {
-+        Region::EU868
-+        | Region::IN865
-+        | Region::RU864 => vec![
-+            super::gain_param(7, 1, 15, 2),
-+            super::gain_param(8, 2, 9, 1),
-+            super::gain_param(9, 2, 12, 3),
-+            super::gain_param(10, 3, 8, 3),
-+            super::gain_param(11, 2, 10, 0),
-+            super::gain_param(12, 3, 9, 3),
-+            super::gain_param(13, 2, 11, 0),
-+            super::gain_param(14, 2, 13, 2),
-+            super::gain_param(15, 3, 8, 1),
-+            super::gain_param(16, 2, 13, 0),
-+            super::gain_param(17, 2, 14, 0),
-+            super::gain_param(18, 3, 10, 2),
-+            super::gain_param(19, 3, 9, 0),
-+            super::gain_param(20, 3, 10, 1),
-+            super::gain_param(21, 3, 13, 3),
-+            super::gain_param(22, 3, 12, 2),
-+            super::gain_param(23, 3, 11, 0),
-+            super::gain_param(24, 3, 13, 2),
-+            super::gain_param(25, 3, 14, 2),
-+            super::gain_param(26, 3, 14, 0),
-+            super::gain_param(27, 3, 15, 0),
-+        ],
-+        _ => return Err(anyhow!("Region not supported: {}", region)),
-+    };
-+
-+    Ok(Configuration {
-+        enforce_duty_cycle,
-+        radio_count: 2,
-+        clock_source: 1,
-+        radio_rssi_offset: vec![-166.0, -166.0],
-+        radio_tx_enabled: vec![true, false],
-+        radio_type: vec![hal::RadioType::SX1257, hal::RadioType::SX1257],
-+        tx_min_max_freqs,
-+        radio_tx_notch_freq: vec![0, 0],
-+        lora_multi_sf_bandwidth: 125000,
 +        tx_gain_table: super::get_tx_gain_table(
-+            tx_gain_config,
++            match model_lora_region {
++                (ModelLoraRegion::V8XX) => lorix_one_8XX::tx_gain_config(),
++                (ModelLoraRegion::V9XX) => lorix_one_9XX::tx_gain_config(),
++            },
 +            conf.gateway.antenna_gain,
 +        ),
 +        gps: gnss::Device::None,
 +        spidev_path: "/dev/spidev0.0".to_string(),
-+        reset_pin: conf.gateway.get_sx1301_reset_pin("/dev/gpiochip0", 1),
-+    })
-+}
-diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_9XX_A.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_9XX_A.rs
+         reset_pin: conf.gateway.get_sx1301_reset_pin("/dev/gpiochip0", 1),
+-        ..Default::default()
+     })
+ }
+Index: chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_8XX.rs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_8XX.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_8XX.rs
 new file mode 100644
-index 0000000..b4c68a7
---- /dev/null
-+++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_9XX_A.rs
-@@ -0,0 +1,70 @@
-+use anyhow::Result;
-+use libloragw_sx1301::hal;
-+use libconcentratord::{gnss, region};
+--- /dev/null	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
++++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_8XX.rs	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
+@@ -0,0 +1,27 @@
++use libloragw_sx1301::hal::TxGainConfig;
 +
-+use super::super::super::super::config::{self, Region};
-+use super::super::{Configuration};
-+
-+pub fn new(conf: &config::Configuration) -> Result<Configuration> {
-+    let region = conf
-+        .gateway
-+        .region
-+        .ok_or_else(|| anyhow!("You must specify a region"))?;
-+
-+    let tx_min_max_freqs = match region {
-+        Region::AS923 | Region::AS923_2 | Region::AS923_3 | Region::AS923_4 => region::as923::TX_MIN_MAX_FREQS.to_vec(),
-+        Region::AU915 => region::au915::TX_MIN_MAX_FREQS.to_vec(),
-+        Region::US915 => region::us915::TX_MIN_MAX_FREQS.to_vec(),
-+        _ => return Err(anyhow!("Region is not supported: {}", region)),
-+    };
-+
-+    let enforce_duty_cycle = conf.gateway.model_flags.contains(&"ENFORCE_DC".to_string());
-+    
-+    let tx_gain_config = match region {
-+        Region::AS923 | Region::AS923_2 | Region::AS923_3 | Region::AS923_4
-+        | Region::AU915
-+        | Region::US915 => vec![
-+            super::gain_param(7, 1, 12, 2),
-+            super::gain_param(8, 1, 12, 1),
-+            super::gain_param(9, 1, 12, 0),
-+            super::gain_param(10, 1, 13, 0),
-+            super::gain_param(11, 1, 15, 1),
-+            super::gain_param(12, 2, 9, 0),
-+            super::gain_param(13, 3, 8, 3),
-+            super::gain_param(14, 2, 10, 0),
-+            super::gain_param(15, 3, 9, 3),
-+            super::gain_param(16, 2, 12, 1),
-+            super::gain_param(17, 3, 10, 3),
-+            super::gain_param(18, 2, 14, 2),
-+            super::gain_param(19, 2, 15, 2),
-+            super::gain_param(20, 3, 9, 1),
-+            super::gain_param(21, 3, 12, 3),
-+            super::gain_param(22, 3, 10, 1),
-+            super::gain_param(23, 3, 11, 2),
-+            super::gain_param(24, 3, 11, 1),
-+            super::gain_param(25, 3, 14, 3),
-+            super::gain_param(26, 3, 13, 2),
-+            super::gain_param(27, 3, 13, 1),
-+        ],
-+        _ => return Err(anyhow!("Region not supported: {}", region)),
-+    };
-+
-+    Ok(Configuration {
-+        enforce_duty_cycle,
-+        radio_count: 2,
-+        clock_source: 1,
-+        radio_rssi_offset: vec![-166.0, -166.0],
-+        radio_tx_enabled: vec![true, false],
-+        radio_type: vec![hal::RadioType::SX1257, hal::RadioType::SX1257],
-+        tx_min_max_freqs,
-+        radio_tx_notch_freq: vec![0, 0],
-+        lora_multi_sf_bandwidth: 125000,
-+        tx_gain_table: super::get_tx_gain_table(
-+            tx_gain_config,
-+            conf.gateway.antenna_gain,
-+        ),
-+        gps: gnss::Device::None,
-+        spidev_path: "/dev/spidev0.0".to_owned(),
-+        reset_pin: conf.gateway.get_sx1301_reset_pin("/dev/gpiochip0", 1),
-+    })
++pub fn tx_gain_config() -> Vec<TxGainConfig> {
++    vec![
++        super::gain_param(7, 1, 15, 2),
++        super::gain_param(8, 2, 9, 1),
++        super::gain_param(9, 2, 12, 3),
++        super::gain_param(10, 3, 8, 3),
++        super::gain_param(11, 2, 10, 0),
++        super::gain_param(12, 3, 9, 3),
++        super::gain_param(13, 2, 11, 0),
++        super::gain_param(14, 2, 13, 2),
++        super::gain_param(15, 3, 8, 1),
++        super::gain_param(16, 2, 13, 0),
++        super::gain_param(17, 2, 14, 0),
++        super::gain_param(18, 3, 10, 2),
++        super::gain_param(19, 3, 9, 0),
++        super::gain_param(20, 3, 10, 1),
++        super::gain_param(21, 3, 13, 3),
++        super::gain_param(22, 3, 12, 2),
++        super::gain_param(23, 3, 11, 0),
++        super::gain_param(24, 3, 13, 2),
++        super::gain_param(25, 3, 14, 2),
++        super::gain_param(26, 3, 14, 0),
++        super::gain_param(27, 3, 15, 0),
++    ]
 +}
+Index: chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_9XX.rs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_9XX.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_9XX.rs
+new file mode 100644
+--- /dev/null	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
++++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_9XX.rs	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
+@@ -0,0 +1,27 @@
++use libloragw_sx1301::hal::TxGainConfig;
++
++pub fn tx_gain_config() -> Vec<TxGainConfig> {
++    vec![
++        super::gain_param(7, 1, 12, 2),
++        super::gain_param(8, 1, 12, 1),
++        super::gain_param(9, 1, 12, 0),
++        super::gain_param(10, 1, 13, 0),
++        super::gain_param(11, 1, 15, 1),
++        super::gain_param(12, 2, 9, 0),
++        super::gain_param(13, 3, 8, 3),
++        super::gain_param(14, 2, 10, 0),
++        super::gain_param(15, 3, 9, 3),
++        super::gain_param(16, 2, 12, 1),
++        super::gain_param(17, 3, 10, 3),
++        super::gain_param(18, 2, 14, 2),
++        super::gain_param(19, 2, 15, 2),
++        super::gain_param(20, 3, 9, 1),
++        super::gain_param(21, 3, 12, 3),
++        super::gain_param(22, 3, 10, 1),
++        super::gain_param(23, 3, 11, 2),
++        super::gain_param(24, 3, 11, 1),
++        super::gain_param(25, 3, 14, 3),
++        super::gain_param(26, 3, 13, 2),
++        super::gain_param(27, 3, 13, 1),
++    ]
++}
+Index: chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
 diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs
-index ac0dab1..143b6ff 100644
---- a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs
-+++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs
-@@ -1 +1,50 @@
+--- a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs	(revision f60f98f1d6c789cf60d49b1822570dca249a18eb)
++++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
+@@ -1,1 +1,51 @@
 -pub mod lorix_one;
 +#[allow(non_snake_case)]
-+pub mod lorix_one_8XX_A;
++pub mod lorix_one_8XX;
 +#[allow(non_snake_case)]
-+pub mod lorix_one_9XX_A;
++pub mod lorix_one_9XX;
++pub(crate) mod lorix_one;
 +
 +use libloragw_sx1301::hal;
 +
@@ -526,26 +497,31 @@ index ac0dab1..143b6ff 100644
 +    // keep only max 16 higher entries
 +    entries.as_slice()[start_index..].to_vec()
 +}
+Index: chirpstack-concentratord-sx1302/src/config/mod.rs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
 diff --git a/chirpstack-concentratord-sx1302/src/config/mod.rs b/chirpstack-concentratord-sx1302/src/config/mod.rs
-index 3b73b83..8f60f34 100644
---- a/chirpstack-concentratord-sx1302/src/config/mod.rs
-+++ b/chirpstack-concentratord-sx1302/src/config/mod.rs
-@@ -356,6 +356,10 @@ pub fn get(filenames: Vec<String>) -> Configuration {
+--- a/chirpstack-concentratord-sx1302/src/config/mod.rs	(revision f60f98f1d6c789cf60d49b1822570dca249a18eb)
++++ b/chirpstack-concentratord-sx1302/src/config/mod.rs	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
+@@ -356,6 +356,7 @@
          "waveshare_sx1302_lorawan_gateway_hat" => {
              vendor::waveshare::sx1302_lorawan_gateway_hat::new(&config).unwrap()
          }
-+        "wifx_l1_8XX_A" => vendor::wifx::l1_8XX_A::new(&config).unwrap(),
-+        "wifx_l1_8XX_B" => vendor::wifx::l1_8XX_B::new(&config).unwrap(),
-+        "wifx_l1_9XX_A" => vendor::wifx::l1_9XX_A::new(&config).unwrap(),
-+        "wifx_l1_9XX_B" => vendor::wifx::l1_9XX_B::new(&config).unwrap(),
++        "wifx_l1" => vendor::wifx::l1::new(&config).unwrap(),
          _ => panic!("unexpected gateway model: {}", config.gateway.model),
      };
  
+Index: chirpstack-concentratord-sx1302/src/config/vendor/mod.rs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
 diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs b/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs
-index 39d0337..2d393e7 100644
---- a/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs
-+++ b/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs
-@@ -8,6 +8,7 @@ pub mod rak;
+--- a/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs	(revision f60f98f1d6c789cf60d49b1822570dca249a18eb)
++++ b/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
+@@ -8,6 +8,7 @@
  pub mod seeed;
  pub mod semtech;
  pub mod waveshare;
@@ -553,460 +529,300 @@ index 39d0337..2d393e7 100644
  
  #[derive(Default, Clone, PartialEq, Debug)]
  pub enum ComType {
+Index: chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1.rs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1.rs
+new file mode 100644
+--- /dev/null	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
++++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1.rs	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
+@@ -0,0 +1,126 @@
++use anyhow::Result;
++use libconcentratord::{gnss, region};
++use libloragw_sx1302::hal;
++use crate::config::Region;
++use crate::config::vendor::{ComType, RadioConfig};
++use crate::config;
++use super::super::Configuration;
++use super::{l1_8XX_A, l1_8XX_B, l1_9XX_A, l1_9XX_B};
++
++#[derive(Debug, Clone, Copy, PartialEq, Eq)]
++pub enum ModelLoraRegion {
++    V8XX,
++    V9XX,
++}
++
++#[derive(Debug, Clone, Copy, PartialEq, Eq)]
++pub enum ModelLoraFrontendRev {
++    A,
++    B,
++}
++
++pub fn new(conf: &config::Configuration) -> Result<Configuration> {
++
++    let flags = &conf.gateway.model_flags;
++
++    let model_lora_region = if flags.contains(&"lora_region-8XX".to_string()) {
++        ModelLoraRegion::V8XX
++    } else if flags.contains(&"lora_region-9XX".to_string()) {
++        ModelLoraRegion::V9XX
++    } else {
++        return Err(anyhow!(
++            "You must specify a lora_region flag: lora_region-8XX or lora_region-9XX"
++        ));
++    };
++
++    let model_lora_frontend_rev = if flags.contains(&"lora_frontend_rev-A".to_string()) {
++        ModelLoraFrontendRev::A
++    } else if flags.contains(&"lora_frontend_rev-B".to_string()) {
++        ModelLoraFrontendRev::B
++    } else {
++        return Err(anyhow!(
++            "You must specify a lora_frontend_rev flag: lora_frontend_rev-A or lora_frontend_rev-B"
++        ));
++    };
++
++    let region = conf
++        .gateway
++        .region
++        .ok_or_else(|| anyhow!("You must specify a region"))?;
++
++    let tx_min_max_freqs = match model_lora_region {
++        ModelLoraRegion::V8XX => match region {
++            Region::EU868 => region::eu868::TX_MIN_MAX_FREQS.to_vec(),
++            Region::IN865 => region::in865::TX_MIN_MAX_FREQS.to_vec(),
++            Region::RU864 => region::ru864::TX_MIN_MAX_FREQS.to_vec(),
++            _ => return Err(anyhow!("Region is not supported: {}", region)),
++        },
++        ModelLoraRegion::V9XX => match region {
++            Region::AS923 | Region::AS923_2 | Region::AS923_3 | Region::AS923_4 => {
++                region::as923::TX_MIN_MAX_FREQS.to_vec()
++            }
++            Region::AU915 => region::au915::TX_MIN_MAX_FREQS.to_vec(),
++            Region::US915 => region::us915::TX_MIN_MAX_FREQS.to_vec(),
++            _ => return Err(anyhow!("Region is not supported: {}", region)),
++        },
++    };
++
++    let enforce_duty_cycle = conf.gateway.model_flags.contains(&"ENFORCE_DC".to_string());
++
++    Ok(Configuration {
++        enforce_duty_cycle,
++        radio_count: 2,
++        clock_source: 1,
++        full_duplex: false,
++        lora_multi_sf_bandwidth: 125000,
++        radio_config: vec![
++            RadioConfig {
++                enable: true,
++                radio_type: hal::RadioType::SX1250,
++                single_input_mode: true,
++                rssi_offset: -215.4,
++                rssi_temp_compensation: hal::RssiTempCompensationConfig {
++                    coeff_a: 0.0,
++                    coeff_b: 0.0,
++                    coeff_c: 20.41,
++                    coeff_d: 2162.56,
++                    coeff_e: 0.0,
++                },
++                tx_enable: true,
++                tx_min_max_freqs,
++                tx_gain_table: super::get_tx_gain_table(
++                    match (model_lora_region, model_lora_frontend_rev) {
++                        (ModelLoraRegion::V8XX, ModelLoraFrontendRev::A) => l1_8XX_A::tx_gain_config(),
++                        (ModelLoraRegion::V8XX, ModelLoraFrontendRev::B) => l1_8XX_B::tx_gain_config(),
++                        (ModelLoraRegion::V9XX, ModelLoraFrontendRev::A) => l1_9XX_A::tx_gain_config(),
++                        (ModelLoraRegion::V9XX, ModelLoraFrontendRev::B) => l1_9XX_B::tx_gain_config(),
++                    },
++                    conf.gateway.antenna_gain,
++                ),
++            },
++            RadioConfig {
++                enable: true,
++                radio_type: hal::RadioType::SX1250,
++                single_input_mode: false,
++                rssi_offset: -215.4,
++                rssi_temp_compensation: hal::RssiTempCompensationConfig {
++                    coeff_a: 0.0,
++                    coeff_b: 0.0,
++                    coeff_c: 20.41,
++                    coeff_d: 2162.56,
++                    coeff_e: 0.0,
++                },
++                tx_enable: false,
++                tx_min_max_freqs: vec![],
++                tx_gain_table: vec![],
++            },
++        ],
++        gps: gnss::Device::None,
++        com_type: ComType::Spi,
++        com_path: "/dev/spidev0.0".to_string(),
++        sx1302_reset_pin: conf.gateway.get_sx1302_reset_pin("/dev/gpiochip0", 1),
++        ..Default::default()
++    })
++
++
++}
+Index: chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_A.rs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
 diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_A.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_A.rs
 new file mode 100644
-index 0000000..e9f3643
---- /dev/null
-+++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_A.rs
-@@ -0,0 +1,106 @@
-+use anyhow::Result;
-+use libloragw_sx1302::hal;
-+use libconcentratord::{gnss, region};
+--- /dev/null	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
++++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_A.rs	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
+@@ -0,0 +1,27 @@
++use libloragw_sx1302::hal::TxGainConfig;
 +
-+use super::super::super::super::config::{self, Region};
-+use super::super::{ComType, Configuration, RadioConfig};
-+
-+pub fn new(conf: &config::Configuration) -> Result<Configuration> {
-+    let region = conf
-+        .gateway
-+        .region
-+        .ok_or_else(|| anyhow!("You must specify a region"))?;
-+
-+    let tx_min_max_freqs = match region {
-+        Region::EU868 => region::eu868::TX_MIN_MAX_FREQS.to_vec(),
-+        Region::IN865 => region::in865::TX_MIN_MAX_FREQS.to_vec(),
-+        Region::RU864 => region::ru864::TX_MIN_MAX_FREQS.to_vec(),
-+        _ => return Err(anyhow!("Region is not supported: {}", region)),
-+    };
-+
-+    let enforce_duty_cycle = conf.gateway.model_flags.contains(&"ENFORCE_DC".to_string());
-+
-+    let tx_gain_config = match region {
-+        Region::EU868
-+        | Region::IN865
-+        | Region::RU864 => vec![
-+            super::gain_param(7, 0, 7),
-+            super::gain_param(8, 0, 8),
-+            super::gain_param(9, 0, 9),
-+            super::gain_param(10, 0, 10),
-+            super::gain_param(11, 0, 11),
-+            super::gain_param(12, 0, 12),
-+            super::gain_param(13, 0, 13),
-+            super::gain_param(14, 0, 14),
-+            super::gain_param(15, 0, 15),
-+            super::gain_param(16, 0, 16),
-+            super::gain_param(17, 0, 18),
-+            super::gain_param(18, 0, 19),
-+            super::gain_param(19, 1, 0),
-+            super::gain_param(20, 1, 1),
-+            super::gain_param(21, 1, 2),
-+            super::gain_param(22, 1, 3),
-+            super::gain_param(23, 1, 4),
-+            super::gain_param(24, 1, 5),
-+            super::gain_param(25, 1, 7),
-+            super::gain_param(26, 1, 9),
-+            super::gain_param(27, 1, 14),
-+        ],
-+        _ => return Err(anyhow!("Region not supported: {}", region)),
-+    };
-+
-+    Ok(Configuration {
-+        enforce_duty_cycle,
-+        radio_count: 2,
-+        clock_source: 1,
-+        full_duplex: false,
-+        lora_multi_sf_bandwidth: 125000,
-+        radio_config: vec![
-+            RadioConfig {
-+                enable: true,
-+                radio_type: hal::RadioType::SX1250,
-+                single_input_mode: true,
-+                rssi_offset: -215.4,
-+                rssi_temp_compensation: hal::RssiTempCompensationConfig {
-+                    coeff_a: 0.0,
-+                    coeff_b: 0.0,
-+                    coeff_c: 20.41,
-+                    coeff_d: 2162.56,
-+                    coeff_e: 0.0,
-+                },
-+                tx_enable: true,
-+                tx_min_max_freqs,
-+                tx_gain_table: super::get_tx_gain_table(
-+                    tx_gain_config,
-+                    conf.gateway.antenna_gain,
-+                ),
-+            },
-+            RadioConfig {
-+                enable: true,
-+                radio_type: hal::RadioType::SX1250,
-+                single_input_mode: false,
-+                rssi_offset: -215.4,
-+                rssi_temp_compensation: hal::RssiTempCompensationConfig {
-+                    coeff_a: 0.0,
-+                    coeff_b: 0.0,
-+                    coeff_c: 20.41,
-+                    coeff_d: 2162.56,
-+                    coeff_e: 0.0,
-+                },
-+                tx_enable: false,
-+                tx_min_max_freqs: vec![],
-+                tx_gain_table: vec![],
-+            },
-+        ],
-+        gps: gnss::Device::None,
-+        com_type: ComType::Spi,
-+        com_path: "/dev/spidev0.0".to_string(),
-+        i2c_path: None,
-+        i2c_temp_sensor_addr: None,
-+        sx1302_reset_pin: conf.gateway.get_sx1302_reset_pin("/dev/gpiochip0", 1),
-+        sx1302_power_en_pin: None,
-+        sx1261_reset_pin: None,
-+        ad5338r_reset_pin: None,
-+        reset_commands: None,
-+    })
++pub fn tx_gain_config() -> Vec<TxGainConfig> {
++    vec![
++        super::gain_param(7, 0, 7),
++        super::gain_param(8, 0, 8),
++        super::gain_param(9, 0, 9),
++        super::gain_param(10, 0, 10),
++        super::gain_param(11, 0, 11),
++        super::gain_param(12, 0, 12),
++        super::gain_param(13, 0, 13),
++        super::gain_param(14, 0, 14),
++        super::gain_param(15, 0, 15),
++        super::gain_param(16, 0, 16),
++        super::gain_param(17, 0, 18),
++        super::gain_param(18, 0, 19),
++        super::gain_param(19, 1, 0),
++        super::gain_param(20, 1, 1),
++        super::gain_param(21, 1, 2),
++        super::gain_param(22, 1, 3),
++        super::gain_param(23, 1, 4),
++        super::gain_param(24, 1, 5),
++        super::gain_param(25, 1, 7),
++        super::gain_param(26, 1, 9),
++        super::gain_param(27, 1, 14),
++    ]
 +}
+Index: chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_B.rs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
 diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_B.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_B.rs
 new file mode 100644
-index 0000000..58252d5
---- /dev/null
-+++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_B.rs
-@@ -0,0 +1,106 @@
-+use anyhow::Result;
-+use libloragw_sx1302::hal;
-+use libconcentratord::{gnss, region};
+--- /dev/null	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
++++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_B.rs	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
+@@ -0,0 +1,27 @@
++use libloragw_sx1302::hal::TxGainConfig;
 +
-+use super::super::super::super::config::{self, Region};
-+use super::super::{ComType, Configuration, RadioConfig};
-+
-+pub fn new(conf: &config::Configuration) -> Result<Configuration> {
-+    let region = conf
-+        .gateway
-+        .region
-+        .ok_or_else(|| anyhow!("You must specify a region"))?;
-+
-+    let tx_min_max_freqs = match region {
-+        Region::EU868 => region::eu868::TX_MIN_MAX_FREQS.to_vec(),
-+        Region::IN865 => region::in865::TX_MIN_MAX_FREQS.to_vec(),
-+        Region::RU864 => region::ru864::TX_MIN_MAX_FREQS.to_vec(),
-+        _ => return Err(anyhow!("Region is not supported: {}", region)),
-+    };
-+
-+    let enforce_duty_cycle = conf.gateway.model_flags.contains(&"ENFORCE_DC".to_string());
-+
-+    let tx_gain_config = match region {
-+        Region::EU868
-+        | Region::IN865
-+        | Region::RU864 => vec![
-+            super::gain_param(7, 0, 7),
-+            super::gain_param(8, 0, 8),
-+            super::gain_param(9, 0, 9),
-+            super::gain_param(10, 0, 9),
-+            super::gain_param(11, 0, 11),
-+            super::gain_param(12, 0, 12),
-+            super::gain_param(13, 0, 13),
-+            super::gain_param(14, 0, 14),
-+            super::gain_param(15, 0, 16),
-+            super::gain_param(16, 0, 16),
-+            super::gain_param(17, 0, 17),
-+            super::gain_param(18, 0, 18),
-+            super::gain_param(19, 0, 20),
-+            super::gain_param(20, 1, 0),
-+            super::gain_param(21, 1, 1),
-+            super::gain_param(22, 1, 2),
-+            super::gain_param(23, 1, 3),
-+            super::gain_param(24, 1, 4),
-+            super::gain_param(25, 1, 6),
-+            super::gain_param(26, 1, 8),
-+            super::gain_param(27, 1, 11),
-+        ],
-+        _ => return Err(anyhow!("Region not supported: {}", region)),
-+    };
-+
-+    Ok(Configuration {
-+        enforce_duty_cycle,
-+        radio_count: 2,
-+        clock_source: 1,
-+        full_duplex: false,
-+        lora_multi_sf_bandwidth: 125000,
-+        radio_config: vec![
-+            RadioConfig {
-+                enable: true,
-+                radio_type: hal::RadioType::SX1250,
-+                single_input_mode: true,
-+                rssi_offset: -215.4,
-+                rssi_temp_compensation: hal::RssiTempCompensationConfig {
-+                    coeff_a: 0.0,
-+                    coeff_b: 0.0,
-+                    coeff_c: 20.41,
-+                    coeff_d: 2162.56,
-+                    coeff_e: 0.0,
-+                },
-+                tx_enable: true,
-+                tx_min_max_freqs,
-+                tx_gain_table: super::get_tx_gain_table(
-+                    tx_gain_config,
-+                    conf.gateway.antenna_gain,
-+                ),
-+            },
-+            RadioConfig {
-+                enable: true,
-+                radio_type: hal::RadioType::SX1250,
-+                single_input_mode: false,
-+                rssi_offset: -215.4,
-+                rssi_temp_compensation: hal::RssiTempCompensationConfig {
-+                    coeff_a: 0.0,
-+                    coeff_b: 0.0,
-+                    coeff_c: 20.41,
-+                    coeff_d: 2162.56,
-+                    coeff_e: 0.0,
-+                },
-+                tx_enable: false,
-+                tx_min_max_freqs: vec![],
-+                tx_gain_table: vec![],
-+            },
-+        ],
-+        gps: gnss::Device::None,
-+        com_type: ComType::Spi,
-+        com_path: "/dev/spidev0.0".to_string(),
-+        i2c_path: None,
-+        i2c_temp_sensor_addr: None,
-+        sx1302_reset_pin: conf.gateway.get_sx1302_reset_pin("/dev/gpiochip0", 1),
-+        sx1302_power_en_pin: None,
-+        sx1261_reset_pin: None,
-+        ad5338r_reset_pin: None,
-+        reset_commands: None,
-+    })
++pub fn tx_gain_config() -> Vec<TxGainConfig> {
++    vec![
++        super::gain_param(7, 0, 7),
++        super::gain_param(8, 0, 8),
++        super::gain_param(9, 0, 9),
++        super::gain_param(10, 0, 9),
++        super::gain_param(11, 0, 11),
++        super::gain_param(12, 0, 12),
++        super::gain_param(13, 0, 13),
++        super::gain_param(14, 0, 14),
++        super::gain_param(15, 0, 16),
++        super::gain_param(16, 0, 16),
++        super::gain_param(17, 0, 17),
++        super::gain_param(18, 0, 18),
++        super::gain_param(19, 0, 20),
++        super::gain_param(20, 1, 0),
++        super::gain_param(21, 1, 1),
++        super::gain_param(22, 1, 2),
++        super::gain_param(23, 1, 3),
++        super::gain_param(24, 1, 4),
++        super::gain_param(25, 1, 6),
++        super::gain_param(26, 1, 8),
++        super::gain_param(27, 1, 11),
++    ]
 +}
+Index: chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_A.rs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
 diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_A.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_A.rs
 new file mode 100644
-index 0000000..ac1479e
---- /dev/null
-+++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_A.rs
-@@ -0,0 +1,106 @@
-+use anyhow::Result;
-+use libloragw_sx1302::hal;
-+use libconcentratord::{gnss, region};
+--- /dev/null	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
++++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_A.rs	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
+@@ -0,0 +1,27 @@
++use libloragw_sx1302::hal::TxGainConfig;
 +
-+use super::super::super::super::config::{self, Region};
-+use super::super::{ComType, Configuration, RadioConfig};
-+
-+pub fn new(conf: &config::Configuration) -> Result<Configuration> {
-+    let region = conf
-+        .gateway
-+        .region
-+        .ok_or_else(|| anyhow!("You must specify a region"))?;
-+
-+    let tx_min_max_freqs = match region {
-+        Region::AS923 | Region::AS923_2 | Region::AS923_3 | Region::AS923_4 => region::as923::TX_MIN_MAX_FREQS.to_vec(),
-+        Region::AU915 => region::au915::TX_MIN_MAX_FREQS.to_vec(),
-+        Region::US915 => region::us915::TX_MIN_MAX_FREQS.to_vec(),
-+        _ => return Err(anyhow!("Region is not supported: {}", region)),
-+    };
-+
-+    let enforce_duty_cycle = conf.gateway.model_flags.contains(&"ENFORCE_DC".to_string());
-+
-+    let tx_gain_config = match region {
-+        Region::AS923 | Region::AS923_2 | Region::AS923_3 | Region::AS923_4
-+        | Region::AU915
-+        | Region::US915 => vec![
-+            super::gain_param(7, 0, 8),
-+            super::gain_param(8, 0, 9),
-+            super::gain_param(9, 0, 10),
-+            super::gain_param(10, 0, 11),
-+            super::gain_param(11, 0, 12),
-+            super::gain_param(12, 0, 13),
-+            super::gain_param(13, 0, 14),
-+            super::gain_param(14, 0, 15),
-+            super::gain_param(15, 0, 16),
-+            super::gain_param(16, 0, 17),
-+            super::gain_param(17, 0, 18),
-+            super::gain_param(18, 0, 19),
-+            super::gain_param(19, 1, 0),
-+            super::gain_param(20, 0, 22),
-+            super::gain_param(21, 1, 2),
-+            super::gain_param(22, 1, 3),
-+            super::gain_param(23, 1, 4),
-+            super::gain_param(24, 1, 6),
-+            super::gain_param(25, 1, 8),
-+            super::gain_param(26, 1, 11),
-+            super::gain_param(27, 1, 15),
-+        ],
-+        _ => return Err(anyhow!("Region not supported: {}", region)),
-+    };
-+
-+    Ok(Configuration {
-+        enforce_duty_cycle,
-+        radio_count: 2,
-+        clock_source: 1,
-+        full_duplex: false,
-+        lora_multi_sf_bandwidth: 125000,
-+        radio_config: vec![
-+            RadioConfig {
-+                enable: true,
-+                radio_type: hal::RadioType::SX1250,
-+                single_input_mode: true,
-+                rssi_offset: -215.4,
-+                rssi_temp_compensation: hal::RssiTempCompensationConfig {
-+                    coeff_a: 0.0,
-+                    coeff_b: 0.0,
-+                    coeff_c: 20.41,
-+                    coeff_d: 2162.56,
-+                    coeff_e: 0.0,
-+                },
-+                tx_enable: true,
-+                tx_min_max_freqs,
-+                tx_gain_table: super::get_tx_gain_table(
-+                    tx_gain_config,
-+                    conf.gateway.antenna_gain,
-+                ),
-+            },
-+            RadioConfig {
-+                enable: true,
-+                radio_type: hal::RadioType::SX1250,
-+                single_input_mode: false,
-+                rssi_offset: -215.4,
-+                rssi_temp_compensation: hal::RssiTempCompensationConfig {
-+                    coeff_a: 0.0,
-+                    coeff_b: 0.0,
-+                    coeff_c: 20.41,
-+                    coeff_d: 2162.56,
-+                    coeff_e: 0.0,
-+                },
-+                tx_enable: false,
-+                tx_min_max_freqs: vec![],
-+                tx_gain_table: vec![],
-+            },
-+        ],
-+        gps: gnss::Device::None,
-+        com_type: ComType::Spi,
-+        com_path: "/dev/spidev0.0".to_string(),
-+        i2c_path: None,
-+        i2c_temp_sensor_addr: None,
-+        sx1302_reset_pin: conf.gateway.get_sx1302_reset_pin("/dev/gpiochip0", 1),
-+        sx1302_power_en_pin: None,
-+        sx1261_reset_pin: None,
-+        ad5338r_reset_pin: None,
-+        reset_commands: None,
-+    })
++pub fn tx_gain_config() -> Vec<TxGainConfig> {
++    vec![
++        super::gain_param(7, 0, 8),
++        super::gain_param(8, 0, 9),
++        super::gain_param(9, 0, 10),
++        super::gain_param(10, 0, 11),
++        super::gain_param(11, 0, 12),
++        super::gain_param(12, 0, 13),
++        super::gain_param(13, 0, 14),
++        super::gain_param(14, 0, 15),
++        super::gain_param(15, 0, 16),
++        super::gain_param(16, 0, 17),
++        super::gain_param(17, 0, 18),
++        super::gain_param(18, 0, 19),
++        super::gain_param(19, 1, 0),
++        super::gain_param(20, 0, 22),
++        super::gain_param(21, 1, 2),
++        super::gain_param(22, 1, 3),
++        super::gain_param(23, 1, 4),
++        super::gain_param(24, 1, 6),
++        super::gain_param(25, 1, 8),
++        super::gain_param(26, 1, 11),
++        super::gain_param(27, 1, 15),
++    ]
 +}
+Index: chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_B.rs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
 diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_B.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_B.rs
 new file mode 100644
-index 0000000..42264fe
---- /dev/null
-+++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_B.rs
-@@ -0,0 +1,106 @@
-+use anyhow::Result;
-+use libloragw_sx1302::hal;
-+use libconcentratord::{gnss, region};
+--- /dev/null	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
++++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_B.rs	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
+@@ -0,0 +1,27 @@
++use libloragw_sx1302::hal::TxGainConfig;
 +
-+use super::super::super::super::config::{self, Region};
-+use super::super::{ComType, Configuration, RadioConfig};
-+
-+pub fn new(conf: &config::Configuration) -> Result<Configuration> {
-+    let region = conf
-+        .gateway
-+        .region
-+        .ok_or_else(|| anyhow!("You must specify a region"))?;
-+
-+    let tx_min_max_freqs = match region {
-+        Region::AS923 | Region::AS923_2 | Region::AS923_3 | Region::AS923_4 => region::as923::TX_MIN_MAX_FREQS.to_vec(),
-+        Region::AU915 => region::au915::TX_MIN_MAX_FREQS.to_vec(),
-+        Region::US915 => region::us915::TX_MIN_MAX_FREQS.to_vec(),
-+        _ => return Err(anyhow!("Region is not supported: {}", region)),
-+    };
-+
-+    let enforce_duty_cycle = conf.gateway.model_flags.contains(&"ENFORCE_DC".to_string());
-+
-+    let tx_gain_config = match region {
-+        Region::AS923 | Region::AS923_2 | Region::AS923_3 | Region::AS923_4
-+        | Region::AU915
-+        | Region::US915 => vec![
-+            super::gain_param(7, 0, 7),
-+            super::gain_param(8, 0, 8),
-+            super::gain_param(9, 0, 9),
-+            super::gain_param(10, 0, 10),
-+            super::gain_param(11, 0, 11),
-+            super::gain_param(12, 0, 12),
-+            super::gain_param(13, 0, 13),
-+            super::gain_param(14, 0, 14),
-+            super::gain_param(15, 0, 15),
-+            super::gain_param(16, 0, 16),
-+            super::gain_param(17, 0, 17),
-+            super::gain_param(18, 1, 2),
-+            super::gain_param(19, 0, 18),
-+            super::gain_param(20, 0, 19),
-+            super::gain_param(21, 1, 6),
-+            super::gain_param(22, 1, 7),
-+            super::gain_param(23, 1, 8),
-+            super::gain_param(24, 1, 9),
-+            super::gain_param(25, 1, 10),
-+            super::gain_param(26, 1, 12),
-+            super::gain_param(27, 1, 14),
-+        ],
-+        _ => return Err(anyhow!("Region not supported: {}", region)),
-+    };
-+
-+    Ok(Configuration {
-+        enforce_duty_cycle,
-+        radio_count: 2,
-+        clock_source: 1,
-+        full_duplex: false,
-+        lora_multi_sf_bandwidth: 125000,
-+        radio_config: vec![
-+            RadioConfig {
-+                enable: true,
-+                radio_type: hal::RadioType::SX1250,
-+                single_input_mode: true,
-+                rssi_offset: -215.4,
-+                rssi_temp_compensation: hal::RssiTempCompensationConfig {
-+                    coeff_a: 0.0,
-+                    coeff_b: 0.0,
-+                    coeff_c: 20.41,
-+                    coeff_d: 2162.56,
-+                    coeff_e: 0.0,
-+                },
-+                tx_enable: true,
-+                tx_min_max_freqs,
-+                tx_gain_table: super::get_tx_gain_table(
-+                    tx_gain_config,
-+                    conf.gateway.antenna_gain,
-+                ),
-+            },
-+            RadioConfig {
-+                enable: true,
-+                radio_type: hal::RadioType::SX1250,
-+                single_input_mode: false,
-+                rssi_offset: -215.4,
-+                rssi_temp_compensation: hal::RssiTempCompensationConfig {
-+                    coeff_a: 0.0,
-+                    coeff_b: 0.0,
-+                    coeff_c: 20.41,
-+                    coeff_d: 2162.56,
-+                    coeff_e: 0.0,
-+                },
-+                tx_enable: false,
-+                tx_min_max_freqs: vec![],
-+                tx_gain_table: vec![],
-+            },
-+        ],
-+        gps: gnss::Device::None,
-+        com_type: ComType::Spi,
-+        com_path: "/dev/spidev0.0".to_string(),
-+        i2c_path: None,
-+        i2c_temp_sensor_addr: None,
-+        sx1302_reset_pin: conf.gateway.get_sx1302_reset_pin("/dev/gpiochip0", 1),
-+        sx1302_power_en_pin: None,
-+        sx1261_reset_pin: None,
-+        ad5338r_reset_pin: None,
-+        reset_commands: None,
-+    })
++pub fn tx_gain_config() -> Vec<TxGainConfig> {
++    vec![
++        super::gain_param(7, 0, 7),
++        super::gain_param(8, 0, 8),
++        super::gain_param(9, 0, 9),
++        super::gain_param(10, 0, 10),
++        super::gain_param(11, 0, 11),
++        super::gain_param(12, 0, 12),
++        super::gain_param(13, 0, 13),
++        super::gain_param(14, 0, 14),
++        super::gain_param(15, 0, 15),
++        super::gain_param(16, 0, 16),
++        super::gain_param(17, 0, 17),
++        super::gain_param(18, 1, 2),
++        super::gain_param(19, 0, 18),
++        super::gain_param(20, 0, 19),
++        super::gain_param(21, 1, 6),
++        super::gain_param(22, 1, 7),
++        super::gain_param(23, 1, 8),
++        super::gain_param(24, 1, 9),
++        super::gain_param(25, 1, 10),
++        super::gain_param(26, 1, 12),
++        super::gain_param(27, 1, 14),
++    ]
 +}
+Index: chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
 diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs
 new file mode 100644
-index 0000000..4550185
---- /dev/null
-+++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs
-@@ -0,0 +1,57 @@
+--- /dev/null	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
++++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
+@@ -0,0 +1,61 @@
 +#[allow(non_snake_case)]
 +pub mod l1_8XX_A;
 +#[allow(non_snake_case)]
@@ -1016,18 +832,22 @@ index 0000000..4550185
 +#[allow(non_snake_case)]
 +pub mod l1_9XX_B;
 +
++#[allow(non_snake_case)]
++pub mod l1;
++
 +use libloragw_sx1302::hal;
++
 +
 +fn gain_param(rf_power: i8, pa: u8, pwr_idx: u8) -> hal::TxGainConfig {
 +    hal::TxGainConfig {
-+        rf_power: rf_power,
++        rf_power,
 +        dig_gain: 0,
 +        pa_gain: pa,
 +        dac_gain: 0,
 +        mix_gain: 5,
 +        offset_i: 0,
 +        offset_q: 0,
-+        pwr_idx: pwr_idx,
++        pwr_idx,
 +    }
 +}
 +

@@ -214,20 +214,15 @@ pkg_postinst_ontarget:${PN}:append:lorix_one () {
         echo "Gateway config file does not exist ("$GW_CONFIG_FILE_PATH")"
     fi
 
-    ### MODEL ###
+    ### MODEL FLAGS ###
 
     if [ -f "$GW_CONFIG_FILE_PATH" ]; then
         # retrieve LoRa Region from machine-info
         LORA_REGION=$(machine-info read "PRODUCT_VARIANT_ATTR_LORA_REGION")
 
-        # retrieve LoRa frontend revision from machine-info
-        LORA_FRONTEND_REV=$(machine-info read "LORA_IFACE_0_FRONTEND_REV")
+        sed -i 's/lora_region-XXX/lora_region-'${LORA_REGION}'/g' $GW_CONFIG_FILE_PATH
 
-        MODEL="wifx_lorix_one_${LORA_REGION}_${LORA_FRONTEND_REV}"
-
-        sed -i 's/model=""/model="'${MODEL}'"/g' $GW_CONFIG_FILE_PATH
-
-        echo "Model set to "$MODEL" in file "$GW_CONFIG_FILE_PATH
+        echo "lora_region set to "$LORA_REGION" in file "$GW_CONFIG_FILE_PATH
     else
         echo "Gateway config file does not exist ("$GW_CONFIG_FILE_PATH")"
     fi
@@ -235,7 +230,7 @@ pkg_postinst_ontarget:${PN}:append:lorix_one () {
 
 pkg_postinst_ontarget:${PN}:append:l1 () {
 
-    ### MODEL ###
+    ### MODEL FLAGS ###
 
     if [ -f "$GW_CONFIG_FILE_PATH" ]; then
         # retrieve LoRa Region from machine-info
@@ -243,12 +238,13 @@ pkg_postinst_ontarget:${PN}:append:l1 () {
         
         # retrieve LoRa frontend revision from machine-info
         LORA_FRONTEND_REV=$(machine-info read "LORA_IFACE_0_FRONTEND_REV")
-
-        MODEL="wifx_l1_${LORA_REGION}_${LORA_FRONTEND_REV}"
         
-        sed -i 's/model=""/model="'${MODEL}'"/g' $GW_CONFIG_FILE_PATH
+        sed -i 's/lora_region-XXX/lora_region-'${LORA_REGION}'/g' $GW_CONFIG_FILE_PATH
+        echo "lora_region set to "$LORA_REGION" in file "$GW_CONFIG_FILE_PATH
 
-        echo "Model set to "$MODEL" in file "$GW_CONFIG_FILE_PATH
+        sed -i 's/lora_frontend_rev-X/lora_frontend_rev-'${LORA_FRONTEND_REV}'/g' $GW_CONFIG_FILE_PATH
+        echo "lora_frontend_rev set to "$LORA_FRONTEND_REV" in file "$GW_CONFIG_FILE_PATH
+
     else
         echo "Gateway config file does not exist ("$GW_CONFIG_FILE_PATH")"
     fi

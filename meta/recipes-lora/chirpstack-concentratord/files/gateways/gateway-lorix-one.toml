@@ -20,7 +20,11 @@
   # Antenna gain (dB).
   antenna_gain=0
   
-  model=""
+  model="wifx_lorix_one"
+
+  model_flags=[
+    "lora_region-XXX",
+  ]
 
   # Region.
   #

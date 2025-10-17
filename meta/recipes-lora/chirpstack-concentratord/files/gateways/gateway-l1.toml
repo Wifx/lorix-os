@@ -13,7 +13,12 @@
   # Antenna gain (dB).
   antenna_gain=0
   
-  model=""
+  model="wifx_l1"
+
+  model_flags=[
+    "lora_region-XXX",
+    "lora_frontend_rev-X",
+  ]
 
   # Region.
   #
