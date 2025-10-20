@@ -25,7 +25,7 @@ PREFERRED_PROVIDER_u-boot-fw-utils = "u-boot-fw-utils-mender-auto-provided"
 
 # We do not want Mender to manager fstab for us, data partition is already
 # managed in preinit script.
-ROOTFS_POSTPROCESS_COMMAND:remove = "mender_update_fstab_file;"
+ROOTFS_POSTPROCESS_COMMAND:remove = "mender_update_fstab_file"
 
 # Create link to mender artifact in release deploy directory
 IMAGE_POSTPROCESS_COMMAND += "final_deploy_link_mender_artifact ;"
