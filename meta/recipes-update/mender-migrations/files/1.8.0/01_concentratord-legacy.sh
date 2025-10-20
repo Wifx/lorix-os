@@ -3,7 +3,7 @@
 ### CONFIGURE THE MIGRATION ###
 
 # The prefix will be shown in the logs only. Keep it short. E.g. "NM-PROF-MV"
-PREFIX=CSCD-LEGACY 
+PREFIX=CSCD-LEGACY
 
 # The following versions description uses semver: https://semver.org/
 # Condition syntax is defined by semver_rs "Range" object: https://docs.rs/semver_rs/0.1.3/semver_rs/struct.Range.html.
