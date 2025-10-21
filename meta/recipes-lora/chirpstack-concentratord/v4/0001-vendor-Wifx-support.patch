@@ -1,13 +1,35 @@
+From f72dde7b2aaec821cc8542c9c221d758d22efde1 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Christian=20M=C3=BCller?= <christian.muller@wifx.net>
+Date: Fri, 19 Sep 2025 11:46:59 +0200
 Subject: [PATCH] Update LORIX One configuration Add Wifx L1 configuration
+
 ---
-Index: chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one.rs
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
+ .../src/config/vendor/wifx/lorix_one.rs       | 333 +++---------------
+ .../src/config/vendor/wifx/lorix_one_8XX.rs   |  27 ++
+ .../src/config/vendor/wifx/lorix_one_9XX.rs   |  27 ++
+ .../src/config/vendor/wifx/mod.rs             |  52 ++-
+ .../src/config/mod.rs                         |   1 +
+ .../src/config/vendor/mod.rs                  |   1 +
+ .../src/config/vendor/wifx/l1.rs              | 126 +++++++
+ .../src/config/vendor/wifx/l1_8XX_A.rs        |  27 ++
+ .../src/config/vendor/wifx/l1_8XX_B.rs        |  27 ++
+ .../src/config/vendor/wifx/l1_9XX_A.rs        |  27 ++
+ .../src/config/vendor/wifx/l1_9XX_B.rs        |  27 ++
+ .../src/config/vendor/wifx/mod.rs             |  61 ++++
+ 12 files changed, 455 insertions(+), 281 deletions(-)
+ create mode 100644 chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_8XX.rs
+ create mode 100644 chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_9XX.rs
+ create mode 100644 chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1.rs
+ create mode 100644 chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_A.rs
+ create mode 100644 chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_B.rs
+ create mode 100644 chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_A.rs
+ create mode 100644 chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_B.rs
+ create mode 100644 chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs
+
 diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one.rs
---- a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one.rs	(revision f60f98f1d6c789cf60d49b1822570dca249a18eb)
-+++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one.rs	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
+index 0ccdb41..f1f7d9d 100644
+--- a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one.rs
++++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one.rs
 @@ -1,300 +1,73 @@
 +use super::super::Configuration;
 +use super::{lorix_one_8XX, lorix_one_9XX};
@@ -32,7 +54,10 @@ diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one.rs
  pub fn new(conf: &config::Configuration) -> Result<Configuration> {
 -    let region = conf.gateway.region.unwrap_or(Region::EU868);
 +    let flags = &conf.gateway.model_flags;
-+
+ 
+-    let tx_min_max_freqs = match region {
+-        Region::EU868 => region::eu868::TX_MIN_MAX_FREQS.to_vec(),
+-        _ => return Err(anyhow!("Region is not supported: {}", region)),
 +    let model_lora_region = if flags.contains(&"lora_region-8XX".to_string()) {
 +        ModelLoraRegion::V8XX
 +    } else if flags.contains(&"lora_region-9XX".to_string()) {
@@ -42,10 +67,7 @@ diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one.rs
 +            "You must specify a lora_region flag: lora_region-8XX or lora_region-9XX"
 +        ));
 +    };
- 
--    let tx_min_max_freqs = match region {
--        Region::EU868 => region::eu868::TX_MIN_MAX_FREQS.to_vec(),
--        _ => return Err(anyhow!("Region is not supported: {}", region)),
++
 +    let region = conf
 +        .gateway
 +        .region
@@ -362,15 +384,11 @@ diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one.rs
 -        ..Default::default()
      })
  }
-Index: chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_8XX.rs
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
 diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_8XX.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_8XX.rs
 new file mode 100644
---- /dev/null	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
-+++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_8XX.rs	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
+index 0000000..678917c
+--- /dev/null
++++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_8XX.rs
 @@ -0,0 +1,27 @@
 +use libloragw_sx1301::hal::TxGainConfig;
 +
@@ -399,15 +417,11 @@ new file mode 100644
 +        super::gain_param(27, 3, 15, 0),
 +    ]
 +}
-Index: chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_9XX.rs
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
 diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_9XX.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_9XX.rs
 new file mode 100644
---- /dev/null	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
-+++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_9XX.rs	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
+index 0000000..e52e775
+--- /dev/null
++++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_9XX.rs
 @@ -0,0 +1,27 @@
 +use libloragw_sx1301::hal::TxGainConfig;
 +
@@ -436,15 +450,11 @@ new file mode 100644
 +        super::gain_param(27, 3, 13, 1),
 +    ]
 +}
-Index: chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
 diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs
---- a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs	(revision f60f98f1d6c789cf60d49b1822570dca249a18eb)
-+++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
-@@ -1,1 +1,51 @@
+index ac0dab1..382cdeb 100644
+--- a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs
++++ b/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs
+@@ -1 +1,51 @@
 -pub mod lorix_one;
 +#[allow(non_snake_case)]
 +pub mod lorix_one_8XX;
@@ -497,15 +507,11 @@ diff --git a/chirpstack-concentratord-sx1301/src/config/vendor/wifx/mod.rs b/chi
 +    // keep only max 16 higher entries
 +    entries.as_slice()[start_index..].to_vec()
 +}
-Index: chirpstack-concentratord-sx1302/src/config/mod.rs
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
 diff --git a/chirpstack-concentratord-sx1302/src/config/mod.rs b/chirpstack-concentratord-sx1302/src/config/mod.rs
---- a/chirpstack-concentratord-sx1302/src/config/mod.rs	(revision f60f98f1d6c789cf60d49b1822570dca249a18eb)
-+++ b/chirpstack-concentratord-sx1302/src/config/mod.rs	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
-@@ -356,6 +356,7 @@
+index 3b73b83..8c43ba1 100644
+--- a/chirpstack-concentratord-sx1302/src/config/mod.rs
++++ b/chirpstack-concentratord-sx1302/src/config/mod.rs
+@@ -356,6 +356,7 @@ pub fn get(filenames: Vec<String>) -> Configuration {
          "waveshare_sx1302_lorawan_gateway_hat" => {
              vendor::waveshare::sx1302_lorawan_gateway_hat::new(&config).unwrap()
          }
@@ -513,15 +519,11 @@ diff --git a/chirpstack-concentratord-sx1302/src/config/mod.rs b/chirpstack-conc
          _ => panic!("unexpected gateway model: {}", config.gateway.model),
      };
  
-Index: chirpstack-concentratord-sx1302/src/config/vendor/mod.rs
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
 diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs b/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs
---- a/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs	(revision f60f98f1d6c789cf60d49b1822570dca249a18eb)
-+++ b/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
-@@ -8,6 +8,7 @@
+index 39d0337..2d393e7 100644
+--- a/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs
++++ b/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs
+@@ -8,6 +8,7 @@ pub mod rak;
  pub mod seeed;
  pub mod semtech;
  pub mod waveshare;
@@ -529,15 +531,11 @@ diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs b/chirpsta
  
  #[derive(Default, Clone, PartialEq, Debug)]
  pub enum ComType {
-Index: chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1.rs
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
 diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1.rs
 new file mode 100644
---- /dev/null	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
-+++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1.rs	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
+index 0000000..9ac2dc4
+--- /dev/null
++++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1.rs
 @@ -0,0 +1,126 @@
 +use anyhow::Result;
 +use libconcentratord::{gnss, region};
@@ -665,15 +663,11 @@ new file mode 100644
 +
 +
 +}
-Index: chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_A.rs
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
 diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_A.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_A.rs
 new file mode 100644
---- /dev/null	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
-+++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_A.rs	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
+index 0000000..e270d8b
+--- /dev/null
++++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_A.rs
 @@ -0,0 +1,27 @@
 +use libloragw_sx1302::hal::TxGainConfig;
 +
@@ -702,15 +696,11 @@ new file mode 100644
 +        super::gain_param(27, 1, 14),
 +    ]
 +}
-Index: chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_B.rs
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
 diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_B.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_B.rs
 new file mode 100644
---- /dev/null	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
-+++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_B.rs	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
+index 0000000..79df1dd
+--- /dev/null
++++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_8XX_B.rs
 @@ -0,0 +1,27 @@
 +use libloragw_sx1302::hal::TxGainConfig;
 +
@@ -739,15 +729,11 @@ new file mode 100644
 +        super::gain_param(27, 1, 11),
 +    ]
 +}
-Index: chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_A.rs
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
 diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_A.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_A.rs
 new file mode 100644
---- /dev/null	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
-+++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_A.rs	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
+index 0000000..e67a539
+--- /dev/null
++++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_A.rs
 @@ -0,0 +1,27 @@
 +use libloragw_sx1302::hal::TxGainConfig;
 +
@@ -776,15 +762,11 @@ new file mode 100644
 +        super::gain_param(27, 1, 15),
 +    ]
 +}
-Index: chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_B.rs
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
 diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_B.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_B.rs
 new file mode 100644
---- /dev/null	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
-+++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_B.rs	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
+index 0000000..c52be45
+--- /dev/null
++++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1_9XX_B.rs
 @@ -0,0 +1,27 @@
 +use libloragw_sx1302::hal::TxGainConfig;
 +
@@ -813,15 +795,11 @@ new file mode 100644
 +        super::gain_param(27, 1, 14),
 +    ]
 +}
-Index: chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
 diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs
 new file mode 100644
---- /dev/null	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
-+++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs	(revision f72dde7b2aaec821cc8542c9c221d758d22efde1)
+index 0000000..3a3c733
+--- /dev/null
++++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/mod.rs
 @@ -0,0 +1,61 @@
 +#[allow(non_snake_case)]
 +pub mod l1_8XX_A;
@@ -884,3 +862,6 @@ new file mode 100644
 +    // keep only max 16 higher entries
 +    entries.as_slice()[start_index..].to_vec()
 +}
+-- 
+2.48.1
+
