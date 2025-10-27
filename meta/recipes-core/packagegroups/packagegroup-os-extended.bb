@@ -8,9 +8,12 @@ PR = "r0"
 
 inherit packagegroup
 
+# Configure firewall backend: nftables (default) or iptables
+FIREWALL_BACKEND ??= "nftables"
+
 RDEPENDS:${PN} = " \
     iproute2 \
-    iptables \
+    ${@bb.utils.contains('FIREWALL_BACKEND', 'nftables', 'nftables', 'iptables', d)} \
     openssl \
     ca-certificates \
 "
