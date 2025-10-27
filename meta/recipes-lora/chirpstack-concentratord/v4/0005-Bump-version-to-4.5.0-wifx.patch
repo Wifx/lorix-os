@@ -1,0 +1,97 @@
+diff --git a/Cargo.lock b/Cargo.lock
+index 79139b2..cb6451a 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -179,7 +179,7 @@ checksum = "9555578bc9e57714c812a1f84e4fc5b4d21fcb063490c624de019f7464c91268"
+ 
+ [[package]]
+ name = "chirpstack-concentratord-2g4"
+-version = "4.5.0"
++version = "4.5.0-wifx"
+ dependencies = [
+  "anyhow",
+  "chirpstack_api",
+@@ -202,7 +202,7 @@ dependencies = [
+ 
+ [[package]]
+ name = "chirpstack-concentratord-sx1301"
+-version = "4.5.0"
++version = "4.5.0-wifx"
+ dependencies = [
+  "anyhow",
+  "chirpstack_api",
+@@ -225,7 +225,7 @@ dependencies = [
+ 
+ [[package]]
+ name = "chirpstack-concentratord-sx1302"
+-version = "4.5.0"
++version = "4.5.0-wifx"
+ dependencies = [
+  "anyhow",
+  "chirpstack_api",
+@@ -560,7 +560,7 @@ checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
+ 
+ [[package]]
+ name = "gateway-id"
+-version = "4.5.0"
++version = "4.5.0-wifx"
+ dependencies = [
+  "chirpstack_api",
+  "clap",
+@@ -569,7 +569,7 @@ dependencies = [
+ 
+ [[package]]
+ name = "gateway-location"
+-version = "4.5.0"
++version = "4.5.0-wifx"
+ dependencies = [
+  "chirpstack_api",
+  "clap",
+@@ -807,7 +807,7 @@ checksum = "d8cfeafaffdbc32176b64fb251369d52ea9f0a8fbc6f8759edffef7b525d64bb"
+ 
+ [[package]]
+ name = "libconcentratord"
+-version = "4.5.0"
++version = "4.5.0-wifx"
+ dependencies = [
+  "anyhow",
+  "chirpstack_api",
+diff --git a/chirpstack-concentratord-2g4/Cargo.toml b/chirpstack-concentratord-2g4/Cargo.toml
+index 00c2b8a..56731e3 100644
+--- a/chirpstack-concentratord-2g4/Cargo.toml
++++ b/chirpstack-concentratord-2g4/Cargo.toml
+@@ -3,7 +3,7 @@
+   repository = "https://github.com/chirpstack/chirpstack-concentratord/"
+   description = "LoRa concentrator HAL daemon (2.4GHz)"
+   license = "MIT"
+-  version = "4.5.0"
++  version = "4.5.0-wifx"
+   authors = ["Orne Brocaar <info@brocaar.com>"]
+   edition = "2024"
+   publish = false
+diff --git a/chirpstack-concentratord-sx1301/Cargo.toml b/chirpstack-concentratord-sx1301/Cargo.toml
+index bed5da2..50cd1d7 100644
+--- a/chirpstack-concentratord-sx1301/Cargo.toml
++++ b/chirpstack-concentratord-sx1301/Cargo.toml
+@@ -3,7 +3,7 @@
+   description = "LoRa concentrator HAL daemon (sx1301)"
+   repository = "https://github.com/chirpstack/chirpstack-concentratord/"
+   license = "MIT"
+-  version = "4.5.0"
++  version = "4.5.0-wifx"
+   authors = ["Orne Brocaar <info@brocaar.com>"]
+   edition = "2024"
+   publish = false
+diff --git a/chirpstack-concentratord-sx1302/Cargo.toml b/chirpstack-concentratord-sx1302/Cargo.toml
+index da67de4..306eec4 100644
+--- a/chirpstack-concentratord-sx1302/Cargo.toml
++++ b/chirpstack-concentratord-sx1302/Cargo.toml
+@@ -3,7 +3,7 @@
+   description = "LoRa concentrator HAL daemon for SX1302"
+   repository = "https://github.com/chirpstack/chirpstack-concentratord/"
+   license = "MIT"
+-  version = "4.5.0"
++  version = "4.5.0-wifx"
+   authors = ["Orne Brocaar <info@brocaar.com>"]
+   edition = "2024"
+   publish = false

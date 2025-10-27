@@ -1,10 +1,9 @@
 SUMMARY = "Process monitor service."
 DESCRIPTION = "Process monitor service, start, stop, restart and manages others processes."
-AUTHOR = "Wifx Sàrl"
+AUTHOR = "Wifx SA"
 
 LICENSE = "Proprietary"
-LIC_FILES_CHKSUM = "file://src/${GO_IMPORT}/LICENSE;md5=c6516b26d091c50b67e08602af287bfd"
-#LIC_FILES_CHKSUM = "file://LICENSE;md5=c6516b26d091c50b67e08602af287bfd"
+LIC_FILES_CHKSUM = "file://src/${GO_IMPORT}/LICENSE;md5=a971c6e63e2a5a8d56f539855996ed37"
 
 inherit upx
 UPX_COMPRESS_FILES:${PN} = "${sbindir}/pmonitord"

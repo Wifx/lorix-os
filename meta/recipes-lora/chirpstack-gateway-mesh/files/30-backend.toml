@@ -1,0 +1,11 @@
+# Backend configuration.
+[backend]
+
+  # ChirpStack Concentratord configuration (end-device communication).
+  [backend.concentratord]
+
+    # Event API URL.
+    event_url = "ipc:///tmp/concentratord_event"
+
+    # Command API URL.
+    command_url = "ipc:///tmp/concentratord_command"

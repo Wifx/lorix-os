@@ -14,15 +14,16 @@ SRC_URI = " \
     file://290_Config-migration-disable.sh;subdir=${BPN}-${PV} \
     file://299_Logs-save.sh;subdir=${BPN}-${PV} \
     file://300_Inhibit-reboot-script-standalone.sh;subdir=${BPN}-${PV} \
-    file://390_Logs-restore.sh;subdir=${BPN}-${PV} \
-    file://391_Update-ca-certificates.sh;subdir=${BPN}-${PV} \
-    file://395_Migrate-opkg-status-apply.sh;subdir=${BPN}-${PV} \
-    file://396_Opkg-configure.sh;subdir=${BPN}-${PV} \
-    file://490_Cleanup-inactive-user-data.sh;subdir=${BPN}-${PV} \
+    file://400_Logs-restore.sh;subdir=${BPN}-${PV} \
+    file://410_Update-ca-certificates.sh;subdir=${BPN}-${PV} \
+    file://450_Migrate-opkg-status-apply.sh;subdir=${BPN}-${PV} \
+    file://459_Opkg-configure.sh;subdir=${BPN}-${PV} \
+    file://690_Cleanup-inactive-user-data.sh;subdir=${BPN}-${PV} \
     file://800_Migrate-opkg-status-restore.sh;subdir=${BPN}-${PV} \
-    file://810_Config-migration-restore.sh;subdir=${BPN}-${PV} \
-    file://998_Migration-context-cleanup.sh;subdir=${BPN}-${PV} \
+    file://997_Migrate-opkg-cleanup.sh;subdir=${BPN}-${PV} \
     file://999_Upgrade-cleanup.sh;subdir=${BPN}-${PV} \
+    file://Config-migration-restore.sh;subdir=${BPN}-${PV} \
+    file://Migration-context-cleanup.sh;subdir=${BPN}-${PV} \
 "
 
 DEPENDS += " \
@@ -110,40 +111,48 @@ include_scripts() {
     ## 90 Migration finalize
     include_script 198_Migrate-reset-immutables.sh          ArtifactInstall_Enter_98_Migrate-reset-immutables
 
-    include_script 998_Migration-context-cleanup.sh         ArtifactInstall_Enter_98_Migration-context-cleanup
+    include_script Migration-context-cleanup.sh             ArtifactInstall_Enter_99_Migration-context-cleanup
 
     # Artifact install leave
     include_script 290_Config-migration-disable.sh          ArtifactInstall_Leave_90_Config-migration-disable
     include_script 299_Logs-save.sh                         ArtifactInstall_Leave_99_Logs-save
 
+    ### REBOOT ###
+
     # Artifact reboot enter (this is only executed on managed update)
     include_script 300_Inhibit-reboot-script-standalone.sh  ArtifactReboot_Enter_00_Inhibit-reboot-script-standalone
 
-    ### REBOOT ###
-
     # Artifact reboot leave (executed either by mender client or init script)
-    include_script 390_Logs-restore.sh                      ArtifactReboot_Leave_00_Logs-restore
-    include_script 391_Update-ca-certificates.sh            ArtifactReboot_Leave_01_Update-ca-certificates
+    include_script 400_Logs-restore.sh                      ArtifactReboot_Leave_00_Logs-restore
+    include_script 410_Update-ca-certificates.sh            ArtifactReboot_Leave_10_Update-ca-certificates
 
-    include_script 395_Migrate-opkg-status-apply.sh         ArtifactReboot_Leave_05_Migrate-opkg-status-apply
-    include_script 396_Opkg-configure.sh                    ArtifactReboot_Leave_06_OPKG-configure
+    include_script 450_Migrate-opkg-status-apply.sh         ArtifactReboot_Leave_50_Migrate-opkg-status-apply
+    # Aditional migration hehre, see -->                    ArtifactReboot_Leave_55_Migration_1.8.0_02_opkg-concentratord-legacy
+    include_script 459_Opkg-configure.sh                    ArtifactReboot_Leave_59_OPKG-configure
+
+    ### COMMIT ###
 
     # Artifact commit enter
 
     # Artifact commit leave
-    include_script 490_Cleanup-inactive-user-data.sh        ArtifactCommit_Leave_90_Cleanup-inactive-user-data
+    include_script 690_Cleanup-inactive-user-data.sh        ArtifactCommit_Leave_90_Cleanup-inactive-user-data
+    include_script 997_Migrate-opkg-cleanup.sh              ArtifactCommit_Leave_97_Migrate-opkg-cleanup
     include_script 999_Upgrade-cleanup.sh                   ArtifactCommit_Leave_99_Upgrade-cleanup
+
+    ### ROLLBACK ###
 
     # Artifact rollback enter
     include_script 800_Migrate-opkg-status-restore.sh       ArtifactRollback_Enter_00_Migrate-opkg-status-restore
-    include_script 810_Config-migration-restore.sh          ArtifactRollback_Enter_10_Config-migration-enable
+    include_script Config-migration-restore.sh              ArtifactRollback_Enter_10_Config-migration-restore
 
     # Artifact rollback leave
     include_script 299_Logs-save.sh                         ArtifactRollback_Leave_99_Logs-save
 
+    ### FAILURE ###
+
     # Artifact failure enter
-    include_script 810_Config-migration-restore.sh          ArtifactFailure_Enter_10_Config-migration-enable
+    include_script Config-migration-restore.sh              ArtifactFailure_Enter_10_Config-migration-restore
 
     # Artifact failure leave
-    include_script 998_Migration-context-cleanup.sh         ArtifactFailure_Leave_00_Migration-context-cleanup
+    include_script Migration-context-cleanup.sh             ArtifactFailure_Leave_99_Migration-context-cleanup
 }

@@ -19,6 +19,13 @@ UPGRADE_LOG_PATH=$UPGRADE_LOG_DIR/$OS_DISTRO_VERSION-$NOW.log
 rm -rf $MENDER_UPGRADE_DIR
 mkdir -p $MENDER_UPGRADE_DIR
 mkdir -p $UPGRADE_LOG_PERSISTENT_DIR
+mkdir -p $UPGRADE_LOG_DIR
+
+source $CURRENT_OS_INFO_PATH
+
+if [[ -z $VERSION_NORM ]]; then
+    VERSION_NORM=$VERSION_ID
+fi
 
 echo '#!/bin/sh
 
@@ -51,11 +58,6 @@ if [[ -z "$PARTITION_ACTIVE" || -z "$PARTITION_INACTIVE" ]]; then
 fi
 ' > $ENV_FILE_PATH
 
-source $CURRENT_OS_INFO_PATH
-
-if [[ -z $VERSION_NORM ]]; then
-    VERSION_NORM=$VERSION_ID
-fi
 
 echo "
 MENDER_UPGRADE_DIR=$MENDER_UPGRADE_DIR
@@ -90,7 +92,6 @@ D_ETC=\$LAYER_USER_CONFIG_INACTIVE_RW
 
 " >> $ENV_FILE_PATH
 
-mkdir -p $UPGRADE_LOG_DIR
 
 echo '
 function log() {

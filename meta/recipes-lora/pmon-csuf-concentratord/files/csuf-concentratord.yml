@@ -1,0 +1,33 @@
+description: ChirpStack concentratord with an UDP Forwarder
+autostart: true
+log: true
+jobs:
+    concentratord:
+        description: LoRa concentrator daemon
+        boot-order: 0
+        process:
+            run-mode: exec
+            program-path: /opt/chirpstack-concentratord/chirpstack-concentratord
+            program-arguments: >-
+              -c /etc/opt/chirpstack-concentratord/00-concentratord.toml
+              -c /etc/opt/chirpstack-concentratord/10-gateway.toml
+              -c /etc/opt/chirpstack-concentratord/11-location.toml
+              -c /etc/opt/chirpstack-concentratord/channels/channels.toml
+            delays:
+                start: 5000
+                term: 5000
+                restart: 5000
+    udp-forwarder:
+        description: Bridges the concentratord to and UDP server
+        boot-order: 1
+        process:
+            run-mode: exec
+            program-path: /opt/chirpstack-udp-forwarder/chirpstack-udp-forwarder
+            program-arguments: >-
+              -c /etc/opt/chirpstack-udp-forwarder/00-concentratord.toml
+              -c /etc/opt/chirpstack-udp-forwarder/10-udp-forwarder.toml
+              -c /etc/opt/chirpstack-udp-forwarder/20-servers.toml
+            delays:
+                start: 5000
+                term: 10000
+                restart: 5000
