@@ -13,7 +13,8 @@ RDEPENDS:${KERNEL_PACKAGE_NAME}-base = ""
 PV = "${LINUX_VERSION}${LINUX_VERSION_EXTENSION}"
 
 SRC_URI = " \
-    git://github.com/Wifx/linux-at91.git;protocol=https;branch=${KBRANCH} \
+    git://github.com/Wifx/linux-at91.git;name=machine;branch=${KBRANCH};protocol=https \
+    git://git.yoctoproject.org/yocto-kernel-cache;type=kmeta;name=meta;branch=yocto-${LINUX_VERSION_SHORT};destsuffix=${KMETA};protocol=https; \
     file://defconfig \
     ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'file://systemd.cfg', '', d)} \
 "
@@ -21,6 +22,7 @@ SRC_URI = " \
 KBRANCH = "linux-${LINUX_VERSION}-at91"
 KMACHINE ?= "${MACHINE}"
 KCONFIG_MODE="--alldefconfig"
+KMETA = "kernel-meta"
 
 python __anonymous () {
     if d.getVar('UBOOT_FIT_IMAGE', True) == 'xyes':
