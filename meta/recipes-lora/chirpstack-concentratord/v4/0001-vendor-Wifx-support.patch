@@ -1,4 +1,4 @@
-From f72dde7b2aaec821cc8542c9c221d758d22efde1 Mon Sep 17 00:00:00 2001
+From 5e7ea73e90b9a75317bf679820e932f0b75d7904 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Christian=20M=C3=BCller?= <christian.muller@wifx.net>
 Date: Fri, 19 Sep 2025 11:46:59 +0200
 Subject: [PATCH] Update LORIX One configuration Add Wifx L1 configuration
@@ -10,13 +10,13 @@ Subject: [PATCH] Update LORIX One configuration Add Wifx L1 configuration
  .../src/config/vendor/wifx/mod.rs             |  52 ++-
  .../src/config/mod.rs                         |   1 +
  .../src/config/vendor/mod.rs                  |   1 +
- .../src/config/vendor/wifx/l1.rs              | 126 +++++++
+ .../src/config/vendor/wifx/l1.rs              | 124 +++++++
  .../src/config/vendor/wifx/l1_8XX_A.rs        |  27 ++
  .../src/config/vendor/wifx/l1_8XX_B.rs        |  27 ++
  .../src/config/vendor/wifx/l1_9XX_A.rs        |  27 ++
  .../src/config/vendor/wifx/l1_9XX_B.rs        |  27 ++
  .../src/config/vendor/wifx/mod.rs             |  61 ++++
- 12 files changed, 455 insertions(+), 281 deletions(-)
+ 12 files changed, 453 insertions(+), 281 deletions(-)
  create mode 100644 chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_8XX.rs
  create mode 100644 chirpstack-concentratord-sx1301/src/config/vendor/wifx/lorix_one_9XX.rs
  create mode 100644 chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1.rs
@@ -508,10 +508,10 @@ index ac0dab1..382cdeb 100644
 +    entries.as_slice()[start_index..].to_vec()
 +}
 diff --git a/chirpstack-concentratord-sx1302/src/config/mod.rs b/chirpstack-concentratord-sx1302/src/config/mod.rs
-index 3b73b83..8c43ba1 100644
+index 3aa0e26..a41557d 100644
 --- a/chirpstack-concentratord-sx1302/src/config/mod.rs
 +++ b/chirpstack-concentratord-sx1302/src/config/mod.rs
-@@ -356,6 +356,7 @@ pub fn get(filenames: Vec<String>) -> Configuration {
+@@ -358,6 +358,7 @@ pub fn get(filenames: Vec<String>) -> Configuration {
          "waveshare_sx1302_lorawan_gateway_hat" => {
              vendor::waveshare::sx1302_lorawan_gateway_hat::new(&config).unwrap()
          }
@@ -520,10 +520,10 @@ index 3b73b83..8c43ba1 100644
      };
  
 diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs b/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs
-index 39d0337..2d393e7 100644
+index 62fda0e..d105235 100644
 --- a/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs
 +++ b/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs
-@@ -8,6 +8,7 @@ pub mod rak;
+@@ -9,6 +9,7 @@ pub mod rak;
  pub mod seeed;
  pub mod semtech;
  pub mod waveshare;
@@ -533,10 +533,10 @@ index 39d0337..2d393e7 100644
  pub enum ComType {
 diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1.rs b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1.rs
 new file mode 100644
-index 0000000..9ac2dc4
+index 0000000..7d673d1
 --- /dev/null
 +++ b/chirpstack-concentratord-sx1302/src/config/vendor/wifx/l1.rs
-@@ -0,0 +1,126 @@
+@@ -0,0 +1,124 @@
 +use anyhow::Result;
 +use libconcentratord::{gnss, region};
 +use libloragw_sx1302::hal;
@@ -614,7 +614,6 @@ index 0000000..9ac2dc4
 +        lora_multi_sf_bandwidth: 125000,
 +        radio_config: vec![
 +            RadioConfig {
-+                enable: true,
 +                radio_type: hal::RadioType::SX1250,
 +                single_input_mode: true,
 +                rssi_offset: -215.4,
@@ -638,7 +637,6 @@ index 0000000..9ac2dc4
 +                ),
 +            },
 +            RadioConfig {
-+                enable: true,
 +                radio_type: hal::RadioType::SX1250,
 +                single_input_mode: false,
 +                rssi_offset: -215.4,
