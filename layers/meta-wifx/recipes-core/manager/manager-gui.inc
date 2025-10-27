@@ -9,46 +9,19 @@ PROVIDES = "manager-gui"
 RDEPENDS:${PN}  += "manager"
 
 S = "${WORKDIR}/git"
-B = "${WORKDIR}/git/dist"
+B = "${S}/dist"
 
 inherit unpack-online-assets
 
-python do_install() {
-    import os
-    import shutil
+do_install() {
+    
+    MANAGER_INSTALL_DIR="${D}${servicedir}/manager"
+    install -d ${MANAGER_INSTALL_DIR}
 
-    gui_source=d.expand("${B}")
-    gui_dest=d.expand("${D}${servicedir}/manager")
+    echo "Installing built GUI files to ${MANAGER_INSTALL_DIR}"
+    cp -r ${B}/* ${MANAGER_INSTALL_DIR}/
 
-    # GUI web files
-    os.makedirs(gui_dest, exist_ok=True)
-
-    for path, dirs, files in os.walk(gui_source):
-        relative_path=path.replace(gui_source+'/', '').replace(gui_source, '')
-
-        if relative_path.startswith("workbox"):
-            continue
-
-        for directory in dirs:
-            if directory.startswith("workbox"):
-                continue
-            dirpath = os.path.join(gui_dest, relative_path, directory)
-            bb.note("Creating directory '%s'" % dirpath)
-            os.mkdir(dirpath)
-
-        for file in files:
-            if relative_path == "fonts" and not (file.endswith("woff2") or file.endswith("woff")):
-                continue
-
-            filename=file.replace('.woff', '').replace('.eot.gz', '').replace('.eot.gz', '').replace('.ttf.gz', '')
-            if os.path.isfile(os.path.join(path, file) + ".gz") or os.path.isfile(os.path.join(path, filename) + ".woff2"):
-                bb.note("'%s' install was skipped, preferring compressed version" % file)
-            else:
-                bb.note("Installing '%s' to '%s'" % (file, os.path.join(gui_dest, relative_path)))
-                shutil.copy(os.path.join(path, file), os.path.join(gui_dest, relative_path, file))
-
-    # Install license file into web sources directory
-    shutil.copy(os.path.join(d.expand("${S}"), "LICENSE"), os.path.join(gui_dest))
+    install -m 0644 ${S}/LICENSE ${MANAGER_INSTALL_DIR}/LICENSE
 }
 
 FILES:${PN} = "${servicedir}/manager/*"

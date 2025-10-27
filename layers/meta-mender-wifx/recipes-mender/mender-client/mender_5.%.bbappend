@@ -14,11 +14,14 @@ RDEPENDS:mender-update:append = " boost-log"
 pkg_postinst_ontarget:${PN}() {
 
     error=false
-    
+
     UBIDATA_MOUNT_PATH="/mnt/ubidata"
     MENDER_BOOTSTRAP_SOURCE_DIR="$UBIDATA_MOUNT_PATH/mender-bootstrap"
     MENDER_DATA_PATH="/data/mender"
     MENDER_BOOTSTRAP_TARGET_PATH="$MENDER_DATA_PATH/bootstrap.mender"
+
+    # TODO: CMR check why this is now required
+    mkdir -p $MENDER_DATA_PATH
 
     if [ -f $MENDER_DATA_PATH/mender-store ]; then
         echo "Mender store already exists at $MENDER_DATA_PATH/mender-store, skipping bootstrap artifact copy"

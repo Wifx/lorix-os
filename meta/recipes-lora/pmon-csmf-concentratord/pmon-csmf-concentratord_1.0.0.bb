@@ -10,6 +10,7 @@ RDEPENDS:${PN} += " \
     pmonitor \
     chirpstack-mqtt-forwarder \
     chirpstack-concentratord \
+    chirpstack-gateway-mesh \
 "
 
 SRC_URI = " \

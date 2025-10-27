@@ -1,7 +1,7 @@
 DESCRIPTION = "Driver/HAL to build a gateway using a concentrator board based on Semtech SX1301"
 HOMEPAGE = "https://github.com/Lora-net/lora_gateway"
 PRIORITY = "optional"
-LICENSE = "BSD"
+LICENSE = "BSD-3-Clause"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=a2bdef95625509f821ba00460e3ae0eb"
 PR = "r8"
 PRR = "r2"

@@ -4,10 +4,6 @@
 # DEFAULT: 60
 #IPTABLES_LOCK_WAIT_TIME="60"
 
-# Set wait interval option for xtables lock in microseconds
-# DEFAULT: 100000
-#IPTABLES_LOCK_WAIT_INTERVAL="100000"
-
 # Location in which ip6tables initscript will save set rules on
 # service shutdown
 IP6TABLES_SAVE="/etc/iptables/ip6tables.rules"

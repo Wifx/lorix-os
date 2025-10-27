@@ -1,8 +1,10 @@
 #!/sbin/openrc-run
-# Copyright (c) 2023, Wifx Sarl <info@iot.wifx.net>
+# Copyright (c) 2023, Wifx SA <info@iot.wifx.net>
 # All rights reserved.
 
 INHIBIT_FILE="/run/wwan-modem-check.inhibit"
+CHIP=${WWAN_PWR_CHIP:-gpiochip3}
+PIN=${WWAN_PWR_PIN:-18}
 
 depend() {
     need sysfs
@@ -12,8 +14,8 @@ depend() {
 start() {
     ebegin "Powering up the WWAN modem"
 
-    # should be abstracted through machine-info
-    gpioset gpiochip3 18=1
+    # TODO: should be abstracted through machine-info
+    gpioset --toggle 0 --chip ${CHIP} ${PIN}=1
 
     # Restore wwan check
     rm -f $INHIBIT_FILE
@@ -25,6 +27,6 @@ stop() {
     # Inhibit wwan check
     touch $INHIBIT_FILE
 
-    # should be abstracted through machine-info
-    gpioset gpiochip3 18=0
+    # TODO: should be abstracted through machine-info
+    gpioset --toggle 0 --chip ${CHIP} ${PIN}=0
 }

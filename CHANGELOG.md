@@ -10,7 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [LOR-434] Enforce password change on first login
+- [LOR-633] Save and restore all logs on reboot
 
+### Changed
+
+- [LOR-632] Update Yocto to Scarthgap (5.0)
 
 ## [1.7.3] - 2025-06-26
 

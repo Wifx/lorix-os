@@ -24,12 +24,15 @@ SRC_URI = " \
     file://1.7.0/05_Fix-overlay-directories.sh;subdir=${BPN}-${PV} \
     file://1.7.1/01_VPN-autoconnect.sh;subdir=${BPN}-${PV} \
     file://1.7.1/02_wwan_auto-connect.sh;subdir=${BPN}-${PV} \
+    file://1.8.0/01_concentratord-legacy.sh;subdir=${BPN}-${PV} \
 "
 
 LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=60704a74c6a3bb355a519fd3d3592955"
 
 inherit mender-state-scripts
+
+ALLOW_EMPTY:${PN} = "1"
 
 RDEPENDS:${PN} += "machine-info busybox sed"
 
@@ -88,4 +91,6 @@ do_compile() {
 
     cp 1.7.1/01_VPN-autoconnect.sh ${TARGET}_Migration_1.7.1_01_VPN-autoconnect
     cp 1.7.1/02_wwan_auto-connect.sh ${TARGET}_Migration_1.7.1_02_wwan_auto-connect
+
+    cp 1.8.0/01_concentratord-legacy.sh ${TARGET}_Migration_1.8.0_01_concentratord-legacy
 }

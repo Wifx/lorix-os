@@ -1,0 +1,67 @@
+#!/sbin/openrc-run
+# Copyright (c) 2025, Wifx SA <info@iot.wifx.net>
+# All rights reserved.
+
+description="Persistent logs service - saves/restores logs to persistent storage"
+
+# Configuration variables with defaults
+PERSISTENT_LOG_FILE="${PERSISTENT_LOG_FILE:-/data/persistent-logs.tar.gz}"
+LOG_DIR="${LOG_DIR:-/var/log}"
+COMPRESSION="${COMPRESSION:-yes}"
+COMPRESSION_RATIO_PERCENT="${COMPRESSION_RATIO_PERCENT:-70}"
+
+# Path to the persistent-logs management script
+PERSISTENT_LOGS_CMD="${PERSISTENT_LOGS_CMD:-/usr/bin/persistent-logs}"
+
+depend() {
+    need localmount
+    after bootmisc
+    before logger syslog-ng
+    # For shutdown: run after logger services stop but before filesystems unmount
+    before umount mount-ro
+    after killprocs savecache
+}
+
+start_pre() {
+    # Ensure persistent storage parent directory exists
+    local persistent_dir=$(dirname "${PERSISTENT_LOG_FILE}")
+    if [ ! -d "${persistent_dir}" ]; then
+        ebegin "Creating persistent log directory ${persistent_dir}"
+        mkdir -p "${persistent_dir}"
+        eend $?
+    fi
+}
+
+start() {
+    ebegin "Restoring persistent logs"
+    
+    # Export configuration variables for the script
+    export PERSISTENT_LOG_FILE LOG_DIR COMPRESSION COMPRESSION_RATIO_PERCENT
+    
+    # Use the persistent-logs script to restore logs
+    if [ -x "${PERSISTENT_LOGS_CMD}" ]; then
+        "${PERSISTENT_LOGS_CMD}" restore >/dev/null 2>&1
+        eend $?
+    else
+        ewarn "Persistent logs script not found at ${PERSISTENT_LOGS_CMD}"
+        eend 1
+    fi
+}
+
+stop() {
+    ebegin "Saving logs to persistent storage"
+    
+    # Export configuration variables for the script
+    export PERSISTENT_LOG_FILE LOG_DIR COMPRESSION COMPRESSION_RATIO_PERCENT
+    
+    # Use the persistent-logs script to save logs
+    if [ -x "${PERSISTENT_LOGS_CMD}" ]; then
+        "${PERSISTENT_LOGS_CMD}" save >/dev/null 2>&1
+        eend $?
+    else
+        ewarn "Persistent logs script not found at ${PERSISTENT_LOGS_CMD}"
+        eend 1
+    fi
+}
+
+# vim: set ft=sh:

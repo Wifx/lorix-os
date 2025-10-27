@@ -1,0 +1,7 @@
+# /etc/conf.d/wwan
+# Copyright (c) 2025, Wifx SA <info@iot.wifx.net>
+# All rights reserved.
+
+# Defines the WWAN modem power pin mapping
+WWAN_PWR_CHIP=gpiochip3
+WWAN_PWR_PIN=18

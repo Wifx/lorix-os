@@ -1,0 +1,75 @@
+diff --git a/Makefile b/Makefile
+index 932ffe0..dd79055 100644
+--- a/Makefile
++++ b/Makefile
+@@ -7,16 +7,16 @@ build: build-aarch64-unknown-linux-musl \
+ 	build-x86_64-unknown-linux-musl
+ 
+ build-aarch64-unknown-linux-musl:
+-	cross build --target aarch64-unknown-linux-musl --release
++	CROSS_CONTAINER_ENGINE=podman cross build --target aarch64-unknown-linux-musl --release
+ 
+ build-armv5te-unknown-linux-musleabi:
+-	cross build --target armv5te-unknown-linux-musleabi --release
++	CROSS_CONTAINER_ENGINE=podman cross build --target armv5te-unknown-linux-musleabi --release
+ 
+ build-armv7-unknown-linux-musleabihf:
+-	cross build --target armv7-unknown-linux-musleabihf --release
++	CROSS_CONTAINER_ENGINE=podman cross build --target armv7-unknown-linux-musleabihf --release
+ 
+ build-x86_64-unknown-linux-musl:
+-	cross build --target x86_64-unknown-linux-musl --release
++	CROSS_CONTAINER_ENGINE=podman cross build --target x86_64-unknown-linux-musl --release
+ 
+ build-mipsel-unknown-linux-musl:
+ 	# mipsel is a tier-3 target.
+diff --git a/chirpstack-concentratord-sx1301/src/handler/uplink.rs b/chirpstack-concentratord-sx1301/src/handler/uplink.rs
+index a252a27..9b5446a 100644
+--- a/chirpstack-concentratord-sx1301/src/handler/uplink.rs
++++ b/chirpstack-concentratord-sx1301/src/handler/uplink.rs
+@@ -68,6 +68,6 @@ pub fn handle_loop(
+             Err(_) => error!("Receive error"),
+         };
+ 
+-        thread::sleep(Duration::from_millis(10));
++        thread::sleep(Duration::from_millis(20));
+     }
+ }
+diff --git a/chirpstack-concentratord-sx1302/src/handler/uplink.rs b/chirpstack-concentratord-sx1302/src/handler/uplink.rs
+index c64183a..49194a4 100644
+--- a/chirpstack-concentratord-sx1302/src/handler/uplink.rs
++++ b/chirpstack-concentratord-sx1302/src/handler/uplink.rs
+@@ -70,6 +70,6 @@ pub fn handle_loop(
+             Err(_) => error!("Receive error"),
+         };
+ 
+-        thread::sleep(Duration::from_millis(10));
++        thread::sleep(Duration::from_millis(20));
+     }
+ }
+diff --git a/libloragw-sx1301/src/hal.rs b/libloragw-sx1301/src/hal.rs
+index 194cb7f..b885c1e 100644
+--- a/libloragw-sx1301/src/hal.rs
++++ b/libloragw-sx1301/src/hal.rs
+@@ -523,7 +523,7 @@ impl TxPacket {
+     }
+ }
+ 
+-const MAX_PKT: usize = 8;
++const MAX_PKT: usize = 16;
+ 
+ /// Configure the gateway board.
+ pub fn board_setconf(conf: &BoardConfig) -> Result<()> {
+diff --git a/libloragw-sx1302/src/hal.rs b/libloragw-sx1302/src/hal.rs
+index d0e78ac..3fe96b9 100644
+--- a/libloragw-sx1302/src/hal.rs
++++ b/libloragw-sx1302/src/hal.rs
+@@ -777,7 +777,7 @@ pub struct SpectralScanResult {
+     pub result: u16,
+ }
+ 
+-const MAX_PKT: usize = 8;
++const MAX_PKT: usize = 16;
+ 
+ /// Set I2C device path.
+ pub fn set_i2c_device_path(path: &str) -> Result<()> {

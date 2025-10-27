@@ -1,0 +1,25 @@
+# Configuration file for persistent-logs OpenRC service
+
+# Directory where persistent logs are stored
+# Default: /data/persistent-logs
+#PERSISTENT_LOG_DIR="/data/persistent-logs"
+
+# Directory containing system logs to backup/restore
+# Default: /var/log
+#LOG_DIR="/var/log"
+
+# Enable compression for log archives
+# Set to "yes" to use gzip compression, "no" for uncompressed tar
+# Default: yes
+#COMPRESSION="yes"
+
+# Expected compression ratio for estimation (percentage reduction)
+# Used to estimate archive size before creation
+# Default: 70 (assumes 70% size reduction for text logs)
+#COMPRESSION_RATIO_PERCENT="70"
+
+# Maximum age of log archives to keep (in days)
+# Archives older than this will be automatically cleaned up
+# Set to 0 to disable automatic cleanup
+# Default: 30
+#MAX_LOG_AGE_DAYS="30"

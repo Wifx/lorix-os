@@ -6,15 +6,16 @@ SRC_URI += " \
 
 inherit openrc
 
-OPENRC_SERVICE:${PN} = "watchdog"
+OPENRC_SERVICES:${PN} = "watchdog"
 OPENRC_RUNLEVEL:watchdog = "default"
+OPENRC_AUTO_ENABLE = "enable"
 
 do_install:append() {
     # Install OpenRC conf script
-    openrc_install_config ${WORKDIR}/watchdog.confd
+    openrc_install_confd ${WORKDIR}/watchdog.confd
 
     # Install OpenRC script
-    openrc_install_script ${WORKDIR}/watchdog.initd
+    openrc_install_initd ${WORKDIR}/watchdog.initd
 }
 
 FILES:${PN} += " \

@@ -9,13 +9,14 @@ SRC_URI += " \
 
 inherit openrc
 
-OPENRC_SERVICE:${PN} = "chronyd"
+OPENRC_SERVICES:${PN} = "chronyd"
 OPENRC_RUNLEVEL:chronyd = "default"
+OPENRC_AUTO_ENABLE = "enable"
 
 do_install:append() {
     # Install OpenRC conf script
-    openrc_install_config ${WORKDIR}/chronyd.confd
+    openrc_install_confd ${WORKDIR}/chronyd.confd
 
     # Install OpenRC script
-    openrc_install_script ${WORKDIR}/chronyd.initd
+    openrc_install_initd ${WORKDIR}/chronyd.initd
 }

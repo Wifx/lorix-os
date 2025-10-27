@@ -1,9 +1,9 @@
 SUMMARY = "Wifx board Embedded Controller util"
 DESCRIPTION = "Util to programm and manage the Wifx board Embedded Controller through wgw-ec driver or i2cdev."
-AUTHOR = "Wifx Sarl"
+AUTHOR = "Wifx SA"
 
 LICENSE = "Proprietary"
-LIC_FILES_CHKSUM = "file://${WORKDIR}/git/LICENSE;md5=ab61665cc10f12f35605de28be0fe1ad"
+LIC_FILES_CHKSUM = "file://${WORKDIR}/git/LICENSE;md5=61619980fb3d535c679ce6ba61cb7790"
 
 inherit unpack-online-assets
 

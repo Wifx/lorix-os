@@ -12,6 +12,6 @@
   [metadata.commands]
 
     # Examples:
-    # uptime="/usr/bin/uptime -p"
+    # uptime=["/usr/bin/uptime", "-p"]
 
-    # antenna_gain="/usr/bin/manager lora hardware antenna"
+    # antenna_gain=["/usr/bin/manager", "-o=standard lora hardware antenna"]

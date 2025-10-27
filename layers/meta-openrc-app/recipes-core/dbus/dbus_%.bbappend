@@ -3,8 +3,9 @@ SRC_URI += "file://dbus.initd"
 
 inherit openrc
 
-OPENRC_SERVICE:${PN} = "dbus"
+OPENRC_SERVICES:${PN} = "dbus"
 OPENRC_RUNLEVEL:dbus = "default"
+OPENRC_AUTO_ENABLE = "enable"
 
 do_install:append() {
 	if [ "${PN}" = "${BPN}" ]; then

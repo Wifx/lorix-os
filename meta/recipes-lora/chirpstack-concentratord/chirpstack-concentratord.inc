@@ -1,6 +1,12 @@
+# Copyright (c) 2025, Wifx SA <info@iot.wifx.net>
+# All rights reserved.
+
 HOMEPAGE = "https://www.chirpstack.io/"
 DESCRIPTION = "ChirpStack Concentratord"
 LICENSE = "MIT"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=bc4546f147d6f9892ca1b7d23bf41196"
+
+FILESEXTRAPATHS:prepend := "${THISDIR}/v4:"
 
 SRC_URI += "\
     file://concentratord.toml \
@@ -31,49 +37,73 @@ SRC_URI += "\
     file://channels/US915/US_902_928_FSB_8.toml \
 "
 
+DEPENDS = " \
+    protobuf-native \
+    clang-native \
+"
+ASSUME_PROVIDED:remove = "cmake-native"
+
 DEPENDS:append:sx1301 = " libloragw-sx1301"
 DEPENDS:append:sx1302 = " libloragw-sx1302"
 
 RDEPENDS:${PN} += "machine-info"
 
-UPX_COMPRESS_FILES:${PN} = "/opt/chirpstack-concentratord/chirpstack-concentratord"
 inherit upx
-
-## meta-rust-bin
-inherit cargo_bin
-
-# Enable network for the compile task allowing cargo to download dependencies
-do_compile[network] = "1"
-
-export BINDGEN_EXTRA_CLANG_ARGS="-I${STAGING_INCDIR}"
- 
-CARGO_BUILD_FLAGS:append:sx1301 = " -p libconcentratord -p chirpstack-concentratord-sx1301 -p libloragw-sx1301"
-CARGO_BUILD_FLAGS:append:sx1302 = " -p libconcentratord -p chirpstack-concentratord-sx1302 -p libloragw-sx1302" 
+UPX_COMPRESS_FILES:${PN} = "${optdir}/chirpstack-concentratord/chirpstack-concentratord"
 
 CONF_DIR = "${sysconfoptdir}/chirpstack-concentratord"
 S = "${WORKDIR}/git"
+
+## meta-rust
+inherit cargo cargo-update-recipe-crates
+
+# Fix panic static and configure options (SQLite based)
+RUST_PANIC_STRATEGY = "abort"
+
+# Remove TMPDIR reference in C based crates
+DEBUG_PREFIX_MAP:append = " \
+    -fmacro-prefix-map=${WORKDIR}=/usr/src/debug/${PN}/${EXTENDPE}${PV}-${PR} \
+    -fdebug-prefix-map=${WORKDIR}=/usr/src/debug/${PN}/${EXTENDPE}${PV}-${PR} \
+"
+
+export BINDGEN_EXTRA_CLANG_ARGS="--sysroot=${STAGING_DIR_TARGET}"
+export BINDGEN_EXTRA_CLANG_ARGS="-I${STAGING_INCDIR}"
+
+CARGO_BUILD_FLAGS:append = " -p libconcentratord"
+CARGO_BUILD_FLAGS:append:sx1301 = " -p chirpstack-concentratord-sx1301 -p libloragw-sx1301"
+CARGO_BUILD_FLAGS:append:sx1302 = " -p chirpstack-concentratord-sx1302 -p libloragw-sx1302" 
 
 do_install() {
     install_configs
 
     install_channels
-    
+
     # Bin directory
     install -m 0755 -d ${D}${optdir}/chirpstack-concentratord
+}
+
+do_install:append:lorix-one() {
+    # Machine specific config
+    install_config gateways/gateway-lorix-one.toml 10-gateway.toml
+}
+
+do_install:append:l1() {
+    # Machine specific config
+    install_config gateways/gateway-l1.toml 10-gateway.toml
+}
+
+do_install:append:sx1301() {
+    install -m 0755 ${B}/target/${CARGO_TARGET_SUBDIR}/chirpstack-concentratord-sx1301 ${D}${optdir}/chirpstack-concentratord/chirpstack-concentratord
+}
+
+do_install:append:sx1302() {
+    install -m 0755 ${B}/target/${CARGO_TARGET_SUBDIR}/chirpstack-concentratord-sx1302 ${D}${optdir}/chirpstack-concentratord/chirpstack-concentratord
 }
 
 install_configs() {
     install -m 0755 -d ${D}${CONF_DIR}
     install_config concentratord.toml 00-concentratord.toml
     install_config gateways/location.toml 11-location.toml
-}
-
-do_install:append:lorix-one() {
-    install_config gateways/gateway-lorix-one.toml 10-gateway.toml
-}
-
-do_install:append:l1() {
-    install_config gateways/gateway-l1.toml 10-gateway.toml
 }
 
 install_config() {
@@ -92,7 +122,7 @@ install_config() {
 
 install_channels() {
     install -m 0755 -d ${D}${CONF_DIR}/channels
-    
+
     install -m 0755 -d ${D}${CONF_DIR}/channels/AS920
     install_channel AS920/AS_920_923.toml
     set_default "AS920" "AS_920_923"
@@ -101,7 +131,7 @@ install_channels() {
     install_channel AS923/AS_923_925.toml
     install_channel AS923/AS_923_925_TTN_AU.toml
     set_default "AS923" "AS_923_925"
-    
+
     install -m 0755 -d ${D}${CONF_DIR}/channels/AU915
     install_channel AU915/AU_915_928_FSB_1.toml
     install_channel AU915/AU_915_928_FSB_2.toml
@@ -112,19 +142,19 @@ install_channels() {
     install_channel AU915/AU_915_928_FSB_7.toml
     install_channel AU915/AU_915_928_FSB_8.toml
     set_default "AU915" "AU_915_928_FSB_2"
-    
+
     install -m 0755 -d ${D}${CONF_DIR}/channels/EU868
     install_channel EU868/EU_863_870.toml
     set_default "EU868" "EU_863_870"
-    
+
     install -m 0755 -d ${D}${CONF_DIR}/channels/IN865
     install_channel IN865/IN_865_867.toml
     set_default "IN865" "IN_865_867"
-    
+
     install -m 0755 -d ${D}${CONF_DIR}/channels/RU864
     install_channel RU864/RU_864_870_TTN.toml
     set_default "RU864" "RU_864_870_TTN"
-    
+
     install -m 0755 -d ${D}${CONF_DIR}/channels/US915
     install_channel US915/US_902_928_FSB_1.toml
     install_channel US915/US_902_928_FSB_2.toml
@@ -165,21 +195,12 @@ set_default() {
     ln -snf "$ID.toml" "${D}${CONF_DIR}/channels/$REGION/default"
 }
 
-
-do_install:append:sx1301() {
-    install -m 0755 ${CARGO_BINDIR}/chirpstack-concentratord-sx1301 ${D}${optdir}/chirpstack-concentratord/chirpstack-concentratord
-}
-
-do_install:append:sx1302() {
-    install -m 0755 ${CARGO_BINDIR}/chirpstack-concentratord-sx1302 ${D}${optdir}/chirpstack-concentratord/chirpstack-concentratord
-}
-
 pkg_postinst_ontarget:${PN} () {
     GW_CONFIG_FILE_PATH="${CONF_DIR}/10-gateway.toml"
 }
 
 pkg_postinst_ontarget:${PN}:append:lorix_one () {
-    
+
     ### GATEWAY ID ### 
 
     if [ -f "$GW_CONFIG_FILE_PATH" ]; then
@@ -193,20 +214,15 @@ pkg_postinst_ontarget:${PN}:append:lorix_one () {
         echo "Gateway config file does not exist ("$GW_CONFIG_FILE_PATH")"
     fi
 
-    ### MODEL ###
+    ### MODEL FLAGS ###
 
     if [ -f "$GW_CONFIG_FILE_PATH" ]; then
         # retrieve LoRa Region from machine-info
         LORA_REGION=$(machine-info read "PRODUCT_VARIANT_ATTR_LORA_REGION")
 
-        # retrieve LoRa frontend revision from machine-info
-        LORA_FRONTEND_REV=$(machine-info read "LORA_IFACE_0_FRONTEND_REV")
+        sed -i 's/lora_region-XXX/lora_region-'${LORA_REGION}'/g' $GW_CONFIG_FILE_PATH
 
-        MODEL="wifx_lorix_one_${LORA_REGION}_${LORA_FRONTEND_REV}"
-
-        sed -i 's/model=""/model="'${MODEL}'"/g' $GW_CONFIG_FILE_PATH
-
-        echo "Model set to "$MODEL" in file "$GW_CONFIG_FILE_PATH
+        echo "lora_region set to "$LORA_REGION" in file "$GW_CONFIG_FILE_PATH
     else
         echo "Gateway config file does not exist ("$GW_CONFIG_FILE_PATH")"
     fi
@@ -214,7 +230,7 @@ pkg_postinst_ontarget:${PN}:append:lorix_one () {
 
 pkg_postinst_ontarget:${PN}:append:l1 () {
 
-    ### MODEL ###
+    ### MODEL FLAGS ###
 
     if [ -f "$GW_CONFIG_FILE_PATH" ]; then
         # retrieve LoRa Region from machine-info
@@ -222,12 +238,13 @@ pkg_postinst_ontarget:${PN}:append:l1 () {
         
         # retrieve LoRa frontend revision from machine-info
         LORA_FRONTEND_REV=$(machine-info read "LORA_IFACE_0_FRONTEND_REV")
-
-        MODEL="wifx_l1_${LORA_REGION}_${LORA_FRONTEND_REV}"
         
-        sed -i 's/model=""/model="'${MODEL}'"/g' $GW_CONFIG_FILE_PATH
+        sed -i 's/lora_region-XXX/lora_region-'${LORA_REGION}'/g' $GW_CONFIG_FILE_PATH
+        echo "lora_region set to "$LORA_REGION" in file "$GW_CONFIG_FILE_PATH
 
-        echo "Model set to "$MODEL" in file "$GW_CONFIG_FILE_PATH
+        sed -i 's/lora_frontend_rev-X/lora_frontend_rev-'${LORA_FRONTEND_REV}'/g' $GW_CONFIG_FILE_PATH
+        echo "lora_frontend_rev set to "$LORA_FRONTEND_REV" in file "$GW_CONFIG_FILE_PATH
+
     else
         echo "Gateway config file does not exist ("$GW_CONFIG_FILE_PATH")"
     fi

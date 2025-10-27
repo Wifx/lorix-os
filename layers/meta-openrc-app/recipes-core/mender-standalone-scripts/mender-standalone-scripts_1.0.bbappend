@@ -7,15 +7,16 @@ SRC_URI += " \
 
 inherit openrc
 
-OPENRC_SERVICE:${PN} = "mender-standalone-scripts"
+OPENRC_SERVICES:${PN} = "mender-standalone-scripts"
 OPENRC_RUNLEVEL:mender-standalone-scripts = "boot"
+OPENRC_AUTO_ENABLE = "enable"
 
 do_install:append() {
     # Install OpenRC conf script
-    openrc_install_config ${WORKDIR}/mender-standalone-scripts.confd
+    openrc_install_confd ${WORKDIR}/mender-standalone-scripts.confd
 
     # Install OpenRC script
-    openrc_install_script ${WORKDIR}/mender-standalone-scripts.initd
+    openrc_install_initd ${WORKDIR}/mender-standalone-scripts.initd
 }
 
 FILES:${PN} += " \

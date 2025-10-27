@@ -23,9 +23,8 @@ RDEPENDS:${PN} = " \
     distro-feed-configs \
     run-postinsts \
     ${@bb.utils.contains('DISTRO_FEATURES', 'openrc', 'openrc', '', d)} \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'openrc', 'openrc-base-files', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'manager', 'manager manager-gui', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'pmonitor', 'pmonitor pmcli', '', d)} \
-    virtual/updater \
-    mender-standalone-scripts \
+    updater \
+    persistent-logs \
 "

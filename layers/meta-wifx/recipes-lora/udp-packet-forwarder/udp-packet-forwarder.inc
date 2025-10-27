@@ -11,7 +11,7 @@ RDEPENDS:${PN} += " \
     libcrypto \
     machine-info \
 "
-RPROVIDES:${PN} += "virtual/udp-packet-forwarder"
+RPROVIDES:${PN} += "udp-packet-forwarder"
 
 INSANE_SKIP:${PN} += "file-rdeps"
 

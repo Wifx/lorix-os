@@ -1,4 +1,4 @@
-description: ChirpStack Gateway Bridge with concentratord
+description: ChirpStack Gateway Bridge with concentratord v3 (legacy)
 autostart: true
 log: true
 jobs:
@@ -7,12 +7,12 @@ jobs:
         boot-order: 0
         process:
             run-mode: exec
-            program-path: /opt/chirpstack-concentratord/chirpstack-concentratord
+            program-path: /opt/chirpstack-concentratord-legacy/chirpstack-concentratord-legacy
             program-arguments: >-
-              -c /etc/opt/chirpstack-concentratord/00-concentratord.toml
-              -c /etc/opt/chirpstack-concentratord/10-gateway.toml
-              -c /etc/opt/chirpstack-concentratord/11-location.toml
-              -c /etc/opt/chirpstack-concentratord/channels/channels.toml
+              -c /etc/opt/chirpstack-concentratord-legacy/00-concentratord.toml
+              -c /etc/opt/chirpstack-concentratord-legacy/10-gateway.toml
+              -c /etc/opt/chirpstack-concentratord-legacy/11-location.toml
+              -c /etc/opt/chirpstack-concentratord-legacy/channels/channels.toml
             delays:
                 start: 3000
                 term: 1000

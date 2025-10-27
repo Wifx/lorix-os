@@ -21,7 +21,7 @@ do_patch[noexec] = "1"
 do_configure[noexec] = "1"
 do_compile[noexec] = "1"
 
-RPROVIDES:${PN} += "virtual/usb-gadget"
+RPROVIDES:${PN} += "usb-gadget"
 RDEPENDS:${PN} += "networkmanager"
 RRECOMMENDS:${PN} += " \
     kernel-module-libcomposite \
