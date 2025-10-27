@@ -26,4 +26,5 @@ RDEPENDS:${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'manager', 'manager manager-gui', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'pmonitor', 'pmonitor pmcli', '', d)} \
     updater \
+    persistent-logs \
 "
