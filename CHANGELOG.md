@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.8.0] - Unreleased
 
+### Added
+
+- [LOR-633] Save and restore all logs on reboot
+
 ### Changed
 
 - [LOR-632] Update Yocto to Scarthgap (5.0)
