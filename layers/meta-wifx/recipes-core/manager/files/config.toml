@@ -19,8 +19,13 @@
 
 # The API allows remote access to the gateway for monitoring and control. Is is used by the Manager web GUI. Authentication is always needed.
 [api]
+
+  # When set to true, https in enforced and vulnerable ciphers are removed. Trades compatibility for extra security
+  #secure-mode = false
+
   [api.http]
     # When set to true, the manager will start a web server providing the API on the defined port
+    # If secure-mode is true, all http requests will be redirected to https
     #enabled = true
 
     # Interface the http web server listens to. All zeros means any interface. You can restrict access from a defined interface by settings it's IP. Default: 0.0.0.0
