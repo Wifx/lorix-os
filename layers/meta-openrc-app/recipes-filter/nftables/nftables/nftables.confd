@@ -1,0 +1,19 @@
+# /etc/conf.d/nftables
+
+# Time to wait for nftables lock
+#NFTABLES_LOCK_WAIT_TIME="60"
+
+# Location in which nftables initscript will save set rules on
+# service shutdown
+NFTABLES_SAVE="/etc/nftables/nftables.conf"
+
+# Save state on stopping nftables
+SAVE_ON_STOP="no"
+
+# If you need to log nftables messages as soon as nftables starts,
+# AND your logger does NOT depend on the network, then you may wish
+# to uncomment the next line.
+# If your logger depends on the network, and you uncomment this line
+# you will create an unresolvable circular dependency during startup.
+# After commenting or uncommenting this line, you must run 'rc-update -u'.
+#rc_use="logger"

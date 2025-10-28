@@ -1,0 +1,104 @@
+#!/sbin/openrc-run
+# Copyright 2025 Wifx SA <info@iot.wifx.net>
+# Distributed under the terms of the GNU General Public License v2
+
+extra_commands="check save help"
+extra_started_commands="reload"
+
+nftables_lock_wait_time=${NFTABLES_LOCK_WAIT_TIME:-"60"}
+nftables_save=${NFTABLES_SAVE:-"/etc/nftables/nftables.conf"}
+
+description="nftables firewall"
+
+depend() {
+	need localmount
+	before net
+	provide firewall
+}
+
+checkkernel() {
+	if [ ! -d /proc/sys/net/netfilter ] ; then
+		eerror "Your kernel lacks netfilter support, please load"
+		eerror "appropriate modules and try again."
+		return 1
+	fi
+	return 0
+}
+
+checkconfig() {
+	if [ ! -f "${nftables_save}" ] ; then
+		eerror "Not starting nftables. First create some rules then run:"
+		eerror "/etc/init.d/nftables save"
+		return 1
+	fi
+	return 0
+}
+
+start_pre() {
+	checkkernel || return 1
+	checkconfig || return 1
+}
+
+start() {
+	ebegin "Loading nftables state and starting firewall"
+
+	if [ -f "${nftables_save}" ] ; then
+		/usr/sbin/nft -f "${nftables_save}"
+		eend $?
+	else
+		eend 1 "No nftables configuration found at ${nftables_save}"
+	fi
+}
+
+stop() {
+	if [ "${SAVE_ON_STOP}" = "yes" ] ; then
+		save || return 1
+	fi
+
+	ebegin "Stopping firewall"
+	/usr/sbin/nft flush ruleset
+	eend $?
+}
+
+reload() {
+	ebegin "Flushing firewall"
+	/usr/sbin/nft flush ruleset
+	eend $? || return 1
+	start
+}
+
+save() {
+	ebegin "Saving nftables state"
+	if [ -f "${nftables_save}" ] ; then
+		# Create backup
+		cp "${nftables_save}" "${nftables_save}.bak"
+	fi
+	
+	# Save current ruleset
+	/usr/sbin/nft list ruleset > "${nftables_save}.tmp" && \
+	mv "${nftables_save}.tmp" "${nftables_save}"
+	eend $?
+}
+
+check() {
+	ebegin "Checking nftables configuration"
+	if [ -f "${nftables_save}" ] ; then
+		/usr/sbin/nft -c -f "${nftables_save}"
+	else
+		eerror "No configuration file found at ${nftables_save}"
+		return 1
+	fi
+	eend $?
+}
+
+help() {
+	echo "Usage: ${SVCNAME} {start|stop|restart|reload|save|check|help}"
+	echo ""
+	echo "  start   - Load nftables rules from ${nftables_save}"
+	echo "  stop    - Flush all nftables rules"
+	echo "  restart - Stop and start the service"
+	echo "  reload  - Flush rules and reload from config"
+	echo "  save    - Save current rules to ${nftables_save}"
+	echo "  check   - Validate configuration file syntax"
+	echo "  help    - Show this help message"
+}

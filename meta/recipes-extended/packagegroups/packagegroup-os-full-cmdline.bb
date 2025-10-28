@@ -89,9 +89,7 @@ RDEPENDS:packagegroup-os-full-cmdline-utils = "\
     "
 
 RDEPENDS:packagegroup-os-full-cmdline-extended = "\
-    iproute2 \
     iputils \
-    iptables \
     module-init-tools \
     nano \
     openssl \
