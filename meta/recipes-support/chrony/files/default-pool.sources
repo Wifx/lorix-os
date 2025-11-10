@@ -1,0 +1,2 @@
+# Use public NTP servers from the pool.ntp.org project.
+pool 0.pool.ntp.org iburst

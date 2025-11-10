@@ -1,0 +1,2 @@
+# Use a local timeserver in preference to the pool, if it's reachable.
+#server 192.168.22.22 iburst minpoll 2 prefer

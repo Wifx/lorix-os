@@ -1,0 +1,123 @@
+#!/bin/sh
+
+# NetworkManager dispatcher script to update chrony's status and add NTP servers
+# obtained via DHCP.  Based on the AUR networkmanager-dispatcher-chrony script.
+
+INTERFACE=$1
+STATUS=$2
+
+# Check that required parameters are provided
+if [ -z "$INTERFACE" ]; then
+    exit 0
+fi
+
+if [ -z "$STATUS" ]; then
+    logger -p daemon.err -t "chrony-nm-dispatcher" "Error: Status parameter is missing"
+    exit 1
+fi
+
+# make sure we're always getting the standard response strings
+LANG='C'
+
+CHRONY=$(which chronyc)
+
+# Check if chronyc is available
+if [ -z "$CHRONY" ]; then
+    logger -p daemon.err -t "chrony-nm-dispatcher" "Error: chronyc not found"
+    exit 1
+fi
+
+# Directory for chrony DHCP sources (chrony v4 style)
+CHRONY_DHCP_DIR="/var/run/chrony-dhcp"
+DHCP_SOURCES_FILE="${CHRONY_DHCP_DIR}/${INTERFACE}.sources"
+
+# Ensure chrony-dhcp directory exists and is accessible
+if [ ! -d "$CHRONY_DHCP_DIR" ]; then
+    if ! mkdir -p "$CHRONY_DHCP_DIR" 2>/dev/null; then
+        logger -p daemon.err -t "chrony-nm-dispatcher" "Error: Failed to create directory $CHRONY_DHCP_DIR"
+        exit 1
+    fi
+    logger -p daemon.info -t "chrony-nm-dispatcher" "Created chrony DHCP directory: $CHRONY_DHCP_DIR"
+fi
+
+# Verify directory is writable
+if [ ! -w "$CHRONY_DHCP_DIR" ]; then
+    logger -p daemon.err -t "chrony-nm-dispatcher" "Error: Directory $CHRONY_DHCP_DIR is not writable"
+    exit 1
+fi
+
+function chrony_status() {
+    local cmd="$1"
+    TIMEOUT=$(which timeout)
+    if [ -n "$TIMEOUT" ]; then
+        $TIMEOUT -s KILL 10 $CHRONY "$cmd"
+    else
+        $CHRONY "$cmd"
+    fi
+    return $?
+}
+
+function chrony_add_servers() {
+    # Create sources file for this interface
+    > "$DHCP_SOURCES_FILE"
+    
+    local sources_added=0
+    
+    # Process DHCP4 and DHCP6 NTP servers
+    for servers_var in "DHCP4_NTP_SERVERS" "DHCP6_NTP_SERVERS"; do
+        eval "servers=\$$servers_var"
+        for server in $servers; do
+            # Basic validation: check if server looks like a valid hostname/IP
+            if echo "$server" | grep -qE '^[a-zA-Z0-9.-]+$'; then
+                # Write server directive to sources file
+                echo "server $server iburst" >> "$DHCP_SOURCES_FILE"
+                logger -p daemon.info -t "chrony-nm-dispatcher" "Added NTP server $server to sources for interface $INTERFACE"
+                sources_added=$((sources_added + 1))
+            else
+                logger -p daemon.warning -t "chrony-nm-dispatcher" "Invalid server format: $server for interface $INTERFACE"
+            fi
+        done
+    done
+    
+    # If no valid servers were added, remove the empty file
+    if [ $sources_added -eq 0 ]; then
+        rm -f "$DHCP_SOURCES_FILE"
+    fi
+}
+
+function chrony_remove_servers() {
+    # Remove sources file for this interface
+    if [ -f "$DHCP_SOURCES_FILE" ]; then
+        logger -p daemon.info -t "chrony-nm-dispatcher" "Removing NTP sources file for interface $INTERFACE"
+        rm -f "$DHCP_SOURCES_FILE"
+    fi
+}
+
+function chrony_reload_sources() {
+    # Tell chrony to reload sources from the directory
+    if chrony_status "reload sources"; then
+        logger -p daemon.info -t "chrony-nm-dispatcher" "Successfully reloaded chrony sources"
+    else
+        logger -p daemon.warning -t "chrony-nm-dispatcher" "Failed to reload chrony sources"
+    fi
+}
+
+case "$STATUS" in
+up|vpn-up|dhcp4-change|connectivity-change)
+    chrony_add_servers
+    chrony_reload_sources
+    chrony_status onoffline
+    rc=$?
+    ;;
+down|vpn-down)
+    chrony_remove_servers
+    chrony_reload_sources
+    chrony_status onoffline
+    rc=$?
+    ;;
+*)
+    logger -p daemon.info -t "chrony-nm-dispatcher" "Unhandled status '$STATUS' for interface $INTERFACE, no action taken"
+    rc=0
+esac
+
+exit $rc

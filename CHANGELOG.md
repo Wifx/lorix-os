@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [LOR-632] Update Yocto to Scarthgap (5.0)
 - [LOR-687] Upgrade syslog-ng config to corresponding version
+- [LOR-700] Update Chrony to v4
 
 ## [1.7.3] - 2025-06-26
 

@@ -25,6 +25,7 @@ SRC_URI = " \
     file://1.7.1/01_VPN-autoconnect.sh;subdir=${BPN}-${PV} \
     file://1.7.1/02_wwan_auto-connect.sh;subdir=${BPN}-${PV} \
     file://1.8.0/01_concentratord-legacy.sh;subdir=${BPN}-${PV} \
+    file://1.8.0/02_chrony_sources.sh;subdir=${BPN}-${PV} \
 "
 
 LICENSE = "Proprietary"
@@ -93,4 +94,5 @@ do_compile() {
     cp 1.7.1/02_wwan_auto-connect.sh ${TARGET}_Migration_1.7.1_02_wwan_auto-connect
 
     cp 1.8.0/01_concentratord-legacy.sh ${TARGET}_Migration_1.8.0_01_concentratord-legacy
+    cp 1.8.0/02_chrony_sources.sh ${TARGET}_Migration_1.8.0_02_chrony_sources
 }
