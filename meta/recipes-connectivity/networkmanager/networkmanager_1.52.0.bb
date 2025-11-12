@@ -37,6 +37,8 @@ inherit gettext update-rc.d systemd gobject-introspection gtk-doc update-alterna
 
 SRC_URI = " \
     https://gitlab.freedesktop.org/NetworkManager/NetworkManager/-/archive/${PV}/NetworkManager-${PV}.tar.gz \
+    file://enable-dhcpcd.conf \
+    file://enable-iwd.conf \
 "
 SRC_URI:append:libc-musl = "${@bb.utils.contains('DISTRO_FEATURES', 'ld-is-lld', ' file://0001-linker-scripts-Do-not-export-_IO_stdin_used.patch', '', d)}"
 
@@ -295,11 +297,11 @@ do_install:append() {
 
     # Enable iwd if compiled
     if ${@bb.utils.contains('PACKAGECONFIG','iwd','true','false',d)}; then
-        install -Dm 0644 ${UNPACKDIR}/enable-iwd.conf ${D}${nonarch_libdir}/NetworkManager/conf.d/enable-iwd.conf
+        install -Dm 0644 ${WORKDIR}/enable-iwd.conf ${D}${nonarch_libdir}/NetworkManager/conf.d/enable-iwd.conf
     fi
 
     # Enable dhcpd if compiled
     if ${@bb.utils.contains('PACKAGECONFIG','dhcpcd','true','false',d)}; then
-        install -Dm 0644 ${UNPACKDIR}/enable-dhcpcd.conf ${D}${nonarch_libdir}/NetworkManager/conf.d/enable-dhcpcd.conf
+        install -Dm 0644 ${WORKDIR}/enable-dhcpcd.conf ${D}${nonarch_libdir}/NetworkManager/conf.d/enable-dhcpcd.conf
     fi
 }
