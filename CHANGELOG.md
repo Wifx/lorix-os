@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-687] Upgrade syslog-ng config to corresponding version
 - [LOR-700] Update Chrony to v4
 
+### Fixed
+
+- [LOR-696] Don't override customer defined hostname during update
+
 ## [1.7.3] - 2025-06-26
 
 ### Added

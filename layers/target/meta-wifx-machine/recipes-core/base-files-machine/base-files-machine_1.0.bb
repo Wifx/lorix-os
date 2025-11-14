@@ -44,35 +44,42 @@ do_install () {
 }
 
 pkg_postinst_ontarget:lorix_one () {
-    if [ -e /sys/class/net/eth0/address ]; then
-        # Construct the hostname based on last 3 Bytes of eth0 MAC address
-        mac=$(cat /sys/class/net/eth0/address)
-        id=$(echo $mac | awk -F':' '{print $4$5$6}')
-        HOSTNAME="lorix-one-$id"
-        # Set LORIX One hostname to "lorix-one-xxxxxx" to have unique hostname (for mDNS for example)
-    else
-        HOSTNAME="lorix-one"
-    fi
+    # If there is no custom hostname yet set
+    if [ ! -f /var/lib/os/layers/active/config/hostname ]; then
 
-    # Update system's hostname
-    echo "$HOSTNAME" > /etc/hostname
-    hostname "$HOSTNAME"
-    export HOSTNAME
+        if [ -e /sys/class/net/eth0/address ]; then
+            # Construct the hostname based on last 3 Bytes of eth0 MAC address
+            mac=$(cat /sys/class/net/eth0/address)
+            id=$(echo $mac | awk -F':' '{print $4$5$6}')
+            HOSTNAME="lorix-one-$id"
+            # Set LORIX One hostname to "lorix-one-xxxxxx" to have unique hostname (for mDNS for example)
+        else
+            HOSTNAME="lorix-one"
+        fi
+
+        # Update system's hostname
+        echo "$HOSTNAME" > /etc/hostname
+        hostname "$HOSTNAME"
+        export HOSTNAME
+    fi
 }
 
 pkg_postinst_ontarget:l1 () {
-    # get lower case serial
-    SERIAL_LABEL=$(machine-info read "PRODUCT_SERIAL")
+    # If there is no custom hostname yet set
+    if [ ! -f /var/lib/os/layers/active/config/hostname ]; then
+        # get lower case serial
+        SERIAL_LABEL=$(machine-info read "PRODUCT_SERIAL")
 
-    SERIAL=$(echo "${SERIAL_LABEL//-/}" | awk '{print tolower($0)}')
-    
-    # Set gateway hostname to "gw<serial>" to have unique hostname (for mDNS for example)
-    HOSTNAME="gw$SERIAL"
+        SERIAL=$(echo "${SERIAL_LABEL//-/}" | awk '{print tolower($0)}')
+        
+        # Set gateway hostname to "gw<serial>" to have unique hostname (for mDNS for example)
+        HOSTNAME="gw$SERIAL"
 
-    # Update system's hostname
-    echo "$HOSTNAME" > /etc/hostname
-    hostname "$HOSTNAME"
-    export HOSTNAME
+        # Update system's hostname
+        echo "$HOSTNAME" > /etc/hostname
+        hostname "$HOSTNAME"
+        export HOSTNAME
+    fi
 }
 
 PACKAGESPLITFUNCS:prepend = "populate_packages_lorix "
