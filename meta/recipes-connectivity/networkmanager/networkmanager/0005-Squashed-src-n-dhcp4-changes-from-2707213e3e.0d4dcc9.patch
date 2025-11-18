@@ -1,0 +1,73 @@
+From 7d8c9dda35a15315dbe8df984c108e8a9327f8d9 Mon Sep 17 00:00:00 2001
+From: Jan Vaclav <jvaclav@redhat.com>
+Date: Wed, 22 Oct 2025 20:09:23 +0200
+Subject: [PATCH 5/6] Squashed 'src/n-dhcp4/' changes from
+ 2707213e3e..0d4dcc9bb4
+
+0d4dcc9bb4 n-dhcp4: introduce n_dhcp4_c_connection_clear_client_ip() helper
+433c57ab2e n-dhcp4: Do not set ciaddr in DISCOVER state.
+feacc2cccd n-dhcp4: change the default DSCP value to 0
+b64e2c62e8 n-dhcp4: support setting the DSCP value
+6cfa9d84d0 n-dhcp4: set xid of the DHCP header for RELEASE and DECLINE message
+
+git-subtree-dir: src/n-dhcp4
+git-subtree-split: 0d4dcc9bb45d5a63d53a787289ad79823343e624
+---
+ src/n-dhcp4/src/n-dhcp4-c-connection.c | 4 ++++
+ src/n-dhcp4/src/n-dhcp4-c-probe.c      | 4 +++-
+ src/n-dhcp4/src/n-dhcp4-private.h      | 2 ++
+ 3 files changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/src/n-dhcp4/src/n-dhcp4-c-connection.c b/src/n-dhcp4/src/n-dhcp4-c-connection.c
+index e76ea16592..707c660487 100644
+--- a/src/n-dhcp4/src/n-dhcp4-c-connection.c
++++ b/src/n-dhcp4/src/n-dhcp4-c-connection.c
+@@ -379,6 +379,10 @@ void n_dhcp4_c_connection_get_timeout(NDhcp4CConnection *connection,
+         *timeoutp = timeout;
+ }
+ 
++void n_dhcp4_c_connection_clear_client_ip(NDhcp4CConnection *connection) {
++        connection->client_ip = INADDR_ANY;
++}
++
+ static int n_dhcp4_c_connection_packet_broadcast(NDhcp4CConnection *connection,
+                                                  NDhcp4Outgoing *message) {
+         int r;
+diff --git a/src/n-dhcp4/src/n-dhcp4-c-probe.c b/src/n-dhcp4/src/n-dhcp4-c-probe.c
+index 7a6def340c..41182774c4 100644
+--- a/src/n-dhcp4/src/n-dhcp4-c-probe.c
++++ b/src/n-dhcp4/src/n-dhcp4-c-probe.c
+@@ -198,7 +198,7 @@ _c_public_ void n_dhcp4_client_probe_config_set_init_reboot(NDhcp4ClientProbeCon
+  *
+  * This sets the DSCP property of the configuration object, which specifies
+  * the DSCP value to set in the first six bits of the DS field in the IPv4
+- * header. If this function is not called, the DSCP will be set to CS0.
++ * header. If this function is not called, the DSCP will be set to CS0 (0).
+  */
+ _c_public_ void n_dhcp4_client_probe_config_set_dscp(NDhcp4ClientProbeConfig *config, uint8_t dscp) {
+         config->dscp = dscp & 0x3F;
+@@ -703,6 +703,8 @@ static int n_dhcp4_client_probe_transition_deferred(NDhcp4ClientProbe *probe, ui
+ 
+         switch (probe->state) {
+         case N_DHCP4_CLIENT_PROBE_STATE_INIT:
++                /* reset client IP (CIADDR) */
++                n_dhcp4_c_connection_clear_client_ip(&probe->connection);
+                 r = n_dhcp4_c_connection_listen(&probe->connection);
+                 if (r)
+                         return r;
+diff --git a/src/n-dhcp4/src/n-dhcp4-private.h b/src/n-dhcp4/src/n-dhcp4-private.h
+index dbfe9b4ad0..7e71406e18 100644
+--- a/src/n-dhcp4/src/n-dhcp4-private.h
++++ b/src/n-dhcp4/src/n-dhcp4-private.h
+@@ -617,6 +617,8 @@ void n_dhcp4_c_connection_close(NDhcp4CConnection *connection);
+ void n_dhcp4_c_connection_get_timeout(NDhcp4CConnection *connection,
+                                       uint64_t *timeoutp);
+ 
++void n_dhcp4_c_connection_clear_client_ip(NDhcp4CConnection *connection);
++
+ int n_dhcp4_c_connection_discover_new(NDhcp4CConnection *connection,
+                                       NDhcp4Outgoing **request);
+ int n_dhcp4_c_connection_select_new(NDhcp4CConnection *connection,
+-- 
+2.43.0
+
