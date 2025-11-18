@@ -29,8 +29,11 @@ DEPENDS += " \
 "
 
 RDEPENDS:${PN} += " \
-    cronie \
     udev \
+"
+
+RDEPENDS:${PN}-daemon += " \
+    cronie \
 "
 
 PACKAGECONFIG:append = " \
