@@ -37,6 +37,8 @@ inherit gettext update-rc.d systemd gobject-introspection gtk-doc update-alterna
 
 SRC_URI = " \
     https://gitlab.freedesktop.org/NetworkManager/NetworkManager/-/archive/${PV}/NetworkManager-${PV}.tar.gz \
+    file://enable-dhcpcd.conf \
+    file://enable-iwd.conf \
 "
 SRC_URI:append:libc-musl = "${@bb.utils.contains('DISTRO_FEATURES', 'ld-is-lld', ' file://0001-linker-scripts-Do-not-export-_IO_stdin_used.patch', '', d)}"
 

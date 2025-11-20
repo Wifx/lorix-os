@@ -1,0 +1,97 @@
+From c653f1fff745e13f8bc440fefefade2a3969e0c4 Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yseraf-git@pm.me>
+Date: Mon, 17 Nov 2025 16:53:28 +0100
+Subject: [PATCH 6/6] dhcp: Fix ciaddr field to comply with RFC2131 Modify
+ header initialization to set ciaddr according to RFC2131 section 4 rules: -
+ Must be zero for DISCOVER and SELECT messages - Must be zero during
+ INIT-REBOOT and DECLINE - Must contain client's IP for RENEW, REBIND,
+ RELEASE, and INFORM
+
+The previous implementation directly mapped internal client_ip state to
+ciaddr, which could lead to RFC violations in specific states. This change
+separates protocol representation (ciaddr) from connection state (client_ip)
+while maintaining proper broadcast behavior based on IP stack configuration.
+
+Signed-off-by: Yannick Serafini <yseraf-git@pm.me>
+---
+ src/n-dhcp4/src/n-dhcp4-c-connection.c | 48 +++++++++++++++++---------
+ 1 file changed, 32 insertions(+), 16 deletions(-)
+
+diff --git a/src/n-dhcp4/src/n-dhcp4-c-connection.c b/src/n-dhcp4/src/n-dhcp4-c-connection.c
+index 707c660487..6a3216f330 100644
+--- a/src/n-dhcp4/src/n-dhcp4-c-connection.c
++++ b/src/n-dhcp4/src/n-dhcp4-c-connection.c
+@@ -430,7 +430,8 @@ static int n_dhcp4_c_connection_udp_send(NDhcp4CConnection *connection,
+ }
+ 
+ static void n_dhcp4_c_connection_init_header(NDhcp4CConnection *connection,
+-                                             NDhcp4Header *header) {
++                                             NDhcp4Header *header,
++                                             uint8_t type) {
+         bool broadcast = connection->client_config->request_broadcast;
+ 
+         header->op = N_DHCP4_OP_BOOTREQUEST;
+@@ -455,22 +456,37 @@ static void n_dhcp4_c_connection_init_header(NDhcp4CConnection *connection,
+                 break;
+         }
+ 
+-        if (connection->client_ip != INADDR_ANY) {
++        /*
++         * Set ciaddr according to RFC2131 section 4:
++         * - must be zero for initial messages (DISCOVER, SELECT)
++         * - must be zero for REBOOT and DECLINE
++         * - must be client's IP for all other messages (RENEW, REBIND, RELEASE, INFORM)
++         */
++        switch (type) {
++        case N_DHCP4_C_MESSAGE_DISCOVER:    /* 4.4.1 - must be zero */
++        case N_DHCP4_C_MESSAGE_SELECT:      /* 4.3.2 - must be zero in SELECTING */
++        case N_DHCP4_C_MESSAGE_REBOOT:      /* 4.3.2 - must be zero in INIT-REBOOT */
++        case N_DHCP4_C_MESSAGE_DECLINE:     /* 4.4   - must be zero per RFC2131 table */
++                header->ciaddr = INADDR_ANY;
++                break;
++        default:
++                /* All other message types must use client's current IP */
+                 header->ciaddr = connection->client_ip;
+-        } else {
+-                /*
+-                 * When the IP stack has not been configured, we may
+-                 * not be able to receive unicast packets, depending
+-                 * on the hardware. If that is the case we must request
+-                 * replies from the server to be broadcast.
+-                 *
+-                 * Once the IP stack has been configured, receiving
+-                 * unicast packets is never a problem, so the broadcast
+-                 * flag should not be set.
+-                 */
+-                if (broadcast)
+-                        header->flags |= N_DHCP4_MESSAGE_FLAG_BROADCAST;
++                break;
+         }
++
++        /*
++         * When the IP stack has not been configured, we may
++         * not be able to receive unicast packets, depending
++         * on the hardware. If that is the case we must request
++         * replies from the server to be broadcast.
++         *
++         * Once the IP stack has been configured, receiving
++         * unicast packets is never a problem, so the broadcast
++         * flag should not be set.
++         */
++        if (connection->client_ip == INADDR_ANY && broadcast)
++                header->flags |= N_DHCP4_MESSAGE_FLAG_BROADCAST;
+ }
+ 
+ static int n_dhcp4_c_connection_new_message(NDhcp4CConnection *connection,
+@@ -535,7 +551,7 @@ static int n_dhcp4_c_connection_new_message(NDhcp4CConnection *connection,
+                 return r;
+ 
+         header = n_dhcp4_outgoing_get_header(message);
+-        n_dhcp4_c_connection_init_header(connection, header);
++        n_dhcp4_c_connection_init_header(connection, header, type);
+ 
+         message->userdata.type = type;
+         message->userdata.message_type = message_type;
+-- 
+2.43.0
+
