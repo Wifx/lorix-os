@@ -10,9 +10,13 @@ RDEPENDS:${PN} += " \
     dbus \
     glibc \
     machine-info \
+    chrony \
+    mender \
+    networkmanager \
+    networkmanager-nmcli \
 "
 
-RRECOMMENDS:${PN} += "manager-gui mender networkmanager networkmanager-nmcli"
+RRECOMMENDS:${PN} += "manager-gui"
 
 SRC_URI += " \
     file://config.toml \
