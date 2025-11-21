@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Wifx Sarl <info@iot.wifx.net>
+# Copyright (c) 2022, Wifx SA <info@iot.wifx.net>
 # All rights reserved.
 
 # We basically configure the build with full UBI feature of Mender

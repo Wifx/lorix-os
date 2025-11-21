@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Wifx Sarl <info@iot.wifx.net>
+# Copyright (c) 2022, Wifx SA <info@iot.wifx.net>
 # All rights reserved.
 
 include ${@mender_feature_is_enabled("mender-uboot","u-boot-mender-wifx-common.inc","",d)}

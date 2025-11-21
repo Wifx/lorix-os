@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Wifx Sarl <info@iot.wifx.net>
+# Copyright (c) 2022, Wifx SA <info@iot.wifx.net>
 # Based on meta-mender-core
 
 # Class that creates an UBI image with an Mender layout

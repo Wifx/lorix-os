@@ -23,7 +23,7 @@ S = "${WORKDIR}/git"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 # Append from Wifx
-# Copyright (c) 2022, Wifx Sarl <info@iot.wifx.net>
+# Copyright (c) 2022, Wifx SA <info@iot.wifx.net>
 # All rights reserved.
 
 PV = "v2022.01-at91"

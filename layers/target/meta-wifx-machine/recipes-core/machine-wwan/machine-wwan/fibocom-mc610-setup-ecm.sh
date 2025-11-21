@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2023, Wifx Sarl <info@iot.wifx.net>
+# Copyright (c) 2023, Wifx SA <info@iot.wifx.net>
 # All rights reserved.
 
 port=$1

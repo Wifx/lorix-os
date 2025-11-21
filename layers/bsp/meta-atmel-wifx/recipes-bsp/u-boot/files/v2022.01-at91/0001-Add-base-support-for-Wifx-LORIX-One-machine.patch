@@ -669,7 +669,7 @@ index 0000000000..f3981b5251
 --- /dev/null
 +++ b/board/wifx/lorix-one-256/MAINTAINERS
 @@ -0,0 +1,7 @@
-+Wifx Sarl LORIX One LoRa gateway
++Wifx SA LORIX One LoRa gateway
 +M:	Yannick Lanz <yannick.lanz@wifx.net>
 +S:	Maintained
 +F:	board/wifx/lorix-one-256/
@@ -950,7 +950,7 @@ index 0000000000..c8584ec3c7
 --- /dev/null
 +++ b/board/wifx/lorix-one-512/MAINTAINERS
 @@ -0,0 +1,7 @@
-+Wifx Sarl LORIX One LoRa gateway
++Wifx SA LORIX One LoRa gateway
 +M:	Yannick Lanz <yannick.lanz@wifx.net>
 +S:	Maintained
 +F:	board/wifx/lorix-one-512/

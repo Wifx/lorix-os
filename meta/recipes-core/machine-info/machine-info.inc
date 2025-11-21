@@ -1,7 +1,7 @@
 SUMMARY = "Wifx board machine detection and information gathering util"
 DESCRIPTION = "Provides a common interface over all Wifx gateway board machines \
                to detect and gather information about the material."
-AUTHOR = "Wifx Sarl"
+AUTHOR = "Wifx SA"
 
 LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://${WORKDIR}/git/LICENSE;md5=ab61665cc10f12f35605de28be0fe1ad"

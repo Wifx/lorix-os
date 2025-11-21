@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Wifx Sarl <info@iot.wifx.net>
+# Copyright (c) 2022, Wifx SA <info@iot.wifx.net>
 # All rights reserved.
 
 # Class to create the "emptyimg" type, which contains an empty partition.

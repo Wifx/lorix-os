@@ -1,10 +1,10 @@
-# Copyright (c) 2022, Wifx Sarl <info@iot.wifx.net>
+# Copyright (c) 2022, Wifx SA <info@iot.wifx.net>
 # All rights reserved.
 SUMMARY = "Ethernet + Serial over USB support for Wifx products"
-AUTHOR = "Wifx Sarl"
+AUTHOR = "Wifx SA"
 
 LICENSE = "Proprietary"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=073bf747e205468f394819c786015ecc"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=9b722e46cb4c5907a5f3eb9bef374aad"
 
 SRC_URI += " \
     file://LICENSE \

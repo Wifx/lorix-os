@@ -113,7 +113,7 @@ index 00000000..5b80c295
 + *         ATMEL Microcontroller Software Support
 + * ----------------------------------------------------------------------------
 + * Copyright (c) 2014, Atmel Corporation
-+ * Copyright (c) 2021, Wifx Sarl <info@iot.wifx.net>
++ * Copyright (c) 2021, Wifx SA <info@iot.wifx.net>
 + *
 + * All rights reserved.
 + *
@@ -866,7 +866,7 @@ index 00000000..c375b3f0
 + *         ATMEL Microcontroller Software Support
 + * ----------------------------------------------------------------------------
 + * Copyright (c) 2014, Atmel Corporation
-+ * Copyright (c) 2021, Wifx Sarl <info@iot.wifx.net>
++ * Copyright (c) 2021, Wifx SA <info@iot.wifx.net>
 + *
 + * All rights reserved.
 + *
