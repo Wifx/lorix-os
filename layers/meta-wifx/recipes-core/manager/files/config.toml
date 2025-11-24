@@ -9,7 +9,7 @@
   #channel = "stable"
 
   # URL of the update repository
-  #repository = "https://download.wifx.net/lorix-os/"
+  #repository = "https://download.iot.wifx.net/lorix-os/"
 
   # When set to true, the manager will automatically check online if new updates are available. The user will be notified through the message of the day (after login) when a new update is available.
   #onlineCheck = true

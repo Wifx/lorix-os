@@ -44,7 +44,7 @@ To create a new version of the SDK:
 
 ### Get a toolchain
 
-Either build it from the build system with the `wifx-image-sdk -c populate_sdk` recipe or download it from https://download.wifx.net/lorix-os/ with the download.sh script.
+Either build it from the build system with the `wifx-image-sdk -c populate_sdk` recipe or download it from https://download.iot.wifx.net/lorix-os/ with the download.sh script.
 
 ```bash
 ./download.sh 1.3.3

@@ -3,7 +3,7 @@
 
 ASSETS_ARCHIVE_NAME = "${PN}-${PV}-${PR}-${TUNE_PKGARCH}.tar.bz2"
 
-ONLINE_PACKAGES_ASSETS_PATH ?= "https://download.wifx.net/yocto/sources/lorix-os/packages-assets"
+ONLINE_PACKAGES_ASSETS_PATH ?= "https://download.iot.wifx.net/yocto/sources/lorix-os/packages-assets"
 
 ONLINE_ASSETS_ARCHIVE_PATH = "${ONLINE_PACKAGES_ASSETS_PATH}/${PN}/${ASSETS_ARCHIVE_NAME}"
 
