@@ -25,11 +25,11 @@ SRC_URI:append:l1 = " \
 SRC_URI:append:lorix-one = " \
     file://lorix.cfg \
 "
-
 KERNEL_EXTRA_FEATURES ?= " \
     ${@bb.utils.contains('IMAGE_FEATURES', 'debug-tweaks', 'features/debug/debug-kernel.scc', '', d)} \
     features/netfilter/netfilter.scc \
     features/nf_tables/nf_tables.scc \
+    features/cgroups/cgroups.scc \
     ${@bb.utils.contains('DISTRO_FEATURES', 'ipv6', ' \
         cfg/net/ipv6.scc \
         cfg/net/ip6_nf.scc \
