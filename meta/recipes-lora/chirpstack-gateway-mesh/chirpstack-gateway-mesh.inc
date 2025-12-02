@@ -13,14 +13,11 @@ SRC_URI += "\
     file://30-backend.toml \
     file://40-events.toml \
     file://50-commands.toml \
+    file://mappings/AS920.toml \
     file://mappings/AS923.toml \
-    file://mappings/AS923_2.toml \
-    file://mappings/AS923_3.toml \
-    file://mappings/AS923_4.toml \
     file://mappings/AU915.toml \
     file://mappings/EU868.toml \
     file://mappings/IN865.toml \
-    file://mappings/KR920.toml \
     file://mappings/RU864.toml \
     file://mappings/US915.toml \
 "
@@ -89,14 +86,11 @@ install_config() {
 
 install_mappings() {
     install -m 0755 -d ${D}${CONF_DIR}/mappings
+    install_mapping AS920.toml
     install_mapping AS923.toml
-    install_mapping AS923_2.toml
-    install_mapping AS923_3.toml
-    install_mapping AS923_4.toml
     install_mapping AU915.toml
     install_mapping EU868.toml
     install_mapping IN865.toml
-    install_mapping KR920.toml
     install_mapping RU864.toml
     install_mapping US915.toml
 }

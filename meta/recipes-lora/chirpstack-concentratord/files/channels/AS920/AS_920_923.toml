@@ -1,7 +1,7 @@
 # +++
-# name: Asia 920-923 MHz
-# description: TTN Community Network frequency plan for Asian countries, using frequencies ≤ 923 MHz
-# countries: [my, sg]
+# name: Asia 920-923 MHz (AS1)
+# description: Frequency plan for Asian countries, using frequencies ≤ 923 MHz. TTN Community Network frequency plan.
+# countries: [MY, SG]
 # +++
 
 

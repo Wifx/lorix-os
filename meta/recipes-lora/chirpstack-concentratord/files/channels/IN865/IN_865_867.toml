@@ -1,7 +1,7 @@
 # +++
 # name: India 865-867 MHz
 # description: Default frequency plan for India
-# countries: [in]
+# countries: [IN]
 # +++
 
 
@@ -13,9 +13,9 @@
         865062500,
         865402500,
         865985000,
-        865232500,
-        866185000,
-        866385000,
-        866585000,
-        866785000,
+        0,
+        0,
+        0,
+        0,
+        0,
     ]

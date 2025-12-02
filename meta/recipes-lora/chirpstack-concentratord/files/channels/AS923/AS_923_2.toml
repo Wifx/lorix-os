@@ -1,7 +1,7 @@
 # +++
-# name: Australia 915-928 MHz, FSB 5
-# description: Default frequency plan for Australia, using sub-band 5
-# countries: [BR, CL, NZ, AR, AU]
+# name: Asia 920-923 MHz
+# description: Frequency plan for Asian countries, using frequencies 920-923 MHz
+# countries: []
 # +++
 
 
@@ -10,6 +10,7 @@
 
     # Multi spreading-factor channels (LoRa).
     multi_sf_channels=[
+        921400000,
         921600000,
         921800000,
         922000000,
@@ -17,11 +18,10 @@
         922400000,
         922600000,
         922800000,
-        923000000,
     ]
 
     # LoRa std channel (single spreading-factor).
     [gateway.concentrator.lora_std]
-        frequency=922300000
-        bandwidth=500000
-        spreading_factor=8
+        frequency=922700000
+        bandwidth=250000
+        spreading_factor=7

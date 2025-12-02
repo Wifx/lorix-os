@@ -14,8 +14,10 @@ SRC_URI += "\
     file://gateways/gateway-lorix-one.toml \
     file://gateways/location.toml \
     file://channels/AS920/AS_920_923.toml \
-    file://channels/AS923/AS_923_925_TTN_AU.toml \
-    file://channels/AS923/AS_923_925.toml \
+    file://channels/AS923/AS_923_1.toml \
+    file://channels/AS923/AS_923_2.toml \
+    file://channels/AS923/AS_923_3.toml \
+    file://channels/AS923/AS_923_4.toml \
     file://channels/AU915/AU_915_928_FSB_1.toml \
     file://channels/AU915/AU_915_928_FSB_2.toml \
     file://channels/AU915/AU_915_928_FSB_3.toml \
@@ -26,7 +28,7 @@ SRC_URI += "\
     file://channels/AU915/AU_915_928_FSB_8.toml \
     file://channels/EU868/EU_863_870.toml \
     file://channels/IN865/IN_865_867.toml \
-    file://channels/RU864/RU_864_870_TTN.toml \
+    file://channels/RU864/RU_864_870.toml \
     file://channels/US915/US_902_928_FSB_1.toml \
     file://channels/US915/US_902_928_FSB_2.toml \
     file://channels/US915/US_902_928_FSB_3.toml \
@@ -128,9 +130,11 @@ install_channels() {
     set_default "AS920" "AS_920_923"
 
     install -m 0755 -d ${D}${CONF_DIR}/channels/AS923
-    install_channel AS923/AS_923_925.toml
-    install_channel AS923/AS_923_925_TTN_AU.toml
-    set_default "AS923" "AS_923_925"
+    install_channel AS923/AS_923_1.toml
+    install_channel AS923/AS_923_2.toml
+    install_channel AS923/AS_923_3.toml
+    install_channel AS923/AS_923_4.toml
+    set_default "AS923" "AS_923_1"
 
     install -m 0755 -d ${D}${CONF_DIR}/channels/AU915
     install_channel AU915/AU_915_928_FSB_1.toml
@@ -152,8 +156,8 @@ install_channels() {
     set_default "IN865" "IN_865_867"
 
     install -m 0755 -d ${D}${CONF_DIR}/channels/RU864
-    install_channel RU864/RU_864_870_TTN.toml
-    set_default "RU864" "RU_864_870_TTN"
+    install_channel RU864/RU_864_870.toml
+    set_default "RU864" "RU_864_870"
 
     install -m 0755 -d ${D}${CONF_DIR}/channels/US915
     install_channel US915/US_902_928_FSB_1.toml

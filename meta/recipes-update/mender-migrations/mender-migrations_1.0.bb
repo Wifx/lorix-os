@@ -27,6 +27,7 @@ SRC_URI = " \
     file://1.8.0/01_concentratord-legacy.sh;subdir=${BPN}-${PV} \
     file://1.8.0/02_chrony_sources.sh;subdir=${BPN}-${PV} \
     file://1.8.0/03_iptables-nftables.sh;subdir=${BPN}-${PV} \
+    file://1.8.0/04_frequency-plan.sh;subdir=${BPN}-${PV} \
 "
 
 LICENSE = "Proprietary"
@@ -97,4 +98,5 @@ do_compile() {
     cp 1.8.0/01_concentratord-legacy.sh ${TARGET}_Migration_1.8.0_01_concentratord-legacy
     cp 1.8.0/02_chrony_sources.sh ${TARGET}_Migration_1.8.0_02_chrony_sources
     cp 1.8.0/03_iptables-nftables.sh ${TARGET}_Migration_1.8.0_03_iptables-nftables
+    cp 1.8.0/04_frequency-plan.sh ${TARGET}_Migration_1.8.0_04_frequency-plan
 }
