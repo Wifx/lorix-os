@@ -1,6 +1,8 @@
 SUMMARY = "LORIX Manager daemon for unified centralized management"
 DESCRIPTION = "Provides the LORIX Manager daemon and REST API"
-AUTHOR = "Wifx Sàrl"
+AUTHOR = "Wifx SA"
+
+CVE_PRODUCT = "international_components_for_unicode"
 
 LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://src/${GO_IMPORT}/LICENSE;md5=87c23dc0a84b7a881d4f06967744168f"

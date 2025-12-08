@@ -1,9 +1,9 @@
 SUMMARY = "NetworkManager machine related scripts"
-AUTHOR = "Wifx Sàrl"
+AUTHOR = "Wifx SA"
 SECTION = "base"
 
 LICENSE = "Proprietary"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=d166218d6256cab6058ea8e31a8b66e8"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=c6344409be0a6b4950e1b252c4b44559"
 
 SRC_URI = " \
     file://LICENSE \

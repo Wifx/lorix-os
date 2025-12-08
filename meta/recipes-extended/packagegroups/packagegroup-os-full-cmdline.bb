@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019 Wifx Sàrl
+# Copyright (C) 2019 Wifx SA
 #  Heavilly based on the standard Poky packagegroup-os-full-cmdline.bb recipe
 #  Copyright (C) 2010 Intel Corporation
 #

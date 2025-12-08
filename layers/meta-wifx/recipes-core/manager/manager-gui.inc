@@ -1,6 +1,6 @@
 SUMMARY = "LORIX Manager GUI for unified centralized management"
 DESCRIPTION = "Provides the LORIX Manager web GUI files to be served by the daemon over HTTP"
-AUTHOR = "Wifx Sàrl"
+AUTHOR = "Wifx SA"
 
 LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=6094780bf42aa355f8bf4e2c199c407b"

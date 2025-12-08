@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
+# Copyright (c) 2019-2020, Wifx SA <info@wifx.net>
 # All rights reserved.
 
 def get_bsp_dir(d):

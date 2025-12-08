@@ -1,10 +1,10 @@
 SUMMARY = "Runs mender state scripts in standalone mode"
 DESCRIPTION = "Provides a script to run mender state scripts in standalone mode"
-AUTHOR = "Wifx Sàrl"
+AUTHOR = "Wifx SA"
 SECTION = "base"
 
 LICENSE = "Proprietary"
-LIC_FILES_CHKSUM = "file://${WORKDIR}/LICENSE;md5=83564c4ad755d0edeaa1ba4b3918b365"
+LIC_FILES_CHKSUM = "file://${WORKDIR}/LICENSE;md5=ac08f2eed56d2f4b41ce86b963832f5c"
 
 RDEPENDS:${PN} += "libubootenv mender"
 

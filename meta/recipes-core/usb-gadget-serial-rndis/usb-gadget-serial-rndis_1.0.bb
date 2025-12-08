@@ -4,7 +4,7 @@ SUMMARY = "Ethernet + Serial over USB support for Wifx products"
 AUTHOR = "Wifx SA"
 
 LICENSE = "Proprietary"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=9b722e46cb4c5907a5f3eb9bef374aad"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=cdaf79f9e065baf5b531da0b2d25ac64"
 
 SRC_URI += " \
     file://LICENSE \

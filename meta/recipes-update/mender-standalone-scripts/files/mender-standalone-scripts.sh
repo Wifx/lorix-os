@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 2025, Wifx Sàrl <info@wifx.net>
+# Copyright (c) 2025, Wifx SA <info@wifx.net>
 # All rights reserved.
 
 SCRIPTS_PATH="/data/mender/scripts"

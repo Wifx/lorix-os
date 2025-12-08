@@ -80,7 +80,7 @@ index 0000000000..7ebf26c592
 +/*
 + * lorix-one-256.dts
 + *  Device Tree file for the LORIX One (256MB) LoRa gateway from
-+ *  Wifx Sàrl
++ *  Wifx SA
 + *
 + *  Copyright (C) 2018 Wifx,
 + *                2018 Yannick Lanz <yannick.lanz@wifx.net>
@@ -169,7 +169,7 @@ index 0000000000..d83c6fce16
 +/*
 + * lorix-one-512.dts
 + *  Device Tree file for the LORIX One (512MB) LoRa gateway from
-+ *  Wifx Sàrl
++ *  Wifx SA
 + *
 + *  Copyright (C) 2018 Wifx,
 + *                2018 Yannick Lanz <yannick.lanz@wifx.net>
@@ -257,7 +257,7 @@ index 0000000000..a039941c89
 +/*
 + * lorix-one-base.dtsi
 + *  Device Tree file for the LORIX One (generic) LoRa gateway from
-+ *  Wifx Sàrl
++ *  Wifx SA
 + *
 + * Based on at91-sama5d4_xplained.dts
 + *  Device Tree file for SAMA5D4 Xplained board
@@ -683,7 +683,7 @@ index 0000000000..7dea4fe121
 +++ b/board/wifx/lorix-one-256/Makefile
 @@ -0,0 +1,8 @@
 +#
-+# Copyright (C) 2018 Wifx Sàrl
++# Copyright (C) 2018 Wifx SA
 +#		        Yannick Lanz <yannick.lanz@wifx.net>
 +#
 +# SPDX-License-Identifier:	GPL-2.0+
@@ -964,7 +964,7 @@ index 0000000000..28b9536ec0
 +++ b/board/wifx/lorix-one-512/Makefile
 @@ -0,0 +1,8 @@
 +#
-+# Copyright (C) 2018 Wifx Sàrl
++# Copyright (C) 2018 Wifx SA
 +#               Yannick Lanz <yannick.lanz@wifx.net>
 +#
 +# SPDX-License-Identifier:	GPL-2.0+
@@ -1664,7 +1664,7 @@ index 0000000000..e342be2174
 +/* SPDX-License-Identifier: GPL-2.0+ */
 +/*
 + * Based on configuration settings for the SAMA5D4 Xplained ultra board.
-+ * Configuration settings for the Wifx Sàrl LORIX One LoRa gateway.
++ * Configuration settings for the Wifx SA LORIX One LoRa gateway.
 + * 256MB NAND Version
 + *
 + * Copyright (C) 2014 Atmel
@@ -1727,7 +1727,7 @@ index 0000000000..e848ee22e3
 +/* SPDX-License-Identifier: GPL-2.0+ */
 +/*
 + * Based on configuration settings for the SAMA5D4 Xplained ultra board.
-+ * Configuration settings for the Wifx Sàrl LORIX One LoRa gateway.
++ * Configuration settings for the Wifx SA LORIX One LoRa gateway.
 + * 512MB NAND Version
 + *
 + * Copyright (C) 2014 Atmel

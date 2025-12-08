@@ -4,7 +4,7 @@ AUTHOR = "Wifx SA"
 SECTION = "base"
 
 LICENSE = "Proprietary"
-LIC_FILES_CHKSUM = "file://${WORKDIR}/LICENSE;md5=d3b4673f9c25d664ae3647da5d98752c"
+LIC_FILES_CHKSUM = "file://${WORKDIR}/LICENSE;md5=2f537ab2753263599e6e0f1d0ce9cfd3"
 
 SRC_URI = " \
     file://LICENSE \

@@ -49,7 +49,7 @@ index 0000000000..231d1a7cd0
 +/*
 + * l1.dts
 + *  Device Tree file for the Wifx L1 LoRa gateway from
-+ *  Wifx Sàrl
++ *  Wifx SA
 + *
 + *  Copyright (C) 2021 Wifx,
 + *                2021 Yannick Lanz <yannick.lanz@wifx.net>
@@ -333,7 +333,7 @@ index 0000000000..8bf2a5ff55
 +++ b/board/wifx/l1/Makefile
 @@ -0,0 +1,8 @@
 +#
-+# Copyright (C) 2021 Wifx Sàrl
++# Copyright (C) 2021 Wifx SA
 +#               Yannick Lanz <yannick.lanz@wifx.net>
 +#
 +# SPDX-License-Identifier:	GPL-2.0+

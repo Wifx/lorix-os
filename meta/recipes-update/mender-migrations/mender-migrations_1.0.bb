@@ -31,7 +31,7 @@ SRC_URI = " \
 "
 
 LICENSE = "Proprietary"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=60704a74c6a3bb355a519fd3d3592955"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=b6142c989ce37a5c76a191352d8bc148"
 
 inherit mender-state-scripts
 

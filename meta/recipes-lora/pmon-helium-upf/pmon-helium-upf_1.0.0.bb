@@ -1,10 +1,10 @@
 SUMMARY = "UDP Packet Forwarder/Helium Gateway"
 DESCRIPTION = "Configuration setup for interfacing the UDP Packet Forwarder and the Helium Gateway forwarder."
-AUTHOR = "Wifx Sàrl"
+AUTHOR = "Wifx SA"
 SECTION = "base"
 
 LICENSE = "Proprietary"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=83564c4ad755d0edeaa1ba4b3918b365"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=ac08f2eed56d2f4b41ce86b963832f5c"
 
 RDEPENDS:${PN} += " \
     pmonitor \

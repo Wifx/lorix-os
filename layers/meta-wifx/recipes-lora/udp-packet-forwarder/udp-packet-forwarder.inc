@@ -1,6 +1,6 @@
 SUMMARY = "LoRa SX1301 based gateway UDP packet forwarder"
 DESCRIPTION = "LoRa SX1301 based gateway UDP packet forwarder"
-AUTHOR = "Wifx Sàrl <support@iot.wifx.net>"
+AUTHOR = "Wifx SA <support@iot.wifx.net>"
 
 LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=8aebde4f3f92d0e71e58871d97d7420f"

@@ -1,5 +1,5 @@
 #!/sbin/openrc-run
-# Copyright (c) 2025, Wifx Sàrl <info@wifx.net>
+# Copyright (c) 2025, Wifx SA <info@wifx.net>
 # All rights reserved.
 
 depend() {

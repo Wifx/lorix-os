@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020, Wifx Sàrl <info@wifx.net>
+# Copyright (c) 2019-2020, Wifx SA <info@wifx.net>
 # All rights reserved.
 
 ASSETS_ARCHIVE_NAME = "${PN}-${PV}-${PR}-${TUNE_PKGARCH}.tar.bz2"

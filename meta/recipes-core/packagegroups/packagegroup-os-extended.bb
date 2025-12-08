@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Wifx Sàrl <info@wifx.net>
+# Copyright (c) 2019, Wifx SA <info@wifx.net>
 # All rights reserved.
 
 SUMMARY = "OS extended package group"

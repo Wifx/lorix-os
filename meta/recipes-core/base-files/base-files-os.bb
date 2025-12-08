@@ -1,10 +1,10 @@
 SUMMARY = "Miscellaneous files for the OS base system"
 DESCRIPTION = "Provides the OS basic set of key configuration files for the system."
-AUTHOR = "Wifx Sàrl"
+AUTHOR = "Wifx SA"
 SECTION = "base"
 
 LICENSE = "Proprietary"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=1ded0c06942a7820da745e412d9aba9b"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=59e81143b67c0ed3506f069c836a93b1"
 
 SRC_URI = " \
     file://LICENSE \
