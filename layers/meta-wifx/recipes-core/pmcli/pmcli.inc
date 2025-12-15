@@ -5,6 +5,8 @@ AUTHOR = "Wifx SA"
 LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://src/${GO_IMPORT}/LICENSE;md5=db3115a0626df58c65e3402d41fec1f7"
 
+CVE_PRODUCT = "wifx:pmonitor-cli"
+
 RDEPENDS:${PN} += "pmonitor"
 
 SRC_URI += " \

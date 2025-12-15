@@ -5,6 +5,8 @@ AUTHOR = "Wifx SA <support@iot.wifx.net>"
 LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=8aebde4f3f92d0e71e58871d97d7420f"
 
+CVE_PRODUCT = "wifx:udp-packet-forwarder"
+
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 RDEPENDS:${PN} += " \

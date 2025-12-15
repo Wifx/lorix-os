@@ -5,6 +5,8 @@ AUTHOR = "Wifx SA"
 LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://${WORKDIR}/git/LICENSE;md5=61619980fb3d535c679ce6ba61cb7790"
 
+CVE_PRODUCT = "wifx:wgw-ec-util"
+
 inherit unpack-online-assets
 
 STAGING_ASSETS = "${WORKDIR}/staging-assets"

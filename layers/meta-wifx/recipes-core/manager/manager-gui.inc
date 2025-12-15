@@ -5,6 +5,8 @@ AUTHOR = "Wifx SA"
 LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=6094780bf42aa355f8bf4e2c199c407b"
 
+CVE_PRODUCT = "wifx:lorix-manager-gui"
+
 PROVIDES = "manager-gui"
 RDEPENDS:${PN}  += "manager"
 

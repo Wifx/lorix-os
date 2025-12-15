@@ -5,6 +5,8 @@ AUTHOR = "Wifx SA"
 LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://src/${GO_IMPORT}/LICENSE;md5=a971c6e63e2a5a8d56f539855996ed37"
 
+CVE_PRODUCT = "wifx:pmonitor"
+
 inherit upx
 UPX_COMPRESS_FILES:${PN} = "${sbindir}/pmonitord"
 
