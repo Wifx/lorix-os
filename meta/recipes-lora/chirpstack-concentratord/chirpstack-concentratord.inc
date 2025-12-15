@@ -199,11 +199,10 @@ set_default() {
     ln -snf "$ID.toml" "${D}${CONF_DIR}/channels/$REGION/default"
 }
 
-pkg_postinst_ontarget:${PN} () {
-    GW_CONFIG_FILE_PATH="${CONF_DIR}/10-gateway.toml"
-}
 
-pkg_postinst_ontarget:${PN}:append:lorix_one () {
+pkg_postinst_ontarget:lorix_one () {
+
+    GW_CONFIG_FILE_PATH="${CONF_DIR}/10-gateway.toml"
 
     ### GATEWAY ID ### 
 
@@ -232,7 +231,9 @@ pkg_postinst_ontarget:${PN}:append:lorix_one () {
     fi
 }
 
-pkg_postinst_ontarget:${PN}:append:l1 () {
+pkg_postinst_ontarget:l1 () {
+
+    GW_CONFIG_FILE_PATH="${CONF_DIR}/10-gateway.toml"
 
     ### MODEL FLAGS ###
 
