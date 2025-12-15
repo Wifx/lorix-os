@@ -43,7 +43,7 @@ do_install () {
     install -m 644 ${WORKDIR}/30-temp-system.rules ${D}${sysconfdir}/udev/rules.d
 }
 
-pkg_postinst_ontarget:lorix_one () {
+pkg_postinst_ontarget:${PN}:lorix_one () {
     # If there is no custom hostname yet set
     if [ ! -f /var/lib/os/layers/active/config/hostname ]; then
 
@@ -64,7 +64,7 @@ pkg_postinst_ontarget:lorix_one () {
     fi
 }
 
-pkg_postinst_ontarget:l1 () {
+pkg_postinst_ontarget:${PN}:l1 () {
     # If there is no custom hostname yet set
     if [ ! -f /var/lib/os/layers/active/config/hostname ]; then
         # get lower case serial
@@ -80,33 +80,6 @@ pkg_postinst_ontarget:l1 () {
         hostname "$HOSTNAME"
         export HOSTNAME
     fi
-}
-
-PACKAGESPLITFUNCS:prepend = "populate_packages_lorix "
-populate_packages_lorix[vardeps] += "pkg_postinst_ontarget:lorix_one pkg_postinst_ontarget:l1"
-
-python populate_packages_lorix() {
-    pkg = d.getVar('PN', True)
-    machine = d.getVar('MACHINE', True)
-
-    # Add pkg to the overrides so that it finds the OPENRC_SERVICES:pkg
-    # variable.
-    localdata = d.createCopy()
-    localdata.prependVar("OVERRIDES", pkg + ":")
-
-    if machine.startswith('lorix-one-'):
-        postinst_ontarget = d.getVar('pkg_postinst_ontarget:%s' % pkg)
-        if not postinst_ontarget:
-            postinst_ontarget = '#!/bin/sh\n'
-        postinst_ontarget += localdata.getVar('pkg_postinst_ontarget:lorix_one')
-        d.setVar('pkg_postinst_ontarget:%s' % pkg, postinst_ontarget)
-
-    if machine.startswith('l1'):
-        postinst_ontarget = d.getVar('pkg_postinst_ontarget:%s' % pkg)
-        if not postinst_ontarget:
-            postinst_ontarget = '#!/bin/sh\n'
-        postinst_ontarget += localdata.getVar('pkg_postinst_ontarget:l1')
-        d.setVar('pkg_postinst_ontarget:%s' % pkg, postinst_ontarget)
 }
 
 FILES:${PN} += " \

@@ -4,6 +4,7 @@
 inherit wifx-setup
 inherit wifx-tools
 inherit wifx-machine
+inherit wifx-postinst-overrides
 
 # Remove this to disable mender
 inherit wifx-mender
