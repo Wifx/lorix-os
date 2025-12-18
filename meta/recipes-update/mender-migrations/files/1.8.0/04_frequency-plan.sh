@@ -57,22 +57,42 @@ log $PREFIX "Migrating..."
 # Read symlink target if any
 CHANNEL_CONFIG_REAL_PATH=$(readlink -f "$CHANNEL_CONFIG_PATH")
 
+if [ -z "$CHANNEL_CONFIG_REAL_PATH" ]; then
+    log $PREFIX "ERROR: Failed to resolve path for $CHANNEL_CONFIG_PATH"
+    exit 1
+fi
+
 # Update AS923/AS_923_925.toml to AS923/AS_923_1.toml
 if grep -q "AS_923_925" "$CHANNEL_CONFIG_REAL_PATH"; then
     log $PREFIX "Updating AS923_925 to AS923_1 in $CHANNEL_CONFIG_REAL_PATH"
-    sed -i 's/AS_923_925/AS_923_1/g' "$CHANNEL_CONFIG_REAL_PATH"
+    if sed -i 's/AS_923_925/AS_923_1/g' "$CHANNEL_CONFIG_REAL_PATH"; then
+        log $PREFIX "Successfully updated AS923_925"
+    else
+        log $PREFIX "ERROR: Failed to update AS923_925 in $CHANNEL_CONFIG_REAL_PATH"
+        exit 1
+    fi
 fi
 
 # Update AS923/AS_923_925_TTN_AU.toml to AS923/AS_923_2.toml
 if grep -q "AS_923_925_TTN_AU" "$CHANNEL_CONFIG_REAL_PATH"; then
     log $PREFIX "Updating AS923_925_TTN_AU to AS923_2 in $CHANNEL_CONFIG_REAL_PATH"
-    sed -i 's/AS_923_925_TTN_AU/AS_923_2/g' "$CHANNEL_CONFIG_REAL_PATH"
+    if sed -i 's/AS_923_925_TTN_AU/AS_923_2/g' "$CHANNEL_CONFIG_REAL_PATH"; then
+        log $PREFIX "Successfully updated AS923_925_TTN_AU"
+    else
+        log $PREFIX "ERROR: Failed to update AS923_925_TTN_AU in $CHANNEL_CONFIG_REAL_PATH"
+        exit 1
+    fi
 fi
 
 # Update RU864/RU_864_870_TTN.toml to RU864/RU_864_870.toml
 if grep -q "RU_864_870_TTN" "$CHANNEL_CONFIG_REAL_PATH"; then
     log $PREFIX "Updating RU_864_870_TTN to RU_864_870 in $CHANNEL_CONFIG_REAL_PATH"
-    sed -i 's/RU_864_870_TTN/RU_864_870/g' "$CHANNEL_CONFIG_REAL_PATH"
+    if sed -i 's/RU_864_870_TTN/RU_864_870/g' "$CHANNEL_CONFIG_REAL_PATH"; then
+        log $PREFIX "Successfully updated RU_864_870_TTN"
+    else
+        log $PREFIX "ERROR: Failed to update RU_864_870_TTN in $CHANNEL_CONFIG_REAL_PATH"
+        exit 1
+    fi
 fi
 
 log $PREFIX "Migration done"

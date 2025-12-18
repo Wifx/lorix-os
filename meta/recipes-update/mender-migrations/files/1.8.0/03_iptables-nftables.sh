@@ -63,20 +63,37 @@ if [[ -f "$IPTABLES_CONFIG_PATH" ]]; then
         log $PREFIX "Found SNMP rule, adding nftables config"
 
         # Add nftables config for SNMP
-        mkdir -p "${NFTABLES_ACTIVE_SET_DIR}"
-        ln -snf "/etc/${NFTABLES_AVAILABLE_SET_DIR}/snmp.conf" "${NFTABLES_ACTIVE_SET_DIR}/90-snmp.conf"
+        if ! mkdir -p "${NFTABLES_ACTIVE_SET_DIR}"; then
+            log $PREFIX "ERROR: Failed to create directory ${NFTABLES_ACTIVE_SET_DIR}"
+            exit 1
+        fi
+        
+        if ln -snf "/etc/${NFTABLES_AVAILABLE_SET_DIR}/snmp.conf" "${NFTABLES_ACTIVE_SET_DIR}/90-snmp.conf"; then
+            log $PREFIX "Successfully created symlink for SNMP config"
+        else
+            log $PREFIX "ERROR: Failed to create symlink for SNMP config"
+            exit 1
+        fi
     fi
 
     # Backup iptables config file
-    mv "$IPTABLES_CONFIG_PATH" "${IPTABLES_CONFIG_PATH}.bak"
-    log $PREFIX "Backed up obsolete iptables config to ${IPTABLES_CONFIG_PATH}.bak"
+    if mv "$IPTABLES_CONFIG_PATH" "${IPTABLES_CONFIG_PATH}.bak"; then
+        log $PREFIX "Backed up obsolete iptables config to ${IPTABLES_CONFIG_PATH}.bak"
+    else
+        log $PREFIX "ERROR: Failed to backup iptables config"
+        exit 1
+    fi
 fi
 
 if [[ -f "$IP6TABLES_CONFIG_PATH" ]]; then
     log $PREFIX "Found ip6tables config, migrating to nftables"
     # Backup ip6tables config file
-    mv "$IP6TABLES_CONFIG_PATH" "${IP6TABLES_CONFIG_PATH}.bak"
-    log $PREFIX "Backed up obsolete ip6tables config to ${IP6TABLES_CONFIG_PATH}.bak"
+    if mv "$IP6TABLES_CONFIG_PATH" "${IP6TABLES_CONFIG_PATH}.bak"; then
+        log $PREFIX "Backed up obsolete ip6tables config to ${IP6TABLES_CONFIG_PATH}.bak"
+    else
+        log $PREFIX "ERROR: Failed to backup ip6tables config"
+        exit 1
+    fi
 fi
 
 log $PREFIX "Migration done"

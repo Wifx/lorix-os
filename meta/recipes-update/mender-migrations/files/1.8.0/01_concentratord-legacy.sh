@@ -59,12 +59,26 @@ elif grep -q "chirpstack-concentratord-legacy" "$PMONITOR_CONFIG"; then
 else
     # Replace chirpstack-concentratord with chirpstack-concentratord-legacy
     log $PREFIX "Migrating pmonitor configuration in $PMONITOR_CONFIG"
-    sed -i 's/chirpstack-concentratord/chirpstack-concentratord-legacy/g' "$PMONITOR_CONFIG"
+    if sed -i 's/chirpstack-concentratord/chirpstack-concentratord-legacy/g' "$PMONITOR_CONFIG"; then
+        log $PREFIX "Successfully updated pmonitor config"
+    else
+        log $PREFIX "ERROR: Failed to update pmonitor config"
+        exit 1
+    fi
 fi
 
 if [[ -d "$CONCENTRATORD_CONFIG_DIR" ]]; then
-    log $PREFIX "Migrating concentratord files to legacy directory '$CONCENTRATORD_LEGACY_CONFIG_DIR'"
-    mv "$CONCENTRATORD_CONFIG_DIR" "$CONCENTRATORD_LEGACY_CONFIG_DIR"
+    if [[ -d "$CONCENTRATORD_LEGACY_CONFIG_DIR" ]]; then
+        log $PREFIX "Legacy directory already exists, skipping move"
+    else
+        log $PREFIX "Migrating concentratord files to legacy directory '$CONCENTRATORD_LEGACY_CONFIG_DIR'"
+        if mv "$CONCENTRATORD_CONFIG_DIR" "$CONCENTRATORD_LEGACY_CONFIG_DIR"; then
+            log $PREFIX "Successfully moved concentratord files"
+        else
+            log $PREFIX "ERROR: Failed to move concentratord files"
+            exit 1
+        fi
+    fi
 fi
 
 log $PREFIX "Migration done"

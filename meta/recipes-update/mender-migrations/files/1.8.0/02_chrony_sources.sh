@@ -54,14 +54,21 @@ fi
 log $PREFIX "Migrating chrony configuration to sources files..."
 
 # Create chrony sources directory if it doesn't exist
-mkdir -p "$CHRONY_SOURCES_DIR"
+if ! mkdir -p "$CHRONY_SOURCES_DIR"; then
+    log $PREFIX "ERROR: Failed to create directory $CHRONY_SOURCES_DIR"
+    exit 1
+fi
 
 # Extract pool entries from chrony.conf
 POOLS_FOUND=$(grep -E "^\s*pool\s+" "$CHRONY_CONFIG_PATH" 2>/dev/null || true)
 if [ -n "$POOLS_FOUND" ]; then
     log $PREFIX "Found pool entries, creating $CHRONY_SOURCES_POOL_PATH"
-    echo "$POOLS_FOUND" > "$CHRONY_SOURCES_POOL_PATH"
-    log $PREFIX "Extracted $(echo "$POOLS_FOUND" | wc -l) pool entries"
+    if echo "$POOLS_FOUND" > "$CHRONY_SOURCES_POOL_PATH"; then
+        log $PREFIX "Extracted $(echo "$POOLS_FOUND" | wc -l) pool entries"
+    else
+        log $PREFIX "ERROR: Failed to write pool entries to $CHRONY_SOURCES_POOL_PATH"
+        exit 1
+    fi
 else
     log $PREFIX "No pool entries found in chrony.conf"
 fi
@@ -70,8 +77,12 @@ fi
 SERVERS_FOUND=$(grep -E "^\s*server\s+" "$CHRONY_CONFIG_PATH" 2>/dev/null || true)
 if [ -n "$SERVERS_FOUND" ]; then
     log $PREFIX "Found server entries, creating $CHRONY_SOURCES_CUSTOM_PATH"
-    echo "$SERVERS_FOUND" > "$CHRONY_SOURCES_CUSTOM_PATH"
-    log $PREFIX "Extracted $(echo "$SERVERS_FOUND" | wc -l) server entries"
+    if echo "$SERVERS_FOUND" > "$CHRONY_SOURCES_CUSTOM_PATH"; then
+        log $PREFIX "Extracted $(echo "$SERVERS_FOUND" | wc -l) server entries"
+    else
+        log $PREFIX "ERROR: Failed to write server entries to $CHRONY_SOURCES_CUSTOM_PATH"
+        exit 1
+    fi
 else
     log $PREFIX "No server entries found in chrony.conf"
 fi
@@ -96,7 +107,12 @@ if [ -f "$CHRONY_SOURCES_CUSTOM_PATH" ]; then
 fi
 
 log $PREFIX "Removing old chrony.conf file"
-rm -f "$CHRONY_CONFIG_PATH" 2>/dev/null || true
+if rm -f "$CHRONY_CONFIG_PATH"; then
+    log $PREFIX "Successfully removed old chrony.conf"
+else
+    log $PREFIX "ERROR: Failed to remove $CHRONY_CONFIG_PATH"
+    exit 1
+fi
 
 log $PREFIX "Migration completed successfully"
 
