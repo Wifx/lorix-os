@@ -6,6 +6,8 @@ SRC_URI += " \
     file://mender-auth.confd \
 "
 
+RDEPENDS:${PN} += " mender-autoconf"
+
 inherit openrc
 OPENRC_SERVICES:${PN} = "menderd mender-auth"
 OPENRC_AUTO_ENABLE = "enable"

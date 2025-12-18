@@ -7,7 +7,7 @@ depend() {
 }
 
 start() {
-    ebegin "Starting mender-standalone-scripts"
-    /usr/sbin/mender-standalone-scripts ArtifactReboot_Leave
+    ebegin "Running mender-autoconf"
+    opkg configure mender mender-auth
     eend 0
 }

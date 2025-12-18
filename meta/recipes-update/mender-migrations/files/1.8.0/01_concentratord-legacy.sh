@@ -67,8 +67,6 @@ if [[ -d "$CONCENTRATORD_CONFIG_DIR" ]]; then
     mv "$CONCENTRATORD_CONFIG_DIR" "$CONCENTRATORD_LEGACY_CONFIG_DIR"
 fi
 
-# TODO : migrate opkg packages if needed
-
 log $PREFIX "Migration done"
 
 exit 0

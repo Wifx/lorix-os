@@ -127,7 +127,6 @@ include_scripts() {
     include_script 410_Update-ca-certificates.sh            ArtifactReboot_Leave_10_Update-ca-certificates
 
     include_script 450_Migrate-opkg-status-apply.sh         ArtifactReboot_Leave_50_Migrate-opkg-status-apply
-    # Aditional migration hehre, see -->                    ArtifactReboot_Leave_55_Migration_1.8.0_02_opkg-concentratord-legacy
     include_script 459_Opkg-configure.sh                    ArtifactReboot_Leave_59_OPKG-configure
 
     ### COMMIT ###
