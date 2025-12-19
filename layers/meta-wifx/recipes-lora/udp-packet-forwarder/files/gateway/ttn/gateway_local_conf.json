@@ -3,8 +3,8 @@
   /* Settings defined in global_conf will be overwritten by those in local_conf */
   "gateway_conf": {
 
-    /* You must pick a unique 64b number for each gateway (represented by an hex string) */
-    "gateway_ID": "AA555A0000000000",
+    /* You must pick a unique 64b number for each gateway (represented by a 16 chars hex string, e.g. "AA555A0000000000") */
+    "gateway_ID": "",
     /* Public description of this device, max 64 chars */
     "description": "LORIX One gateway",
     /* Email of gateway operator, max 40 chars*/

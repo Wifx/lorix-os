@@ -140,14 +140,31 @@ set_default() {
 pkg_postinst_ontarget:${PN} () {
     # Update gateway ID in general config files
 
+    CONF_DIR="${sysconfoptdir}/udp-packet-forwarder/gateway"
+    if [ ! -d "$CONF_DIR" ]; then
+        echo "Configuration directory '$CONF_DIR' does not exist"
+        exit 0
+    fi
+
     # retrieve gateway ID from machine-info
     GWID=$(machine-info read "LORA_GATEWAY_ID")
+    if [ $? -ne 0 ] || [ -z "$GWID" ]; then
+        echo "Error: Failed to retrieve LORA_GATEWAY_ID from machine-info"
+        exit 1
+    fi
 
-    cd ${sysconfoptdir}/udp-packet-forwarder/gateway
-    for file in $(find . -type f -name '*.json' -o -name '*.json.sample'); do
-        # replace last 8 digits of default gateway ID by actual GWID, in given JSON configuration file
-        sed -i 's/\(^\s*"gateway_ID":\s*"\).\{16\}"\s*\(,\?\).*$/\1'${GWID}'"\2/' $file
-        echo "Gateway_ID set to "$GWID" in file "$file
+    # Find files and process them safely
+    find "$CONF_DIR" -type f \( -name '*.json' -o -name '*.json.sample' \) | while read -r file; do
+        # Check if gateway_ID is empty in the file
+        if grep -q '^\s*"gateway_ID":\s*"",' "$file"; then
+            # replace empty gateway ID by actual GWID
+            if sed -i 's/\(^\s*"gateway_ID":\s*"\)"",/\1'${GWID}'",/' "$file"; then
+                echo "Gateway_ID set to '$GWID' in file '$file'"
+            else
+                echo "Error: Failed to set Gateway_ID in file '$file'"
+                exit 1
+            fi
+        fi
     done
 }
 
