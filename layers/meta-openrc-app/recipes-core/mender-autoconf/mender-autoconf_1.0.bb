@@ -1,3 +1,8 @@
+SUMMARY = "Run mender opkg package configure on boot"
+DESCRIPTION = "Mender daemon will be started at boot time and it must not be restarted during the update process. By running 'opkg configure' prio to running mender, we ensure that it is properly configured before starting and also that it will not get restarted during later 'opkg configure' executions."
+AUTHOR = "Wifx SA"
+SECTION = "base"
+
 FILESEXTRAPATHS:append := "${THISDIR}/files:"
 
 LICENSE = "CLOSED"
