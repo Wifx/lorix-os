@@ -8,6 +8,7 @@ depend() {
 
 start() {
     ebegin "Running mender-autoconf"
-    opkg configure mender mender-auth
+    opkg configure mender
+    opkg configure mender-auth
     eend 0
 }
