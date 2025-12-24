@@ -41,6 +41,8 @@ source /data/mender/upgrade/version-guard.sh
 cd $D_ETC
 
 RUNLEVELS_PATH="runlevels/"
+OPENRC_CONF_OLD_DIR="openrc.d/"
+OPENRC_CONF_NEW_DIR="init.d/"
 
 # If no runlevels directory, nothing to do
 if [ ! -d "$RUNLEVELS_PATH" ]; then
@@ -54,17 +56,26 @@ log $PREFIX "Migrating..."
 # - Pre-migration : copy files from $S_ETC to $D_ETC, edit them but not rename them
 # - Post-migration : add, edit or remove files in $D_ETC
 
-# Find all symlinks in runlevels directories and convert them from /etc/openrc.d to /etc/init.d
-find "$RUNLEVELS_PATH" -type l | while read -r symlink; do
-    target=$(readlink "$symlink")
-    case "$target" in
-        /etc/openrc.d/*)
-            new_target="/etc/init.d/${target##*/}"
-            log $PREFIX "Updating symlink $symlink to point to $new_target"
-            ln -sf "$new_target" "$symlink"
-            ;;
-    esac
-done
+if [ -d "$OPENRC_CONF_OLD_DIR" ]; then
+    log $PREFIX "Migrating OpenRC conf.d files from $OPENRC_CONF_OLD_DIR to $OPENRC_CONF_NEW_DIR"
+    mv "$OPENRC_CONF_OLD_DIR" "$OPENRC_CONF_NEW_DIR"
+else
+    log $PREFIX "No OpenRC conf.d directory found, skipping file migration"
+fi
+
+if [ -d "$RUNLEVELS_PATH" ]; then
+    # Find all symlinks in runlevels directories and convert them from /etc/openrc.d to /etc/init.d
+    find "$RUNLEVELS_PATH" -type l | while read -r symlink; do
+        target=$(readlink "$symlink")
+        case "$target" in
+            /etc/openrc.d/*)
+                new_target="/etc/init.d/${target##*/}"
+                log $PREFIX "Updating symlink $symlink to point to $new_target"
+                ln -sf "$new_target" "$symlink"
+                ;;
+        esac
+    done
+fi
 
 log $PREFIX "Migration done"
 
