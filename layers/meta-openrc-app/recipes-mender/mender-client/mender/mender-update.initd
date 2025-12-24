@@ -10,7 +10,7 @@ respawn_delay="${RESPAWN_DELAY:-2}"
 
 command_user="root"
 command="/usr/bin/mender-update"
-command_args="daemon"
+command_args="--log-file /var/log/mender-update-run.log --log-level trace daemon"
 command_background=true
 start_stop_daemon_args="--group root"
 
@@ -18,10 +18,12 @@ pidfile="/var/run/${RC_SVCNAME}.pid"
 
 depend() {
     use dns
-    use mender-autoconf
-    want mender-auth
+    need mender-auth
 }
 
 start_pre() {
     checkpath -d /data/mender -m 0755
+    echo "[INITD] Running mender opkg configure" >> /var/log/mender-update-conf.log
+    opkg configure mender
+    echo "[INITD] mender opkg configure ended" >> /var/log/mender-update-conf.log
 }

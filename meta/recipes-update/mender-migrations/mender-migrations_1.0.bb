@@ -29,6 +29,7 @@ SRC_URI = " \
     file://1.8.0/03_iptables-nftables.sh;subdir=${BPN}-${PV} \
     file://1.8.0/04_frequency-plan.sh;subdir=${BPN}-${PV} \
     file://1.8.0/05_openrc-confdir.sh;subdir=${BPN}-${PV} \
+    file://1.8.0/06_mender-service-name.sh;subdir=${BPN}-${PV} \
 "
 
 LICENSE = "Proprietary"
@@ -101,4 +102,5 @@ do_compile() {
     cp 1.8.0/03_iptables-nftables.sh ${TARGET}_Migration_1.8.0_03_iptables-nftables
     cp 1.8.0/04_frequency-plan.sh ${TARGET}_Migration_1.8.0_04_frequency-plan
     cp 1.8.0/05_openrc-confdir.sh ${TARGET}_Migration_1.8.0_05_openrc-confdir
+    cp 1.8.0/06_mender-service-name.sh ${TARGET}_Migration_1.8.0_06_mender-service-name
 }

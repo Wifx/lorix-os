@@ -17,9 +17,9 @@ start_stop_daemon_args="--group root"
 pidfile="/var/run/${RC_SVCNAME}.pid"
 
 depend() {
-        use dns
+    use dns
 }
 
 start_pre() {
-        checkpath -d /data/mender -m 0755
+    checkpath -d /data/mender -m 0755
 }
