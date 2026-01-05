@@ -65,7 +65,7 @@ if [ -d "$OPENRC_RUNLEVELS_DIR" ]; then
     find "$OPENRC_RUNLEVELS_DIR/" -type l -name "menderd" | while read -r filepath; do
         dirname=$(dirname "$filepath")
         rm "$filepath"
-        ln -s "../$OPENRC_INIT_DIR/mender-update" "$dirname/mender-update"
+        ln -s "/etc/$OPENRC_INIT_DIR/mender-update" "$dirname/mender-update"
         log $PREFIX "Updated runlevel symlink $filepath to point to mender-update"
     done
 fi
