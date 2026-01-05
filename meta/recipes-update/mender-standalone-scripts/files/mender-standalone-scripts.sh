@@ -15,12 +15,6 @@ log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $message" >> "$LOG_FILE"
 }
 
-# Check if process is inhibited
-if [ -f "$INHIBIT_FILE_PATH" ]; then
-    log "Reboot script is inhibited by $INHIBIT_FILE_PATH"
-    exit 0
-fi
-
 # Check if an update is pending
 UPGRADE_AVAILABLE=$(fw_printenv upgrade_available -n)
 if [ $? -ne 0 ]; then
@@ -40,6 +34,12 @@ if [ "$UPGRADE_AVAILABLE" != "1" ]; then
 fi
 
 log "An update is pending"
+
+# Check if process is inhibited
+if [ -f "$INHIBIT_FILE_PATH" ]; then
+    log "Reboot script is inhibited by $INHIBIT_FILE_PATH"
+    exit 0
+fi
 
 # Read prefix from args and check
 if [ -z "$1" ]; then
