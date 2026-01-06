@@ -15,6 +15,27 @@ log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $message" >> "$LOG_FILE"
 }
 
+save_log() {
+    # Create persistent log directory if it does not exist
+    if [ ! -d "$LOG_PERSISTENT_DIR" ]; then
+        mkdir -p "$LOG_PERSISTENT_DIR"
+
+        if [ $? -ne 0 ]; then
+            log "Failed to create persistent log directory at $LOG_PERSISTENT_DIR"
+        fi
+    fi
+
+    # Save log files
+    if [ -d "$LOG_PERSISTENT_DIR" ]; then
+        cp "$LOG_FILE" "$LOG_PERSISTENT_DIR/$LOG_FILENAME"
+        if [ $? -ne 0 ]; then
+            log "Failed to save log file to persistent storage"
+        else
+            log "Log file saved to $LOG_PERSISTENT_DIR"
+        fi
+    fi
+}
+
 # Check if an update is pending
 UPGRADE_AVAILABLE=$(fw_printenv upgrade_available -n)
 if [ $? -ne 0 ]; then
@@ -43,7 +64,7 @@ fi
 
 # Read prefix from args and check
 if [ -z "$1" ]; then
-    log "No scripts prefix provided. Usage $0 <scripts_prefix>"
+    echo "No scripts prefix provided. Usage $0 <scripts_prefix>"
     exit 1
 fi
 SCRIPTS_PREFIX="$1"
@@ -74,24 +95,7 @@ for script in $SCRIPTS_PATH/$SCRIPTS_PREFIX*; do
                 log "Failed to rollback update"
             fi
 
-            # Create persistent log directory if it does not exist
-            if [ ! -d "$LOG_PERSISTENT_DIR" ]; then
-                mkdir -p "$LOG_PERSISTENT_DIR"
-
-                if [ $? -ne 0 ]; then
-                    log "Failed to create persistent log directory at $LOG_PERSISTENT_DIR"
-                fi
-            fi
-
-            # Save log files
-            if [ ! -d "$LOG_PERSISTENT_DIR" ]; then
-                cp "$LOG_FILE" "$LOG_PERSISTENT_DIR/$LOG_FILENAME"
-                if [ $? -ne 0 ]; then
-                    log "Failed to save log file to persistent storage"
-                else
-                    log "Log file saved to $LOG_PERSISTENT_DIR"
-                fi
-            fi
+            save_log
 
             log "Rollback completed, rebooting system"
             shutdown -r now "The extra $SCRIPTS_PREFIX tasks of the pending update failed" 
