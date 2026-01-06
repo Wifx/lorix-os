@@ -29,22 +29,16 @@ VERSION_MAX="1.8.0"
 # - $S_ETC : active etc diff, readonly (/var/lib/os/layers/active/config)
 # - $D_ETC : inactive etc diff, readwrite (/var/lib/os/layers/inactive/config mounted on /var/lib/migration/config)
 # - $S_ROOT : factory root of the active partition, readonly (/var/lib/os/layers/active/factory)
-source /data/mender/upgrade/migration-env.sh 
+. /data/mender/upgrade/migration-env.sh 
 
 # Checks whether the migration should be applied or not (do not change)
-source /data/mender/upgrade/version-guard.sh
-
-### WRITE YOUR MIGRATION FROM HERE ###
-
-# You may generally want to go into /etc of the destination rootfs. 
-# WARNING - Path to files MUST not contain /etc (would refer to the currently mounted config)
-cd $S_ETC
+. /data/mender/upgrade/version-guard.sh
 
 OPKG_STATUS_PATH_OLD="/var/lib/opkg/status" 
-OPKG_STATUS_PATH_NEW="slotfs/var/lib/opkg/status"
+OPKG_STATUS_PATH_NEW="/etc/slotfs/var/lib/opkg/status"
 
 # Check if file does not exist or is a symlink (migration already done)
-if [[ ! -f "$OPKG_STATUS_PATH_OLD" ]] || [[ -L "$OPKG_STATUS_PATH_OLD" ]]; then
+if [ ! -f "$OPKG_STATUS_PATH_OLD" ] || [ -L "$OPKG_STATUS_PATH_OLD" ]; then
     log $PREFIX "No opkg status to migrate"
     exit 0
 fi
@@ -57,15 +51,13 @@ log $PREFIX "Migrating..."
 
 # Migrate the current system too in case revert does not happen
 mkdir -p "$(dirname "$OPKG_STATUS_PATH_NEW")"
-mv -f "$OPKG_STATUS_PATH_OLD" "$OPKG_STATUS_PATH_NEW"
-if [ $? -ne 0 ]; then
+if ! mv -f "$OPKG_STATUS_PATH_OLD" "$OPKG_STATUS_PATH_NEW"; then
     log $PREFIX "Failed to move opkg status file to new location"
     exit 1
 fi
 
 # Create symlink from old location to new location
-ln -s "/etc/$OPKG_STATUS_PATH_NEW" "$OPKG_STATUS_PATH_OLD"
-if [ $? -ne 0 ]; then
+if ! ln -s "$OPKG_STATUS_PATH_NEW" "$OPKG_STATUS_PATH_OLD"; then
     log $PREFIX "Failed to create symlink for opkg status file"
     exit 1
 fi
