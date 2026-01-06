@@ -17,7 +17,7 @@ PREFIX=OPKG-STATUS-LOC
 # Defines what is the highest version (excluded) of the source system for the migration to be applied (semver).
 # This is generally set to the current version. If the user has this version (or higher), the migration is already done and not useful anymore.
 # Must not be empty. Can be left undefined.
-VERSION_MAX="1.8.0" 
+VERSION_MAX="1.8.0"
 
 # Condition that will be finally be checked to know if the migration will be applied.
 # Is automatically generated with VERSION_MIN and VERSION_MAX if not defined. If defined VERSION_MIN/MAX are ignored
@@ -38,12 +38,12 @@ source /data/mender/upgrade/version-guard.sh
 
 # You may generally want to go into /etc of the destination rootfs. 
 # WARNING - Path to files MUST not contain /etc (would refer to the currently mounted config)
-cd $D_ETC
+cd $S_ETC
 
 OPKG_STATUS_PATH_OLD="/var/lib/opkg/status" 
 OPKG_STATUS_PATH_NEW="slotfs/var/lib/opkg/status"
 
-# It is generally a good thing to check wheter the migration should be applied or not depending on the FS state
+# Check if file does not exist or is a symlink (migration already done)
 if [[ ! -f "$OPKG_STATUS_PATH_OLD" ]] || [[ -L "$OPKG_STATUS_PATH_OLD" ]]; then
     log $PREFIX "No opkg status to migrate"
     exit 0
@@ -56,8 +56,8 @@ log $PREFIX "Migrating..."
 # - Post-migration : add, edit or remove files in $D_ETC
 
 # Migrate the current system too in case revert does not happen
-mkdir -p "$(dirname "/etc/$OPKG_STATUS_PATH_NEW")"
-mv -f "$OPKG_STATUS_PATH_OLD" "/etc/$OPKG_STATUS_PATH_NEW"
+mkdir -p "$(dirname "$OPKG_STATUS_PATH_NEW")"
+mv -f "$OPKG_STATUS_PATH_OLD" "$OPKG_STATUS_PATH_NEW"
 if [ $? -ne 0 ]; then
     log $PREFIX "Failed to move opkg status file to new location"
     exit 1

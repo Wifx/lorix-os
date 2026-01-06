@@ -24,13 +24,13 @@ SRC_URI = " \
     file://1.7.0/05_Fix-overlay-directories.sh;subdir=${BPN}-${PV} \
     file://1.7.1/01_VPN-autoconnect.sh;subdir=${BPN}-${PV} \
     file://1.7.1/02_wwan_auto-connect.sh;subdir=${BPN}-${PV} \
+    file://1.8.0/00_opkg-status-loc.sh;subdir=${BPN}-${PV} \
     file://1.8.0/01_concentratord-legacy.sh;subdir=${BPN}-${PV} \
     file://1.8.0/02_chrony_sources.sh;subdir=${BPN}-${PV} \
     file://1.8.0/03_iptables-nftables.sh;subdir=${BPN}-${PV} \
     file://1.8.0/04_frequency-plan.sh;subdir=${BPN}-${PV} \
     file://1.8.0/05_openrc-confdir.sh;subdir=${BPN}-${PV} \
     file://1.8.0/06_mender-service-name.sh;subdir=${BPN}-${PV} \
-    file://1.8.0/07_opkg-status-loc.sh;subdir=${BPN}-${PV} \
 "
 
 LICENSE = "Proprietary"
@@ -55,6 +55,7 @@ do_compile() {
     # These migrations should generally create new files in $D_ETC, depending on environement and/or $S_ETC
     # Generic migration does not override existing files of $D_ETC
 
+    cp 1.8.0/00_opkg-status-loc.sh ${TARGET}_Migration_1.8.0_00_opkg-status-loc
 
 
     ### Post-migrations ###
@@ -104,5 +105,4 @@ do_compile() {
     cp 1.8.0/04_frequency-plan.sh ${TARGET}_Migration_1.8.0_04_frequency-plan
     cp 1.8.0/05_openrc-confdir.sh ${TARGET}_Migration_1.8.0_05_openrc-confdir
     cp 1.8.0/06_mender-service-name.sh ${TARGET}_Migration_1.8.0_06_mender-service-name
-    cp 1.8.0/07_opkg-status-loc.sh ${TARGET}_Migration_1.8.0_07_opkg-status-loc
 }
