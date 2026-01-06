@@ -19,8 +19,6 @@ SRC_URI = " \
     file://450_Migrate-opkg-status-apply.sh;subdir=${BPN}-${PV} \
     file://459_Opkg-configure.sh;subdir=${BPN}-${PV} \
     file://690_Cleanup-inactive-user-data.sh;subdir=${BPN}-${PV} \
-    file://800_Migrate-opkg-status-restore.sh;subdir=${BPN}-${PV} \
-    file://997_Migrate-opkg-cleanup.sh;subdir=${BPN}-${PV} \
     file://999_Upgrade-cleanup.sh;subdir=${BPN}-${PV} \
     file://Config-migration-restore.sh;subdir=${BPN}-${PV} \
     file://Migration-context-cleanup.sh;subdir=${BPN}-${PV} \
@@ -135,13 +133,11 @@ include_scripts() {
 
     # Artifact commit leave
     include_script 690_Cleanup-inactive-user-data.sh        ArtifactCommit_Leave_90_Cleanup-inactive-user-data
-    include_script 997_Migrate-opkg-cleanup.sh              ArtifactCommit_Leave_97_Migrate-opkg-cleanup
     include_script 999_Upgrade-cleanup.sh                   ArtifactCommit_Leave_99_Upgrade-cleanup
 
     ### ROLLBACK ###
 
     # Artifact rollback enter
-    include_script 800_Migrate-opkg-status-restore.sh       ArtifactRollback_Enter_00_Migrate-opkg-status-restore
     include_script Config-migration-restore.sh              ArtifactRollback_Enter_10_Config-migration-restore
 
     # Artifact rollback leave

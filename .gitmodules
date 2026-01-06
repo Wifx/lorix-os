@@ -4,7 +4,7 @@
 	branch = dunfell
 [submodule "poky"]
 	path = poky
-	url = https://git.yoctoproject.org/poky
+	url = https://github.com/Wifx/poky
 [submodule "meta-mender"]
 	path = layers/meta-mender
 	url = https://github.com/mendersoftware/meta-mender.git

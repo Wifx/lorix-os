@@ -4,7 +4,7 @@ PREFIX=MIGRATE-OPKG-STATUS-DIFF
 source /data/mender/upgrade/migration-env.sh
 
 FACTORY_OPKG_STATUS_FILE="$S_ROOT/var/lib/opkg/status"
-USER_OPKG_STATUS_FILE="$LAYER_USER/var/lib/opkg/status"
+USER_OPKG_STATUS_FILE="$LAYER_USER_CONFIG_INACTIVE_RW/slotfs/var/lib/opkg/status"
 OPKG_STATUS_DIFF_BIN="/data/mender/upgrade/tools/opkg-status-diff"
 OPKG_STATUS_PATCHES_DIR="/data/mender/upgrade/opkg-status-patches"
 
@@ -23,23 +23,26 @@ fi
 # Create patches directory if it doesn't exist
 if [ ! -d "$OPKG_STATUS_PATCHES_DIR" ]; then
     log $PREFIX "Creating OPKG status patches directory: $OPKG_STATUS_PATCHES_DIR"
-    mkdir -p "$OPKG_STATUS_PATCHES_DIR"
-    if [ $? -ne 0 ]; then
+    if ! mkdir -p "$OPKG_STATUS_PATCHES_DIR"; then
         log $PREFIX "Failed to create OPKG status patches directory"
         exit 1
     fi
 fi
 
-$OPKG_STATUS_DIFF_BIN diff added $FACTORY_OPKG_STATUS_FILE $USER_OPKG_STATUS_FILE > $OPKG_STATUS_PATCHES_DIR/packages-added.patch
-if [ $? -ne 0 ]; then
+if ! $OPKG_STATUS_DIFF_BIN diff added $FACTORY_OPKG_STATUS_FILE $USER_OPKG_STATUS_FILE > $OPKG_STATUS_PATCHES_DIR/packages-added.patch; then
     log $PREFIX "Failed to diff opkg status files ($OPKG_STATUS_DIFF_BIN diff added)"
     exit 1
 fi
 
-$OPKG_STATUS_DIFF_BIN diff removed $FACTORY_OPKG_STATUS_FILE $USER_OPKG_STATUS_FILE > $OPKG_STATUS_PATCHES_DIR/packages-removed.patch
-if [ $? -ne 0 ]; then
+if ! $OPKG_STATUS_DIFF_BIN diff removed $FACTORY_OPKG_STATUS_FILE $USER_OPKG_STATUS_FILE > $OPKG_STATUS_PATCHES_DIR/packages-removed.patch; then
     log $PREFIX "Failed to diff opkg status files ($OPKG_STATUS_DIFF_BIN diff removed)"
     rm -f added.txt
+    exit 1
+fi
+
+rm -f "$USER_OPKG_STATUS_FILE"
+if [ $? -ne 0 ]; then
+    log $PREFIX "Failed to remove user opkg status file: $USER_OPKG_STATUS_FILE"
     exit 1
 fi
 

@@ -4,24 +4,17 @@ PREFIX=MIGRATE-OPKG-STATUS-APPLY
 source /data/mender/upgrade/migration-env.sh
 
 FACTORY_OPKG_STATUS_FILE="$S_ROOT/var/lib/opkg/status"
-USER_OPKG_STATUS_FILE="/var/lib/opkg/status"
+USER_OPKG_STATUS_FILE="/etc/slotfs/var/lib/opkg/status"
 OPKG_STATUS_DIFF_BIN="/data/mender/upgrade/tools/opkg-status-diff"
 OPKG_STATUS_PATCHES_DIR="/data/mender/upgrade/opkg-status-patches"
 
 if [ ! -f "$USER_OPKG_STATUS_FILE" ]; then
-    log $PREFIX "No existing user opkg status file found, skipping migration"
+    log $PREFIX "No existing opkg status file found, skipping migration"
     exit 0
 fi
 
 if [ ! -x "$OPKG_STATUS_DIFF_BIN" ]; then
     log $PREFIX "OPKG status diff binary not found or not executable: $OPKG_STATUS_DIFF_BIN"
-    exit 1
-fi
-
-log $PREFIX "Backing up existing user opkg status file"
-mv -f "$USER_OPKG_STATUS_FILE" "$USER_OPKG_STATUS_FILE.bak"
-if [ $? -ne 0 ]; then
-    log $PREFIX "Failed to backup user opkg status file"
     exit 1
 fi
 
@@ -36,13 +29,6 @@ if [ ! -f "$FACTORY_OPKG_STATUS_FILE" ]; then
     exit 1
 fi
 
-# Copy factory opkg status file to user directory
-log $PREFIX "Copying factory opkg status file to user directory"
-cp -f "$FACTORY_OPKG_STATUS_FILE" "$USER_OPKG_STATUS_FILE"
-if [ $? -ne 0 ]; then
-    log $PREFIX "Failed to copy factory opkg status file to user directory"
-    exit 1
-fi
 
 TEMP_STATUS_FILE_APPLY="" # Initialize, will hold mktemp result
 

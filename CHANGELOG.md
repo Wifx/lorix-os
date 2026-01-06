@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-687] Upgrade syslog-ng config to corresponding version
 - [LOR-700] Update Chrony to v4
 - [LOR-705] Forwarder logs are no more added to the "all" log
+- [LOR-706] Move OPKG status file into A/B slotted partition (/etc/slotfs)
 
 ### Fixed
 
