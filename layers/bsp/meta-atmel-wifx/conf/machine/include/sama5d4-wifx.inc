@@ -20,7 +20,7 @@ PREFERRED_PROVIDER_u-boot-env:sama5 = "u-boot-at91"
 PREFERRED_VERSION_at91bootstrap:sama5 = "3.%"
 
 # Linux kernel specific variables
-KERNEL_DEVICETREE ?= "${MACHINE}.dtb"
+KERNEL_DEVICETREE ?= "microchip/${MACHINE}.dtb"
 KERNEL_IMAGETYPE = "zImage"
 
 # U-Boot bootloader specific variables

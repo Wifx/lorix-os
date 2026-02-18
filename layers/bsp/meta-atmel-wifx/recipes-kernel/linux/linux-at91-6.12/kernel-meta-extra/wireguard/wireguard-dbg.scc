@@ -1,0 +1,8 @@
+#
+# Not directly sourced via a kernel type but via an external bb
+#
+
+define KFEATURE_DESCRIPTION "Enable WireGuard VPN debug support"
+define KFEATURE_COMPATIBILITY all
+
+kconf non-hardware wireguard-dbg.cfg
