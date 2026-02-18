@@ -10,6 +10,11 @@ LOG_FILE="$LOG_DIR/$LOG_FILENAME"
 LOG_PERSISTENT_DIR="/data/mender/upgrade/logs"
 INHIBIT_FILE_PATH="/data/mender/upgrade/inhibit-reboot-script-standalone"
 
+# Ensure log directory exists
+if [ ! -d "$LOG_DIR" ]; then
+    mkdir -p "$LOG_DIR"
+fi
+
 log() {
     local message="$1"
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $message" >> "$LOG_FILE"
