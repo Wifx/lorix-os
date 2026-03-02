@@ -9,6 +9,7 @@ FILESEXTRAPATHS:prepend = "${THISDIR}/${PN}-${LINUX_VERSION_SHORT}:${THISDIR}/${
 
 SRCREV_machine = "7d6b6eb000ec3866db59efd992683f3f9353cdd2"
 SRCREV_meta = "578937826ffad97749eba3a5d1b21b37b5cd7bdc"
+KERNEL_DEVICETREE = "${MACHINE}.dtb"
 
 PR ?= "r0"
 S ?= "${WORKDIR}/git"

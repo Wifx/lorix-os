@@ -1,0 +1,72 @@
+From 74b1203586a86f4bdf3b3638913531387344318c Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Wed, 25 Feb 2026 21:20:16 +0100
+Subject: [PATCH 05/12] usb: gadget: u_ether: harden netdev parent handling
+ across link teardown
+
+On disconnect/cleanup, the netdev parent device link can outlive the active
+USB gadget instance and leave stale references behind.
+
+Clear the netdev parent on disconnect and cleanup, and refresh it on connect
+from the current function/cdev gadget.
+
+Also validate the gadget pointer before connect setup and fail early when
+the function is not attached to a valid gadget instance.
+
+This prevents crashes caused by invalid or stale parent pointers during
+UDC role-switch, unbind/rebind, and reconnect sequences.
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ drivers/usb/gadget/function/u_ether.c | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/drivers/usb/gadget/function/u_ether.c b/drivers/usb/gadget/function/u_ether.c
+index f58590bf5e02..b7b2e73ded1c 100644
+--- a/drivers/usb/gadget/function/u_ether.c
++++ b/drivers/usb/gadget/function/u_ether.c
+@@ -1089,6 +1089,9 @@ void gether_cleanup(struct eth_dev *dev)
+ 	if (!dev)
+ 		return;
+ 
++	/* Drop parent device link before netdev teardown. */
++	SET_NETDEV_DEV(dev->net, NULL);
++
+ 	unregister_netdev(dev->net);
+ 	flush_work(&dev->work);
+ 	free_netdev(dev->net);
+@@ -1114,11 +1117,21 @@ EXPORT_SYMBOL_GPL(gether_cleanup);
+ struct net_device *gether_connect(struct gether *link)
+ {
+ 	struct eth_dev		*dev = link->ioport;
++	struct usb_gadget	*gadget;
+ 	int			result = 0;
+ 
+ 	if (!dev)
+ 		return ERR_PTR(-EINVAL);
+ 
++	gadget = (link->func.config && link->func.config->cdev) ?
++		link->func.config->cdev->gadget : NULL;
++	if (!gadget)
++		return ERR_PTR(-ENODEV);
++
++	/* Refresh netdev parent from the current gadget instance. */
++	dev->gadget = gadget;
++	SET_NETDEV_DEV(dev->net, &gadget->dev);
++
+ 	link->in_ep->driver_data = dev;
+ 	result = usb_ep_enable(link->in_ep);
+ 	if (result != 0) {
+@@ -1242,6 +1255,9 @@ void gether_disconnect(struct gether *link)
+ 	dev->port_usb = NULL;
+ 	link->is_suspend = false;
+ 	spin_unlock(&dev->lock);
++
++	/* Prevent stale parent references after link teardown. */
++	SET_NETDEV_DEV(dev->net, NULL);
+ }
+ EXPORT_SYMBOL_GPL(gether_disconnect);
+ 
+-- 
+2.43.0
+

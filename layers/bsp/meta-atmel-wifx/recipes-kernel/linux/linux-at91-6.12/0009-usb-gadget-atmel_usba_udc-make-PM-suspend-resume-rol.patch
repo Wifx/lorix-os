@@ -1,0 +1,117 @@
+From c48b0737b89e506d7d56c5b0d23f6321d385619b Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Wed, 25 Feb 2026 23:01:37 +0100
+Subject: [PATCH 09/12] usb: gadget: atmel_usba_udc: make PM suspend/resume
+ role-switch aware
+
+PM suspend and resume can race with delayed bus clock events and role
+transitions.
+
+Flush delayed IRQ work and clear queued clock events before entering
+suspend and before resume handling to avoid stale event replay across PM
+state changes.
+
+When usb-role-switch is active and current role is not device, keep the
+device side quiesced in PM callbacks instead of re-arming UDC wake/start
+paths.
+
+Document that vbus_is_present() fallback without a VBUS GPIO is expected
+on the device-role resume path after role filtering.
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ drivers/usb/gadget/udc/atmel_usba_udc.c | 52 +++++++++++++++++++++++++
+ 1 file changed, 52 insertions(+)
+
+diff --git a/drivers/usb/gadget/udc/atmel_usba_udc.c b/drivers/usb/gadget/udc/atmel_usba_udc.c
+index fbffd46c3cec..c7b275e184e2 100644
+--- a/drivers/usb/gadget/udc/atmel_usba_udc.c
++++ b/drivers/usb/gadget/udc/atmel_usba_udc.c
+@@ -2678,13 +2678,36 @@ static void usba_udc_remove(struct platform_device *pdev)
+ static int usba_udc_suspend(struct device *dev)
+ {
+ 	struct usba_udc *udc = dev_get_drvdata(dev);
++	unsigned long flags;
+ 
+ 	/* Not started */
+ 	if (!udc->driver)
+ 		return 0;
+ 
++	/*
++	 * Flush delayed IRQ worker/events before PM transition.
++	 * Keep this before state_lock to avoid lock inversion with worker.
++	 */
++	cancel_delayed_work_sync(&udc->udc_irq_delayed_work);
++	spin_lock_irqsave(&udc->lock, flags);
++	udc->udc_irq_delayed_events = 0;
++	spin_unlock_irqrestore(&udc->lock, flags);
++
+ 	mutex_lock(&udc->state_lock);
+ 
++#if IS_ENABLED(CONFIG_USB_ROLE_SWITCH)
++	if (udc->role_sw && READ_ONCE(udc->role_sw_current) != USB_ROLE_DEVICE) {
++		/*
++		 * UDC PM callbacks can run while gadget driver is bound but role is
++		 * host/none. Keep device side quiesced and do not arm device wake path.
++		 */
++		udc->suspended = false;
++		usba_stop(udc);
++		mutex_unlock(&udc->state_lock);
++		return 0;
++	}
++#endif
++
+ 	if (!device_may_wakeup(dev)) {
+ 		udc->suspended = false;
+ 		usba_stop(udc);
+@@ -2711,11 +2734,21 @@ static int usba_udc_suspend(struct device *dev)
+ static int usba_udc_resume(struct device *dev)
+ {
+ 	struct usba_udc *udc = dev_get_drvdata(dev);
++	unsigned long flags;
+ 
+ 	/* Not started */
+ 	if (!udc->driver)
+ 		return 0;
+ 
++	/*
++	 * Drop stale delayed IRQ worker/events carried across system suspend.
++	 * Keep this before state_lock to avoid lock inversion with worker.
++	 */
++	cancel_delayed_work_sync(&udc->udc_irq_delayed_work);
++	spin_lock_irqsave(&udc->lock, flags);
++	udc->udc_irq_delayed_events = 0;
++	spin_unlock_irqrestore(&udc->lock, flags);
++
+ 	if (device_may_wakeup(dev)) {
+ 		if (udc->vbus_pin)
+ 			disable_irq_wake(gpiod_to_irq(udc->vbus_pin));
+@@ -2725,6 +2758,25 @@ static int usba_udc_resume(struct device *dev)
+ 
+ 	/* If Vbus is present, enable the controller and wait for reset */
+ 	mutex_lock(&udc->state_lock);
++
++#if IS_ENABLED(CONFIG_USB_ROLE_SWITCH)
++	if (udc->role_sw && READ_ONCE(udc->role_sw_current) != USB_ROLE_DEVICE) {
++		/*
++		 * Do not resurrect the device controller on PM resume when role is
++		 * host/none; role-switch paths will re-enable device side explicitly.
++		 */
++		udc->suspended = false;
++		usba_stop(udc);
++		phy_set_mode_ext(udc->phy, PHY_MODE_USB_DEVICE, 0);
++		mutex_unlock(&udc->state_lock);
++		return 0;
++	}
++#endif
++	/*
++	 * vbus_is_present() returns true when no VBUS GPIO is wired.
++	 * This is intentional here: non-device roles are filtered above,
++	 * so reaching this path means role=device and we can re-arm UDC.
++	 */
+ 	udc->vbus_prev = vbus_is_present(udc);
+ 	if (udc->vbus_prev) {
+ 		phy_set_mode_ext(udc->phy, PHY_MODE_USB_DEVICE, 1);
+-- 
+2.43.0
+

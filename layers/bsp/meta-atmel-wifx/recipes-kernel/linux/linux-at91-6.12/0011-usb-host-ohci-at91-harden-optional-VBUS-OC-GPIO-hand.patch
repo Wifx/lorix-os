@@ -1,0 +1,118 @@
+From 42501fe163473693e373441f5c4a6a2482f5d67e Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Mon, 2 Mar 2026 11:11:12 +0100
+Subject: [PATCH 11/12] usb: host: ohci-at91: harden optional VBUS/OC GPIO
+ handling
+
+Make per-port VBUS and overcurrent GPIOs safely optional.
+Propagate EPROBE_DEFER during GPIO lookup, skip NULL OC GPIOs in IRQ
+matching, and keep power status consistent when VBUS is externally managed.
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ drivers/usb/host/ohci-at91.c | 50 +++++++++++++++++++++++++++++++++---
+ 1 file changed, 46 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/usb/host/ohci-at91.c b/drivers/usb/host/ohci-at91.c
+index 8eac2fd343c9..4f7736dbd346 100644
+--- a/drivers/usb/host/ohci-at91.c
++++ b/drivers/usb/host/ohci-at91.c
+@@ -337,6 +337,10 @@ static void ohci_at91_usb_set_power(struct at91_usbh_data *pdata, int port, int
+ 	if (!valid_port(port))
+ 		return;
+ 
++	/* No-op if no VBUS GPIO for this port (VBUS controlled externally) */
++	if (!pdata->vbus_pin[port])
++		return;
++
+ 	gpiod_set_value(pdata->vbus_pin[port], enable);
+ }
+ 
+@@ -345,6 +349,12 @@ static int ohci_at91_usb_get_power(struct at91_usbh_data *pdata, int port)
+ 	if (!valid_port(port))
+ 		return -EINVAL;
+ 
++	/*
++	 * If there is no VBUS GPIO, assume power is managed externally and is
++	 * present from the HCD perspective (keep PPS set).
++	 */
++	if (!pdata->vbus_pin[port])
++		return 1;
+ 	return gpiod_get_value(pdata->vbus_pin[port]);
+ }
+ 
+@@ -518,6 +528,11 @@ static int ohci_at91_hub_control(struct usb_hcd *hcd, u16 typeReq, u16 wValue,
+ 		dev_dbg(hcd->self.controller, "GetPortStatus(%d)\n", wIndex);
+ 
+ 		if (valid_port(wIndex)) {
++			/*
++			 * If no VBUS GPIO, ohci_at91_usb_get_power() returns 1
++			 * (power assumed externally), so keep PPS set. If GPIO
++			 * exists and reads 0, clear PPS.
++			 */
+ 			if (!ohci_at91_usb_get_power(pdata, wIndex))
+ 				*data &= ~cpu_to_le32(RH_PS_PPS);
+ 
+@@ -544,6 +559,9 @@ static irqreturn_t ohci_hcd_at91_overcurrent_irq(int irq, void *data)
+ 	/* From the GPIO notifying the over-current situation, find
+ 	 * out the corresponding port */
+ 	at91_for_each_port(port) {
++		if (!pdata->overcurrent_pin[port])
++			continue;
++
+ 		if (gpiod_to_irq(pdata->overcurrent_pin[port]) == irq)
+ 			break;
+ 	}
+@@ -623,7 +641,22 @@ static int ohci_hcd_at91_drv_probe(struct platform_device *pdev)
+ 						      i, GPIOD_OUT_HIGH);
+ 		if (IS_ERR(pdata->vbus_pin[i])) {
+ 			err = PTR_ERR(pdata->vbus_pin[i]);
+-			dev_err(&pdev->dev, "unable to claim gpio \"vbus\": %d\n", err);
++			if (err == -EPROBE_DEFER)
++				return err;
++			dev_err(&pdev->dev, "unable to claim gpio \"vbus\" for port %d: %d\n", i, err);
++			pdata->vbus_pin[i] = NULL;
++			continue;
++		}
++		/*
++		 * VBUS GPIO is optional and may be NULL e.g. VBUS is managed by
++		 * external glue/Type‑C/PMIC driver. ohci_at91_usb_[get/set]_power
++		 * handle this NULL state (no-op for set, assume powered for get).
++		 */
++		if (!pdata->vbus_pin[i]) {
++			/* Optional VBUS: not provided for this port */
++			dev_dbg(&pdev->dev,
++				"gpio \"vbus\" for port %d not provided, feature disabled for this port\n",
++				i);
+ 			continue;
+ 		}
+ 	}
+@@ -635,13 +668,22 @@ static int ohci_hcd_at91_drv_probe(struct platform_device *pdev)
+ 		pdata->overcurrent_pin[i] =
+ 			devm_gpiod_get_index_optional(&pdev->dev, "atmel,oc",
+ 						      i, GPIOD_IN);
+-		if (!pdata->overcurrent_pin[i])
+-			continue;
+ 		if (IS_ERR(pdata->overcurrent_pin[i])) {
+ 			err = PTR_ERR(pdata->overcurrent_pin[i]);
+-			dev_err(&pdev->dev, "unable to claim gpio \"overcurrent\": %d\n", err);
++			if (err == -EPROBE_DEFER)
++				return err;
++			dev_err(&pdev->dev, "unable to claim gpio \"overcurrent\" for port %d: %d\n", i, err);
++			pdata->overcurrent_pin[i] = NULL;
+ 			continue;
+ 		}
++		if (!pdata->overcurrent_pin[i]) {
++			/* Optional Overcurrent: not provided for this port */
++			dev_dbg(&pdev->dev,
++				"gpio \"overcurrent\" for port %d not provided, feature disabled for this port\n",
++				i);
++			continue;
++		}
++
+ 
+ 		ret = devm_request_irq(&pdev->dev,
+ 				       gpiod_to_irq(pdata->overcurrent_pin[i]),
+-- 
+2.43.0
+

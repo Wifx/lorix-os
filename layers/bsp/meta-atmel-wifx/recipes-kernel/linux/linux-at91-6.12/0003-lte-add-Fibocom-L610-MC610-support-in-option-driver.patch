@@ -1,7 +1,7 @@
-From 23c70ecd987555ad38281e7076a8936f4316973e Mon Sep 17 00:00:00 2001
+From 55037eeb0824c90322a34874e0e6185e653416e0 Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Tue, 4 Apr 2023 16:59:12 +0200
-Subject: [PATCH 3/7] lte: add Fibocom L610/MC610 support in option driver
+Subject: [PATCH 03/12] lte: add Fibocom L610/MC610 support in option driver
 
 Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
 ---

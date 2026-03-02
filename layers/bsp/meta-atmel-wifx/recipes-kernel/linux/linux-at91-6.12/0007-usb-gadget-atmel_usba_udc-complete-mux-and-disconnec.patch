@@ -1,0 +1,138 @@
+From 57a1330a5bc065881dc1b32852ccb34bff727c06 Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Wed, 25 Feb 2026 22:52:39 +0100
+Subject: [PATCH 07/12] usb: gadget: atmel_usba_udc: complete mux and
+ disconnect handling
+
+Improve role-switch electrical transitions by making mux and CTRL handling
+explicit and deterministic.
+
+Add a CTRL write helper that preserves EN_USBA while applying detach and
+pull-down states, and clear speed override bits at controller start.
+
+Introduce a short forced disconnect pulse during role none/host
+transitions by switching mux to host briefly, then restoring the target
+mux state.
+
+Also apply role-aware detach policy in usba_stop() and keep a short delay
+to let disconnect propagate before clocks are gated.
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ drivers/usb/gadget/udc/atmel_usba_udc.c | 44 +++++++++++++++++++++++--
+ 1 file changed, 41 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/usb/gadget/udc/atmel_usba_udc.c b/drivers/usb/gadget/udc/atmel_usba_udc.c
+index e94b50c1f21f..7e653b7b742e 100644
+--- a/drivers/usb/gadget/udc/atmel_usba_udc.c
++++ b/drivers/usb/gadget/udc/atmel_usba_udc.c
+@@ -31,6 +31,9 @@
+ #define USBA_VBUS_IRQFLAGS (IRQF_ONESHOT \
+ 			   | IRQF_TRIGGER_FALLING | IRQF_TRIGGER_RISING)
+ 
++#define USBA_DISCONNECT_PULSE_US_MIN 1000
++#define USBA_DISCONNECT_PULSE_US_MAX 2000
++
+ #ifdef CONFIG_USB_GADGET_DEBUG_FS
+ #include <linux/debugfs.h>
+ #include <linux/uaccess.h>
+@@ -377,6 +380,16 @@ static inline void usba_int_enb_clear(struct usba_udc *udc, u32 mask)
+ 	udc->int_enb_cache = val;
+ }
+ 
++static inline void usba_ctrl_write(struct usba_udc *udc, u32 value)
++{
++	u32 ctrl;
++
++	/* Retrieve EN_USBA bit */
++	ctrl = usba_readl(udc, CTRL) & USBA_EN_USBA;
++	/* Apply value to CTRL register without affecting bit EN_USBA */
++	usba_writel(udc, CTRL, ctrl | (value & ~USBA_EN_USBA));
++}
++
+ static int vbus_is_present(struct usba_udc *udc)
+ {
+ 	if (udc->vbus_pin)
+@@ -1897,6 +1910,7 @@ static int usba_start(struct usba_udc *udc)
+ {
+ 	unsigned long flags;
+ 	int ret;
++	u32 tst;
+ 
+ 	ret = start_clock(udc);
+ 	if (ret)
+@@ -1906,8 +1920,11 @@ static int usba_start(struct usba_udc *udc)
+ 		return 0;
+ 
+ 	spin_lock_irqsave(&udc->lock, flags);
++	tst = usba_readl(udc, TST);
++	tst &= ~USBA_SPEED_CFG_MASK;
++	usba_writel(udc, TST, tst);
+ 	toggle_bias(udc, 1);
+-	usba_writel(udc, CTRL, USBA_ENABLE_MASK);
++	usba_ctrl_write(udc, USBA_ENABLE_MASK);
+ 	/* Clear all requested and pending interrupts... */
+ 	usba_writel(udc, INT_ENB, 0);
+ 	udc->int_enb_cache = 0;
+@@ -1934,9 +1951,14 @@ static void usba_stop(struct usba_udc *udc)
+ 
+ 	/* This will also disable the DP pullup */
+ 	toggle_bias(udc, 0);
+-	usba_writel(udc, CTRL, USBA_DISABLE_MASK);
++	if (udc->role_sw && READ_ONCE(udc->role_sw_current) != USB_ROLE_DEVICE)
++		usba_ctrl_write(udc, USBA_DETACH | USBA_PULLD_DIS);
++	else
++		usba_ctrl_write(udc, USBA_DETACH);
+ 	spin_unlock_irqrestore(&udc->lock, flags);
+ 
++	usleep_range(1000, 2000);
++
+ 	stop_clock(udc);
+ }
+ 
+@@ -1980,10 +2002,15 @@ static void usba_set_mux_locked(struct usba_udc *udc, bool host)
+ {
+ 	unsigned long flags;
+ 	u32 ctrl;
++	int ret;
+ 
+ 	if (udc->mux_is_host == host)
+ 		return;
+ 
++	ret = clk_prepare_enable(udc->pclk);
++	if (ret)
++		return;
++
+ 	spin_lock_irqsave(&udc->lock, flags);
+ 	ctrl = usba_readl(udc, CTRL);
+ 	if (host)
+@@ -1993,6 +2020,17 @@ static void usba_set_mux_locked(struct usba_udc *udc, bool host)
+ 	usba_writel(udc, CTRL, ctrl);
+ 	udc->mux_is_host = host;
+ 	spin_unlock_irqrestore(&udc->lock, flags);
++
++	clk_disable_unprepare(udc->pclk);
++}
++
++static void usba_force_disconnect_pulse_locked(struct usba_udc *udc,
++					     bool final_mux_host)
++{
++	usba_set_mux_locked(udc, true);
++	usleep_range(USBA_DISCONNECT_PULSE_US_MIN,
++		     USBA_DISCONNECT_PULSE_US_MAX);
++	usba_set_mux_locked(udc, final_mux_host);
+ }
+ 
+ static void usba_apply_role_none_locked(struct usba_udc *udc, bool mux_host)
+@@ -2004,7 +2042,7 @@ static void usba_apply_role_none_locked(struct usba_udc *udc, bool mux_host)
+ 
+ 	usba_stop(udc);
+ 	phy_set_mode_ext(udc->phy, PHY_MODE_USB_DEVICE, 0);
+-	usba_set_mux_locked(udc, mux_host);
++	usba_force_disconnect_pulse_locked(udc, mux_host);
+ }
+ 
+ static int usba_apply_role_device_locked(struct usba_udc *udc)
+-- 
+2.43.0
+

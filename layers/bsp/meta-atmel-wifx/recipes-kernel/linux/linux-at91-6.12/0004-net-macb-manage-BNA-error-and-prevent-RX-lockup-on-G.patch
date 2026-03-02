@@ -1,7 +1,8 @@
-From f37bd4d8a97d15a151003ca9365f3a06638991ed Mon Sep 17 00:00:00 2001
+From a3c83ed79bad0bec9017bbb19132db76d4aecd0d Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yseraf-git@pm.me>
 Date: Wed, 28 Jan 2026 11:31:57 +0100
-Subject: [PATCH 4/7] net: macb: manage BNA error and prevent RX lockup on GEM
+Subject: [PATCH 04/12] net: macb: manage BNA error and prevent RX lockup on
+ GEM
 
 This patch addresses a controller freeze occurring under high incoming
 traffic loads on GEM-based platforms like the ATSAMA5D41. When the DMA

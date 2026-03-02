@@ -1,18 +1,27 @@
-From a659878c6fbaaec2f0eaffe4c0485730c77e770f Mon Sep 17 00:00:00 2001
+From ad3a9f594624175d309393af674d5b9025f469db Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Thu, 22 Jul 2021 12:18:27 +0200
-Subject: [PATCH 2/7] Add i2c3 bus support for SAMA5D4x family processor in dt
+Subject: [PATCH 02/12] Add i2c3 bus support for SAMA5D4x family processor in
+ dt
 
 Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
 ---
- arch/arm/boot/dts/microchip/sama5d4.dtsi | 36 ++++++++++++++++++++++++
- 1 file changed, 36 insertions(+)
+ arch/arm/boot/dts/microchip/sama5d4.dtsi | 37 ++++++++++++++++++++++++
+ 1 file changed, 37 insertions(+)
 
 diff --git a/arch/arm/boot/dts/microchip/sama5d4.dtsi b/arch/arm/boot/dts/microchip/sama5d4.dtsi
-index 958f76d95a01..0733fbc9e06c 100644
+index 958f76d95a01..e3f1f61bdc43 100644
 --- a/arch/arm/boot/dts/microchip/sama5d4.dtsi
 +++ b/arch/arm/boot/dts/microchip/sama5d4.dtsi
-@@ -433,6 +433,28 @@ i2c2: i2c@f8024000 {
+@@ -41,6 +41,7 @@ aliases {
+ 		i2c0 = &i2c0;
+ 		i2c1 = &i2c1;
+ 		i2c2 = &i2c2;
++		i2c3 = &i2c3;
+ 	};
+ 	cpus {
+ 		#address-cells = <1>;
+@@ -433,6 +434,28 @@ i2c2: i2c@f8024000 {
  				status = "disabled";
  			};
  
@@ -20,10 +29,10 @@ index 958f76d95a01..0733fbc9e06c 100644
 +				compatible = "atmel,sama5d4-i2c";
 +				reg = <0xfc038000 0x4000>;
 +				interrupts = <62 IRQ_TYPE_LEVEL_HIGH 6>;
-+				dmas = <&dma1
++				dmas = <&dma0
 +					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1)
 +					| AT91_XDMAC_DT_PERID(8))>,
-+				       <&dma1
++				       <&dma0
 +					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1)
 +					| AT91_XDMAC_DT_PERID(9))>;
 +				dma-names = "tx", "rx";
@@ -41,7 +50,7 @@ index 958f76d95a01..0733fbc9e06c 100644
  			sfr: sfr@f8028000 {
  				compatible = "atmel,sama5d4-sfr", "syscon";
  				reg = <0xf8028000 0x60>;
-@@ -1046,6 +1068,20 @@ pinctrl_i2c2_gpio: i2c2-gpio {
+@@ -1046,6 +1069,20 @@ pinctrl_i2c2_gpio: i2c2-gpio {
  					};
  				};
  
