@@ -30,6 +30,7 @@ SRC_URI += " \
     file://0010-usb-gadget-atmel_usba_udc-finalize-role-switch-lifec.patch \
     file://0011-usb-host-ohci-at91-harden-optional-VBUS-OC-GPIO-hand.patch \
     file://0012-wifx-add-support-for-LORIX-One-and-Wifx-L1-LoRaWAN-g.patch \
+    file://0013-leds-pmic-lorix-update-copyright-and-improve-error-h.patch \
 "
 
 SRC_URI:append:l1 = " \
