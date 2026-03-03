@@ -11,6 +11,7 @@ MENDER_PACKAGES = " \
     mender-migrations \    
     mender-state-scripts-base \
     mender-standalone-scripts \
+    mender-rollback-timer \
 "
 
 # Don't use default CORE_IMAGE_BASE_INSTALL in IMAGE_INSTALL
