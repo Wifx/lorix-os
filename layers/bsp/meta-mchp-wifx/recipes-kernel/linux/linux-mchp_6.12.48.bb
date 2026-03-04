@@ -6,6 +6,7 @@ LINUX_VERSION ?= "6.12.48"
 LINUX_VERSION_EXTENSION = "-wifx"
 KERNEL_VERSION_SANITY_SKIP = "1"
 KBRANCH = "linux-${LINUX_VERSION_SHORT}-mchp"
+KBUILD_DEFCONFIG = ""
 
 FILESEXTRAPATHS:prepend = "${THISDIR}/${PN}-${LINUX_VERSION_SHORT}:${THISDIR}/${PN}-${LINUX_VERSION_SHORT}/kernel-features:"
 
@@ -52,4 +53,3 @@ KERNEL_EXTRA_FEATURES ?= " \
     ', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'wireguard', 'kernel-meta-extra/wireguard/wireguard.scc', '', d)} \
 "
-KERNEL_EXTRA_FEATURES ?= ""
