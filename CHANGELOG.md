@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [LOR-434] Enforce password change on first login
 - [LOR-633] Save and restore all logs on reboot
+- [LOR-199] Provide auto-rollback on non commited update
 
 ### Changed
 

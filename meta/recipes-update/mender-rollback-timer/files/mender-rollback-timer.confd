@@ -1,0 +1,7 @@
+# /etc/conf.d/mender-rollback-timer
+# Copyright (c) 2026, Wifx SA <info@wifx.net>
+# All rights reserved.
+
+# Timeout in seconds before rolling back an uncommitted Mender update
+# For example, 7200 seconds = 2 hours
+MENDER_ROLLBACK_TIMEOUT=7200

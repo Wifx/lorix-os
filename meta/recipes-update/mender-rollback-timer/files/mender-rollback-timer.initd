@@ -1,0 +1,35 @@
+#!/sbin/openrc-run
+# Copyright (c) 2026, Wifx SA <info@wifx.net>
+# All rights reserved.
+
+name="Mender Rollback Timer"
+description="Reboots the device if a Mender update is not committed within a timeout"
+
+# Setting MENDER_ROLLBACK_TIMEOUT in /etc/conf.d/mender-rollback-timer
+: ${MENDER_ROLLBACK_TIMEOUT:=7200}
+
+command="/usr/sbin/mender-rollback-timer.sh"
+command_args="${MENDER_ROLLBACK_TIMEOUT}"
+
+depend() {
+    need localmount
+    after bootmisc
+    use logger
+}
+
+start_pre() {
+    # Only start the daemon if an upgrade is actually pending
+    if [ "$(fw_printenv -n upgrade_available 2>/dev/null)" != "1" ]; then
+        return 1
+    fi
+    return 0
+}
+
+start() {
+    ebegin "Starting Mender Rollback Timer"
+    
+    # Run the timer script in the background completely detached
+    ( ${command} ${command_args} </dev/null >/dev/null 2>&1 & )
+
+    eend 0
+}
