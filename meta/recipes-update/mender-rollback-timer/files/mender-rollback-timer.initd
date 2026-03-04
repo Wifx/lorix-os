@@ -3,7 +3,7 @@
 # All rights reserved.
 
 name="Mender Rollback Timer"
-description="Reboots the device if a Mender update is not committed within a timeout"
+description="Rollback the update and reboots the device if a Mender update is not committed within a timeout"
 
 # Setting MENDER_ROLLBACK_TIMEOUT in /etc/conf.d/mender-rollback-timer
 : ${MENDER_ROLLBACK_TIMEOUT:=7200}
@@ -18,6 +18,12 @@ depend() {
 }
 
 start_pre() {
+
+    # Only start the daemon if auto-rollback is enabled 
+    if [ "${MENDER_ROLLBACK_ENABLED}" != "true" ]; then
+        return 1
+    fi
+
     # Only start the daemon if an upgrade is actually pending
     if [ "$(fw_printenv -n upgrade_available 2>/dev/null)" != "1" ]; then
         return 1
