@@ -11,9 +11,6 @@
 [submodule "meta-arm"]
 	path = layers/bsp/meta-arm
 	url = https://git.yoctoproject.org/meta-arm
-[submodule "meta-atmel"]
-	path = layers/bsp/meta-atmel
-	url = https://github.com/Wifx/meta-atmel.git
 [submodule "meta-openrc"]
 	path = layers/meta-openrc
 	url = https://github.com/jsbronder/meta-openrc.git

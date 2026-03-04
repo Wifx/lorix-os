@@ -11,7 +11,7 @@ IMAGE_FSTYPES += "ubimg wimg tar.bz2"
 
 # Preferred providers
 PREFERRED_PROVIDER_virtual/firststage:sama5 = "at91bootstrap"
-PREFERRED_PROVIDER_virtual/kernel:sama5 = "linux-at91"
+PREFERRED_PROVIDER_virtual/kernel:sama5 = "linux-mchp"
 PREFERRED_PROVIDER_virtual/bootloader:sama5 = "u-boot-at91"
 PREFERRED_PROVIDER_u-boot:sama5 = "u-boot-at91"
 PREFERRED_PROVIDER_u-boot-env:sama5 = "u-boot-at91"
