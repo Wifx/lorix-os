@@ -1,4 +1,4 @@
-require linux-at91-6.12.inc
+require linux-mchp.inc
 LIC_FILES_CHKSUM = "file://COPYING;md5=6bc538ed5bd9a7fc9398086aedcd7e46"
 
 LINUX_VERSION_SHORT = "6.12"
@@ -43,7 +43,6 @@ SRC_URI:append:lorix-one = " \
 "
 
 KERNEL_EXTRA_FEATURES ?= " \
-    ${@bb.utils.contains('IMAGE_FEATURES', 'debug-tweaks', 'features/debug/debug-kernel.scc', '', d)} \
     features/netfilter/netfilter.scc \
     features/nf_tables/nf_tables.scc \
     features/cgroups/cgroups.scc \
@@ -51,5 +50,13 @@ KERNEL_EXTRA_FEATURES ?= " \
         cfg/net/ipv6.scc \
         cfg/net/ip6_nf.scc \
     ', '', d)} \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'wireguard', 'kernel-meta-extra/wireguard/wireguard.scc', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'wireguard', ' \
+        kernel-meta-extra/wireguard/wireguard.scc \
+    ', '', d)} \
+    ${@bb.utils.contains('IMAGE_FEATURES', 'debug-tweaks', ' \
+        features/debug/debug-dyndbg.scc \
+        features/debug/debug-kernel.scc \
+        features/debug/debug-runtime.scc \
+        features/debug/printk.scc \
+    ', '', d)} \
 "
