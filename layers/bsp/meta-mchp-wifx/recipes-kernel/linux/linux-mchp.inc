@@ -13,7 +13,7 @@ RDEPENDS:${KERNEL_PACKAGE_NAME}-base = ""
 PV = "${LINUX_VERSION}${LINUX_VERSION_EXTENSION}"
 
 SRC_URI = " \
-    git://github.com/linux4microchip/linux.git;name=machine;branch=${KBRANCH};protocol=https \
+    git://github.com/Wifx/linux4mchp.git;name=machine;branch=${KBRANCH};protocol=https \
     git://git.yoctoproject.org/yocto-kernel-cache;type=kmeta;name=meta;branch=yocto-${LINUX_VERSION_SHORT};destsuffix=${KMETA};protocol=https; \
     ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'file://systemd.cfg', '', d)} \
 "
