@@ -1,6 +1,12 @@
 #!/bin/sh
 
 PREFIX=SAVE-LOGS
+
+if [[ ! -f /data/mender/upgrade/migration-env.sh ]]; then
+    echo $PREFIX "migration-env.sh does not exist, skipping"
+    exit 0
+fi
+
 source /data/mender/upgrade/migration-env.sh
 
 if [ -f "$UPGRADE_LOG_PATH" ]; then
