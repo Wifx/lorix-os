@@ -3,7 +3,7 @@ DESCRIPTION = "Provides the LORIX Manager daemon and REST API"
 AUTHOR = "Wifx SA"
 
 LICENSE = "Proprietary"
-LIC_FILES_CHKSUM = "file://src/${GO_IMPORT}/LICENSE;md5=87c23dc0a84b7a881d4f06967744168f"
+LIC_FILES_CHKSUM = "file://src/${GO_IMPORT}/LICENSE;md5=b6142c989ce37a5c76a191352d8bc148"
 
 CVE_PRODUCT = "wifx:lorix-manager"
 
