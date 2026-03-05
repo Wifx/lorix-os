@@ -17,6 +17,10 @@
   # Time between two checks for new updates
   #onlineCheckPeriod = "24h"
 
+[remote-terminal]
+
+  #enabled = true
+  
 # The API allows remote access to the gateway for monitoring and control. Is is used by the Manager web GUI. Authentication is always needed.
 [api]
 
@@ -97,8 +101,20 @@
 
 # Wifx Connect connectivity services
 [connect]
-  # When enabled, the gateway will try to connect to Wifx Connect
+  # Whether Wifx Connect is enabled or not
   #enabled = false
 
-  # The address of the Wifx Connect server
-	#server = "broker.connect.iot.wifx.net:7422"
+  # URL to the Wifx Connect server. You can specify multiple severs by separating them by a coma.
+  #server = "eu1.connect.iot.wifx.net:4201,eu2.connect.iot.wifx.net:4202"
+
+  #timeout = "5s"
+
+  #pingInterval = "30s"
+
+  #pingMaxFails = "2"
+
+  #reconnectInterval = "10s"
+
+  [connect.credentials]
+    #jwt = ""
+    #seed = ""
