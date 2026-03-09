@@ -1,0 +1,29 @@
+From 9098a07fe5824455b54aeee11e2b1db55d63520c Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Mon, 9 Mar 2026 22:22:46 +0100
+Subject: [PATCH 14/14] wifx: l1 dts: remove useless bool argument for i2c
+ filters
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ arch/arm/boot/dts/microchip/l1.dts | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/boot/dts/microchip/l1.dts b/arch/arm/boot/dts/microchip/l1.dts
+index dcfc26e1e064..ebd2c0074b3e 100644
+--- a/arch/arm/boot/dts/microchip/l1.dts
++++ b/arch/arm/boot/dts/microchip/l1.dts
+@@ -101,8 +101,8 @@ ds1339: rtc@68 {
+ 			i2c2: i2c@f8024000 {
+ 				status = "okay";
+ 				clock-frequency = <400000>;
+-				i2c-digital-filter = "true";
+-				i2c-analog-filter = "true";
++				i2c-digital-filter;
++				i2c-analog-filter;
+ 
+ 				board-ec@2a {
+ 					compatible = "wifx,wgw-ec-i2c";
+-- 
+2.43.0
+
