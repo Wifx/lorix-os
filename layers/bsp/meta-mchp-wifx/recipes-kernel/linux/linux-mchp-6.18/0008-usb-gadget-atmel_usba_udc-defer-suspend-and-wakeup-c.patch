@@ -1,0 +1,131 @@
+From d6cba68c9623520e584251e6453172d3a01a4028 Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Wed, 25 Feb 2026 22:59:28 +0100
+Subject: [PATCH 08/13] usb: gadget: atmel_usba_udc: defer suspend and wakeup
+ clock transitions
+
+Move bus suspend and wakeup clock transitions out of hard IRQ context and
+serialize them through a delayed worker.
+
+Introduce a delayed-event bitmap and enqueue suspend and wakeup events
+from IRQ handlers. Wakeup clears any pending suspend event so wakeup
+takes precedence when transitions race.
+
+Initialize and cancel the delayed worker in probe/remove so deferred bus
+events are processed in a controlled lifecycle path.
+
+This keeps role-switch behavior intact while making bus transition timing
+deterministic and easier to validate.
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ drivers/usb/gadget/udc/atmel_usba_udc.c | 42 +++++++++++++++++++++++--
+ drivers/usb/gadget/udc/atmel_usba_udc.h |  3 ++
+ 2 files changed, 42 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/usb/gadget/udc/atmel_usba_udc.c b/drivers/usb/gadget/udc/atmel_usba_udc.c
+index 30892fc2edcc..b59bb2779d12 100644
+--- a/drivers/usb/gadget/udc/atmel_usba_udc.c
++++ b/drivers/usb/gadget/udc/atmel_usba_udc.c
+@@ -1723,6 +1723,34 @@ static void usba_dma_irq(struct usba_udc *udc, struct usba_ep *ep)
+ static int start_clock(struct usba_udc *udc);
+ static void stop_clock(struct usba_udc *udc);
+ 
++enum {
++	USBA_IRQ_CLOCK_EVT_SUSPEND_BIT = 0,
++	USBA_IRQ_CLOCK_EVT_WAKEUP_BIT,
++};
++
++static void usba_udc_irq_delayed(struct work_struct *work)
++{
++	struct usba_udc *udc = container_of(
++		to_delayed_work(work), struct usba_udc, udc_irq_delayed_work);
++	unsigned long events;
++	unsigned long flags;
++
++	mutex_lock(&udc->state_lock);
++	spin_lock_irqsave(&udc->lock, flags);
++	events = xchg(&udc->udc_irq_delayed_events, 0);
++	spin_unlock_irqrestore(&udc->lock, flags);
++
++	if (events & BIT(USBA_IRQ_CLOCK_EVT_WAKEUP_BIT)) {
++		start_clock(udc);
++		toggle_bias(udc, 1);
++	} else if (events & BIT(USBA_IRQ_CLOCK_EVT_SUSPEND_BIT)) {
++		if (READ_ONCE(udc->suspended))
++			stop_clock(udc);
++	}
++
++	mutex_unlock(&udc->state_lock);
++}
++
+ static irqreturn_t usba_udc_irq(int irq, void *devid)
+ {
+ 	struct usba_udc *udc = devid;
+@@ -1743,7 +1771,9 @@ static irqreturn_t usba_udc_irq(int irq, void *devid)
+ 		udc->suspended = true;
+ 		toggle_bias(udc, 0);
+ 		udc->bias_pulse_needed = true;
+-		stop_clock(udc);
++		set_bit(USBA_IRQ_CLOCK_EVT_SUSPEND_BIT,
++			&udc->udc_irq_delayed_events);
++		schedule_delayed_work(&udc->udc_irq_delayed_work, 0);
+ 		DBG(DBG_BUS, "Suspend detected\n");
+ 		if (udc->gadget.speed != USB_SPEED_UNKNOWN
+ 				&& udc->driver && udc->driver->suspend) {
+@@ -1754,9 +1784,12 @@ static irqreturn_t usba_udc_irq(int irq, void *devid)
+ 	}
+ 
+ 	if (status & USBA_WAKE_UP) {
+-		start_clock(udc);
+-		toggle_bias(udc, 1);
+ 		usba_writel(udc, INT_CLR, USBA_WAKE_UP);
++		clear_bit(USBA_IRQ_CLOCK_EVT_SUSPEND_BIT,
++			&udc->udc_irq_delayed_events);
++		set_bit(USBA_IRQ_CLOCK_EVT_WAKEUP_BIT,
++			&udc->udc_irq_delayed_events);
++		schedule_delayed_work(&udc->udc_irq_delayed_work, 0);
+ 		DBG(DBG_BUS, "Wake Up CPU detected\n");
+ 	}
+ 
+@@ -2512,6 +2545,8 @@ static int usba_udc_probe(struct platform_device *pdev)
+ 
+ 	spin_lock_init(&udc->lock);
+ 	mutex_init(&udc->state_lock);
++	INIT_DELAYED_WORK(&udc->udc_irq_delayed_work, usba_udc_irq_delayed);
++	udc->udc_irq_delayed_events = 0;
+ 	udc->pdev = pdev;
+ 	udc->pclk = pclk;
+ 	udc->hclk = hclk;
+@@ -2622,6 +2657,7 @@ static void usba_udc_remove(struct platform_device *pdev)
+ 	int i;
+ 
+ 	udc = platform_get_drvdata(pdev);
++	cancel_delayed_work_sync(&udc->udc_irq_delayed_work);
+ 
+ 	device_init_wakeup(&pdev->dev, 0);
+ 	usb_del_gadget_udc(&udc->gadget);
+diff --git a/drivers/usb/gadget/udc/atmel_usba_udc.h b/drivers/usb/gadget/udc/atmel_usba_udc.h
+index f3166672d257..4191a3128641 100644
+--- a/drivers/usb/gadget/udc/atmel_usba_udc.h
++++ b/drivers/usb/gadget/udc/atmel_usba_udc.h
+@@ -10,6 +10,7 @@
+ #include <linux/gpio/consumer.h>
+ #include <linux/phy/phy.h>
+ #include <linux/usb/role.h>
++#include <linux/workqueue.h>
+ 
+ /* USB register offsets */
+ #define USBA_CTRL				0x0000
+@@ -350,6 +351,8 @@ struct usba_udc {
+ 	struct clk *hclk;
+ 	struct usba_ep *usba_ep;
+ 	bool bias_pulse_needed;
++	unsigned long udc_irq_delayed_events;
++	struct delayed_work udc_irq_delayed_work;
+ 	bool clocked;
+ 	bool suspended;
+ #if IS_ENABLED(CONFIG_USB_ROLE_SWITCH)
+-- 
+2.43.0
+

@@ -1,0 +1,838 @@
+From 596abc0e24349fb21b22577ff0db58c4de4d49bb Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Thu, 5 Mar 2026 14:12:32 +0100
+Subject: [PATCH 11/13] usb: gadget: atmel_usba_udc: add FSM and fix clock/PM
+ races
+
+Replace ad-hoc suspended/shutting_down flags and dual
+state_lock/clock_lock with a small controller FSM
+(UNINIT/ACTIVE/SUSPENDED/STOPPED) plus a single pm_mutex to
+serialize start/stop, VBUS, role-switch and PM paths.
+
+All stop callers now use usba_stop_locked(), which masks and clears
+UDC interrupts, resets endpoints, detaches, then gates clocks/PHY and
+sets the FSM to STOPPED. The delayed IRQ worker drops events once
+STOPPED and only gates clocks on suspend when the gadget is already
+logically disconnected, avoiding hard lockups on rmmod/modprobe
+cycles. Also fix the EP0 descriptor to use EP0_FIFO_SIZE and
+bInterval = 0.
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ drivers/usb/gadget/udc/atmel_usba_udc.c | 378 ++++++++++++++----------
+ drivers/usb/gadget/udc/atmel_usba_udc.h |  20 +-
+ 2 files changed, 241 insertions(+), 157 deletions(-)
+
+diff --git a/drivers/usb/gadget/udc/atmel_usba_udc.c b/drivers/usb/gadget/udc/atmel_usba_udc.c
+index 5bd55a9c47c1..9172c1d8a42d 100644
+--- a/drivers/usb/gadget/udc/atmel_usba_udc.c
++++ b/drivers/usb/gadget/udc/atmel_usba_udc.c
+@@ -41,6 +41,132 @@ enum {
+ #define USBA_IRQ_CLOCK_EVT_SUSPEND BIT(USBA_IRQ_CLOCK_EVT_SUSPEND_BIT)
+ #define USBA_IRQ_CLOCK_EVT_WAKEUP BIT(USBA_IRQ_CLOCK_EVT_WAKEUP_BIT)
+ 
++enum usba_event {
++	USBA_EVENT_NONE = 0,
++	USBA_EVENT_SUSPEND,
++	USBA_EVENT_WAKEUP,
++	USBA_EVENT_RESUME,
++	USBA_EVENT_START,
++	USBA_EVENT_STOP,
++	USBA_EVENT_RESET,
++};
++
++#if defined(DEBUG)
++static const char *usba_event_name(enum usba_event event)
++{
++	switch (event) {
++	case USBA_EVENT_NONE:
++		return "none";
++	case USBA_EVENT_SUSPEND:
++		return "suspend";
++	case USBA_EVENT_WAKEUP:
++		return "wakeup";
++	case USBA_EVENT_RESUME:
++		return "resume";
++	case USBA_EVENT_START:
++		return "start";
++	case USBA_EVENT_STOP:
++		return "stop";
++	case USBA_EVENT_RESET:
++		return "reset";
++	default:
++		return "unknown";
++	}
++}
++
++static const char *usba_state_name(enum usba_state state)
++{
++	switch (state) {
++	case USBA_STATE_UNINIT:
++		return "uninit";
++	case USBA_STATE_ACTIVE:
++		return "active";
++	case USBA_STATE_SUSPENDED:
++		return "suspended";
++	case USBA_STATE_STOPPED:
++		return "stopped";
++	default:
++		return "unknown";
++	}
++}
++#endif
++
++static inline enum usba_state usba_get_state(struct usba_udc *udc)
++{
++	return READ_ONCE(udc->state);
++}
++
++static bool usba_can_transition(struct usba_udc *udc,
++				   enum usba_state new_state,
++				   enum usba_event event)
++{
++	enum usba_state cur = usba_get_state(udc);
++
++	/*
++	 * Keep policy intentionally simple for now: only block
++	 * obviously nonsensical transitions to catch logic bugs
++	 * without constraining valid runtime flows.
++	 */
++	switch (cur) {
++	case USBA_STATE_UNINIT:
++		/* probe() may set ACTIVE directly, STOPPED is used on remove */
++		return new_state == USBA_STATE_ACTIVE ||
++		       new_state == USBA_STATE_STOPPED;
++	case USBA_STATE_ACTIVE:
++		/* ACTIVE can go to SUSPENDED or STOPPED */
++		return new_state == USBA_STATE_ACTIVE ||
++		       new_state == USBA_STATE_SUSPENDED ||
++		       new_state == USBA_STATE_STOPPED;
++	case USBA_STATE_SUSPENDED:
++		/* SUSPENDED can resume to ACTIVE or be fully stopped */
++		return new_state == USBA_STATE_SUSPENDED ||
++		       new_state == USBA_STATE_ACTIVE ||
++		       new_state == USBA_STATE_STOPPED;
++	case USBA_STATE_STOPPED:
++		/*
++		 * STOPPED is normally terminal, but an explicit START event
++		 * (e.g. role switch back to device) is allowed to restart
++		 * the controller.
++		 */
++		if (new_state == USBA_STATE_ACTIVE && event == USBA_EVENT_START)
++			return true;
++		return new_state == USBA_STATE_STOPPED;
++	}
++
++	return false;
++}
++
++static void usba_set_state(struct usba_udc *udc,
++			   enum usba_state new_state,
++			   enum usba_event event)
++{
++	enum usba_state old = usba_get_state(udc);
++
++	if (old == new_state)
++		return;
++	if (!usba_can_transition(udc, new_state, event)) {
++#if defined(DEBUG)
++		dev_warn(&udc->pdev->dev,
++			 "invalid state transition: %s -> %s (event=%s)\n",
++			 usba_state_name(old), usba_state_name(new_state),
++			 usba_event_name(event));
++#else
++		dev_warn(&udc->pdev->dev,
++			 "invalid state transition: %d -> %d (event=%d)\n",
++			 old, new_state, event);
++#endif
++		return;
++	}
++
++	udc->state = new_state;
++#if defined(DEBUG)
++	dev_dbg(&udc->pdev->dev,
++		"state: %s -> %s (event=%s)\n",
++		usba_state_name(old), usba_state_name(new_state),
++		usba_event_name(event));
++#endif
++}
++
+ #ifdef CONFIG_USB_GADGET_DEBUG_FS
+ #include <linux/debugfs.h>
+ #include <linux/uaccess.h>
+@@ -1137,9 +1263,9 @@ static struct usb_endpoint_descriptor usba_ep0_desc = {
+ 	.bDescriptorType = USB_DT_ENDPOINT,
+ 	.bEndpointAddress = 0,
+ 	.bmAttributes = USB_ENDPOINT_XFER_CONTROL,
+-	.wMaxPacketSize = cpu_to_le16(64),
+-	/* FIXME: I have no idea what to put here */
+-	.bInterval = 1,
++	.wMaxPacketSize = cpu_to_le16(EP0_FIFO_SIZE),
++	/* bInterval is ignored for control endpoints, leave at 0 */
++	.bInterval = 0,
+ };
+ 
+ static const struct usb_gadget usba_gadget_template = {
+@@ -1734,8 +1860,8 @@ static void usba_dma_irq(struct usba_udc *udc, struct usba_ep *ep)
+ 	}
+ }
+ 
+-static int start_clock(struct usba_udc *udc);
+-static void stop_clock(struct usba_udc *udc);
++static int start_clock_locked(struct usba_udc *udc);
++static void stop_clock_locked(struct usba_udc *udc);
+ 
+ static void usba_udc_irq_delayed(struct work_struct *work)
+ {
+@@ -1745,38 +1871,41 @@ static void usba_udc_irq_delayed(struct work_struct *work)
+ 	unsigned long flags;
+ 
+ 	/*
+-	 * Single shutdown gate under state_lock: if remove() started before this
+-	 * worker run, pending delayed IRQ events are dropped and no clock/PHY
+-	 * transition is performed while teardown is in progress.
++	 * Serialize late clock/PHY updates against remove() via pm_mutex.
++	 * If remove() set the state to STOPPED, drop pending events and
++	 * return without touching clocks/PHY during teardown.
+ 	 */
+-	mutex_lock(&udc->state_lock);
++	mutex_lock(&udc->pm_mutex);
+ 	spin_lock_irqsave(&udc->lock, flags);
+ 	events = xchg(&udc->udc_irq_delayed_events, 0);
+ 	spin_unlock_irqrestore(&udc->lock, flags);
+-	if (READ_ONCE(udc->shutting_down)) {
+-		mutex_unlock(&udc->state_lock);
++	if (usba_get_state(udc) == USBA_STATE_STOPPED) {
++		mutex_unlock(&udc->pm_mutex);
+ 		return;
+ 	}
+ 
+ 	if (events & USBA_IRQ_CLOCK_EVT_WAKEUP) {
+-		start_clock(udc);
++		start_clock_locked(udc);
+ 		toggle_bias(udc, 1);
+ 	} else if (events & USBA_IRQ_CLOCK_EVT_SUSPEND) {
+-		if (!READ_ONCE(udc->suspended))
++		if (usba_get_state(udc) != USBA_STATE_SUSPENDED)
+ 			goto out;
+ 
+ 		/*
+-		 * Regression fix: when gadget is active, stopping clocks on
+-		 * cable unplug suspend can lock up the system. Keep clocks
+-		 * running in this case and let explicit stop paths
+-		 * (role none/udc stop/remove) gate clocks.
++		 * On suspend, always drop bias and schedule a bias pulse for the
++		 * next resume/reset. To avoid lockups when the gadget is still
++		 * active, leave clocks running and let explicit stop paths
++		 * (role none / udc stop / remove) gate clocks; only gate them
++		 * here when the gadget is already logically disconnected.
+ 		 */
++		toggle_bias(udc, 0);
++		udc->bias_pulse_needed = true;
+ 		if (udc->gadget.speed == USB_SPEED_UNKNOWN || !udc->driver)
+-			stop_clock(udc);
++			stop_clock_locked(udc);
+ 	}
+ 
+ out:
+-	mutex_unlock(&udc->state_lock);
++	mutex_unlock(&udc->pm_mutex);
+ }
+ 
+ static irqreturn_t usba_udc_irq(int irq, void *devid)
+@@ -1792,24 +1921,11 @@ static irqreturn_t usba_udc_irq(int irq, void *devid)
+ 	status = usba_readl(udc, INT_STA) & (int_enb | USBA_HIGH_SPEED);
+ 	DBG(DBG_INT, "irq, status=%#08x\n", status);
+ 
+-	if (unlikely(READ_ONCE(udc->shutting_down))) {
+-		/*
+-		 * remove() is in progress: do not execute normal IRQ logic.
+-		 * Only ack pending interrupt sources to avoid IRQ retriggering.
+-		 */
+-		if (status)
+-			usba_writel(udc, INT_CLR, status & ~USBA_HIGH_SPEED);
+-		spin_unlock(&udc->lock);
+-		return IRQ_HANDLED;
+-	}
+-
+ 	if (status & USBA_DET_SUSPEND) {
+ 		usba_writel(udc, INT_CLR, USBA_DET_SUSPEND | USBA_WAKE_UP);
+ 		usba_int_enb_set(udc, USBA_WAKE_UP);
+ 		usba_int_enb_clear(udc, USBA_DET_SUSPEND);
+-		udc->suspended = true;
+-		toggle_bias(udc, 0);
+-		udc->bias_pulse_needed = true;
++		usba_set_state(udc, USBA_STATE_SUSPENDED, USBA_EVENT_SUSPEND);
+ 		set_bit(USBA_IRQ_CLOCK_EVT_SUSPEND_BIT,
+ 			&udc->udc_irq_delayed_events);
+ 		schedule_delayed_work(&udc->udc_irq_delayed_work, 0);
+@@ -1833,7 +1949,7 @@ static irqreturn_t usba_udc_irq(int irq, void *devid)
+ 	}
+ 
+ 	if (status & USBA_END_OF_RESUME) {
+-		udc->suspended = false;
++		usba_set_state(udc, USBA_STATE_ACTIVE, USBA_EVENT_RESUME);
+ 		usba_writel(udc, INT_CLR, USBA_END_OF_RESUME);
+ 		usba_int_enb_clear(udc, USBA_WAKE_UP);
+ 		usba_int_enb_set(udc, USBA_DET_SUSPEND);
+@@ -1908,7 +2024,7 @@ static irqreturn_t usba_udc_irq(int irq, void *devid)
+ 				USBA_EPT_ENABLE | USBA_RX_SETUP);
+ 
+ 		/* If we get reset while suspended... */
+-		udc->suspended = false;
++		usba_set_state(udc, USBA_STATE_ACTIVE, USBA_EVENT_RESET);
+ 		usba_int_enb_clear(udc, USBA_WAKE_UP);
+ 
+ 		usba_int_enb_set(udc, USBA_BF(EPT_INT, 1) |
+@@ -1944,14 +2060,12 @@ static irqreturn_t usba_udc_irq(int irq, void *devid)
+ 	return IRQ_HANDLED;
+ }
+ 
+-static int start_clock(struct usba_udc *udc)
++static int start_clock_locked(struct usba_udc *udc)
+ {
+ 	int ret;
+ 
+-	mutex_lock(&udc->clock_lock);
+-
+ 	if (udc->clocked)
+-		goto out_ok;
++		return 0;
+ 
+ 	pm_stay_awake(&udc->pdev->dev);
+ 
+@@ -1959,69 +2073,53 @@ static int start_clock(struct usba_udc *udc)
+ 
+ 	ret = clk_prepare_enable(udc->pclk);
+ 	if (ret)
+-		goto err_power;
++		goto err_clock;
+ 
+ 	ret = clk_prepare_enable(udc->hclk);
+ 	if (ret) {
+ 		clk_disable_unprepare(udc->pclk);
+-		goto err_power;
++		goto err_clock;
+ 	}
+ 
+ 	udc->clocked = true;
+-out_ok:
+-	mutex_unlock(&udc->clock_lock);
+ 	return 0;
+ 
+-err_power:
+-	dev_err(&udc->pdev->dev, "start_clock failed: %d\n", ret);
++err_clock:
++	dev_err(&udc->pdev->dev, "start_clock_locked failed: %d\n", ret);
+ 	phy_power_off(udc->phy);
+ 	pm_relax(&udc->pdev->dev);
+-	mutex_unlock(&udc->clock_lock);
+ 	return ret;
+ }
+ 
+-static void stop_clock(struct usba_udc *udc)
++static void stop_clock_locked(struct usba_udc *udc)
+ {
+-	mutex_lock(&udc->clock_lock);
+-
+ 	if (!udc->clocked)
+-		goto out;
+-
+-	udc->clocked = false;
++		return;
+ 
+ 	clk_disable_unprepare(udc->hclk);
+ 	clk_disable_unprepare(udc->pclk);
+ 
+ 	phy_power_off(udc->phy);
+ 
+-	WRITE_ONCE(udc->clocked, false);
++	udc->clocked = false;
+ 
+ 	pm_relax(&udc->pdev->dev);
+-out:
+-	mutex_unlock(&udc->clock_lock);
+ }
+ 
+-static int usba_start(struct usba_udc *udc)
++static int usba_start_locked(struct usba_udc *udc)
+ {
+ 	unsigned long flags;
+ 	int ret;
+-	u32 tst;
+ 
+-	ret = start_clock(udc);
++	ret = start_clock_locked(udc);
+ 	if (ret)
+ 		return ret;
+ 
+-	if (udc->suspended) {
+-		dev_warn(&udc->pdev->dev,
+-			 "usba_start: already suspended, can't start\n");
++	if (usba_get_state(udc) == USBA_STATE_SUSPENDED)
+ 		return 0;
+-	}
+ 
+ 	spin_lock_irqsave(&udc->lock, flags);
+-	udc->suspended = false;
+-	tst = usba_readl(udc, TST);
+-	tst &= ~USBA_SPEED_CFG_MASK;
+-	usba_writel(udc, TST, tst);
++	usba_set_state(udc, USBA_STATE_ACTIVE, USBA_EVENT_START);
+ 
+ 	toggle_bias(udc, 1);
+ 	usba_ctrl_write(udc, USBA_ENABLE_MASK);
+@@ -2038,18 +2136,23 @@ static int usba_start(struct usba_udc *udc)
+ 	return 0;
+ }
+ 
+-static void usba_stop(struct usba_udc *udc)
++static void usba_stop_locked(struct usba_udc *udc)
+ {
+ 	unsigned long flags;
+-	u32 ctrl;
+ 
+ 	dev_dbg(&udc->pdev->dev,
+-		"usba_stop: clocked=%d suspended=%d role=%s\n",
++		"usba_stop_locked: clocked=%d state=%d role=%s\n",
+ 		udc->clocked,
+-		udc->suspended,
+-		usb_role_string(READ_ONCE(udc->role_sw_current)));
++		usba_get_state(udc),
++		usb_role_string(udc->role_sw_current));
+ 
+-	if (udc->suspended)
++	/*
++	 * Unified stop path: quiesce the controller and detach from the bus,
++	 * then gate clocks/PHY and move the FSM to STOPPED. When the FSM is
++	 * SUSPENDED, clock/PHY policy is owned by the delayed worker, so we
++	 * skip this path.
++	 */
++	if (usba_get_state(udc) == USBA_STATE_SUSPENDED)
+ 		return;
+ 
+ 	spin_lock_irqsave(&udc->lock, flags);
+@@ -2067,22 +2170,15 @@ static void usba_stop(struct usba_udc *udc)
+ 
+ 	/* This will also disable the DP pullup */
+ 	toggle_bias(udc, 0);
+-	ctrl = usba_readl(udc, CTRL);
+-	if (udc->role_sw && READ_ONCE(udc->role_sw_current) != USB_ROLE_DEVICE) {
++	if (udc->role_sw && udc->role_sw_current != USB_ROLE_DEVICE) {
+ 		usba_ctrl_write(udc, USBA_DETACH | USBA_PULLD_DIS);
+ 	} else {
+ 		usba_ctrl_write(udc, USBA_DETACH);
+ 	}
+ 	spin_unlock_irqrestore(&udc->lock, flags);
+ 
+-	/*
+-	 * Let disconnect state propagate to function/network layers before
+-	 * fully gating the controller clocks. This reduces reconnect races
+-	 * when role toggles quickly with active RNDIS traffic.
+-	 */
+-	usleep_range(1000, 2000);
+-
+-	stop_clock(udc);
++	stop_clock_locked(udc);
++	usba_set_state(udc, USBA_STATE_STOPPED, USBA_EVENT_STOP);
+ }
+ 
+ static irqreturn_t usba_vbus_irq_thread(int irq, void *devid)
+@@ -2093,25 +2189,24 @@ static irqreturn_t usba_vbus_irq_thread(int irq, void *devid)
+ 	/* debounce */
+ 	udelay(10);
+ 
+-	mutex_lock(&udc->state_lock);
++	mutex_lock(&udc->pm_mutex);
+ 
+ 	vbus = vbus_is_present(udc);
+ 	if (vbus != udc->vbus_prev) {
+ 		if (vbus) {
+ 			phy_set_mode_ext(udc->phy, PHY_MODE_USB_DEVICE, 1);
+-			usba_start(udc);
++			usba_start_locked(udc);
+ 		} else {
+-			udc->suspended = false;
+-			if (udc->driver)
+-				usb_gadget_disconnect(&udc->gadget);
++			if (udc->driver->disconnect)
++				udc->driver->disconnect(&udc->gadget);
+ 
+-			usba_stop(udc);
++			usba_stop_locked(udc);
+ 			phy_set_mode_ext(udc->phy, PHY_MODE_USB_DEVICE, 0);
+ 		}
+ 		udc->vbus_prev = vbus;
+ 	}
+ 
+-	mutex_unlock(&udc->state_lock);
++	mutex_unlock(&udc->pm_mutex);
+ 	return IRQ_HANDLED;
+ }
+ 
+@@ -2194,8 +2289,6 @@ static void usba_apply_role_none_locked(struct usba_udc *udc, bool mux_host)
+ 	udc->udc_irq_delayed_events = 0;
+ 	spin_unlock_irqrestore(&udc->lock, flags);
+ 
+-	udc->suspended = false;
+-
+ 	/*
+ 	 * Notify gadget framework when we were effectively connected so
+ 	 * function drivers (e.g. RNDIS) can teardown network state cleanly
+@@ -2204,7 +2297,7 @@ static void usba_apply_role_none_locked(struct usba_udc *udc, bool mux_host)
+ 	if (udc->driver)
+ 		usb_gadget_disconnect(&udc->gadget);
+ 
+-	usba_stop(udc);
++	usba_stop_locked(udc);
+ 	phy_set_mode_ext(udc->phy, PHY_MODE_USB_DEVICE, 0);
+ 
+ 	usba_force_disconnect_pulse_locked(udc, mux_host);
+@@ -2236,10 +2329,8 @@ static int usba_apply_role_device_locked(struct usba_udc *udc)
+ 	}
+ 
+ 	/* role=device is an explicit resume/start request */
+-	udc->suspended = false;
+-
+ 	phy_set_mode_ext(udc->phy, PHY_MODE_USB_DEVICE, 1);
+-	ret = usba_start(udc);
++	ret = usba_start_locked(udc);
+ 	if (ret) {
+ 		dev_err(&udc->pdev->dev,
+ 			"failed to start UDC in device mode: %d\n", ret);
+@@ -2260,7 +2351,8 @@ static int usba_role_switch_set(struct usb_role_switch *sw, enum usb_role role)
+ 	enum usb_role role_sw_previous;
+ 	int ret = 0;
+ 
+-	mutex_lock(&udc->state_lock);
++	mutex_lock(&udc->pm_mutex);
++	role_sw_previous = udc->role_sw_current;
+ 
+ 	/* should not happend*/
+ 	if (udc->vbus_pin) {
+@@ -2270,7 +2362,6 @@ static int usba_role_switch_set(struct usb_role_switch *sw, enum usb_role role)
+ 		goto out;
+ 	}
+ 
+-	role_sw_previous = udc->role_sw_current;
+ 	if (role != role_sw_previous) {
+ 		udc->role_sw_current = role;
+ 		switch (role) {
+@@ -2300,22 +2391,19 @@ static int usba_role_switch_set(struct usb_role_switch *sw, enum usb_role role)
+ 		dev_dbg(&udc->pdev->dev, "role: already %s\n",
+ 			usb_role_string(role));
+ 	}
++	mutex_unlock(&udc->pm_mutex);
++	return 0;
+ 
+ out:
+-	if (ret)
+-		udc->role_sw_current = role_sw_previous;
+-	mutex_unlock(&udc->state_lock);
++	udc->role_sw_current = role_sw_previous;
++	mutex_unlock(&udc->pm_mutex);
+ 	return ret;
+ }
+ 
+ static enum usb_role usba_role_switch_get(struct usb_role_switch *sw)
+ {
+ 	struct usba_udc *udc = usb_role_switch_get_drvdata(sw);
+-	enum usb_role role;
+-
+-	role = READ_ONCE(udc->role_sw_current);
+-
+-	return role;
++	return READ_ONCE(udc->role_sw_current);
+ }
+ #endif
+ 
+@@ -2373,7 +2461,7 @@ static int atmel_usba_start(struct usb_gadget *gadget,
+ 	udc->driver = driver;
+ 	spin_unlock_irqrestore(&udc->lock, flags);
+ 
+-	mutex_lock(&udc->state_lock);
++	mutex_lock(&udc->pm_mutex);
+ 
+ 	if (udc->vbus_pin)
+ 		enable_irq(gpiod_to_irq(udc->vbus_pin));
+@@ -2383,7 +2471,7 @@ static int atmel_usba_start(struct usb_gadget *gadget,
+ 		dev_dbg(&udc->pdev->dev,
+ 			"udc_start: deferred because role=%s\n",
+ 			usb_role_string(READ_ONCE(udc->role_sw_current)));
+-		mutex_unlock(&udc->state_lock);
++		mutex_unlock(&udc->pm_mutex);
+ 		return 0;
+ 	}
+ #endif
+@@ -2393,19 +2481,19 @@ static int atmel_usba_start(struct usb_gadget *gadget,
+ 	udc->vbus_prev = vbus_is_present(udc);
+ 	if (udc->vbus_prev) {
+ 		phy_set_mode_ext(udc->phy, PHY_MODE_USB_DEVICE, 1);
+-		ret = usba_start(udc);
++		ret = usba_start_locked(udc);
+ 		if (ret)
+ 			goto err;
+ 	}
+ 
+-	mutex_unlock(&udc->state_lock);
++	mutex_unlock(&udc->pm_mutex);
+ 	return 0;
+ 
+ err:
+ 	if (udc->vbus_pin)
+ 		disable_irq(gpiod_to_irq(udc->vbus_pin));
+ 
+-	mutex_unlock(&udc->state_lock);
++	mutex_unlock(&udc->pm_mutex);
+ 
+ 	spin_lock_irqsave(&udc->lock, flags);
+ 	udc->devstatus &= ~(1 << USB_DEVICE_SELF_POWERED);
+@@ -2420,7 +2508,7 @@ static int atmel_usba_stop(struct usb_gadget *gadget)
+ 	unsigned long flags;
+ 
+ 	cancel_delayed_work_sync(&udc->udc_irq_delayed_work);
+-	mutex_lock(&udc->state_lock);
++	mutex_lock(&udc->pm_mutex);
+ 	spin_lock_irqsave(&udc->lock, flags);
+ 	udc->udc_irq_delayed_events = 0;
+ 	spin_unlock_irqrestore(&udc->lock, flags);
+@@ -2429,21 +2517,21 @@ static int atmel_usba_stop(struct usb_gadget *gadget)
+ 		disable_irq(gpiod_to_irq(udc->vbus_pin));
+ 
+ 	/*
+-	 * Block new endpoint queueing immediately during unbind/remove.
+-	 * Keep udc->driver valid until usba_stop() has fully quiesced
+-	 * endpoints so function-driver teardown callbacks stay coherent.
++	 * Ensure the controller is fully quiesced and clocks/PHY are
++	 * gated on gadget unbind, so a subsequent probe starts from a
++	 * clean STOPPED state regardless of the last external role.
+ 	 */
+-	spin_lock_irqsave(&udc->lock, flags);
+-	udc->gadget.speed = USB_SPEED_UNKNOWN;
+-	spin_unlock_irqrestore(&udc->lock, flags);
+-
+-	udc->suspended = false;
+-	usba_stop(udc);
++	usba_stop_locked(udc);
+ 
++	/*
++	 * Block new endpoint queueing immediately during unbind/remove and
++	 * drop the gadget driver reference atomically.
++	 */
+ 	spin_lock_irqsave(&udc->lock, flags);
++	udc->gadget.speed = USB_SPEED_UNKNOWN;
+ 	udc->driver = NULL;
+ 	spin_unlock_irqrestore(&udc->lock, flags);
+-	mutex_unlock(&udc->state_lock);
++	mutex_unlock(&udc->pm_mutex);
+ 
+ 	return 0;
+ }
+@@ -2745,11 +2833,10 @@ static int usba_udc_probe(struct platform_device *pdev)
+ 		return PTR_ERR(hclk);
+ 
+ 	spin_lock_init(&udc->lock);
+-	mutex_init(&udc->state_lock);
+-	mutex_init(&udc->clock_lock);
++	mutex_init(&udc->pm_mutex);
+ 	INIT_DELAYED_WORK(&udc->udc_irq_delayed_work, usba_udc_irq_delayed);
+ 	udc->udc_irq_delayed_events = 0;
+-	udc->shutting_down = false;
++	udc->state = USBA_STATE_UNINIT;
+ 	udc->pdev = pdev;
+ 	udc->pclk = pclk;
+ 	udc->hclk = hclk;
+@@ -2765,9 +2852,7 @@ static int usba_udc_probe(struct platform_device *pdev)
+ 		return ret;
+ 	}
+ 	usba_writel(udc, CTRL, USBA_DETACH | USBA_EN_USBA);
+-#if IS_ENABLED(CONFIG_USB_ROLE_SWITCH)
+ 	udc->mux_is_host = false; /* EN_USBA set => device path selected */
+-#endif
+ 	clk_disable_unprepare(pclk);
+ 
+ 	udc->usba_ep = atmel_udc_of_init(pdev, udc);
+@@ -2800,7 +2885,7 @@ static int usba_udc_probe(struct platform_device *pdev)
+ 		role_sw_desc.name = dev_name(&pdev->dev);
+ 		role_sw_desc.set = usba_role_switch_set;
+ 		role_sw_desc.get = usba_role_switch_get;
+-#ifdef DEBUG_SYSFS
++#ifdef DEBUG
+ 		role_sw_desc.allow_userspace_control = true;
+ #endif
+ 
+@@ -2817,7 +2902,7 @@ static int usba_udc_probe(struct platform_device *pdev)
+ 		dev_info(&pdev->dev,
+ 			 "%s registered as usb-role-switch, current role=%s\n",
+ 			 role_sw_desc.name,
+-			 usb_role_string(READ_ONCE(udc->role_sw_current)));
++			 usb_role_string(udc->role_sw_current));
+ 	}
+ #endif
+ 
+@@ -2849,6 +2934,7 @@ static int usba_udc_probe(struct platform_device *pdev)
+ 		goto out_role_sw;
+ 	}
+ 	device_init_wakeup(&pdev->dev, 1);
++	udc->state = USBA_STATE_ACTIVE;
+ 
+ 	usba_init_debugfs(udc);
+ 	for (i = 1; i < udc->num_ep; i++)
+@@ -2873,8 +2959,7 @@ static void usba_udc_remove(struct platform_device *pdev)
+ 	udc = platform_get_drvdata(pdev);
+ 
+ 	dev_dbg(&pdev->dev, "remove: start (driver=%s)\n", udc->driver ? "bound" : "none");
+-
+-	WRITE_ONCE(udc->shutting_down, true);
++	usba_set_state(udc, USBA_STATE_STOPPED, USBA_EVENT_STOP);
+ 	disable_irq(udc->irq);
+ 	cancel_delayed_work_sync(&udc->udc_irq_delayed_work);
+ 	udc->udc_irq_delayed_events = 0;
+@@ -2908,31 +2993,29 @@ static int usba_udc_suspend(struct device *dev)
+ 
+ 	/*
+ 	 * Flush delayed IRQ worker/events before PM transition.
+-	 * Keep this before state_lock to avoid lock inversion with worker.
++	 * Keep this before pm_mutex to avoid lock inversion with worker.
+ 	 */
+ 	cancel_delayed_work_sync(&udc->udc_irq_delayed_work);
+ 	spin_lock_irqsave(&udc->lock, flags);
+ 	udc->udc_irq_delayed_events = 0;
+ 	spin_unlock_irqrestore(&udc->lock, flags);
+ 
+-	mutex_lock(&udc->state_lock);
++	mutex_lock(&udc->pm_mutex);
+ 
+ #if IS_ENABLED(CONFIG_USB_ROLE_SWITCH)
+-	if (udc->role_sw && READ_ONCE(udc->role_sw_current) != USB_ROLE_DEVICE) {
++	if (udc->role_sw && udc->role_sw_current != USB_ROLE_DEVICE) {
+ 		/*
+ 		 * UDC PM callbacks can run while gadget driver is bound but role is
+ 		 * host/none. Keep device side quiesced and do not arm device wake path.
+ 		 */
+-		udc->suspended = false;
+-		usba_stop(udc);
+-		mutex_unlock(&udc->state_lock);
++		usba_stop_locked(udc);
++		mutex_unlock(&udc->pm_mutex);
+ 		return 0;
+ 	}
+ #endif
+ 
+ 	if (!device_may_wakeup(dev)) {
+-		udc->suspended = false;
+-		usba_stop(udc);
++		usba_stop_locked(udc);
+ 		goto out;
+ 	}
+ 
+@@ -2942,14 +3025,14 @@ static int usba_udc_suspend(struct device *dev)
+ 	 */
+ 	if (udc->vbus_pin) {
+ 		/* FIXME: right to stop here...??? */
+-		usba_stop(udc);
++		usba_stop_locked(udc);
+ 		enable_irq_wake(gpiod_to_irq(udc->vbus_pin));
+ 	}
+ 
+ 	enable_irq_wake(udc->irq);
+ 
+ out:
+-	mutex_unlock(&udc->state_lock);
++	mutex_unlock(&udc->pm_mutex);
+ 	return 0;
+ }
+ 
+@@ -2964,7 +3047,7 @@ static int usba_udc_resume(struct device *dev)
+ 
+ 	/*
+ 	 * Drop stale delayed IRQ worker/events carried across system suspend.
+-	 * Keep this before state_lock to avoid lock inversion with worker.
++	 * Keep this before pm_mutex to avoid lock inversion with worker.
+ 	 */
+ 	cancel_delayed_work_sync(&udc->udc_irq_delayed_work);
+ 	spin_lock_irqsave(&udc->lock, flags);
+@@ -2979,18 +3062,17 @@ static int usba_udc_resume(struct device *dev)
+ 	}
+ 
+ 	/* If Vbus is present, enable the controller and wait for reset */
+-	mutex_lock(&udc->state_lock);
++	mutex_lock(&udc->pm_mutex);
+ 
+ #if IS_ENABLED(CONFIG_USB_ROLE_SWITCH)
+-	if (udc->role_sw && READ_ONCE(udc->role_sw_current) != USB_ROLE_DEVICE) {
++	if (udc->role_sw && udc->role_sw_current != USB_ROLE_DEVICE) {
+ 		/*
+ 		 * Do not resurrect the device controller on PM resume when role is
+ 		 * host/none; role-switch paths will re-enable device side explicitly.
+ 		 */
+-		udc->suspended = false;
+-		usba_stop(udc);
++		usba_stop_locked(udc);
+ 		phy_set_mode_ext(udc->phy, PHY_MODE_USB_DEVICE, 0);
+-		mutex_unlock(&udc->state_lock);
++		mutex_unlock(&udc->pm_mutex);
+ 		return 0;
+ 	}
+ #endif
+@@ -3002,9 +3084,9 @@ static int usba_udc_resume(struct device *dev)
+ 	udc->vbus_prev = vbus_is_present(udc);
+ 	if (udc->vbus_prev) {
+ 		phy_set_mode_ext(udc->phy, PHY_MODE_USB_DEVICE, 1);
+-		usba_start(udc);
++		usba_start_locked(udc);
+ 	}
+-	mutex_unlock(&udc->state_lock);
++	mutex_unlock(&udc->pm_mutex);
+ 
+ 	return 0;
+ }
+diff --git a/drivers/usb/gadget/udc/atmel_usba_udc.h b/drivers/usb/gadget/udc/atmel_usba_udc.h
+index 3d52b0fda8d3..c16fd9eaadf4 100644
+--- a/drivers/usb/gadget/udc/atmel_usba_udc.h
++++ b/drivers/usb/gadget/udc/atmel_usba_udc.h
+@@ -260,6 +260,13 @@ enum usba_ctrl_state {
+   EP_STATE_HALT,
+ */
+ 
++enum usba_state {
++	USBA_STATE_UNINIT = 0,
++	USBA_STATE_ACTIVE,
++	USBA_STATE_SUSPENDED,
++	USBA_STATE_STOPPED,
++};
++
+ struct usba_dma_desc {
+ 	dma_addr_t next;
+ 	dma_addr_t addr;
+@@ -331,10 +338,8 @@ struct usba_udc {
+ 	/* Protect hw registers from concurrent modifications */
+ 	spinlock_t lock;
+ 
+-	/* Serialize start/stop and role/VBUS transitions */
+-	struct mutex state_lock;
+-	/* Serialize clock/phy/pm transitions */
+-	struct mutex clock_lock;
++	/* Serialize start/stop, role/VBUS and PM/clock/phy transitions */
++	struct mutex pm_mutex;
+ 
+ 	void __iomem *regs;
+ 	void __iomem *fifo;
+@@ -355,12 +360,9 @@ struct usba_udc {
+ 	bool bias_pulse_needed;
+ 	unsigned long udc_irq_delayed_events;
+ 	struct delayed_work udc_irq_delayed_work;
+-	bool shutting_down;
+-	bool clocked;
+-	bool suspended;
+-#if IS_ENABLED(CONFIG_USB_ROLE_SWITCH)
+ 	bool mux_is_host;
+-#endif
++	enum usba_state state;
++	bool clocked;
+ 	bool ep_prealloc;
+ 
+ 	u16 devstatus;
+-- 
+2.43.0
+
