@@ -1,0 +1,10 @@
+require linux-mchp.inc
+
+LIC_FILES_CHKSUM = "file://COPYING;md5=6bc538ed5bd9a7fc9398086aedcd7e46"
+
+LINUX_VERSION_SHORT = "6.12"
+LINUX_VERSION = "6.12.48"
+LINUX_VERSION_EXTENSION = "-wifx"
+
+SRCREV_machine = "09c915bc2d12b2bb180762160854ac0ea929aa70"
+SRCREV_meta = "7a8d96185b9be165feb974fe6297b518f83b3b9c"
