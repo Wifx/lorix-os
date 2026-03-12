@@ -12,6 +12,8 @@ sleep "$TIMEOUT"
 if [ "$(fw_printenv -n upgrade_available 2>/dev/null)" = "1" ]; then
     logger -t mender-rollback "Mender update wasn't committed within ${TIMEOUT}s. Running \`mender-update rollback\`."
     mender-update rollback
+    logger -t mender-rollback "Rebooting to complete rollback."
+    wall "System reboot imminent: Mender update was not committed within ${TIMEOUT}s. Rolling back."
     reboot -f
 else
     logger -t mender-rollback "Mender update was committed within ${TIMEOUT}s. No rollback needed."

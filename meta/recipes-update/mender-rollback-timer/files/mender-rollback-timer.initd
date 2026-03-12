@@ -5,11 +5,13 @@
 name="Mender Rollback Timer"
 description="Rollback the update and reboots the device if a Mender update is not committed within a timeout"
 
-# Setting MENDER_ROLLBACK_TIMEOUT in /etc/conf.d/mender-rollback-timer
+# Settings from /etc/conf.d/mender-rollback-timer
 : ${MENDER_ROLLBACK_TIMEOUT:=7200}
+: ${MENDER_ROLLBACK_ENABLED:=false}
 
 command="/usr/sbin/mender-rollback-timer.sh"
 command_args="${MENDER_ROLLBACK_TIMEOUT}"
+pidfile="/run/${RC_SVCNAME}.pid"
 
 depend() {
     need localmount
@@ -17,25 +19,34 @@ depend() {
     use logger
 }
 
-start_pre() {
-
-    # Only start the daemon if auto-rollback is enabled 
+start() {
+    # Only start if auto-rollback is enabled
     if [ "${MENDER_ROLLBACK_ENABLED}" != "true" ]; then
-        return 1
+        einfo "Auto-rollback is disabled, skipping"
+        return 0
     fi
 
-    # Only start the daemon if an upgrade is actually pending
+    # Only start if an upgrade is actually pending
     if [ "$(fw_printenv -n upgrade_available 2>/dev/null)" != "1" ]; then
-        return 1
+        einfo "No pending upgrade, skipping"
+        return 0
     fi
-    return 0
+
+    ebegin "Starting ${name}"
+    start-stop-daemon --start \
+        --background \
+        --make-pidfile --pidfile "${pidfile}" \
+        --exec "${command}" \
+        -- ${command_args}
+    eend $?
 }
 
-start() {
-    ebegin "Starting Mender Rollback Timer"
-    
-    # Run the timer script in the background completely detached
-    ( ${command} ${command_args} </dev/null >/dev/null 2>&1 & )
+stop() {
+    if [ ! -f "${pidfile}" ]; then
+        return 0
+    fi
 
-    eend 0
+    ebegin "Stopping ${name}"
+    start-stop-daemon --stop --pidfile "${pidfile}"
+    eend $?
 }
