@@ -33,4 +33,5 @@ SRC_URI += " \
     file://0012-usb-host-ohci-at91-harden-optional-VBUS-OC-GPIO-hand.patch \
     file://0013-wifx-add-support-for-LORIX-One-and-Wifx-L1-LoRaWAN-g.patch \
     file://0014-wifx-l1-dts-remove-useless-bool-argument-for-i2c-fil.patch \
+    file://0015-watchdog-sama5d4-register-driver-earlier-at-boot.patch \
 "

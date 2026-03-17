@@ -1,0 +1,63 @@
+From 093c0b304e0246004b4abac38b5a4021da2ae35d Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Tue, 17 Mar 2026 10:50:37 +0100
+Subject: [PATCH 15/15] watchdog: sama5d4: register driver earlier at boot
+
+Some legacy products boot with the watchdog already enabled by an old
+U-Boot, sometimes with a very short timeout (about 1-2 seconds). In
+that case, the kernel may not take control in time and can reset before
+userspace.
+
+Move the built-in SAMA5D4 watchdog driver registration to an earlier
+initcall stage so probing happens sooner and the watchdog is
+reconfigured/pinged earlier during boot. Keep module behavior unchanged
+for modular builds.
+
+This reduces early-boot reset risk on systems handed over with an
+overly short watchdog timeout.
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ drivers/watchdog/sama5d4_wdt.c | 19 ++++++++++++++++++-
+ 1 file changed, 18 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/watchdog/sama5d4_wdt.c b/drivers/watchdog/sama5d4_wdt.c
+index 13e72918338a..9deafa573668 100644
+--- a/drivers/watchdog/sama5d4_wdt.c
++++ b/drivers/watchdog/sama5d4_wdt.c
+@@ -6,6 +6,7 @@
+  */
+ 
+ #include <linux/delay.h>
++#include <linux/init.h>
+ #include <linux/interrupt.h>
+ #include <linux/io.h>
+ #include <linux/kernel.h>
+@@ -385,7 +386,23 @@ static struct platform_driver sama5d4_wdt_driver = {
+ 		.of_match_table = sama5d4_wdt_of_match,
+ 	}
+ };
+-module_platform_driver(sama5d4_wdt_driver);
++
++static int __init sama5d4_wdt_driver_init(void)
++{
++	return platform_driver_register(&sama5d4_wdt_driver);
++}
++
++#ifdef MODULE
++module_init(sama5d4_wdt_driver_init);
++#else
++subsys_initcall(sama5d4_wdt_driver_init);
++#endif
++
++static void __exit sama5d4_wdt_driver_exit(void)
++{
++	platform_driver_unregister(&sama5d4_wdt_driver);
++}
++module_exit(sama5d4_wdt_driver_exit);
+ 
+ MODULE_AUTHOR("Atmel Corporation");
+ MODULE_DESCRIPTION("Atmel SAMA5D4 Watchdog Timer driver");
+-- 
+2.43.0
+
