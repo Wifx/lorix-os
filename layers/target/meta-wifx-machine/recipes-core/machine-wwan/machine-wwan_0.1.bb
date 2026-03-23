@@ -13,6 +13,8 @@ SRC_URI = " \
     file://99-wwan-modem.rules \
     file://wwan-autoconnect-unblock.cron \
     file://wwan-autoconnect-unblock.sh \
+    file://wwan-modem-handle.cron \
+    file://wwan-modem-handle.sh \
 "
 
 PR = "r0"
@@ -44,9 +46,11 @@ do_install:l1() {
 
     install -d -m 755 ${D}${sysconfdir}/cron.d
     install -p -m 0644 ${WORKDIR}/wwan-autoconnect-unblock.cron ${D}${sysconfdir}/cron.d/wwan-autoconnect-unblock
+    install -p -m 0644 ${WORKDIR}/wwan-modem-handle.cron ${D}${sysconfdir}/cron.d/wwan-modem-handle
 
     install -d -m 755 ${D}${sysconfdir}/cron.script
     install -p -m 0755 ${WORKDIR}/wwan-autoconnect-unblock.sh ${D}${sysconfdir}/cron.script/wwan-autoconnect-unblock.sh
+    install -p -m 0755 ${WORKDIR}/wwan-modem-handle.sh ${D}${sysconfdir}/cron.script/wwan-modem-handle.sh
 }
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
@@ -55,5 +59,7 @@ FILES:${PN} += " \
     ${nonarch_base_libdir}/os/wwan/* \
     ${nonarch_base_libdir}/udev/rules.d/* \
     ${sysconfdir}/cron.d/wwan-autoconnect-unblock \
+    ${sysconfdir}/cron.d/wwan-modem-handle \
     ${sysconfdir}/cron.script/wwan-autoconnect-unblock.sh \
+    ${sysconfdir}/cron.script/wwan-modem-handle.sh \
 "
