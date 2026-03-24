@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-705] Forwarder logs are no more added to the "all" log
 - [LOR-706] Move OPKG status file into A/B slotted partition (/etc/slotfs)
 - [LOR-697] Update manager to v1.0
+- modemmanager: fix AT+COPS timeout command (increase from 120s to 180s)
+- modemmanager: fix AT+CGACT timeout command (increase from default 3s to specific 30s)
+- modemmanager: fix AT+GTRNDIS timeout command (increase from default 3-6s to specific 30s)
 
 ### Fixed
 

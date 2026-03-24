@@ -1,0 +1,63 @@
+From d7a6b77c05160ea07abe6083709bd3b397fbe357 Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Mon, 23 Mar 2026 22:09:33 +0100
+Subject: [PATCH 8/9] 3gpp: use 30s timeout for CGACT queries
+
+Increase the timeout used for +CGACT? queries from 3s to 30s in
+the generic bearer connection status polling and in the 3GPP
+profile activation check.
+
+This matches the MC610 datasheet, which documents a 30000 ms
+maximum response/result duration for CGACT operations.
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ src/mm-broadband-bearer.c | 3 ++-
+ src/mm-broadband-modem.c  | 3 ++-
+ 2 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/src/mm-broadband-bearer.c b/src/mm-broadband-bearer.c
+index 69bf699b..b5f929a7 100644
+--- a/src/mm-broadband-bearer.c
++++ b/src/mm-broadband-bearer.c
+@@ -1680,6 +1680,7 @@ load_connection_status (MMBaseBearer        *self,
+                         GAsyncReadyCallback  callback,
+                         gpointer             user_data)
+ {
++    static const guint cgact_query_timeout_secs = 30;
+     GTask                  *task;
+     g_autoptr(MMBaseModem)  modem = NULL;
+     MMIfacePortAt          *port;
+@@ -1718,7 +1719,7 @@ load_connection_status (MMBaseBearer        *self,
+     mm_base_modem_at_command_full (MM_BASE_MODEM (modem),
+                                    port,
+                                    "+CGACT?",
+-                                   3,
++                                   cgact_query_timeout_secs,
+                                    FALSE, /* allow cached */
+                                    FALSE, /* raw */
+                                    NULL, /* cancellable */
+diff --git a/src/mm-broadband-modem.c b/src/mm-broadband-modem.c
+index 222f0101..7f80e6d6 100644
+--- a/src/mm-broadband-modem.c
++++ b/src/mm-broadband-modem.c
+@@ -11440,6 +11440,7 @@ modem_3gpp_profile_manager_check_activated_profile (MMIfaceModem3gppProfileManag
+                                                     GAsyncReadyCallback             callback,
+                                                     gpointer                        user_data)
+ {
++    static const guint cgact_query_timeout_secs = 30;
+     GTask *task;
+     gint   profile_id;
+ 
+@@ -11452,7 +11453,7 @@ modem_3gpp_profile_manager_check_activated_profile (MMIfaceModem3gppProfileManag
+     mm_base_modem_at_command (
+         MM_BASE_MODEM (self),
+         "+CGACT?",
+-        3,
++        cgact_query_timeout_secs,
+         FALSE,
+         (GAsyncReadyCallback)check_activated_profile_cgact_query_ready,
+         task);
+-- 
+2.43.0
+

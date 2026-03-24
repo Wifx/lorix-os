@@ -1,9 +1,10 @@
-From d032308b2876a3be9c0ad1bcb5aa75a358d8657b Mon Sep 17 00:00:00 2001
-From: Yannick Lanz <yannick.lanz@wifx.net>
+From f927a674cf391a02757e543ebc473186f322c6cd Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Thu, 17 Apr 2025 22:00:20 +0200
-Subject: [PATCH 2/2] mc610: fix SIM hot swap handling following 1.24 upgrade
+Subject: [PATCH 2/9] fibocom-mc610: fix SIM hot swap handling following 1.24
+ upgrade
 
-Signed-off-by: Yannick Lanz <yannick.lanz@wifx.net>
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
 ---
  .../mm-broadband-modem-fibocom-mc610.c           | 16 ++++++++++++----
  1 file changed, 12 insertions(+), 4 deletions(-)
@@ -57,5 +58,5 @@ index 8e5c1227..9363d5e9 100644
  }
  
 -- 
-2.45.2
+2.43.0
 

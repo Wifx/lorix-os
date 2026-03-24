@@ -3,10 +3,15 @@
 
 SRC_URI += " \
     file://78-mm-allowlist-internal-model.rules \
-    file://0001-mc610-add-support-for-Fibocom-MC610-specific-plugin.patch \
-    file://0002-mc610-fix-SIM-hot-swap-handling-following-1.24-upgra.patch \
-    file://0003-mc610-reset-PDP-context-0-during-modem-init.patch \
-    file://0004-mc610-reduce-modem-mode-support-to-only-ECM-to-avoid.patch \
+    file://0001-fibocom-mc610-add-support-for-Fibocom-MC610-specific.patch \
+    file://0002-fibocom-mc610-fix-SIM-hot-swap-handling-following-1..patch \
+    file://0003-fibocom-mc610-reset-PDP-context-0-during-modem-init.patch \
+    file://0004-fibocom-mc610-reduce-modem-mode-support-to-only-ECM-.patch \
+    file://0005-fibocom-mc610-enhance-timeout-handling-for-Fibocom-M.patch \
+    file://0006-serial-include-port-and-command-in-timeout-errors.patch \
+    file://0007-fibocom-mc610-use-180s-timeout-for-all-COPS-operatio.patch \
+    file://0008-3gpp-use-30s-timeout-for-CGACT-queries.patch \
+    file://0009-fibocom-use-30s-timeout-for-GTRNDIS-queries.patch \
 "
 
 # Disable MBIM and QMI features

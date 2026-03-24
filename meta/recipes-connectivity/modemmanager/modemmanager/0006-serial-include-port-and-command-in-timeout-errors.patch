@@ -1,0 +1,129 @@
+From e5f9b53c782f6208cf5f27669571f458c7f850fa Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Tue, 24 Mar 2026 07:46:33 +0100
+Subject: [PATCH 6/9] serial: include port and command in timeout errors
+
+Improve serial timeout reporting by including the port name and,
+when available, the AT command that timed out.
+
+This makes timeout failures easier to diagnose in logs, especially
+when tracking intermittent modem issues or identifying commands
+that trigger consecutive-timeout invalidation.
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ src/mm-port-serial.c | 71 ++++++++++++++++++++++++++++++++++++++------
+ 1 file changed, 62 insertions(+), 9 deletions(-)
+
+diff --git a/src/mm-port-serial.c b/src/mm-port-serial.c
+index 0ea7a06e..5c38c82f 100644
+--- a/src/mm-port-serial.c
++++ b/src/mm-port-serial.c
+@@ -46,6 +46,8 @@ static void     port_serial_set_cached_reply       (MMPortSerial *self,
+                                                     const GByteArray *command,
+                                                     const GByteArray *response);
+ 
++static gchar   *port_serial_command_to_loggable_string (const GByteArray *command);
++
+ G_DEFINE_TYPE (MMPortSerial, mm_port_serial, MM_TYPE_PORT)
+ 
+ enum {
+@@ -750,6 +752,8 @@ static gboolean
+ port_serial_timed_out (gpointer data)
+ {
+     MMPortSerial *self = MM_PORT_SERIAL (data);
++    CommandContext *ctx;
++    const gchar *device;
+     GError *error;
+ 
+     self->priv->timeout_id = 0;
+@@ -757,12 +761,31 @@ port_serial_timed_out (gpointer data)
+     /* Update number of consecutive timeouts found */
+     self->priv->n_consecutive_timeouts++;
+ 
+-    /* FIXME: This is not completely correct - if the response finally arrives and there's
+-     * some other command waiting for response right now, the other command will
+-     * get the output of the timed out command. Not sure what to do here. */
+-    error = g_error_new_literal (MM_SERIAL_ERROR,
+-                                 MM_SERIAL_ERROR_RESPONSE_TIMEOUT,
+-                                 "Serial command timed out");
++    ctx = g_queue_peek_head (self->priv->queue) ? g_task_get_task_data (g_queue_peek_head (self->priv->queue)) : NULL;
++    device = mm_port_get_device (MM_PORT (self));
++
++    if (ctx && ctx->command) {
++        g_autofree gchar *command = NULL;
++
++        command = port_serial_command_to_loggable_string (ctx->command);
++        error = g_error_new (MM_SERIAL_ERROR,
++                             MM_SERIAL_ERROR_RESPONSE_TIMEOUT,
++                             "Serial command timed out on port %s: %s",
++                             device ? device : "unknown",
++                             command);
++    } else {
++        error = g_error_new (MM_SERIAL_ERROR,
++                             MM_SERIAL_ERROR_RESPONSE_TIMEOUT,
++                             "Serial command timed out on port %s",
++                             device ? device : "unknown");
++    }
++
++    /* FIXME: The timeout is reported to the correct in-flight command, but the
++     * serial stream remains unsynchronized. If the timed out command reply
++     * arrives later, after we complete it with an error and start waiting for
++     * the next queued command, that late reply may be parsed as the next
++     * command's response.
++     */
+ 
+     /* Make sure we have a valid reference when emitting the signal */
+     g_object_ref (self);
+@@ -787,15 +810,45 @@ port_serial_response_wait_cancelled (GCancellable *cancellable,
+     /* We don't want to call disconnect () while in the signal handler */
+     self->priv->cancellable_id = 0;
+ 
+-    /* FIXME: This is not completely correct - if the response finally arrives and there's
+-     * some other command waiting for response right now, the other command will
+-     * get the output of the cancelled command. Not sure what to do here. */
+     error = g_error_new_literal (G_IO_ERROR, G_IO_ERROR_CANCELLED,
+                                  "Waiting for the reply cancelled");
++
++    /* FIXME: Cancelling the in-flight command has the same desynchronization
++     * issue as timing out: a late reply may still arrive afterwards and be
++     * parsed while the next queued command is waiting for its response.
++     */
++
+     /* Note: may complete last operation and unref the MMPortSerial */
+     port_serial_got_response (self, NULL, error);
+ }
+ 
++static gchar *
++port_serial_command_to_loggable_string (const GByteArray *command)
++{
++    GString *string;
++    guint i;
++
++    g_return_val_if_fail (command != NULL, NULL);
++
++    string = g_string_sized_new (command->len + 8);
++
++    for (i = 0; i < command->len; i++) {
++        guint8 current;
++
++        current = command->data[i];
++        if (g_ascii_isprint (current))
++            g_string_append_c (string, current);
++        else if (current == '\r')
++            g_string_append (string, "<CR>");
++        else if (current == '\n')
++            g_string_append (string, "<LF>");
++        else
++            g_string_append_printf (string, "\\%u", current);
++    }
++
++    return g_string_free (string, FALSE);
++}
++
+ static gboolean
+ port_serial_queue_process (gpointer data)
+ {
+-- 
+2.43.0
+

@@ -1,9 +1,10 @@
-From d58329f5f30a44981bfe64f020ccd317c486b1d4 Mon Sep 17 00:00:00 2001
-From: Yannick Lanz <yannick.lanz@wifx.net>
+From 0594d360128a2c2cfe59788f66c08a4531b84328 Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Mon, 2 Jun 2025 09:27:32 +0200
-Subject: [PATCH 4/4] mc610: reduce modem mode support to only ECM to avoid
- modem detection before switch to ECM
+Subject: [PATCH 4/9] fibocom-mc610: reduce modem mode support to only ECM to
+ avoid modem detection before switch to ECM
 
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
 ---
  src/plugins/fibocom_mc610/mm-plugin-fibocom-mc610.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
@@ -22,5 +23,5 @@ index 9f838168..26880ae3 100644
      return MM_PLUGIN (
          g_object_new (MM_TYPE_PLUGIN_FIBOCOM_MC610,
 -- 
-2.45.2
+2.43.0
 

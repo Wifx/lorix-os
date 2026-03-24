@@ -1,0 +1,265 @@
+From d1dafa14bcb3db150644511be226beeacd8df696 Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Mon, 23 Mar 2026 17:56:25 +0100
+Subject: [PATCH 7/9] fibocom-mc610: use 180s timeout for all COPS operations
+
+Override the generic 3GPP COPS timeouts in the MC610 plugin.
+
+The MC610 AT command manual specifies a maximum result returning
+duration of 180 seconds for AT+COPS commands, including:
+- AT+COPS=
+- AT+COPS?
+- AT+COPS=?
+
+Use a 180 second timeout for operator code/name loading and network
+registration in the MC610-specific plugin so ModemManager does not
+prematurely time out valid COPS operations on this modem.
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ .../mm-broadband-modem-fibocom-mc610.c        | 202 ++++++++++++++++++
+ 1 file changed, 202 insertions(+)
+
+diff --git a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+index fc75621c..50ec035f 100644
+--- a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
++++ b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+@@ -33,19 +33,24 @@
+ #include "mm-shared-fibocom.h"
+ 
+ static void iface_modem_init                      (MMIfaceModemInterface                   *iface);
++static void iface_modem_3gpp_init                 (MMIfaceModem3gppInterface               *iface);
+ static void iface_modem_firmware_init             (MMIfaceModemFirmwareInterface           *iface);
+ static void iface_modem_3gpp_profile_manager_init (MMIfaceModem3gppProfileManagerInterface *iface);
+ static void shared_fibocom_init                   (MMSharedFibocomInterface                *iface);
+ 
++static MMIfaceModem3gppInterface               *iface_modem_3gpp_parent;
+ static MMIfaceModemFirmwareInterface           *iface_modem_firmware_parent;
+ static MMIfaceModem3gppProfileManagerInterface *iface_modem_3gpp_profile_manager_parent;
+ 
+ G_DEFINE_TYPE_EXTENDED (MMBroadbandModemFibocomMc610, mm_broadband_modem_fibocom_mc610, MM_TYPE_BROADBAND_MODEM, 0,
+                         G_IMPLEMENT_INTERFACE (MM_TYPE_IFACE_MODEM, iface_modem_init)
++                        G_IMPLEMENT_INTERFACE (MM_TYPE_IFACE_MODEM_3GPP, iface_modem_3gpp_init)
+                         G_IMPLEMENT_INTERFACE (MM_TYPE_SHARED_FIBOCOM,  shared_fibocom_init)
+                         G_IMPLEMENT_INTERFACE (MM_TYPE_IFACE_MODEM_3GPP_PROFILE_MANAGER, iface_modem_3gpp_profile_manager_init)
+                         G_IMPLEMENT_INTERFACE (MM_TYPE_IFACE_MODEM_FIRMWARE, iface_modem_firmware_init))
+ 
++#define MC610_COPS_TIMEOUT_SECS 180
++
+ typedef enum {
+     FEATURE_SUPPORT_UNKNOWN,
+     FEATURE_NOT_SUPPORTED,
+@@ -243,6 +248,190 @@ modem_power_off (MMIfaceModem *self,
+                               user_data);
+ }
+ 
++/*****************************************************************************/
++/* 3GPP operator loading and registration                                    */
++
++static void
++modem_3gpp_load_operator_code (MMIfaceModem3gpp *self,
++                               GAsyncReadyCallback callback,
++                               gpointer user_data)
++{
++    mm_obj_dbg (self, "loading Operator Code...");
++    mm_base_modem_at_command (MM_BASE_MODEM (self),
++                              "+COPS=3,2",
++                              MC610_COPS_TIMEOUT_SECS,
++                              FALSE,
++                              NULL,
++                              NULL);
++    mm_base_modem_at_command (MM_BASE_MODEM (self),
++                              "+COPS?",
++                              MC610_COPS_TIMEOUT_SECS,
++                              FALSE,
++                              callback,
++                              user_data);
++}
++
++static void
++modem_3gpp_load_operator_name (MMIfaceModem3gpp *self,
++                               GAsyncReadyCallback callback,
++                               gpointer user_data)
++{
++    mm_obj_dbg (self, "loading Operator Name...");
++    mm_base_modem_at_command (MM_BASE_MODEM (self),
++                              "+COPS=3,0",
++                              MC610_COPS_TIMEOUT_SECS,
++                              FALSE,
++                              NULL,
++                              NULL);
++    mm_base_modem_at_command (MM_BASE_MODEM (self),
++                              "+COPS?",
++                              MC610_COPS_TIMEOUT_SECS,
++                              FALSE,
++                              callback,
++                              user_data);
++}
++
++typedef struct {
++    gchar         *operator_id;
++    MMIfacePortAt *port;
++} RegisterInNetworkContext;
++
++static void
++register_in_network_context_free (RegisterInNetworkContext *ctx)
++{
++    g_free (ctx->operator_id);
++    g_clear_object (&ctx->port);
++    g_slice_free (RegisterInNetworkContext, ctx);
++}
++
++static gboolean
++modem_3gpp_register_in_network_finish (MMIfaceModem3gpp  *self,
++                                       GAsyncResult      *res,
++                                       GError           **error)
++{
++    return g_task_propagate_boolean (G_TASK (res), error);
++}
++
++static void
++cops_set_ready (MMBaseModem  *self,
++                GAsyncResult *res,
++                GTask        *task)
++{
++    GError *error = NULL;
++
++    if (!mm_base_modem_at_command_full_finish (MM_BASE_MODEM (self), res, &error))
++        g_task_return_error (task, error);
++    else
++        g_task_return_boolean (task, TRUE);
++    g_object_unref (task);
++}
++
++static void
++cops_ascii_set_ready (MMBaseModem  *_self,
++                      GAsyncResult *res,
++                      GTask        *task)
++{
++    g_autoptr(GError)         error = NULL;
++
++    if (!mm_base_modem_at_command_full_finish (_self, res, &error)) {
++        RegisterInNetworkContext *ctx;
++        g_autoptr(GError)         enc_error = NULL;
++        g_autofree gchar         *operator_id_enc = NULL;
++        g_autofree gchar         *command = NULL;
++
++        if (!g_error_matches (error, MM_MOBILE_EQUIPMENT_ERROR, MM_MOBILE_EQUIPMENT_ERROR_NOT_SUPPORTED)) {
++            g_task_return_error (task, g_steal_pointer (&error));
++            g_object_unref (task);
++            return;
++        }
++
++        ctx = g_task_get_task_data (task);
++        operator_id_enc = mm_modem_charset_str_from_utf8 (ctx->operator_id,
++                                                          mm_broadband_modem_get_current_charset (MM_BROADBAND_MODEM (_self)),
++                                                          FALSE,
++                                                          &enc_error);
++        if (!operator_id_enc) {
++            mm_obj_dbg (_self, "couldn't convert operator id to current charset: %s", enc_error->message);
++            g_task_return_error (task, g_steal_pointer (&error));
++            g_object_unref (task);
++            return;
++        }
++
++        if (g_strcmp0 (ctx->operator_id, operator_id_enc) == 0) {
++            g_task_return_error (task, g_steal_pointer (&error));
++            g_object_unref (task);
++            return;
++        }
++
++        command = g_strdup_printf ("+COPS=1,2,\"%s\"", operator_id_enc);
++        mm_base_modem_at_command_full (_self,
++                                       ctx->port,
++                                       command,
++                                       MC610_COPS_TIMEOUT_SECS,
++                                       FALSE,
++                                       FALSE,
++                                       g_task_get_cancellable (task),
++                                       (GAsyncReadyCallback)cops_set_ready,
++                                       task);
++        return;
++    }
++
++    g_task_return_boolean (task, TRUE);
++    g_object_unref (task);
++}
++
++static void
++modem_3gpp_register_in_network (MMIfaceModem3gpp    *self,
++                                const gchar         *operator_id,
++                                GCancellable        *cancellable,
++                                GAsyncReadyCallback  callback,
++                                gpointer             user_data)
++{
++    RegisterInNetworkContext *ctx;
++    GTask                    *task;
++    MMIfacePortAt            *port;
++    GError                   *error = NULL;
++    g_autofree gchar         *command = NULL;
++
++    task = g_task_new (self, cancellable, callback, user_data);
++
++    port = mm_base_modem_peek_best_at_port (MM_BASE_MODEM (self), &error);
++    if (!port) {
++        g_task_return_error (task, error);
++        g_object_unref (task);
++        return;
++    }
++
++    ctx = g_slice_new0 (RegisterInNetworkContext);
++    ctx->port = g_object_ref (port);
++    ctx->operator_id = g_strdup (operator_id);
++    g_task_set_task_data (task, ctx, (GDestroyNotify)register_in_network_context_free);
++
++    if (!ctx->operator_id) {
++        mm_base_modem_at_command_full (MM_BASE_MODEM (self),
++                                       port,
++                                       "+COPS=0",
++                                       MC610_COPS_TIMEOUT_SECS,
++                                       FALSE,
++                                       FALSE,
++                                       cancellable,
++                                       (GAsyncReadyCallback)cops_set_ready,
++                                       task);
++        return;
++    }
++
++    command = g_strdup_printf ("+COPS=1,2,\"%s\"", ctx->operator_id);
++    mm_base_modem_at_command_full (MM_BASE_MODEM (self),
++                                   port,
++                                   command,
++                                   MC610_COPS_TIMEOUT_SECS,
++                                   FALSE,
++                                   FALSE,
++                                   cancellable,
++                                   (GAsyncReadyCallback)cops_ascii_set_ready,
++                                   task);
++}
++
+ 
+  /*****************************************************************************/
+ /* Load supported modes (Modem interface) */
+@@ -1455,6 +1644,19 @@ iface_modem_firmware_init (MMIfaceModemFirmwareInterface *iface)
+     iface->load_update_settings_finish = mm_shared_fibocom_firmware_load_update_settings_finish;
+ }
+ 
++static void
++iface_modem_3gpp_init (MMIfaceModem3gppInterface *iface)
++{
++    iface_modem_3gpp_parent = g_type_interface_peek_parent (iface);
++
++    iface->load_operator_code = modem_3gpp_load_operator_code;
++    iface->load_operator_code_finish = iface_modem_3gpp_parent->load_operator_code_finish;
++    iface->load_operator_name = modem_3gpp_load_operator_name;
++    iface->load_operator_name_finish = iface_modem_3gpp_parent->load_operator_name_finish;
++    iface->register_in_network = modem_3gpp_register_in_network;
++    iface->register_in_network_finish = modem_3gpp_register_in_network_finish;
++}
++
+ static void
+ iface_modem_3gpp_profile_manager_init (MMIfaceModem3gppProfileManagerInterface *iface)
+ {
+-- 
+2.43.0
+

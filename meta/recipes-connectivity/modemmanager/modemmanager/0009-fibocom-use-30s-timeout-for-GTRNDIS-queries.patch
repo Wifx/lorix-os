@@ -1,0 +1,85 @@
+From 92d6c367fa08d0f9da5fe26ebb7043ccc2772b2c Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Mon, 23 Mar 2026 22:10:38 +0100
+Subject: [PATCH 9/9] fibocom: use 30s timeout for GTRNDIS queries
+
+Increase the timeout used for GTRNDIS support detection and
+state queries from 3-6s to 30s in the Fibocom ECM bearer and
+the MC610 plugin.
+
+This aligns the query paths with the MC610 datasheet, which
+documents a 30000 ms maximum response/result duration for
+GTRNDIS operations.
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ src/plugins/fibocom/mm-broadband-bearer-fibocom-ecm.c     | 8 +++++---
+ .../fibocom_mc610/mm-broadband-modem-fibocom-mc610.c      | 5 +++--
+ 2 files changed, 8 insertions(+), 5 deletions(-)
+
+diff --git a/src/plugins/fibocom/mm-broadband-bearer-fibocom-ecm.c b/src/plugins/fibocom/mm-broadband-bearer-fibocom-ecm.c
+index 06f28b8a..4def62f9 100644
+--- a/src/plugins/fibocom/mm-broadband-bearer-fibocom-ecm.c
++++ b/src/plugins/fibocom/mm-broadband-bearer-fibocom-ecm.c
+@@ -23,6 +23,8 @@
+ 
+ G_DEFINE_TYPE (MMBroadbandBearerFibocomEcm, mm_broadband_bearer_fibocom_ecm, MM_TYPE_BROADBAND_BEARER)
+ 
++#define FIBOCOM_GTRNDIS_TIMEOUT_SECS 30
++
+ /*****************************************************************************/
+ /* Common helper functions                                                   */
+ 
+@@ -123,7 +125,7 @@ load_connection_status (MMBaseBearer        *bearer,
+ 
+     mm_base_modem_at_command (modem,
+                               "+GTRNDIS?",
+-                              3,
++                              FIBOCOM_GTRNDIS_TIMEOUT_SECS,
+                               FALSE,
+                               (GAsyncReadyCallback) gtrndis_query_ready,
+                               task);
+@@ -280,7 +282,7 @@ connect_3gpp (MMBroadbandBearer   *self,
+     /* First, we must check whether RNDIS is already active */
+     mm_base_modem_at_command (MM_BASE_MODEM (modem),
+                               "+GTRNDIS?",
+-                              3,
++                              FIBOCOM_GTRNDIS_TIMEOUT_SECS,
+                               FALSE, /* allow_cached */
+                               (GAsyncReadyCallback) gtrndis_check_ready,
+                               task);
+@@ -391,7 +393,7 @@ gtrndis_activate_ready (MMBaseModem  *modem,
+ 
+     mm_base_modem_at_command (modem,
+                               "+GTRNDIS?",
+-                              6, /* timeout [s] */
++                              FIBOCOM_GTRNDIS_TIMEOUT_SECS,
+                               FALSE, /* allow_cached */
+                               (GAsyncReadyCallback) gtrndis_verify_ready,
+                               task);
+diff --git a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+index 50ec035f..49646403 100644
+--- a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
++++ b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+@@ -49,7 +49,8 @@ G_DEFINE_TYPE_EXTENDED (MMBroadbandModemFibocomMc610, mm_broadband_modem_fibocom
+                         G_IMPLEMENT_INTERFACE (MM_TYPE_IFACE_MODEM_3GPP_PROFILE_MANAGER, iface_modem_3gpp_profile_manager_init)
+                         G_IMPLEMENT_INTERFACE (MM_TYPE_IFACE_MODEM_FIRMWARE, iface_modem_firmware_init))
+ 
+-#define MC610_COPS_TIMEOUT_SECS 180
++#define MC610_COPS_TIMEOUT_SECS    180
++#define MC610_GTRNDIS_TIMEOUT_SECS 30
+ 
+ typedef enum {
+     FEATURE_SUPPORT_UNKNOWN,
+@@ -192,7 +193,7 @@ modem_create_bearer (MMIfaceModem       *_self,
+     mm_obj_dbg (self, "checking +GTRNDIS support...");
+     mm_base_modem_at_command (MM_BASE_MODEM (self),
+                               "+GTRNDIS=?",
+-                              6, /* timeout [s] */
++                              MC610_GTRNDIS_TIMEOUT_SECS,
+                               TRUE, /* allow_cached */
+                               (GAsyncReadyCallback) gtrndis_test_ready,
+                               task);
+-- 
+2.43.0
+

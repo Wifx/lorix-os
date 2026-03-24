@@ -1,8 +1,10 @@
-From c6507ff8831d92355f29d9ae4e6907eefefdf501 Mon Sep 17 00:00:00 2001
-From: Yannick Lanz <yannick.lanz@wifx.net>
+From 66482623feb29dc3df417f59e9181c33e6af6a21 Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Mon, 14 Apr 2025 23:41:52 +0200
-Subject: [PATCH] mc610: add support for Fibocom MC610 specific plugin
+Subject: [PATCH 1/9] fibocom-mc610: add support for Fibocom MC610 specific
+ plugin
 
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
 ---
  libmm-glib/mm-bearer-properties.c             |    3 +-
  libmm-glib/mm-bearer-properties.h             |    1 +
@@ -2273,5 +2275,5 @@ index b21b5e36..b856f776 100644
  if plugins_options['foxconn']
    foxconn_dir = plugins_dir / 'foxconn'
 -- 
-2.45.2
+2.43.0
 

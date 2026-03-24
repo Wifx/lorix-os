@@ -1,0 +1,30 @@
+From 4db209e2ba0770bf51b30fb455510aa315ba05e5 Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Tue, 24 Mar 2026 07:44:55 +0100
+Subject: [PATCH 5/9] fibocom-mc610: enhance timeout handling for Fibocom MC610
+ to allow recovery during degraded registration cycles
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+index 5e43d05d..fc75621c 100644
+--- a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
++++ b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+@@ -1380,6 +1380,11 @@ mm_broadband_modem_fibocom_mc610_new (const gchar  *device,
+                          MM_BASE_MODEM_PRODUCT_ID, product_id,
+                          MM_BASE_MODEM_DATA_NET_SUPPORTED, TRUE,
+                          MM_BASE_MODEM_DATA_TTY_SUPPORTED, TRUE,
++                         /* The MC610 can stop answering AT commands for extended
++                          * periods during degraded registration cycles and later
++                          * recover without needing a modem reset. Be more lenient
++                          * before invalidating the modem object. */
++                         MM_BASE_MODEM_MAX_TIMEOUTS, 30,
+                          NULL);
+ }
+ 
+-- 
+2.43.0
+
