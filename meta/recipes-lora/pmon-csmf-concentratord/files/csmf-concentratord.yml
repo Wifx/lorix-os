@@ -15,7 +15,7 @@ jobs:
               -c /etc/opt/chirpstack-concentratord/11-location.toml
               -c /etc/opt/chirpstack-concentratord/channels/channels.toml
             delays:
-                start: 3000
+                start: 5000
                 term: 1000
                 restart: 5000
     gateway-mesh:
@@ -34,7 +34,7 @@ jobs:
               -c /etc/opt/chirpstack-gateway-mesh/50-commands.toml
               -c /etc/opt/chirpstack-gateway-mesh/mappings.toml
             delays:
-                start: 1000
+                start: 3000
                 term: 1000
                 restart: 5000
     mqtt-forwarder:
