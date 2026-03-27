@@ -5,13 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.8.0] - Unreleased
+## [1.8.0] - 2026-03-27
 
 ### Added
 
 - [LOR-434] Enforce password change on first login
 - [LOR-633] Save and restore all logs on reboot
 - [LOR-199] Provide auto-rollback on non commited update
+- [LOR-710] Add support for ChirpStack v4 stack (MQTT Forwrarder, Gateway Mesh)
+- [LOR-638] Add iperf3 package by default
+- [LOR-683] Add 1NCE APN in mobile broadband info
 
 ### Changed
 
@@ -22,6 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-705] Forwarder logs are no more added to the "all" log
 - [LOR-706] Move OPKG status file into A/B slotted partition (/etc/slotfs)
 - [LOR-697] Update manager to v1.0
+- [LOR-637] Update linux kernel to 6.12
+- [LOR-682] Reduce ChirpStack concentratord CPU usage
+- [LOR-693] Remove openssl-misc
+- [LOR-692] Replace nss by gnutls for NM's crypto support
+- [LOR-694] Reduce eudev-hwdb size
+- [LOR-695] Remove bind-utils, bridge-utils and iperf3 by default for lorix-one-256
 - modemmanager: fix AT+COPS timeout command (increase from 120s to 180s)
 - modemmanager: fix AT+CGACT timeout command (increase from default 3s to specific 30s)
 - modemmanager: fix AT+GTRNDIS timeout command (increase from default 3-6s to specific 30s)
@@ -29,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - [LOR-696] Don't override customer defined hostname during update
+- [LOR-702] Fix NM internal DHCP compliance with RFC 2131
 
 ## [1.7.3] - 2025-06-26
 
