@@ -3,7 +3,7 @@ SRC_URI += " \
     file://syslog-ng.conf \
     file://scl/local-file/persistent-file.conf \
     file://scl/local-file/volatile-file.conf \
-    file://rules/all.conf \
+    file://rules/general.conf \
     file://rules/applicative.conf \
     file://rules/errors.conf \
     file://rules/system.conf \
@@ -30,7 +30,7 @@ do_install:append() {
 
     # rules
     install -d ${D}/${sysconfdir}/${PN}/conf.d/
-    install -m 644 ${WORKDIR}/rules/all.conf            ${D}/${sysconfdir}/${PN}/conf.d/all.conf
+    install -m 644 ${WORKDIR}/rules/general.conf        ${D}/${sysconfdir}/${PN}/conf.d/general.conf
     install -m 644 ${WORKDIR}/rules/applicative.conf    ${D}/${sysconfdir}/${PN}/conf.d/applicative.conf
     install -m 644 ${WORKDIR}/rules/errors.conf         ${D}/${sysconfdir}/${PN}/conf.d/errors.conf
     install -m 644 ${WORKDIR}/rules/system.conf         ${D}/${sysconfdir}/${PN}/conf.d/system.conf
