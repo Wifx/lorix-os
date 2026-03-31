@@ -5,15 +5,15 @@
 # This script generates a binary delta between two Mender artifacts.
 #
 # Usage:
-#   ./generate-wifx-binary-delta.sh <source-artifact> <target-artifact>
+#   ./generate-wifx-binary-delta.sh <origin-artifact> <target-artifact>
 #
 # Arguments:
-#   <source-artifact>  Path to the source Mender artifact.
+#   <origin-artifact>  Path to the origin Mender artifact.
 #   <target-artifact>  Path to the target Mender artifact.
 #
 # Environment Variables:
 #   - XDELTA_FLAGS  Additional flags to pass to xdelta3.
-#       - Source buffer size          -B  Default=67108864(64M)  [16384(16K) - Unlimited]
+#       - Origin buffer size          -B  Default=67108864(64M)  [16384(16K) - Unlimited]
 #       - Input window size           -W  Default=8388608(8M)    [16384(16K) - 16777216(16M)]
 #       - Instruction buffer size     -I  Default=32768(32KB)    [ min?      - 0 (Unlimited) ]
 #       - Compression duplicates size -P  Default=262144(256KB)  P <= W, Must be power of 2
@@ -37,7 +37,7 @@
 #   - xdelta3: Binary delta generator.
 #
 # Example:
-#   ./wifx-binary-delta-generator.sh source.mender target.mender
+#   ./wifx-binary-delta-generator.sh origin.mender target.mender
 #
 # Author:
 #   Wifx SA <info@iot.wifx.net>
@@ -61,17 +61,37 @@ cleanup() {
 # Set up cleanup trap to run on exit
 trap cleanup EXIT INT TERM
 
-SOURCE_ARTIFACT_PATH=$1
-TARGET_ARTIFACT_PATH=$2
+ORIGIN_ARTIFACT_INPUT_PATH=$1
+TARGET_ARTIFACT_INPUT_PATH=$2
 
-if [ -z "$SOURCE_ARTIFACT_PATH" ] || [ -z "$TARGET_ARTIFACT_PATH" ]; then
-    echo "Usage: $0 <source-artifact> <target-artifact>" >&2
+# Preserve the caller-provided path for naming and output location.
+# This keeps delta artifacts next to a target symlink instead of next to the
+# dereferenced file it points to.
+make_absolute_reference_path() {
+    local input_path=$1
+
+    if [[ "$input_path" = /* ]]; then
+        printf '%s\n' "$input_path"
+        return 0
+    fi
+
+    printf '%s/%s\n' "$PWD" "$input_path"
+}
+
+ORIGIN_ARTIFACT_REFERENCE_PATH=$(make_absolute_reference_path "$ORIGIN_ARTIFACT_INPUT_PATH")
+TARGET_ARTIFACT_REFERENCE_PATH=$(make_absolute_reference_path "$TARGET_ARTIFACT_INPUT_PATH")
+
+ORIGIN_ARTIFACT_PATH=$ORIGIN_ARTIFACT_INPUT_PATH
+TARGET_ARTIFACT_PATH=$TARGET_ARTIFACT_INPUT_PATH
+
+if [ -z "$ORIGIN_ARTIFACT_PATH" ] || [ -z "$TARGET_ARTIFACT_PATH" ]; then
+    echo "Usage: $0 <origin-artifact> <target-artifact>" >&2
     exit 1
 fi
 
 # Convert to absolute paths and validate they don't contain problematic characters
-SOURCE_ARTIFACT_PATH=$(realpath "$SOURCE_ARTIFACT_PATH" 2>/dev/null) || {
-    echo "Error: Cannot resolve source artifact path: '$1'" >&2
+ORIGIN_ARTIFACT_PATH=$(realpath "$ORIGIN_ARTIFACT_PATH" 2>/dev/null) || {
+    echo "Error: Cannot resolve origin artifact path: '$1'" >&2
     exit 1
 }
 
@@ -80,13 +100,13 @@ TARGET_ARTIFACT_PATH=$(realpath "$TARGET_ARTIFACT_PATH" 2>/dev/null) || {
     exit 1
 }
 
-if [ ! -f "$SOURCE_ARTIFACT_PATH" ]; then
-    echo "Error: Source artifact not found: $SOURCE_ARTIFACT_PATH" >&2
+if [ ! -f "$ORIGIN_ARTIFACT_PATH" ]; then
+    echo "Error: Origin artifact not found: $ORIGIN_ARTIFACT_PATH" >&2
     exit 1
 fi
 
-if [ ! -r "$SOURCE_ARTIFACT_PATH" ]; then
-    echo "Error: Source artifact is not readable: $SOURCE_ARTIFACT_PATH" >&2
+if [ ! -r "$ORIGIN_ARTIFACT_PATH" ]; then
+    echo "Error: Origin artifact is not readable: $ORIGIN_ARTIFACT_PATH" >&2
     exit 1
 fi
 
@@ -101,8 +121,8 @@ if [ ! -r "$TARGET_ARTIFACT_PATH" ]; then
 fi
 
 # Validate file extensions
-if [[ ! "$SOURCE_ARTIFACT_PATH" =~ \.mender$ ]]; then
-    echo "Error: Source artifact must have .mender extension" >&2
+if [[ ! "$ORIGIN_ARTIFACT_PATH" =~ \.mender$ ]]; then
+    echo "Error: Origin artifact must have .mender extension" >&2
     exit 1
 fi
 
@@ -117,15 +137,15 @@ command -v tar >/dev/null 2>&1 || { echo "tar is required but not installed. Abo
 command -v xdelta3 >/dev/null 2>&1 || { echo "xdelta3 is required but not installed. Aborting." >&2; exit 1; }
 command -v mender-artifact >/dev/null 2>&1 || { echo "mender-artifact is required but not installed. Aborting." >&2; exit 1; }
 
-SOURCE_DIR_NAME=$(basename "$SOURCE_ARTIFACT_PATH" .mender)
+ORIGIN_DIR_NAME=$(basename "$ORIGIN_ARTIFACT_PATH" .mender)
 TARGET_DIR_NAME=$(basename "$TARGET_ARTIFACT_PATH" .mender)
 
-SOURCE_FILE_NAME=$(basename "$SOURCE_ARTIFACT_PATH" .mender)
-TARGET_FILE_NAME=$(basename "$TARGET_ARTIFACT_PATH" .mender)
+ORIGIN_FILE_NAME=$(basename "$ORIGIN_ARTIFACT_REFERENCE_PATH" .mender)
+TARGET_FILE_NAME=$(basename "$TARGET_ARTIFACT_REFERENCE_PATH" .mender)
 
-TARGET_BASE_PATH=$(dirname "$TARGET_ARTIFACT_PATH")
+TARGET_BASE_PATH=$(dirname "$TARGET_ARTIFACT_REFERENCE_PATH")
 
-SOURCE_DIR_PATH="$TMP_DIR/$SOURCE_DIR_NAME"
+ORIGIN_DIR_PATH="$TMP_DIR/$ORIGIN_DIR_NAME"
 TARGET_DIR_PATH="$TMP_DIR/$TARGET_DIR_NAME"
 
 get_device_types() {
@@ -200,17 +220,17 @@ extract_artifact() {
 }
 
 # Extract artifacts
-extract_artifact "$SOURCE_ARTIFACT_PATH" "$SOURCE_DIR_PATH"
+extract_artifact "$ORIGIN_ARTIFACT_PATH" "$ORIGIN_DIR_PATH"
 extract_artifact "$TARGET_ARTIFACT_PATH" "$TARGET_DIR_PATH"
 
 # Find device types for both artifacts
-source_device_types=($(get_device_types "$SOURCE_DIR_PATH"))
+origin_device_types=($(get_device_types "$ORIGIN_DIR_PATH"))
 target_device_types=($(get_device_types "$TARGET_DIR_PATH"))
 
 # Check that device types are the same for both artifacts
-if [ "${source_device_types[*]}" != "${target_device_types[*]}" ]; then
+if [ "${origin_device_types[*]}" != "${target_device_types[*]}" ]; then
     echo "Error: Device types do not match between artifacts" >&2
-    echo "  Source device types: ${source_device_types[*]}" >&2
+    echo "  Origin device types: ${origin_device_types[*]}" >&2
     echo "  Target device types: ${target_device_types[*]}" >&2
     exit 1
 fi
@@ -243,7 +263,7 @@ get_artifact_name() {
     echo "$artifact_name"
 }
 
-source_artifact_name=$(get_artifact_name "$SOURCE_DIR_PATH")
+origin_artifact_name=$(get_artifact_name "$ORIGIN_DIR_PATH")
 target_artifact_name=$(get_artifact_name "$TARGET_DIR_PATH")
 
 
@@ -270,15 +290,15 @@ get_artifact_checksum() {
     echo "$artifact_checksum"
 }
 
-source_artifact_checksum=$(get_artifact_checksum "$SOURCE_DIR_PATH")
+origin_artifact_checksum=$(get_artifact_checksum "$ORIGIN_DIR_PATH")
 target_artifact_checksum=$(get_artifact_checksum "$TARGET_DIR_PATH")
 
 # Find the ubifs files
-source_ubifs_file=$(find "$SOURCE_DIR_PATH/data/0000" -name "*.ubifs" | head -1)
+origin_ubifs_file=$(find "$ORIGIN_DIR_PATH/data/0000" -name "*.ubifs" | head -1)
 target_ubifs_file=$(find "$TARGET_DIR_PATH/data/0000" -name "*.ubifs" | head -1)
 
-if [ -z "$source_ubifs_file" ]; then
-    echo "Error: No .ubifs file found in source artifact" >&2
+if [ -z "$origin_ubifs_file" ]; then
+    echo "Error: No .ubifs file found in origin artifact" >&2
     exit 1
 fi
 
@@ -290,7 +310,7 @@ fi
 echo "Generating binary delta..." >&2
 xdelta3 -e -f \
     $XDELTA_FLAGS \
-    -s "$source_ubifs_file" \
+    -s "$origin_ubifs_file" \
     "$target_ubifs_file" \
     "$TMP_DIR/delta.ubifs" || {
     echo "Error: Failed to generate binary delta with xdelta3" >&2
@@ -317,7 +337,7 @@ target_image_size=$(stat -c %s "$target_ubifs_file") || {
 echo '{ "target_image_size": "'$target_image_size'" }' > "$TMP_DIR/meta-data.json"
 
 
-delta_artifact_name="${TARGET_FILE_NAME}.delta-${SOURCE_FILE_NAME}.mender"
+delta_artifact_name="${TARGET_FILE_NAME}.delta-${ORIGIN_FILE_NAME}.mender"
 
 key_args=""
 if [ -n "$SIGN_KEY_PATH" ]; then
@@ -332,9 +352,9 @@ mender-artifact write module-image \
     $device_types_args \
     $script_args \
     $key_args \
-    --artifact-name-depends "$source_artifact_name" \
+    --artifact-name-depends "$origin_artifact_name" \
     --artifact-name "$target_artifact_name" \
-    --depends "rootfs-image.checksum:$source_artifact_checksum" \
+    --depends "rootfs-image.checksum:$origin_artifact_checksum" \
     --provides "rootfs-image.checksum:$target_artifact_checksum" \
     --provides "rootfs-image.version:$target_artifact_name" \
     --clears-provides "rootfs-image.*" \
@@ -355,8 +375,8 @@ meta_file="$output_path.meta"
 {
     echo "type: delta-artifact"
     echo "depends:"
-    echo "  rootfs-image.version: $source_artifact_name"
-    echo "  rootfs-image.checksum: $source_artifact_checksum"
+    echo "  rootfs-image.version: $origin_artifact_name"
+    echo "  rootfs-image.checksum: $origin_artifact_checksum"
     echo "url: $delta_artifact_name"
     echo "sha256: $(sha256sum "$output_path" | cut -d ' ' -f 1)"
     echo "size: $(stat -c %s "$output_path")"
