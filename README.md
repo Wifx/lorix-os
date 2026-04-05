@@ -34,7 +34,7 @@ Copy default configuration files from the lorix-os/tools directory:
 ```shell
 $ cd lorix-os
 $ mkdir -p poky/build/conf
-$ cp tools/config/* poky/build/conf
+$ cp tools/configs/* poky/build/conf
 ```
 
 > **Note**: The default 'machine' is the LORIX One 512MB. If want want to build for another machine, edit the `poky/build/conf/local.conf` file.
