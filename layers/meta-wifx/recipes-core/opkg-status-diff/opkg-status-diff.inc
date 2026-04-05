@@ -10,3 +10,11 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 inherit unpack-online-assets
 
 SYSROOT_DIRS += "${bindir}"
+
+ALLOW_EMPTY:${PN} = "1"
+INHIBIT_PACKAGE_INSTALL = "1"
+
+do_install(){
+    install -d ${D}${bindir}
+    install -m 0755 ${WORKDIR}/target/armv7-unknown-linux-gnueabihf/release/opkg-status-diff ${D}${bindir}/opkg-status-diff
+}
