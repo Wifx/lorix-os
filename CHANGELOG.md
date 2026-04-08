@@ -47,6 +47,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-696] Don't override customer defined hostname during update
 - [LOR-702] Fix NM internal DHCP compliance with RFC 2131
 
+## [1.7.4] - 2025-08-15
+
+### Changed
+
+- [LOR-651] Update pvisor to v0.3.3
+- [LOR-689] Update mobile-broadband-provider-info to 20250613
+- [LOR-683] Add 1NCE operator in mobile-broadband-provider-info database
+
+### Fixed
+
+- [LOR-688] ChirpStack Gateway Bridge accidentally reverted to v3.14.3 (v3.14.8 restored)
+- [LOR-686] mender-standalone-scripts errors at boot in rc log
+
+
 ## [1.7.3] - 2025-06-26
 
 ### Added

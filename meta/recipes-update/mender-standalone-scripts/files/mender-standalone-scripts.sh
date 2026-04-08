@@ -17,6 +17,8 @@ fi
 
 log() {
     local message="$1"
+    # Ensure directory exists
+    [ -d "$LOG_DIR" ] || mkdir -p "$LOG_DIR" >/dev/null 2>&1
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $message" >> "$LOG_FILE"
 }
 
@@ -41,20 +43,42 @@ save_log() {
     fi
 }
 
+rollback_update() {
+    log "Rolling back update"
+    
+    # Ensure mender-update is available
+    if ! command -v mender-update >/dev/null 2>&1; then
+        log "mender-update not found"
+        return 1
+    fi
+    mender-update rollback >> "$LOG_FILE" 2>&1
+    if [ $? -ne 0 ]; then
+        log "Failed to rollback update"
+        return 1
+    fi
+    return 0
+}
+
+# Check if process is inhibited
+if [ -f "$INHIBIT_FILE_PATH" ]; then
+    echo "Reboot script is inhibited by $INHIBIT_FILE_PATH"
+    exit 0
+fi
+
 # Check if an update is pending
 UPGRADE_AVAILABLE=$(fw_printenv upgrade_available -n)
 if [ $? -ne 0 ]; then
-    log "Error reading upgrade_available"
+    echo "Error reading upgrade_available"
     exit 1
 fi
 
 # If no upgrade is pending, exit
 if [ "$UPGRADE_AVAILABLE" != "1" ]; then
-    log "Not starting an updated system (not pending)"
-    log "Checking update status"
     if [ -f /data/mender/upgrade/migration-env.sh ]; then
         log "Update in progress, executing rollback..."
-        mender-update rollback
+        if ! rollback_update; then
+            exit 1
+        fi
     fi
     exit 0
 fi
@@ -75,7 +99,7 @@ fi
 SCRIPTS_PREFIX="$1"
 
 # Check if mender-update is available
-if ! command -v mender-update &> /dev/null; then
+if ! command -v mender-update >/dev/null 2>&1; then
     log "mender-update not found"
     exit 1
 fi
@@ -88,22 +112,18 @@ for script in $SCRIPTS_PATH/$SCRIPTS_PREFIX*; do
 
         # Execute script and log its output
         log "Executing $script"
-        $script
-        
+        "$script" >> "$LOG_FILE" 2>&1
+
         # If script fails, rollback the update
         if [ $? -ne 0 ]; then
             log "Error executing $script"
 
-            log "Rolling back update"
-            mender-update rollback
-            if [ $? -ne 0 ]; then
-                log "Failed to rollback update"
-            fi
+            rollback_update || log "Failed to rollback update"
 
             save_log
 
             log "Rollback completed, rebooting system"
-            shutdown -r now "The extra $SCRIPTS_PREFIX tasks of the pending update failed" 
+            shutdown -r now "The extra $SCRIPTS_PREFIX tasks of the pending update failed"
             exit 0
         fi
     fi

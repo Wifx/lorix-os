@@ -9,7 +9,19 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
 inherit unpack-online-assets
 
+STAGING_ASSETS = "${WORKDIR}/staging-assets"
+
+# Install the fetched binary into the target rootfs staging area
+do_install() {
+    install -d ${D}${bindir}
+    install -m 0755 ${STAGING_ASSETS}${bindir}/opkg-status-diff ${D}${bindir}/
+}
+
+# Ensure /usr/bin is exported to the recipe sysroot for dependent recipes
 SYSROOT_DIRS += "${bindir}"
+
+# Package the binary
+FILES:${PN} += "${bindir}/opkg-status-diff"
 
 ALLOW_EMPTY:${PN} = "1"
 INHIBIT_PACKAGE_INSTALL = "1"
