@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [LOR-711] Add general log
 
+### Fixed
+
+- [LOR-712] UDP Packet Forwarder gateway_ID not set at first init
 
 ## [1.8.0] - 2026-03-27
 

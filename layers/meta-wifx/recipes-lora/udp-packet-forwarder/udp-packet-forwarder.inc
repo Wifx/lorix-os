@@ -153,12 +153,15 @@ pkg_postinst_ontarget:${PN} () {
         exit 1
     fi
 
+    GWID_ESCAPED=$(printf '%s' "$GWID" | sed 's/[\\/&]/\\\\&/g')
+
     # Find files and process them safely
     find "$CONF_DIR" -type f \( -name '*.json' -o -name '*.json.sample' \) | while read -r file; do
         # Check if gateway_ID is empty in the file
-        if grep -q '^\s*"gateway_ID":\s*"",' "$file"; then
+        if grep -q '^[[:space:]]*"gateway_ID":[[:space:]]*"",' "$file"; then
             # replace empty gateway ID by actual GWID
-            if sed -i 's/\(^\s*"gateway_ID":\s*"\)"",/\1'${GWID}'",/' "$file"; then
+            if sed -i "s/^\([[:space:]]*\"gateway_ID\":[[:space:]]*\)\"\",/\1\"${GWID_ESCAPED}\",/" "$file" \
+                && grep -q "^[[:space:]]*\"gateway_ID\":[[:space:]]*\"${GWID_ESCAPED}\"," "$file"; then
                 echo "Gateway_ID set to '$GWID' in file '$file'"
             else
                 echo "Error: Failed to set Gateway_ID in file '$file'"
