@@ -23,7 +23,6 @@ SRC_URI = " \
     file://1.7.0/03_CSCD-LoraRegion.sh;subdir=${BPN}-${PV} \
     file://1.7.0/05_Fix-overlay-directories.sh;subdir=${BPN}-${PV} \
     file://1.7.1/01_VPN-autoconnect.sh;subdir=${BPN}-${PV} \
-    file://1.7.1/02_wwan_auto-connect.sh;subdir=${BPN}-${PV} \
     file://1.8.0/00_opkg-status-loc.sh;subdir=${BPN}-${PV} \
     file://1.8.0/01_concentratord-legacy.sh;subdir=${BPN}-${PV} \
     file://1.8.0/02_chrony_sources.sh;subdir=${BPN}-${PV} \
@@ -31,6 +30,7 @@ SRC_URI = " \
     file://1.8.0/04_frequency-plan.sh;subdir=${BPN}-${PV} \
     file://1.8.0/05_openrc-confdir.sh;subdir=${BPN}-${PV} \
     file://1.8.0/06_mender-service-name.sh;subdir=${BPN}-${PV} \
+    file://1.8.1/01_wwan_auto-connect_limit.sh;subdir=${BPN}-${PV} \
 "
 
 LICENSE = "Proprietary"
@@ -97,7 +97,6 @@ do_compile() {
     cp 1.7.0/05_Fix-overlay-directories.sh  ${TARGET}_Migration_1.7.0_05_Fix-overlay-directories
 
     cp 1.7.1/01_VPN-autoconnect.sh ${TARGET}_Migration_1.7.1_01_VPN-autoconnect
-    cp 1.7.1/02_wwan_auto-connect.sh ${TARGET}_Migration_1.7.1_02_wwan_auto-connect
 
     cp 1.8.0/01_concentratord-legacy.sh ${TARGET}_Migration_1.8.0_01_concentratord-legacy
     cp 1.8.0/02_chrony_sources.sh ${TARGET}_Migration_1.8.0_02_chrony_sources
@@ -105,4 +104,8 @@ do_compile() {
     cp 1.8.0/04_frequency-plan.sh ${TARGET}_Migration_1.8.0_04_frequency-plan
     cp 1.8.0/05_openrc-confdir.sh ${TARGET}_Migration_1.8.0_05_openrc-confdir
     cp 1.8.0/06_mender-service-name.sh ${TARGET}_Migration_1.8.0_06_mender-service-name
+
+    cp 1.8.1/01_wwan_auto-connect_limit.sh ${TARGET}_Migration_1.8.1_01_wwan_auto-connect_limit
+
+    return 0
 }

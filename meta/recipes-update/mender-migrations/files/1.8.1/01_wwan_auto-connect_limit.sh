@@ -3,7 +3,7 @@
 ### CONFIGURE THE MIGRATION ###
 
 # The prefix will be shown in the logs only. Keep it short. E.g. "NM-PROF-MV"
-PREFIX=WWAN-AUTOCONNECT 
+PREFIX=WWAN-AUTOCONNECT-LIMIT
 
 # The following versions description uses semver: https://semver.org/
 # Condition syntax is defined by semver_rs "Range" object: https://docs.rs/semver_rs/0.1.3/semver_rs/struct.Range.html.
@@ -17,7 +17,7 @@ PREFIX=WWAN-AUTOCONNECT
 # Defines what is the highest version (excluded) of the source system for the migration to be applied (semver).
 # This is generally set to the current version. If the user has this version (or higher), the migration is already done and not useful anymore.
 # Must not be empty. Can be left undefined.
-VERSION_MAX="1.7.1" 
+VERSION_MAX="1.8.1" 
 
 # Condition that will be finally be checked to know if the migration will be applied.
 # Is automatically generated with VERSION_MIN and VERSION_MAX if not defined. If defined VERSION_MIN/MAX are ignored
@@ -50,13 +50,13 @@ fi
 
 log $PREFIX "Migrating..."
 
-# Add autoconnect properties to the [connection] section
-if grep -q "^\[connection\]" "$WWAN_CONFIG_PATH"; then
-    sed -i '/^\[connection\]/a autoconnect=true\nautoconnect-priority=1\nautoconnect-retries=0' "$WWAN_CONFIG_PATH"
-    log $PREFIX "Updated [connection] section with autoconnect properties"
-else
-    log $PREFIX "No [connection] section found in $WWAN_CONFIG_PATH"
-fi
+# Remove the exact autoconnect block if present
+sed -i '/^autoconnect=true$/ {
+N
+N
+/^autoconnect=true\nautoconnect-priority=1\nautoconnect-retries=0$/d
+}' "$WWAN_CONFIG_PATH"
+log $PREFIX "Removed exact autoconnect limit block if present"
 
 log $PREFIX "Migration completed for $WWAN_CONFIG_PATH"
 
