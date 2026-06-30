@@ -11,4 +11,11 @@ session    optional   pam_motd.so motd=/run/motd.dynamic\
 session    optional   pam_motd.so noupdate' ${D}${sysconfdir}/pam.d/login
         fi
     fi
+
+    if [ -e ${D}${sysconfdir}/login.defs ]; then
+        # Reduce SHA512 rounds for faster password verification on embedded hardware.
+        sed -i -e 's:^#SHA_CRYPT_MIN_ROUNDS .*:SHA_CRYPT_MIN_ROUNDS 1000:' \
+            -e 's:^#SHA_CRYPT_MAX_ROUNDS .*:SHA_CRYPT_MAX_ROUNDS 1000:' \
+            ${D}${sysconfdir}/login.defs
+    fi
 }
