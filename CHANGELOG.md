@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- [LOR-719] Update ChirpStack MQTT Forwarder to 4.6
 - [LOR-720] Update pmonitord to 1.1
 
 ## [1.8.1] - 2026-04-20
