@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-719] Update ChirpStack MQTT Forwarder to 4.6
 - [LOR-720] Update pmonitord to 1.1
 - [LOR-721] Set BasicStation TCP timeout to 2 min
+- Update poky to 5.0.19
+- Update meta-openembedded
 
 ## [1.8.1] - 2026-04-20
 
