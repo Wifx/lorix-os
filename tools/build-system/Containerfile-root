@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=registry.wifx.net/yocto/lorix-os/build-system/rootless
+ARG BASE_IMAGE=registry.iot.wifx.net/yocto/lorix-os/build-system/rootless
 
 FROM $BASE_IMAGE
 

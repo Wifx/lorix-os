@@ -4,7 +4,7 @@
 ## Sources
 
 * meta-wifx<br />
-  URI: [https://git.wifx.net/wifx/next/meta-wifx.git](https://git.wifx.net/wifx/next/meta-wifx.git)<br />
+  URI: [https://git.iot.wifx.net/wifx/next/meta-wifx.git](https://git.iot.wifx.net/wifx/next/meta-wifx.git)<br />
   Branch: sumo
 
 ## Status

@@ -4,7 +4,7 @@
 ## Sources
 
 * meta-wifx-lorix<br />
-  URI: [https://git.wifx.net/wifx/next/meta-wifx-lorix.git](https://git.wifx.net/wifx/next/meta-wifx-lorix.git)<br />
+  URI: [https://git.iot.wifx.net/wifx/next/meta-wifx-lorix.git](https://git.iot.wifx.net/wifx/next/meta-wifx-lorix.git)<br />
   Branch: sumo
 
 ## Status
