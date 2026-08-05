@@ -15,6 +15,7 @@ SRC_URI += " \
     file://lora-basic-station.yml \
     file://0001-editable-toolchain-path.patch \
     file://0002-handle-router-config-on-unknown-region.patch \
+    file://0003-configure-tcp-user-timeout.patch \
 "
 
 SRC_URI:append:lorix-one = " \
