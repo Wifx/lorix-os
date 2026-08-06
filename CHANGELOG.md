@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update poky to 5.0.19
 - Update meta-openembedded
 
+### Fixed
+
+- [LOR-722] Fix: ChirpStack UDP Packet fowarder pmonitor service config not migrated
+
 ## [1.8.1] - 2026-04-20
 
 ### Added

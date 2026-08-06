@@ -31,6 +31,7 @@ SRC_URI = " \
     file://1.8.0/04_frequency-plan.sh;subdir=${BPN}-${PV} \
     file://1.8.0/05_openrc-confdir.sh;subdir=${BPN}-${PV} \
     file://1.8.0/06_mender-service-name.sh;subdir=${BPN}-${PV} \
+    file://1.8.2/01_pmonitor-csub-to-csuf-concentratord.sh;subdir=${BPN}-${PV} \
 "
 
 LICENSE = "Proprietary"
@@ -105,4 +106,6 @@ do_compile() {
     cp 1.8.0/04_frequency-plan.sh ${TARGET}_Migration_1.8.0_04_frequency-plan
     cp 1.8.0/05_openrc-confdir.sh ${TARGET}_Migration_1.8.0_05_openrc-confdir
     cp 1.8.0/06_mender-service-name.sh ${TARGET}_Migration_1.8.0_06_mender-service-name
+
+    cp 1.8.2/01_pmonitor-csub-to-csuf-concentratord.sh ${TARGET}_Migration_1.8.2_01_pmonitor-csub-to-csuf-concentratord
 }
