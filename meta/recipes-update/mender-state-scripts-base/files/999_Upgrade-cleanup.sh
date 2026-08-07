@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [[ ! -f /data/mender/upgrade/migration-env.sh ]]; then
-    echo $PREFIX "migration-env.sh does not exist, skipping"
+    >&2 echo "$(date +"%Y-%m-%dT%H:%m:%SZ") [$PREFIX] migration-env.sh does not exist, skipping"
     exit 0
 fi
 

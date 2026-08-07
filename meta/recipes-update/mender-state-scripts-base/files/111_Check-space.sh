@@ -5,7 +5,7 @@ source /data/mender/upgrade/migration-env.sh
 
 USER_CONFIG_PATH="/etc"
 
-log $PREFIX "Checking availalbe space for user config migration ($USER_CONFIG_PATH)"
+log $PREFIX "Checking available space for user config migration ($USER_CONFIG_PATH)"
 
 DU=$(du -s $USER_CONFIG_PATH)
 if [ "$?" -ne 0 ]; then

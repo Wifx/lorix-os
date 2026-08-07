@@ -16,3 +16,10 @@ if [ -d "$LAYER_USER_CONFIG_INACTIVE_RW" ]; then
     umount $LAYER_USER_CONFIG_INACTIVE_RW
     rmdir $LAYER_USER_CONFIG_INACTIVE_RW
 fi
+
+# Unmount inactive factory layer
+if [ -d "$LAYER_FACTORY_INACTIVE" ]; then
+    log $PREFIX "Unmounting inactive factory layer"
+    umount $LAYER_FACTORY_INACTIVE
+    rmdir $LAYER_FACTORY_INACTIVE
+fi

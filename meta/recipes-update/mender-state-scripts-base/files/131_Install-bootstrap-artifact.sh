@@ -13,6 +13,7 @@ log $PREFIX "Mounting ubidata volume on $UBIDATA_MOUNT_PATH"
 
 mkdir -p $UBIDATA_MOUNT_PATH
 mount -t ubifs ubi0:data $UBIDATA_MOUNT_PATH
+log $PREFIX "Ubidata volume mounted"
 
 # Copy bootstrap artifact
 MENDER_BOOTSTRAP_DIR=$UBIDATA_MOUNT_PATH/mender-bootstrap/$PARTITION_INACTIVE

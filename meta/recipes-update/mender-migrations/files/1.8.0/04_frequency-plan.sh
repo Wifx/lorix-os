@@ -40,7 +40,7 @@ source /data/mender/upgrade/version-guard.sh
 # WARNING - Path to files MUST not contain /etc (would refer to the currently mounted config)
 cd $D_ETC
 
-CHANNEL_CONFIG_PATH="opt/chirpstack-concentratord/channels/channels.toml" # Refers to a file at /etc/someapp/config.yml
+CHANNEL_CONFIG_PATH="opt/chirpstack-concentratord-legacy/channels/channels.toml"
 
 # It is generally a good thing to check wheter the migration should be applied or not depending on the FS state
 if [[ ! -f "$CHANNEL_CONFIG_PATH" ]]; then

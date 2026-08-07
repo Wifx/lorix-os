@@ -3,7 +3,7 @@
 # You can update the gateway configuration for the concentratord here.
 # Refer to https://www.chirpstack.io/concentratord/install/config/ for details
 #
-# NOTE: The LORIX Manager will override the antenna_gain setting if defined in the Manager
+# NOTE: The LORIX Manager will override the antenna_gain and region setting if defined in the Manager
 
 [gateway]
 

@@ -15,17 +15,31 @@ LAYERS_DIR_LEGACY=/data/layers
 NOW=$(date +"%Y-%m-%dT%H:%m:%SZ")
 UPGRADE_LOG_PATH=$UPGRADE_LOG_DIR/$OS_DISTRO_VERSION-$NOW.log
 
+PREFIX=SETUP-ENV
+
+# log is not yet available; write directly to the upgrade log
+_log() {
+    now=$(date +"%Y-%m-%dT%H:%m:%SZ")
+    msg="$now [$1] $2"
+    >&2 echo "$msg"
+    echo "$msg" >> "$UPGRADE_LOG_PATH"
+}
+
 # Create and cleanup upgrade directory
 rm -rf $MENDER_UPGRADE_DIR
 mkdir -p $MENDER_UPGRADE_DIR
 mkdir -p $UPGRADE_LOG_PERSISTENT_DIR
 mkdir -p $UPGRADE_LOG_DIR
 
+_log $PREFIX "Setting up upgrade environment (target: $OS_DISTRO_VERSION)"
+
 source $CURRENT_OS_INFO_PATH
 
 if [[ -z $VERSION_NORM ]]; then
     VERSION_NORM=$VERSION_ID
 fi
+
+_log $PREFIX "Origin: $ID $VERSION_NORM"
 
 echo '#!/bin/sh
 
@@ -74,11 +88,15 @@ TARGET_COMPATIBLE_VERSIONS='$OS_DISTRO_UPGRADE_COMPATIBLE_VERSIONS'
 
 if [ -d $LAYERS_DIR_NEW ]; then
     LAYER_FACTORY=$LAYERS_DIR_NEW/active/factory
+    LAYER_FACTORY_INACTIVE=$LAYERS_DIR_NEW/inactive/factory
+    LAYER_FACTORY_INACTIVE_UBI=ubi0_\$(( 1 - PARTITION_MATCH ))
     LAYER_USER=$LAYERS_DIR_NEW/active/user
     LAYER_USER_CONFIG=$LAYERS_DIR_NEW/active/config
     LAYER_USER_CONFIG_INACTIVE=$LAYERS_DIR_NEW/inactive/config
 else
     LAYER_FACTORY=$LAYERS_DIR_LEGACY/factory
+    LAYER_FACTORY_INACTIVE=/var/lib/migration/factory-inactive
+    LAYER_FACTORY_INACTIVE_UBI=ubi0_\$(( 1 - PARTITION_MATCH ))
     LAYER_USER=$LAYERS_DIR_LEGACY/user
     LAYER_USER_CONFIG=$LAYERS_DIR_LEGACY/config/rootfs\$PARTITION_ACTIVE
     LAYER_USER_CONFIG_INACTIVE=$LAYERS_DIR_LEGACY/config/rootfs\$PARTITION_INACTIVE
@@ -102,3 +120,5 @@ function log() {
     echo "$msg" >> $UPGRADE_LOG_PATH
 }
 ' >> $ENV_FILE_PATH
+
+_log $PREFIX "Environment file written: $ENV_FILE_PATH"
