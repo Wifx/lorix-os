@@ -22,3 +22,13 @@ mkdir -p "$LAYER_FACTORY_INACTIVE"
 log $PREFIX "Mounting inactive factory layer ($LAYER_FACTORY_INACTIVE_UBI)"
 mount -t ubifs $LAYER_FACTORY_INACTIVE_UBI $LAYER_FACTORY_INACTIVE
 log $PREFIX "Inactive factory layer mounted on '$LAYER_FACTORY_INACTIVE'"
+
+# Detect machine-info version; may not be present on all systems
+if command -v machine-info >/dev/null 2>&1; then
+    MI_VERSION=$(machine-info --version 2>&1 | awk '{print $NF}')
+    log $PREFIX "machine-info version: '$MI_VERSION'"
+else
+    MI_VERSION=""
+    log $PREFIX "machine-info not available"
+fi
+echo "MI_VERSION='$MI_VERSION'" >> /data/mender/upgrade/migration-env.sh

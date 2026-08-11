@@ -121,4 +121,22 @@ function log() {
 }
 ' >> $ENV_FILE_PATH
 
+cat >> $ENV_FILE_PATH << 'ENDFUNC'
+
+version_gte() {
+    [ "$1" = "$2" ] && return 0
+    [ "$(printf '%s\n' "$1" "$2" | sort -V | head -n1)" = "$2" ]
+}
+
+# Read a machine-info attribute using the correct syntax for the detected MI_VERSION
+machine_info_read() {
+    [ -z "$MI_VERSION" ] && return 1
+    if version_gte "$MI_VERSION" "1.0.0"; then
+        machine-info read "$1" 2>/dev/null
+    else
+        machine-info -f "$1" 2>/dev/null | awk -F= '{print $2}'
+    fi
+}
+ENDFUNC
+
 _log $PREFIX "Environment file written: $ENV_FILE_PATH"

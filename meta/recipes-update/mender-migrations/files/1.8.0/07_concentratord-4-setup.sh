@@ -49,6 +49,15 @@ LEGACY_GATEWAY_CONFIG="opt/chirpstack-concentratord-legacy/10-gateway.toml"
 # Factory root of the inactive (destination) partition
 GATEWAY_TEMPLATE="${LAYER_FACTORY_INACTIVE}/etc/opt/chirpstack-concentratord/10-gateway.toml"
 
+### L1-only gateway config setup ###
+
+PRODUCT_MODEL=$(machine_info_read "PRODUCT_MODEL" || true)
+if [[ "$PRODUCT_MODEL" != "l1" ]]; then
+    log $PREFIX "Not an L1 gateway (model: '${PRODUCT_MODEL:-unknown}'), skipping gateway config setup"
+    log $PREFIX "Migration done"
+    exit 0
+fi
+
 ### Create channels symlink ###
 
 if [[ ! -L "$LEGACY_CHANNELS_LINK" ]]; then
@@ -65,15 +74,6 @@ else
     mkdir -p "$CHANNELS_DIR"
     ln -snf "$NEW_TARGET" "$CHANNELS_LINK"
     log $PREFIX "Created channels symlink -> $NEW_TARGET"
-fi
-
-### L1-only gateway config setup ###
-
-LORA_FRONTEND_REV=$(machine-info read "LORA_IFACE_0_FRONTEND_REV" 2>/dev/null || true)
-if [[ -z "$LORA_FRONTEND_REV" ]]; then
-    log $PREFIX "Not an L1 gateway, skipping gateway config setup"
-    log $PREFIX "Migration done"
-    exit 0
 fi
 
 if [[ ! -f "$GATEWAY_TEMPLATE" ]]; then

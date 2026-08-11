@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - [LOR-722] Fix: ChirpStack UDP Packet fowarder pmonitor service config not migrated
+- [LOR-727] Fix : ChirpStack Concentratord v4 region not set properly from legacy
 
 ## [1.8.1] - 2026-04-20
 
