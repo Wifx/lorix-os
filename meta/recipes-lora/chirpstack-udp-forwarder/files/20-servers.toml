@@ -2,7 +2,7 @@
 # This section can be repeated.
 [[udp_forwarder.servers]]
   # Server (hostname:port).
-  server="eu1.cloud.thethings.network:1700"
+  server=""
 
   # Keepalive interval (seconds).
   #
