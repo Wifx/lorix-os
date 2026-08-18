@@ -22,6 +22,7 @@ SRC_URI = " \
     file://999_Upgrade-cleanup.sh;subdir=${BPN}-${PV} \
     file://Config-migration-restore.sh;subdir=${BPN}-${PV} \
     file://Migration-context-cleanup.sh;subdir=${BPN}-${PV} \
+    file://State-record.sh;subdir=${BPN}-${PV} \
 "
 
 DEPENDS += " \
@@ -83,6 +84,7 @@ include_scripts() {
     sed -i "s/#distro_metadata#/${DISTRO_METADATA}/" "${MENDER_STATE_SCRIPTS_DIR}/ArtifactInstall_Enter_01_Setup-env"
 
     include_script 102_Setup-utils.sh                       ArtifactInstall_Enter_02_Setup-utils
+    include_script State-record.sh                          ArtifactInstall_Enter_03_State-record
 
     ## 10 Checks
     include_script 110_Check-version.sh                     ArtifactInstall_Enter_10_Check-version
@@ -112,15 +114,18 @@ include_scripts() {
     include_script Migration-context-cleanup.sh             ArtifactInstall_Enter_99_Migration-context-cleanup
 
     # Artifact install leave
+    include_script State-record.sh                          ArtifactInstall_Leave_00_State-record
     include_script 290_Config-migration-disable.sh          ArtifactInstall_Leave_90_Config-migration-disable
     include_script 299_Logs-save.sh                         ArtifactInstall_Leave_99_Logs-save
 
     ### REBOOT ###
 
     # Artifact reboot enter (this is only executed on managed update)
+    include_script State-record.sh                          ArtifactReboot_Enter_05_State-record
     include_script 300_Inhibit-reboot-script-standalone.sh  ArtifactReboot_Enter_00_Inhibit-reboot-script-standalone
 
     # Artifact reboot leave (executed either by mender client or init script)
+    include_script State-record.sh                          ArtifactReboot_Leave_05_State-record
     include_script 400_Logs-restore.sh                      ArtifactReboot_Leave_00_Logs-restore
     include_script 410_Update-ca-certificates.sh            ArtifactReboot_Leave_10_Update-ca-certificates
 
@@ -130,24 +135,31 @@ include_scripts() {
     ### COMMIT ###
 
     # Artifact commit enter
+    include_script State-record.sh                          ArtifactCommit_Enter_00_State-record
 
     # Artifact commit leave
+    include_script State-record.sh                          ArtifactCommit_Leave_00_State-record
     include_script 690_Cleanup-inactive-user-data.sh        ArtifactCommit_Leave_90_Cleanup-inactive-user-data
     include_script 999_Upgrade-cleanup.sh                   ArtifactCommit_Leave_99_Upgrade-cleanup
 
     ### ROLLBACK ###
 
     # Artifact rollback enter
+    include_script State-record.sh                          ArtifactRollback_Enter_00_State-record
     include_script Config-migration-restore.sh              ArtifactRollback_Enter_10_Config-migration-restore
 
     # Artifact rollback leave
-    include_script 299_Logs-save.sh                         ArtifactRollback_Leave_99_Logs-save
+    include_script State-record.sh                          ArtifactRollback_Leave_00_State-record
+    include_script 999_Upgrade-cleanup.sh                   ArtifactRollback_Leave_99_Upgrade-cleanup
 
     ### FAILURE ###
 
     # Artifact failure enter
+    include_script State-record.sh                          ArtifactFailure_Enter_00_State-record
     include_script Config-migration-restore.sh              ArtifactFailure_Enter_10_Config-migration-restore
 
     # Artifact failure leave
-    include_script Migration-context-cleanup.sh             ArtifactFailure_Leave_99_Migration-context-cleanup
+    include_script State-record.sh                          ArtifactFailure_Leave_00_State-record
+    include_script Migration-context-cleanup.sh             ArtifactFailure_Leave_90_Migration-context-cleanup
+    include_script 999_Upgrade-cleanup.sh                   ArtifactFailure_Leave_99_Upgrade-cleanup
 }
