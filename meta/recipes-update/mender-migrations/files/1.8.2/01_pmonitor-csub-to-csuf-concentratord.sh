@@ -49,6 +49,11 @@ if [[ ! -L "$SYMLINK_OLD" ]]; then
     exit 0
 fi
 
+if [[ -e "$SYMLINK_NEW" || -L "$SYMLINK_NEW" ]]; then
+    log $PREFIX "csuf-concentratord symlink already exists, skipping migration"
+    exit 0
+fi
+
 log $PREFIX "Renaming csub-concentratord symlink to csuf-concentratord..."
 
 ln -s "$TARGET_NEW" "$SYMLINK_NEW"
