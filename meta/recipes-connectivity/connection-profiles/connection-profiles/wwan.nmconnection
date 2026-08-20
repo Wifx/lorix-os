@@ -3,9 +3,6 @@ id=wwan
 uuid=5222a507-9f7c-44fb-86e7-c7843c4e433a
 type=gsm
 interface-name=ttyUSB0
-autoconnect=true
-autoconnect-priority=1
-autoconnect-retries=0
 
 [gsm]
 auto-config=true
