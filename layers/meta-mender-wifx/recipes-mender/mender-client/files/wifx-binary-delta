@@ -1,6 +1,12 @@
-#!/bin/sh
+#!/bin/bash
 
 set -ue
+set -o pipefail
+
+# Minimum available memory (in KB) required to apply a binary delta update.
+# Measured xdelta3 decode RSS: ~87MB (with -B 67108864 -W 8388608),
+# mender-update RSS: ~7MB. Base ~94MB + 10% margin ≈ 100MB.
+REQUIRED_MEMORY_KB=${REQUIRED_MEMORY_KB:-102400}
 
 STATE="$1"
 FILES="$2"
@@ -168,6 +174,29 @@ check_requirements() {
     set_upgrade_vars
 }
 
+check_available_memory() {
+    local mem_available_kb
+    mem_available_kb=$(awk '/^MemAvailable:/ { print $2 }' /proc/meminfo)
+    if [ -z "$mem_available_kb" ]; then
+        echo "Warning: Cannot determine available memory from /proc/meminfo, skipping memory check" 1>&2
+        return 0
+    fi
+    if [ "$mem_available_kb" -lt "$REQUIRED_MEMORY_KB" ]; then
+        local mem_available_mb=$((mem_available_kb / 1024))
+        local required_mb=$((REQUIRED_MEMORY_KB / 1024))
+        cat 1>&2 <<EOF
+Insufficient memory for binary delta update.
+  Required: ~${required_mb}MB available
+  Current:  ${mem_available_mb}MB available
+The delta update requires approximately ${required_mb}MB of free RAM to decode
+and apply. Free up memory (restart the gateway, stop unnecessary services) or 
+use a full image update instead.
+EOF
+        return 1
+    fi
+    return 0
+}
+
 case "$STATE" in
     ProvidePayloadFileSizes)
         echo "Yes"
@@ -180,6 +209,7 @@ case "$STATE" in
 
     DownloadWithFileSizes)
         check_requirements
+        check_available_memory
 
         if [ "$upgrade_available" != 0 ]; then
             echo "Unexpected \`upgrade_available=$upgrade_available\` in $STATE." 1>&2
@@ -195,14 +225,54 @@ case "$STATE" in
             exit 1
         fi
 
+        # The payload is a named pipe (FIFO) in the streams tree, not a regular file.
+        if [ ! -p "$file" ]; then
+            echo "Delta payload stream '$file' does not exist or is not a named pipe" 1>&2
+            exit 1
+        fi
+
         target_image_size=$(jq -r ".target_image_size | select (.!=null)" "$FILES"/header/meta-data)
         if [ -z "$target_image_size" ]; then
             echo "Cannot parse metadata for target image size" 1>&2
             exit 1
         fi
 
+        # Validate target_image_size is a positive integer
+        if ! [[ "$target_image_size" =~ ^[0-9]+$ ]] || [ "$target_image_size" -le 0 ]; then
+            echo "Invalid target image size: '$target_image_size' (expected positive integer)" 1>&2
+            exit 1
+        fi
+
+        # Run the delta decode + write pipeline.
+        # Use PIPESTATUS to detect which stage failed, especially to
+        # distinguish an xdelta3 OOM kill (SIGKILL, exit 137) from other errors.
         cat "$file" | xdelta3 -c -d -s "$active" | ubiupdatevol "$passive" --size="$target_image_size" -
-            
+        pipe_status=("${PIPESTATUS[@]}")
+
+        if [ "${pipe_status[1]}" -eq 137 ]; then
+            cat 1>&2 <<'EOF'
+xdelta3 was killed by the OOM killer (SIGKILL) while decoding the delta.
+The device does not have enough available memory to apply this delta update.
+Try freeing memory (stop unnecessary services) or use a full image update instead.
+EOF
+            # Best-effort: include OOM killer evidence from dmesg if accessible
+            if dmesg 2>/dev/null | grep -i "oom\|out of memory\|killed process" | tail -5 1>&2; then
+                : # output already redirected
+            fi
+            exit 1
+        elif [ "${pipe_status[1]}" -ne 0 ]; then
+            echo "xdelta3 decode failed with exit code ${pipe_status[1]}" 1>&2
+            exit 1
+        fi
+
+        if [ "${pipe_status[2]}" -ne 0 ]; then
+            echo "ubiupdatevol failed with exit code ${pipe_status[2]}" 1>&2
+            exit 1
+        fi
+
+        # Flush writes to NAND
+        sync
+
         if [ "$(cat stream-next)" != "" ]; then
             echo "More than one file in payload" 1>&2
             exit 1
@@ -211,6 +281,7 @@ case "$STATE" in
 
     ArtifactInstall)
         check_requirements
+        check_available_memory
 
         cat > "$FILES/tmp/orig-part.tmp" <<EOF
 orig_part_num=$active_num
@@ -226,12 +297,16 @@ EOF
         fi
         check_device_matches_root "$active"
 
-        ${SETENV} -s - <<EOF
+        if ! ${SETENV} -s - <<EOF
 mender_boot_part=$passive_num
 mender_boot_part_hex=$passive_num_hex
 upgrade_available=1
 bootcount=0
 EOF
+        then
+            echo "Failed to set boot environment variables for update" 1>&2
+            exit 1
+        fi
         ;;
 
     NeedsArtifactReboot)

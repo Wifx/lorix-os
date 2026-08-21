@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.8.2] - Unreleased
 
+### Added
+
+- [LOR-732] Add memory availability check during wifx delta updates
+
 ### Changed
 
 - [LOR-719] Update ChirpStack MQTT Forwarder to 4.6
