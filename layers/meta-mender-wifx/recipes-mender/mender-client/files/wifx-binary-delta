@@ -19,27 +19,6 @@ else
     SETENV=fw_setenv
 fi
 
-# Memory bounds for the xdelta3 decode step.
-# -B caps the decoder's source block cache and -W caps its input read buffer.
-# The delta's per-window target length (and therefore the decoder's output
-# buffer) is set by the encoder's -W at delta-generation time, so keep these
-# aligned with the generator (lorix-os/tools/build-system/wifx-binary-delta-generator.sh).
-# The 4 MiB defaults bound peak xdelta3 RSS to roughly 16 MiB.
-# Override via the XDELTA_SRCWINSZ / XDELTA_WINSIZE environment variables, or
-# via an optional config file at /etc/mender/wifx-binary-delta.conf containing:
-#   XDELTA_SRCWINSZ=4194304
-#   XDELTA_WINSIZE=4194304
-# Environment variables take precedence over the config file.
-# Keep these >= the -B / -W used when the delta was generated.
-WIFX_DELTA_CONF="/etc/mender/wifx-binary-delta.conf"
-if [ -r "$WIFX_DELTA_CONF" ]; then
-    if [ -z "${XDELTA_SRCWINSZ:-}" ] && [ -z "${XDELTA_WINSIZE:-}" ]; then
-        . "$WIFX_DELTA_CONF"
-    fi
-fi
-XDELTA_SRCWINSZ="${XDELTA_SRCWINSZ:-4194304}"
-XDELTA_WINSIZE="${XDELTA_WINSIZE:-4194304}"
-
 resolve_rootfs() {
     case "$1" in
         /dev/root|/dev/disk/by-partlabel/*|/dev/disk/by-partuuid/*)
@@ -222,7 +201,7 @@ case "$STATE" in
             exit 1
         fi
 
-        cat "$file" | xdelta3 -c -d -B "$XDELTA_SRCWINSZ" -W "$XDELTA_WINSIZE" -s "$active" | ubiupdatevol "$passive" --size="$target_image_size" -
+        cat "$file" | xdelta3 -c -d -s "$active" | ubiupdatevol "$passive" --size="$target_image_size" -
             
         if [ "$(cat stream-next)" != "" ]; then
             echo "More than one file in payload" 1>&2

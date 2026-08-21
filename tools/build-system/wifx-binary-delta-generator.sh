@@ -13,11 +13,8 @@
 #
 # Environment Variables:
 #   - XDELTA_FLAGS  Additional flags to pass to xdelta3.
-#       - Origin buffer size          -B  Default=4194304(4M)    [16384(16K) - Unlimited]
-#       - Input window size           -W  Default=4194304(4M)    [16384(16K) - 16777216(16M)]
-#       These window sizes also bound the on-device decoder (wifx-binary-delta):
-#       -B bounds the decoder source cache, -W bounds its input buffer, and the
-#       encoder's -W determines the per-window output buffer the decoder allocates.
+#       - Origin buffer size          -B  Default=67108864(64M)  [16384(16K) - Unlimited]
+#       - Input window size           -W  Default=8388608(8M)    [16384(16K) - 16777216(16M)]
 #       - Instruction buffer size     -I  Default=32768(32KB)    [ min?      - 0 (Unlimited) ]
 #       - Compression duplicates size -P  Default=262144(256KB)  P <= W, Must be power of 2
 #       - Compression level           -9  Default=9              [0 - 9]
@@ -49,7 +46,7 @@
 #   All rights reserved.
 #
 
-XDELTA_FLAGS=${XDELTA_FLAGS:-"-B 4194304 -W 4194304 -I 32768 -P 262144 -9"}
+XDELTA_FLAGS=${XDELTA_FLAGS:-"-B 67108864 -W 8388608 -I 32768 -P 262144 -9"}
 
 TMP_DIR=${TMP_DIR:-$(mktemp -d)}
 
