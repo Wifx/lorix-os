@@ -1,0 +1,47 @@
+From 90fb0ecda78bb295680e2dd20b8997b51f9f3b31 Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Mon, 16 Dec 2024 16:57:24 +0100
+Subject: [PATCH 7/7] bump to 3.3.1+wifx-0.2
+
+---
+ Cargo.lock                                 | 2 +-
+ chirpstack-concentratord-sx1302/Cargo.toml | 6 +++---
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/Cargo.lock b/Cargo.lock
+index 43d8cd8..daf07f7 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -222,7 +222,7 @@ dependencies = [
+ 
+ [[package]]
+ name = "chirpstack-concentratord-sx1302"
+-version = "3.3.1"
++version = "3.3.1+wifx-0.2"
+ dependencies = [
+  "chirpstack_api",
+  "chrono",
+diff --git a/chirpstack-concentratord-sx1302/Cargo.toml b/chirpstack-concentratord-sx1302/Cargo.toml
+index 047a0a3..b10c05b 100644
+--- a/chirpstack-concentratord-sx1302/Cargo.toml
++++ b/chirpstack-concentratord-sx1302/Cargo.toml
+@@ -1,13 +1,13 @@
+ [package]
+ name = "chirpstack-concentratord-sx1302"
+-version = "3.3.1"
++version = "3.3.1+wifx-0.2"
+ authors = ["Orne Brocaar <info@brocaar.com>"]
+ edition = "2018"
+ publish = false
+ 
+ [dependencies]
+-libloragw-sx1302 = {path = "../libloragw-sx1302"}
+-libconcentratord = {path = "../libconcentratord"}
++libloragw-sx1302 = { path = "../libloragw-sx1302" }
++libconcentratord = { path = "../libconcentratord" }
+ chirpstack_api = { version = "3.10", default-features = false }
+ serde = { version = "1.0", features = ["derive"] }
+ toml = "0.5"
+-- 
+2.43.0
+

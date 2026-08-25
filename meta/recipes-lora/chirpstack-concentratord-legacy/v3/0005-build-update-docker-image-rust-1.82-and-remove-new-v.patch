@@ -1,0 +1,138 @@
+From a9591c26feacf51d3208f84301782fbdc2bd06b5 Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Mon, 26 May 2025 22:00:00 +0200
+Subject: [PATCH 5/7] build: update docker image (rust 1.82) and remove new
+ version related warnings
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ Dockerfile-devel                                       | 10 +++++-----
+ Makefile                                               |  6 ++++++
+ chirpstack-concentratord-2g4/src/config/vendor/mod.rs  |  1 +
+ chirpstack-concentratord-2g4/src/handler/uplink.rs     |  2 +-
+ chirpstack-concentratord-sx1301/src/handler/uplink.rs  |  2 +-
+ .../src/config/vendor/mod.rs                           |  1 +
+ chirpstack-concentratord-sx1302/src/handler/uplink.rs  |  2 +-
+ docker-compose.yml                                     |  1 -
+ 8 files changed, 16 insertions(+), 9 deletions(-)
+
+diff --git a/Dockerfile-devel b/Dockerfile-devel
+index ba7828a..b465b9f 100644
+--- a/Dockerfile-devel
++++ b/Dockerfile-devel
+@@ -1,13 +1,13 @@
+-FROM rust:1.45-stretch
++FROM rust:1.82.0-bookworm
+ 
+ # required by bingen
+ RUN apt-get update && \
+ 	apt-get install -y \
+ 		build-essential \
+ 		cmake \
+-		clang-3.9 \
+-		libclang-3.9-dev \
+-		llvm-3.9-dev \
++		clang-14 \
++		libclang-14-dev \
++		llvm-14-dev \
+ 		gcc-arm-linux-gnueabi \
+ 		g++-arm-linux-gnueabi \
+ 		gcc-arm-linux-gnueabihf \
+@@ -128,7 +128,7 @@ RUN cd /hal/aarch64/gateway_2g4_hal && \
+ 	ln -s /hal/aarch64/gateway_2g4_hal/libloragw/inc /usr/aarch64-linux-gnu/include/libloragw-2g4 && \
+ 	ln -s /hal/aarch64/gateway_2g4_hal/libloragw/libloragw.a /usr/aarch64-linux-gnu/lib/libloragw-2g4.a
+ 
+-ENV LLVM_CONFIG_PATH=llvm-config-3.9
++ENV LLVM_CONFIG_PATH=llvm-config-14
+ ENV PROJECT_PATH=/chirpstack-concentratord
+ RUN mkdir -p $PROJECT_PATH
+ WORKDIR $PROJECT_PATH
+diff --git a/Makefile b/Makefile
+index fac48d4..e7a4fef 100644
+--- a/Makefile
++++ b/Makefile
+@@ -63,3 +63,9 @@ test:
+ 
+ devshell:
+ 	docker-compose run --rm chirpstack-concentratord bash
++
++compose-build:
++	docker compose build chirpstack-concentratord
++
++compose-build-full:
++	docker compose build --no-cache chirpstack-concentratord
+\ No newline at end of file
+diff --git a/chirpstack-concentratord-2g4/src/config/vendor/mod.rs b/chirpstack-concentratord-2g4/src/config/vendor/mod.rs
+index 5fa3cba..a729fd5 100644
+--- a/chirpstack-concentratord-2g4/src/config/vendor/mod.rs
++++ b/chirpstack-concentratord-2g4/src/config/vendor/mod.rs
+@@ -5,5 +5,6 @@ pub struct Configuration {
+     pub tty_path: String,
+     pub min_max_tx_freq: (u32, u32),
+     pub reset_pin: Option<(u32, u32)>,
++    #[allow(unused)]
+     pub boot0_pin: Option<u32>,
+ }
+diff --git a/chirpstack-concentratord-2g4/src/handler/uplink.rs b/chirpstack-concentratord-2g4/src/handler/uplink.rs
+index 02f29c8..bcefa86 100644
+--- a/chirpstack-concentratord-2g4/src/handler/uplink.rs
++++ b/chirpstack-concentratord-2g4/src/handler/uplink.rs
+@@ -30,7 +30,7 @@ pub fn handle_loop(gateway_id: &[u8], stop_receive: Receiver<Signal>) {
+                         continue;
+                     }
+ 
+-                    let proto = match wrapper::uplink_to_proto(gateway_id.clone(), &frame) {
++                    let proto = match wrapper::uplink_to_proto(gateway_id, &frame) {
+                         Ok(v) => v,
+                         Err(err) => {
+                             error!("Convert uplink frame to protobuf error, error: {}", err);
+diff --git a/chirpstack-concentratord-sx1301/src/handler/uplink.rs b/chirpstack-concentratord-sx1301/src/handler/uplink.rs
+index 8aa6b7f..091f8cb 100644
+--- a/chirpstack-concentratord-sx1301/src/handler/uplink.rs
++++ b/chirpstack-concentratord-sx1301/src/handler/uplink.rs
+@@ -30,7 +30,7 @@ pub fn handle_loop(gateway_id: &[u8], stop_receive: Receiver<Signal>) {
+                         continue;
+                     }
+ 
+-                    let proto = match wrapper::uplink_to_proto(gateway_id.clone(), &frame) {
++                    let proto = match wrapper::uplink_to_proto(gateway_id, &frame) {
+                         Ok(v) => v,
+                         Err(err) => {
+                             error!("Convert uplink frame to protobuf error, error: {}", err);
+diff --git a/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs b/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs
+index 15592c8..2d5ca32 100644
+--- a/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs
++++ b/chirpstack-concentratord-sx1302/src/config/vendor/mod.rs
+@@ -32,6 +32,7 @@ pub struct Configuration {
+ 
+ #[derive(Clone)]
+ pub struct RadioConfig {
++    #[allow(unused)]
+     pub enable: bool,
+     pub radio_type: hal::RadioType,
+     pub single_input_mode: bool,
+diff --git a/chirpstack-concentratord-sx1302/src/handler/uplink.rs b/chirpstack-concentratord-sx1302/src/handler/uplink.rs
+index 4b003e2..38aab74 100644
+--- a/chirpstack-concentratord-sx1302/src/handler/uplink.rs
++++ b/chirpstack-concentratord-sx1302/src/handler/uplink.rs
+@@ -30,7 +30,7 @@ pub fn handle_loop(gateway_id: &[u8], stop_receive: Receiver<Signal>) {
+                         continue;
+                     }
+ 
+-                    let proto = match wrapper::uplink_to_proto(gateway_id.clone(), &frame) {
++                    let proto = match wrapper::uplink_to_proto(gateway_id, &frame) {
+                         Ok(v) => v,
+                         Err(err) => {
+                             error!("Convert uplink frame to protobuf error, error: {}", err);
+diff --git a/docker-compose.yml b/docker-compose.yml
+index 5634cd8..4cccac2 100644
+--- a/docker-compose.yml
++++ b/docker-compose.yml
+@@ -1,4 +1,3 @@
+-version: "2"
+ services:
+   chirpstack-concentratord:
+     build:
+-- 
+2.43.0
+
