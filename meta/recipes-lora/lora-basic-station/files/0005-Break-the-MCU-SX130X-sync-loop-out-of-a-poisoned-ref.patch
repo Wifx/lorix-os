@@ -1,0 +1,274 @@
+From 4572944374edf25f5665002cf14e31f9afb95808 Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Tue, 18 Aug 2026 09:52:47 +0200
+Subject: [PATCH 5/6] Break the MCU/SX130X sync loop out of a poisoned
+ reference
+
+ts_updateTimesync() advances its reference sample only under the "done:"
+label, downstream of the excessive-drift early return. If the first pair of
+a session is itself bad, every later sample is measured against a wrong
+reference, looks excessive for that reason alone, and the loop can never
+leave the state. Measured on target: up to +24740ppm still at +1918ppm after
+57 retries, and a field unit stuck at -900ppm with no natural exit at all.
+A poisoned reference shifts txjob->txtime without moving the RF instant, so
+downlinks are either silently never triggered or aborted by the TXCHECK_FUDGE
+health check.
+
+Advance the reference every REBASE_RETRIES rejections, unconditionally: a
+poisoned reference never looks excessive against itself, so any smarter
+condition can stall on the very failure being fixed. Add prevSamples to log
+the drift against the preceding sample and the interval against the
+reference, which separates a bad pairing from a sustained rate error.
+
+Rationale, sizing of REBASE_RETRIES, TX consequences and field measurements:
+doc/wifx/timesync-recovery.md
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ doc/wifx/timesync-recovery.md | 174 ++++++++++++++++++++++++++++++++++
+ src/timesync.c                |  20 +++-
+ 2 files changed, 192 insertions(+), 2 deletions(-)
+ create mode 100644 doc/wifx/timesync-recovery.md
+
+diff --git a/doc/wifx/timesync-recovery.md b/doc/wifx/timesync-recovery.md
+new file mode 100644
+index 0000000..f2a94a5
+--- /dev/null
++++ b/doc/wifx/timesync-recovery.md
+@@ -0,0 +1,174 @@
++# MCU/SX130X sync loop recovery in Basic Station
++
++Wifx patch. Applies to Basic Station's radio time synchronisation loop, `ts_updateTimesync()`
++in `src/timesync.c`.
++
++---
++
++## 1. Why this patch exists
++
++### The lockup
++
++`ts_updateTimesync()` keeps one reference sample per txunit, `timesyncs[txunit]`, and
++measures every new sample against it. The reference is only advanced at the very end of the
++function, under the `done:` label. An excessive-drift verdict returns before ever reaching
++it.
++
++If the first pair of samples of a session is itself bad, the reference is poisoned and every
++sample that follows is measured against a wrong value. Nothing looks excessive because the
++clock is bad; everything looks excessive because the reference is. And the loop cannot leave
++that state, because leaving it requires the comparison that keeps failing.
++
++### The two signatures observed in the field
++
++**A one-off bad pairing.** A fixed error `E` in the first pair produces an apparent drift of
++`E/Δt`, which decays as `1/n` as the interval since that pair grows. It resolves on its own
++once it falls back under the threshold, but slowly. Measured on target across three
++consecutive restarts of the same gateway:
++
++| First verdict | Retries | Outcome |
++|---|---|---|
++| -547.7 ppm | 15 | resolved, about 15 s |
++| +215.5 ppm | 6 | resolved, about 6 s |
++| +24 740 ppm | 57 | still at +1918 ppm after about a minute, extrapolating past ten |
++
++**A sustained rate error.** A field unit showed the opposite behaviour: the mean MCU drift
++climbed from -872.7 ppm to -904.7 ppm between retries 3 and 18, increasing rather than
++decaying. That is not a bad pair, it is a real rate error between the two clocks, consistent
++with a time daemon still slewing `CLOCK_MONOTONIC` after boot. This signature never resolves
++on its own, because the apparent drift it produces does not decay towards the threshold.
++
++### Why the existing escape hatch cannot help
++
++After `2*QUICK_RETRIES` rejections the code resets `drift_thres` to `MAX_MCU_DRIFT_THRES`,
++100 ppm. That is already its value at initialisation. It cannot unstick a loop running at
++500, 900 or 24 000 ppm, three orders of magnitude above the ceiling it restores.
++
++---
++
++## 2. Why the lockup is not cosmetic
++
++`timesyncs[txunit]` is what `ts_xtime2ustime()` reads to produce `txjob->txtime`, and the
++radio is armed with `pkt_tx.count_us = txjob->xtime`. A poisoned reference therefore does
++not move the RF instant. It moves the station's belief about when that instant is due, in
++`s2e_nextTxAction()`. A pairing error `E` shifts that belief by `E`, in either direction,
++and both directions lose a downlink:
++
++- **`E` greater than `TX_AIM_GAP`** (20 ms on this platform; the 60 ms value applies only to
++  the `cisco` and `rpi64` builds). The "missed TX time" guard does not fire, since it only
++  compares against `TX_MIN_GAP`, 10 ms. No recalculation corrects it either, because that
++  only happens for jobs carrying a `gpstime` or on a txunit switch. The concentrator is
++  handed a trigger value already in its past: no error is reported, the frame simply never
++  goes out. The SX1302 trigger register is 32 bits of 32 MHz ticks, so the usable range of
++  `count_us` is $2^{27}$ µs, about 134 s, after which a value in the past becomes
++  indistinguishable from one far in the future.
++- **`E` below `-TXCHECK_FUDGE`** (5 ms). The frame is scheduled correctly and would go out
++  on time, but the `TXCHECK_FUDGE` health check runs before transmission starts,
++  `ral_txstatus()` reports `TX_SCHEDULED` rather than emitting, and the code abandons a
++  frame that was about to be sent correctly.
++
++Both paths fall through to `altTxTime()`, which is shifted by the same `E` and fails the
++same way. Class B has no alternative slot at all.
++
++A sustained rate error `r` compounds instead of staying fixed: after `t` seconds of lockup
++the belief error is `r*t`, which crosses `TX_AIM_GAP` in about 22 s at 900 ppm and keeps
++growing for as long as the lockup lasts.
++
++---
++
++## 3. What the patch does
++
++Every `REBASE_RETRIES` consecutive rejections, the reference is advanced to the current
++sample, unconditionally.
++
++`REBASE_RETRIES` is a `#define` in `timesync.c`, set to 3, next to `QUICK_RETRIES`. It is an
++internal safety net, not something a deployment should tune, so it is deliberately not a
++`CONF_PARAM`.
++
++### Why the trigger is blind
++
++It does not try to tell a bad pairing apart from a genuine excessive drift, for exactly the
++reason the old `drift_thres` escape hatch deliberately did not either: a poisoned reference
++never looks excessive against itself, so any condition that waits for a "better" sample to
++turn up can stall indefinitely. That is the failure being fixed. Blind and periodic is what
++guarantees termination whatever the cause.
++
++### Why 3
++
++`N` is sized against the sustained-rate-error case, not the one-off pairing error, because
++that is the regime with no natural exit. Requiring the error accumulated over the rebase
++window to stay inside `TXCHECK_FUDGE`:
++
++$$|r| \cdot N \cdot \frac{\text{TIMESYNC\_RADIO\_INTV}}{2} \le \text{TXCHECK\_FUDGE}$$
++
++At `N = 3`, `TIMESYNC_RADIO_INTV` of 2100 ms and `TXCHECK_FUDGE` of 5 ms, this tolerates a
++rate error up to 1587 ppm: a 44 % margin over the roughly 1100 ppm worst case attributable
++to time-daemon slewing during convergence. Sizing on the daemon's configured slew range
++rather than on the single sample observed in the field keeps that margin meaningful if the
++configuration varies.
++
++The one-off pairing case is a side benefit. The first sample after a poisoned reference
++arrives a full `TIMESYNC_RADIO_INTV` later and rejections then retry at half that, so the
++worst-case time to recovery becomes about 4.2 s, against the tens of minutes observed on
++target.
++
++### What is deliberately left alone
++
++**`excessive_drift_cnt` is not reset when rebasing.** Only the `% REBASE_RETRIES == 0` check
++fires, on the same counter that already gates the periodic `WARNING` every `QUICK_RETRIES`.
++The counter keeps meaning "how long has this been going on", the warning keeps its cadence,
++and the reset on an accepted sample is untouched.
++
++**The `drift_thres` reset stays.** It is not made redundant by the rebase: the two repair
++different causes of the same lockup. The rebase repairs a stale reference, every
++`REBASE_RETRIES` rejections. The reset repairs a `drift_thres` that has ratcheted down to an
++unworkably low value, visible on target as `threshold q90` readings of a few tens of ppm in
++the periodic `MCU/SX130X drift stats` line, every `2*QUICK_RETRIES` rejections. Both happen
++to fire together at `cnt=6`, which is convenient: refreshing the reference and loosening the
++threshold in the same call maximises the odds that the next sample is accepted.
++
++---
++
++## 4. Reading the logs
++
++Module `SYN`. The existing warning, emitted every `QUICK_RETRIES` rejections, gains two
++fields:
++
++```
++[SYN:WARN] Repeated excessive clock drifts between MCU/SX130X#0 (3 retries): -547.7ppm (threshold 100.0ppm) vs prev=-0.3ppm dt_last=2100.0ms
++```
++
++| Field | Meaning |
++|---|---|
++| `-547.7ppm` | the drift of the current sample against the reference, as before |
++| `vs prev` | the drift of the current sample against the immediately preceding one |
++| `dt_last` | the interval between the current sample and the reference |
++
++The two new fields separate the signatures without further instrumentation:
++
++- **`vs prev` near zero while the main figure is large** - the reference is the poisoned
++  element. The main figure will decay as `dt_last` grows.
++- **both close to the same nonzero constant** - a sustained rate error. Neither will decay.
++
++In both cases the actual pairing or rate error in microseconds is the main figure multiplied
++by `dt_last`.
++
++`vs prev` comes from a second per-txunit snapshot, `prevSamples`, which tracks the last
++sample that passed the quality filter regardless of the reference and regardless of the
++excessive-drift verdict. It is diagnostics only: nothing in the loop's decisions reads it.
++It is reset in `ts_iniTimesync()` alongside `timesyncs`, since it is scoped to the same
++xtime session and comparing across sessions with different session encodings would be
++meaningless.
++
++---
++
++## 5. What this patch does not do
++
++**It does not address `syncQual_thres`.** Its initial value is `INT_MAX`, which means no
++quality rejection at all for the first 30 samples. That is a related but separate issue,
++targeting a different part of the same failure, and on the data available it would not by
++itself have prevented the worst of the three restarts observed here. It is left for a
++follow-up.
++
++**It does not change the drift statistics, the outlier rejection or the quality filter.**
++The rebase only advances the reference; the accepted-sample path is untouched.
+diff --git a/src/timesync.c b/src/timesync.c
+index 7affae3..b2ebba5 100644
+--- a/src/timesync.c
++++ b/src/timesync.c
+@@ -47,6 +47,7 @@
+ #define PPS_DRIFT_THRES        80  // cut off quantile - for PPS sync quality
+ #define N_DRIFTS               20  // size of quantile table MCU/PPS
+ #define QUICK_RETRIES           3
++#define REBASE_RETRIES          3  // rejects before advancing the reference - see ts_updateTimesync()
+ #define PPM       ((sL_t)1000000)  // 1sec in micros
+ #define iPPM_SCALE             10  // keep drifts in deci ppm as ints
+ #define fPPM_SCALE           10.0  //   -double-
+@@ -100,6 +101,7 @@ static int         syncLnsCnt;       // count timesync tries with LNS, 0=not try
+ static tmr_t       syncLnsTmr;       // sync with server time
+ static ustime_t    lastReport;       // report time sync status regularly
+ static timesync_t  timesyncs[MAX_TXUNITS];
++static timesync_t  prevSamples[MAX_TXUNITS];  // last sample received, whether accepted or not - for diagnostics only
+ static timesync_t  ppsSync;          // last good PPS sync
+ static s1_t        syncWobble;
+ static u1_t        wsBufFull;
+@@ -210,6 +212,8 @@ ustime_t ts_updateTimesync (u1_t txunit, int quality, const timesync_t* curr) {
+     }
+ 
+     timesync_t* last = &timesyncs[txunit];
++    timesync_t  prev = prevSamples[txunit];  // snapshot before overwriting below
++    prevSamples[txunit] = *curr;             // remember for next call, whether this sample is accepted or not
+     if( last->ustime == 0 ) {
+         // Very first call - just setup last
+         *last = *curr;
+@@ -248,8 +252,19 @@ ustime_t ts_updateTimesync (u1_t txunit, int quality, const timesync_t* curr) {
+     if( abs(drift_ppm) > stats->drift_thres ) {
+         stats->excessive_drift_cnt += 1;
+         if( (stats->excessive_drift_cnt % QUICK_RETRIES) == 0 ) {
+-            LOG(MOD_SYN|WARNING, "Repeated excessive clock drifts between MCU/SX130X#%d (%d retries): %.1fppm (threshold %.1fppm)",
+-                txunit, stats->excessive_drift_cnt, drift_ppm/fPPM_SCALE, stats->drift_thres/fPPM_SCALE);
++            sL_t dxp = curr->xtime - prev.xtime;
++            int drift_vs_prev_ppm = (prev.xtime && dxp > 0)
++                ? encodeDriftPPM( (double)(curr->ustime - prev.ustime)/(double)dxp )
++                : 0;
++            LOG(MOD_SYN|WARNING, "Repeated excessive clock drifts between MCU/SX130X#%d (%d retries): %.1fppm (threshold %.1fppm) vs prev=%.1fppm dt_last=%.1fms",
++                txunit, stats->excessive_drift_cnt, drift_ppm/fPPM_SCALE, stats->drift_thres/fPPM_SCALE,
++                drift_vs_prev_ppm/fPPM_SCALE, dus/1000.0);
++        }
++        if( (stats->excessive_drift_cnt % REBASE_RETRIES) == 0 ) {
++            // Blind on purpose: a poisoned reference never looks excessive against itself,
++            // so waiting for a "better" sample can stall indefinitely. Advancing regardless
++            // bounds the damage to REBASE_RETRIES*TIMESYNC_RADIO_INTV/2, whatever the cause.
++            *last = *curr;
+         }
+         if( stats->excessive_drift_cnt >= 2*QUICK_RETRIES )
+             stats->drift_thres = MAX_MCU_DRIFT_THRES;  // reset - we might be stuck on a very low value
+@@ -579,6 +594,7 @@ void ts_iniTimesync () {
+     lastReport = 0;
+     sum_mcu_drifts = 0;
+     memset(timesyncs, 0, sizeof(timesyncs));
++    memset(prevSamples, 0, sizeof(prevSamples));
+     rt_clrTimer(&syncLnsTmr);
+     // The UTC anchor state is deliberately untouched: it tracks the OS clock, not the LNS session.
+ }
+-- 
+2.43.0
+
