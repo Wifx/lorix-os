@@ -18,6 +18,7 @@ SRC_URI += " \
     file://0003-Configure-TCP_USER_TIMEOUT-on-TC-sockets-for-reliabl.patch \
     file://0004-Anchor-the-UTC-reference-to-the-OS-wall-clock.patch \
     file://0005-Break-the-MCU-SX130X-sync-loop-out-of-a-poisoned-ref.patch \
+    file://0006-Compute-the-MCU-SX130X-drift-mean-over-a-truncated-w.patch \
 "
 
 SRC_URI:append:lorix-one = " \

@@ -1,0 +1,262 @@
+From 6aaad18383f060475b642dd084fa565f7883b2a8 Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Tue, 18 Aug 2026 09:56:04 +0200
+Subject: [PATCH 6/6] Compute the MCU/SX130X drift mean over a truncated window
+
+mcu_drifts[] feeds two consumers with opposite requirements. log_drift_stats()
+derives drift_thres from a quantile of the window and must see outliers to
+stay calibrated. sum_mcu_drifts, the mean of the same window, is a drift
+estimate feeding the "Mean MCU drift" line, the rt_utcOffset correction and
+ts_normalizeTimespanMCU(), which scales RefTime - and it must not. A unit
+locked up at -914ppm was reporting its own pairing error as its TCXO rate and
+scaling RefTime by it.
+
+Filtering what is recorded would make the outlier detector ratchet down to
+MIN_MCU_DRIFT_THRES; that variant was measured on target and rejected. Keep
+recording every sample and truncate at the point of use: once drift_thres is
+recomputed from the untouched window, average only the entries within it.
+Keep the previous mean when the truncated set is empty.
+
+Rationale, the rejected variant and its measurements:
+doc/wifx/timesync-recovery.md
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ doc/wifx/timesync-recovery.md | 125 +++++++++++++++++++++++++++++++---
+ src/timesync.c                |  28 ++++++--
+ 2 files changed, 137 insertions(+), 16 deletions(-)
+
+diff --git a/doc/wifx/timesync-recovery.md b/doc/wifx/timesync-recovery.md
+index f2a94a5..89dcca1 100644
+--- a/doc/wifx/timesync-recovery.md
++++ b/doc/wifx/timesync-recovery.md
+@@ -1,11 +1,16 @@
+ # MCU/SX130X sync loop recovery in Basic Station
+ 
+-Wifx patch. Applies to Basic Station's radio time synchronisation loop, `ts_updateTimesync()`
+-in `src/timesync.c`.
++Wifx patches. Apply to Basic Station's radio time synchronisation loop,
++`ts_updateTimesync()` in `src/timesync.c`.
++
++Two defects of the same loop, fixed in two commits:
++
++1. the loop cannot escape a reference sample that was bad to begin with (section 3);
++2. the drift mean it publishes is contaminated by the very samples it rejects (section 4).
+ 
+ ---
+ 
+-## 1. Why this patch exists
++## 1. Why these patches exist
+ 
+ ### The lockup
+ 
+@@ -76,7 +81,7 @@ growing for as long as the lockup lasts.
+ 
+ ---
+ 
+-## 3. What the patch does
++## 3. Breaking out of a poisoned reference
+ 
+ Every `REBASE_RETRIES` consecutive rejections, the reference is advanced to the current
+ sample, unconditionally.
+@@ -129,7 +134,94 @@ threshold in the same call maximises the odds that the next sample is accepted.
+ 
+ ---
+ 
+-## 4. Reading the logs
++## 4. Keeping the drift mean honest
++
++### Two consumers, opposite requirements
++
++`mcu_drifts[]` is a rolling window of the last `N_DRIFTS` (20) drift measurements. Upstream
++serves two consumers from it, both unfiltered, and they want opposite things.
++
++`log_drift_stats()` derives `drift_thres` from the q90 of that window. It is an **outlier
++detector**: it has to see outliers to stay calibrated against them.
++
++`sum_mcu_drifts`, the plain mean of the same window, is a **drift estimator**: it is meant to
++describe what the hardware is doing. It feeds three things:
++
++- the `Mean MCU drift vs SX130X#0` log line;
++- the `rt_utcOffset` drift-steering correction, when there is no PPS and no UTC anchor (see
++  [utc-anchor.md](utc-anchor.md));
++- `ts_normalizeTimespanMCU()`, which scales the `RefTime` published with every uplink.
++
++Outliers have no business in the second. A field unit logging
++`Mean MCU drift vs SX130X#0: -914ppm` during a startup lockup was reporting its own pairing
++error, not its TCXO - and `RefTime` was being scaled by that figure: 0.09 % of the interval
++since the last `MuxTime` at -914 ppm, 2.47 % at the +24 740 ppm seen on another gateway.
++
++### The obvious fix is wrong
++
++Moving the recording past the excessive-drift test, so that only accepted samples are ever
++stored, looks correct and is not. It is written down here precisely because it looks correct.
++
++Truncating the input to an outlier detector makes it **ratchet**. An accepted sample
++satisfies `|drift| <= drift_thres` by construction, so the quantile of a window built only
++from accepted samples is always at or below the `drift_thres` in force, and the next
++threshold derived from it is therefore always at or below the previous one. It converges on
++`MIN_MCU_DRIFT_THRES`, 2 ppm, regardless of what the hardware is doing.
++
++That variant was implemented and measured on target rather than reasoned about. Over 1 h 52
++in steady state:
++
++| | Baseline | Truncated collection |
++|---|---|---|
++| `Repeated excessive` warnings | 11.7/h | 34.8/h, 65 in total |
++
++It fired on perfectly ordinary drift - `20.5ppm (threshold 10.5ppm)`,
++`17.6ppm (threshold 10.5ppm)`, `13.8ppm (threshold 13.0ppm)` - while `drift_thres` sawtoothed
++downwards over about a dozen cycles, 39, 23, 17.6, 15.2, 13.3, 10.0 ppm, until the
++`excessive_drift_cnt >= 2*QUICK_RETRIES` reset pushed it back to `MAX_MCU_DRIFT_THRES` and
++the descent started again. One such cycle logged `threshold 15.7ppm` at 3 and 6 retries, then
++`threshold 100.0ppm` at 9. The variant was rejected on those numbers.
++
++### Filter at the point of use, not at the point of collection
++
++`mcu_drifts[]` keeps receiving every sample that reaches it, exactly as upstream, so the
++quantile stays calibrated on the full distribution it expects. Once `drift_thres` has been
++recomputed from that untouched window, the same window is walked again and only the entries
++within the threshold are averaged.
++
++One recording, two views: the detector sees everything, the estimator sees only what survived
++it. Neither compromises the other.
++
++`mean_mcu_drift` replaces `sum_mcu_drifts` and its per-call incremental maintenance, which is
++no longer needed: the truncated mean is computed fresh each time `drift_thres` is recomputed,
++once per completed window. It feeds the same three consumers.
++
++### The empty-set case
++
++If every entry in the window exceeds the just-computed `drift_thres`, the truncated set is
++empty and no mean can be derived from it. This is reachable: `drift_thres` is clamped to at
++most `MAX_MCU_DRIFT_THRES`, 100 ppm, and during a lockup every recorded value can sit far
++above that.
++
++The previous `mean_mcu_drift` is then kept rather than replaced, which matches how the log
++line and the `rt_utcOffset` correction already behave before the first window ever completes.
++`ts_iniTimesync()` resets it to 0, like `sum_mcu_drifts` before it: `decodeDriftPPM(0)` is
++1.0, that is, no correction.
++
++### Upstream scope kept, deliberately
++
++Two oddities are preserved rather than fixed, to keep the change to what it claims to be:
++
++- the truncated mean is only assigned under `txunit == 0`, mirroring where `sum_mcu_drifts`
++  was maintained - even though the surrounding `widx == 0` block runs for every txunit, so
++  its `Mean MCU drift vs SX130X#0` line and its `rt_utcOffset` correction still read
++  txunit 0's figures whichever txunit triggered the block;
++- the second, unreachable `return` in `ts_normalizeTimespanMCU()` is left in place; only the
++  identifier it references changes.
++
++---
++
++## 5. Reading the logs
+ 
+ Module `SYN`. The existing warning, emitted every `QUICK_RETRIES` rejections, gains two
+ fields:
+@@ -160,15 +252,30 @@ It is reset in `ts_iniTimesync()` alongside `timesyncs`, since it is scoped to t
+ xtime session and comparing across sessions with different session encodings would be
+ meaningless.
+ 
++### The two statistics lines
++
++Emitted together, once per completed window of 20 samples:
++
++```
++[SYN:INFO] MCU/SX130X drift stats: min: +0.1ppm  q50: +0.4ppm  q80: +0.9ppm  max: +12.3ppm - threshold q90: +2.1ppm
++[SYN:INFO] Mean MCU drift vs SX130X#0: -0.4ppm
++```
++
++The first is unchanged and still reflects the full window, outliers included - that is what
++keeps `threshold q90` meaningful. The second is now the truncated mean, so during a lockup it
++no longer echoes the pairing error back at you. The two disagreeing by orders of magnitude
++while samples are being rejected is the expected picture, not a fault.
++
+ ---
+ 
+-## 5. What this patch does not do
++## 6. What these patches do not do
+ 
+-**It does not address `syncQual_thres`.** Its initial value is `INT_MAX`, which means no
++**They do not address `syncQual_thres`.** Its initial value is `INT_MAX`, which means no
+ quality rejection at all for the first 30 samples. That is a related but separate issue,
+ targeting a different part of the same failure, and on the data available it would not by
+ itself have prevented the worst of the three restarts observed here. It is left for a
+ follow-up.
+ 
+-**It does not change the drift statistics, the outlier rejection or the quality filter.**
+-The rebase only advances the reference; the accepted-sample path is untouched.
++**They do not change the outlier detector or the quality filter.** `log_drift_stats()` still
++sees the full window and `drift_thres` is still derived from it exactly as upstream. Only the
++mean is truncated, and only at the point where it is read.
+diff --git a/src/timesync.c b/src/timesync.c
+index b2ebba5..8dc737f 100644
+--- a/src/timesync.c
++++ b/src/timesync.c
+@@ -89,7 +89,7 @@ static struct txunit_stats {
+     int mcu_drifts[N_DRIFTS];
+     int mcu_drifts_widx;
+ } txunit_stats[MAX_TXUNITS];
+-static int         sum_mcu_drifts;    // sum of txunit_stats[0].mcu_drifts
++static int         mean_mcu_drift;    // truncated mean of txunit_stats[0].mcu_drifts, deci-ppm - excludes entries beyond drift_thres
+ 
+ static int         pps_drifts[N_DRIFTS];
+ static int         pps_drifts_widx;
+@@ -190,8 +190,8 @@ static int log_drift_stats (str_t msg, int* drifts, int thresQ, int* auxQ) {
+ ustime_t ts_normalizeTimespanMCU (ustime_t timespan) {
+     
+     
+-    return (ustime_t)round(timespan / decodeDriftPPM((double)sum_mcu_drifts / N_DRIFTS));
+-    return (ustime_t)round( timespan / (1.0 + sum_mcu_drifts / (PPM*iPPM_SCALE) / N_DRIFTS) );
++    return (ustime_t)round(timespan / decodeDriftPPM((double)mean_mcu_drift));
++    return (ustime_t)round( timespan / (1.0 + mean_mcu_drift / (PPM*iPPM_SCALE)) );
+ }
+ 
+ ustime_t ts_updateTimesync (u1_t txunit, int quality, const timesync_t* curr) {
+@@ -232,8 +232,6 @@ ustime_t ts_updateTimesync (u1_t txunit, int quality, const timesync_t* curr) {
+     }
+     struct txunit_stats* stats = &txunit_stats[txunit];
+     int drift_ppm = encodeDriftPPM( (double)dus/(double)dxc );
+-    if( txunit == 0 )
+-        sum_mcu_drifts += drift_ppm - stats->mcu_drifts[stats->mcu_drifts_widx];
+     stats->mcu_drifts[stats->mcu_drifts_widx] = drift_ppm;
+     stats->mcu_drifts_widx = (stats->mcu_drifts_widx + 1) % N_DRIFTS;
+     if( stats->mcu_drifts_widx == 0 ) {
+@@ -242,7 +240,23 @@ ustime_t ts_updateTimesync (u1_t txunit, int quality, const timesync_t* curr) {
+         
+         int thres = log_drift_stats("MCU/SX130X drift stats", stats->mcu_drifts, MCU_DRIFT_THRES, NULL);
+         stats->drift_thres = max(MIN_MCU_DRIFT_THRES, min(MAX_MCU_DRIFT_THRES, abs(thres)));
+-        double mean_ppm = decodePPM( ((double)sum_mcu_drifts) / N_DRIFTS);
++        if( txunit == 0 ) {
++            // The quantile above must see every entry, aberrant or not, to stay calibrated
++            // as an outlier detector. The mean below must not, to stay an honest drift
++            // estimate - truncate at read time rather than filtering what feeds the quantile.
++            int trunc_sum = 0, trunc_cnt = 0;
++            for( int i=0; i<N_DRIFTS; i++ ) {
++                if( abs(stats->mcu_drifts[i]) <= stats->drift_thres ) {
++                    trunc_sum += stats->mcu_drifts[i];
++                    trunc_cnt++;
++                }
++            }
++            if( trunc_cnt > 0 )
++                mean_mcu_drift = trunc_sum / trunc_cnt;
++            // else: every entry in this window looks excessive - keep the previous
++            // mean_mcu_drift rather than fabricate one from an empty set.
++        }
++        double mean_ppm = decodePPM((double)mean_mcu_drift);
+         LOG(MOD_SYN|INFO, "Mean MCU drift vs SX130X#0: %.1fppm",  mean_ppm);
+         if( rt_utcOffset_ts != 0 && !ppsSync.pps_xtime && !utcAnchored ) {
+             rt_utcOffset -= (curr->ustime - rt_utcOffset_ts) * mean_ppm/PPM;
+@@ -592,7 +606,7 @@ void ts_iniTimesync () {
+     syncQual_thres = INT_MAX;
+     syncLnsCnt = 0;
+     lastReport = 0;
+-    sum_mcu_drifts = 0;
++    mean_mcu_drift = 0;
+     memset(timesyncs, 0, sizeof(timesyncs));
+     memset(prevSamples, 0, sizeof(prevSamples));
+     rt_clrTimer(&syncLnsTmr);
+-- 
+2.43.0
+
