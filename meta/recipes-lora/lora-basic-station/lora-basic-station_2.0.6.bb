@@ -13,9 +13,10 @@ SRCREV = "ba4f85d80a438a5c2b659e568cd2d0f0de08e5a7"
 
 SRC_URI += " \
     file://lora-basic-station.yml \
-    file://0001-editable-toolchain-path.patch \
-    file://0002-handle-router-config-on-unknown-region.patch \
-    file://0003-configure-tcp-user-timeout.patch \
+    file://0001-Make-toolchain-path-configurable-with-default-value.patch \
+    file://0002-Handle-router-config-on-unknown-region.patch \
+    file://0003-Configure-TCP_USER_TIMEOUT-on-TC-sockets-for-reliabl.patch \
+    file://0004-Anchor-the-UTC-reference-to-the-OS-wall-clock.patch \
 "
 
 SRC_URI:append:lorix-one = " \

@@ -1,3 +1,12 @@
+From db3b8e0aad6a89187458989fc9dcd82ad18425bd Mon Sep 17 00:00:00 2001
+From: Yannick Lanz <yannick.lanz@wifx.net>
+Date: Thu, 30 Jul 2026 18:08:24 +0200
+Subject: [PATCH 2/6] Handle router config on unknown region
+
+---
+ src/s2e.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
 diff --git a/src/s2e.c b/src/s2e.c
 index 6a9c009..879d3c9 100644
 --- a/src/s2e.c
@@ -11,3 +20,6 @@ index 6a9c009..879d3c9 100644
          // Might happen if messages are still queued
          LOG(MOD_S2E|WARNING, "Received '%.*s' before 'router_config' - dropped", D.str.len, D.str.beg);
          return 1;
+-- 
+2.43.0
+

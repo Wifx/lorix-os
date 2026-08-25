@@ -1,0 +1,713 @@
+From 1b8fd63c5c2d55005b3ed2c1298cc775fa8bd295 Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Mon, 17 Aug 2026 14:20:28 +0200
+Subject: [PATCH 4/6] Anchor the UTC reference to the OS wall clock
+
+rt_utcOffset is captured once in rt_ini() and never re-derived from the OS
+clock. Without PPS its only later update is the drift correction in
+ts_updateTimesync(), which steers it to the concentrator counter. Any error
+present at process start therefore becomes permanent and the published UTC
+drifts at the TCXO's rate error: measured in the field, a constant offset of
+0.8 to 5 s plus a residual slope of 3 to 5 ppm.
+
+Add sys_utcTrusted() to query the kernel NTP discipline state with adjtimex(),
+and a self-scheduling loop in timesync.c that compares rt_getUTC() against
+sys_utc() while the clock is trusted, slewing small errors and stepping large
+ones after confirmation. The loop releases the reference to the PPS logic, and
+both the drift steering and router_config MuxTime stand down while it owns it.
+
+Rationale, precedence between the writers of rt_utcOffset, parameters, log
+lines and field measurements: doc/wifx/utc-anchor.md
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ doc/wifx/utc-anchor.md | 367 +++++++++++++++++++++++++++++++++++++++++
+ src-linux/sys_linux.c  |  19 +++
+ src/s2conf.h           |   6 +
+ src/s2e.c              |   8 +-
+ src/sys.h              |   4 +
+ src/timesync.c         | 146 +++++++++++++++-
+ src/timesync.h         |   2 +
+ 7 files changed, 549 insertions(+), 3 deletions(-)
+ create mode 100644 doc/wifx/utc-anchor.md
+
+diff --git a/doc/wifx/utc-anchor.md b/doc/wifx/utc-anchor.md
+new file mode 100644
+index 0000000..f891bc4
+--- /dev/null
++++ b/doc/wifx/utc-anchor.md
+@@ -0,0 +1,367 @@
++# UTC reference anchoring in Basic Station
++
++Wifx patch. Applies to LORIX OS gateways running Basic Station without a GNSS receiver.
++
++---
++
++## 1. Why this patch exists
++
++### The short version
++
++Basic Station publishes a `rxtime` field with every uplink it forwards to the LNS. On an
++unpatched gateway that value is wrong in two independent ways: it carries a fixed error of
++up to several seconds established when the process starts, and it drifts continuously
++afterwards. The gateway is the only party that can fix this. No LNS can repair a timestamp
++it did not produce.
++
++### The objection, answered
++
++*"`rxtime` is not meant to be used for timing anyway, so the LNS should not depend on it."*
++
++That is correct, and it does not change anything.
++
++`rxtime` is sampled when the JSON message is built, not when the frame is received, so it
++already carries the RX polling interval and the queueing delay. It is metadata. Basic
++Station provides `xtime` for correlating uplinks and downlinks, and `gpstime` when a GNSS
++is present. An LNS that uses `rxtime` as its primary timing reference is building on a
++field that was never specified to carry that weight.
++
++But two things are true at once. An LNS should not depend on `rxtime` for timing, **and**
++a gateway should not publish a value that is wrong by seconds and diverging without bound.
++The second is our responsibility and only ours. A customer opened a ticket because of it;
++the next customer, with a different LNS, would eventually do the same.
++
++### What was actually wrong
++
++**Defect 1: the UTC reference is captured once and never re-derived.**
++
++`rt_utcOffset` is read from the system clock in `rt_ini()`, at process start, and no code
++path ever reads the system clock again. On a gateway that starts Basic Station before the
++time daemon has converged, and that is the normal case on a 4G unit where the modem must
++attach before NTP can run, whatever the clock was wrong by at that instant becomes a
++permanent offset. Measured in the field on customer hardware: between 0.8 and 5 seconds
++depending on the boot.
++
++**Defect 2: without PPS, the reference is steered to the concentrator, not to NTP.**
++
++The only subsequent update to `rt_utcOffset` is a relative drift correction that aligns it
++to the SX1302 counter. That counter is driven by a TCXO, which is an excellent frequency
++source but has no notion of UTC and is two to three orders of magnitude worse than an
++NTP-disciplined host clock. The published timestamp therefore drifts at the TCXO's rate
++error, measured between 3 and 5 ppm across two gateways, while a perfectly healthy chrony
++running on the same machine is never consulted.
++
++---
++
++## 2. What the patch does
++
++A loop runs on its own timer, independent of the radio synchronisation loop and of the LNS
++session. Every `UTCANCHOR_INTV` it asks the kernel whether the system clock is disciplined,
++and if so compares the published UTC reference against it.
++
++- Small errors are corrected by a bounded amount per check.
++- Large errors are corrected in a single step, after confirmation.
++- If the kernel reports the clock as undisciplined, the loop does nothing and the previous
++  behaviour applies unchanged.
++
++Trust comes from `adjtimex()` in mode 0: the reference is used only when the call does not
++return `TIME_ERROR` and `STA_UNSYNC` is clear. There is no dependency on chrony, on its
++socket, or on any particular time daemon.
++
++### Where the loop is armed
++
++Once per process, from `startupMaster()`, and deliberately not from `ts_iniTimesync()`.
++
++`ts_iniTimesync()` runs before the fork in daemon mode, so the timer would also be queued in
++the supervisor, which reads no UTC reference yet would log under the same module tag and
++hand its step state to every worker it respawns. It also runs on every reconnect, which
++would restart the pending-step decision on an unstable link and drive the loop at the
++reconnect rate instead of `UTCANCHOR_INTV` - and the bound on the gradual correction assumes
++the configured cadence.
++
++No anchor state is tied to the LNS session: the deferral counter, the grace window, the step
++latch and the slew report timestamp all track the OS clock. `startupMaster()` still runs
++before the LNS connection is set up, so anchoring does not wait for the network.
++
++### Arbitration between the writers of `rt_utcOffset`
++
++Before the patch, four code paths wrote that variable with no ordering between them, and
++whichever ran last owned the value. The patch establishes a precedence:
++
++```
++  PPS logic                    highest, when a PPS signal is present
++  OS wall clock                this patch
++  router_config MuxTime        LNS-supplied, used when the OS clock is not trusted
++  MCU/SX130X drift steering    fallback when nothing better exists
++  rt_ini()                     initial value at process start
++```
++
++Each writer stands down while a higher one is available. Nothing is removed; the fallbacks
++remain in place exactly where they are needed.
++
++The `MuxTime` decision deserves a word, because it is a policy choice rather than a bug
++fix. `MuxTime` is a timestamp placed in a JSON message by the LNS and read on arrival, with
++no round-trip compensation and no filtering. Its error is the one-way network delay, which
++on a cellular link is tens to hundreds of milliseconds and is systematically biased late. A
++locally disciplined clock is better by two to three orders of magnitude and its error is
++zero-mean. On a gateway with no usable local clock, `MuxTime` still applies as before.
++
++---
++
++## 3. Measured results
++
++All figures from production hardware, not simulation.
++
++### Cold boot with a wrong clock
++
++An Ethernet gateway booted with its clock reading 2000-01-01. Basic Station started 47
++seconds before the time daemon converged, then:
++
++| | |
++|---|---|
++| Error at the moment trust was granted | 839 671 237 776 784 µs, about 26.6 years |
++| Corrected by | one step, immediately |
++| Residual afterwards | between -1 and +2 µs for the following 12 minutes |
++
++### Before and after on the same 4G gateway
++
++One log containing a restart, so the two regimes are directly comparable:
++
++| | Before | After |
++|---|---|---|
++| Slope of the published UTC | -4.2 ppm | -0.17 ppm |
++| Extrapolated over 7 days | -2.5 s | below 1 ms |
++
++Confirmed seven days later on the same gateway: the error was unchanged within 1 ms.
++
++### Robustness to a noisy radio loop
++
++On the 4G gateway the internal drift estimator produces large excursions, up to
++**+11 410 ppm**, most likely because modem activity stalls the SPI reads of the concentrator
++counter. Over the same period the published timestamp did not move by half a millisecond.
++That is the property the patch is for: the radio loop's noise no longer reaches the UTC
++output.
++
++### Coverage
++
++Every path through the loop exercised on production hardware.
++
++| Path | Ethernet gateway | 4G gateway |
++|---|---|---|
++| Clock untrusted, no action taken | boot with the clock at 2000-01-01 | 60 s after a manual `date -s`, and at boot |
++| Gradual correction | 22.9 ms absorbed in 110 s | 28 ms absorbed in 140 s |
++| Step, first of the process | 26.6 years, and separately 1.02 s | 2.87 s |
++| Step, deferred by `UTCANCHOR_STEP_CNT` | | several, `(1/3)` then `(2/3)` then step |
++| Second step inside the grace window | | twice, reported at WARNING |
++| Third step within the hour | | once, reported at ERROR |
++| Trust lost and regained | | six cycles in 40 minutes, one log line each, no flood |
++| Feature disabled by configuration | | `UTCANCHOR_ENABLE=0`, anchor never armed |
++| Steady state | ±2 µs over 12 minutes | 7 days within 1 ms |
++
++The only path never exercised is the release of the reference to the PPS logic, which
++requires PPS hardware.
++
++One behaviour worth knowing, discovered rather than designed: setting the clock manually
++with `date -s` makes the kernel raise `STA_UNSYNC`. The loop therefore refuses to act on a
++hand-stepped clock and waits for the time daemon to re-establish synchronisation. It held
++off for a full minute against a 2.87 s error before correcting it.
++
++Note also that the allowance for an immediate first step is keyed on whether a step has ever
++been taken in this process, not on elapsed time. A process that anchors, runs for hours
++without ever stepping, and then meets a large error will still step on the first check
++rather than after `UTCANCHOR_STEP_CNT` confirmations. Keying it on a once-per-process latch
++rather than on the anchored state also means a flapping trust bit cannot produce a train of
++unconfirmed steps.
++
++---
++
++## 4. Parameters
++
++Six runtime parameters, set in the `station_conf` section of `station.conf` or in the
++environment, both read before the anchor is armed, so switching a site over needs no
++rebuild. Three further values are compile-time constants because no deployment should need
++to change them.
++
++| Parameter | Default | When you would touch it |
++|---|---|---|
++| `UTCANCHOR_ENABLE` | `1` | Set to `0` to disable the feature entirely and restore the previous behaviour. The kill switch. See the warning below. |
++| `UTCANCHOR_INTV` | `10s` | Trade reactivity against cost. One `adjtimex()` and one `clock_gettime()` per interval. Rarely worth changing. |
++| `UTCANCHOR_STEP_THRES` | `200ms` | The boundary between a gradual correction and a single jump. Raise it if you would rather never jump; lower it if you want faster recovery from a large error. |
++| `UTCANCHOR_STEP_CNT` | `3` | Consecutive checks above the threshold before stepping. Raise it on a site whose time source is unreliable, so that no isolated bad reading can move the reference. |
++| `UTCANCHOR_SLEW_PPM` | `200` | Maximum correction rate. At the default, 2 ms per 10 s interval. Raise it if convergence after a disturbance is too slow. |
++| `UTCANCHOR_ESTERROR` | `0` | Refuse to anchor while the kernel's own error estimate exceeds this. `0` disables the check. See section 6 before enabling it. |
++
++**Warning on `UTCANCHOR_ENABLE`.** Setting it to `0` does not switch the UTC reference over
++to the LNS. It disables the anchor and lets `router_config MuxTime` write the reference
++again, which is only useful if your LNS actually sends that field. On an LNS that does not,
++setting `0` restores the pre-patch behaviour including its drift, with nothing in its place.
++
++### Compile-time constants
++
++| Constant | Value | Why it is not configurable |
++|---|---|---|
++| `UTCANCHOR_DEADBAND` | 1 ms | Three orders of magnitude below anything downstream can use. `rxtime` is already quantised by the RX polling interval. |
++| `UTCANCHOR_STEP1_CNT` | 1 | The first step of a process corrects an offset that is known to exist, at a moment the kernel has just declared the clock usable. Deferring it buys nothing. |
++| `UTCANCHOR_GRACE` | 5 min | Log severity policy only. Determines how long after startup an extra step is reported as a warning rather than an error. |
++
++---
++
++## 5. Reading the logs
++
++Module `SYN`. Everything below is visible at log level `VERBOSE` except the per-check
++diagnostic, which needs `DEBUG`.
++
++### Normal operation
++
++At startup, once per process, the effective configuration:
++
++```
++[SYN:INFO] UTC anchor: intv=10000ms deadband=1000us step=200000us cnt=1/3 grace=300000ms slew=200ppm esterror=0us
++```
++
++This line is the fastest way to confirm which build is running and what values it is using.
++If it appears more than once per process, something is wrong.
++
++When the clock becomes usable:
++
++```
++[SYN:INFO] UTC anchor: OS clock trusted - taking over the UTC reference (error -1us, maxerror 26724us)
++```
++
++And then, on a healthy gateway, **nothing at all**. Seven days of production running
++produced no further line. Silence is the expected steady state; the loop checks and finds
++nothing to correct.
++
++At `DEBUG` level, one line per interval, useful for diagnosis:
++
++```
++[SYN:DEBU] UTC anchor: trusted=1 anchored=1 err=0us maxerror=21000us esterror=22us
++```
++
++### Lines that mean something happened
++
++| Line | Meaning |
++|---|---|
++| `error Nus beyond slew range (i/n) - deferring` | An error above the step threshold awaiting confirmation. Expected before any step other than the first of the process. |
++| `stepping UTC reference by Nus - error beyond slew range` | Expected once per boot when the clock was wrong at process start. |
++| `stepping ... N steps within the hour, time source flapping or kernel timekeeping faulty` | An error. A repeated step in steady state is a fault, not a correction. |
++| `stepping ... step N in startup grace, time daemon likely trusted before converged` | The time daemon declared the clock usable before it had converged. Harmless, but it is the evidence for enabling `UTCANCHOR_ESTERROR`. |
++| `slewing UTC reference by Nus` | A gradual correction is in progress. Rate-limited to `TIMESYNC_REPORTS`, 5 minutes by default. |
++| `OS clock no longer trusted ... reverting to MCU/SX130X drift steering` | NTP has been unavailable long enough for the kernel to give up. The gateway falls back to the previous behaviour. |
++| `PPS acquired - releasing the UTC reference to the PPS logic` | A PPS signal appeared. The anchor stands down and the PPS logic governs alone. |
++| `disabled by UTCANCHOR_ENABLE=0` | The feature is off by configuration. |
++
++### One thing this patch is not responsible for
++
++For the first seconds or minutes after the process starts you may see a burst of
++
++```
++[SYN:WARN] Repeated excessive clock drifts between MCU/SX130X#0 (N retries): ...ppm (threshold 100.0ppm)
++```
++
++with values in the hundreds or thousands of ppm, decaying steadily. This is a **separate,
++pre-existing defect** in the radio synchronisation loop, unrelated to the UTC anchor and
++present long before this patch. It is tracked on its own.
++
++It matters here only because the two are easy to confuse. Since the anchor stands the drift
++steering down while the OS clock is trusted, none of that noise reaches the published
++`rxtime`. If you see this burst alongside a stable `rxtime`, both are behaving as expected.
++
++---
++
++## 6. Behaviour when NTP is unavailable
++
++**Never available since boot.** `STA_UNSYNC` stays set, the loop never takes over, and the
++concentrator drift steering runs exactly as it did before this patch. The cost is one
++`adjtimex()` per interval. This is deliberate: a gateway with no time source must not behave
++differently because of this feature.
++
++**Lost while running.** The kernel keeps applying the last frequency correction to both the
++monotonic and the wall clock, so the measured error stays near zero and the loop takes no
++action and logs nothing. The published UTC drifts at the residual of the discipline, well
++under 1 ppm, rather than at the TCXO's several ppm.
++
++The kernel's own error estimate grows at 500 µs per second of unsynchronised operation, and
++it declares the clock unusable at 16 seconds. That is roughly **8.9 hours** without any NTP
++update before the fallback of the previous paragraph is triggered.
++
++### About `UTCANCHOR_ESTERROR`
++
++The kernel exposes two error estimates. Both are logged; only one is offered as a guard, and
++even that one is a coarse gate rather than a precision instrument.
++
++`maxerror` is a sawtooth: it resets at each NTP update and grows at 500 µs per second in
++between. Measured between 2.5 ms and 30 ms across a 129 second polling interval, which means
++any useful threshold would have to sit above 35 ms and would still be dominated by the
++sawtooth. It is logged for diagnosis and is not offered as a guard.
++
++`esterror` is the one you can act on, with two important limits.
++
++**It does not predict the real error.** Six measurements taken at the moment trust was
++granted, some during a deliberate sequence of clock disturbances:
++
++| Reported `esterror` | Real error | Deviation |
++|---|---|---|
++| 30.7 ms | 22.9 ms | over by 34 % |
++| 840 ms | 1022 ms | under by 18 % |
++| 3.2 ms | 28.1 ms | under by 89 % |
++| 1654 ms | 2871 ms | under by 42 % |
++| 1393 ms | 2141 ms | under by 35 % |
++| 565 ms | 153 ms | **over by 268 %** |
++
++The spread runs from underestimating by a factor of nine to overestimating by a factor of
++three and a half. It reliably catches gross errors, at the second level, and lets fine ones
++through, at the tens of milliseconds level. Treat it as a gate against anchoring on a badly
++converged clock, never as a bound on the resulting accuracy.
++
++**Its steady-state value depends entirely on the network path.** Measured in steady state:
++10 to 144 µs on an Ethernet gateway, 3.2 to 11.4 ms on a 4G gateway. A factor of a hundred.
++A threshold sized from an Ethernet unit would permanently block anchoring on a cellular one.
++
++If you enable it, capture a few minutes at `DEBUG` on the noisiest link in your fleet, take
++the highest steady-state value you see, and leave an order of magnitude of margin above it.
++
++---
++
++## 7. What this patch does not do
++
++**It does not enable Class B.** Beaconing requires GPS time, which requires a PPS signal.
++Without one, `ppsOffset` is never established, the time synchronisation handshake with the
++LNS never starts, and `gpstime` stays unavailable. This is unchanged.
++
++**It does not enable GPS-time scheduled downlinks**, including multicast FUOTA sessions,
++for the same reason.
++
++**It does not make the timestamp better than NTP.** The published UTC is now as good as the
++gateway's time synchronisation, which is a few milliseconds on a healthy link. It is not a
++substitute for a GNSS receiver.
++
++**It does not change transmit timing.** There is no conversion from UTC back to internal
++time anywhere in Basic Station; every transmission is scheduled from the concentrator
++counter. The UTC reference is a write-only output. A step in the reference cannot move a
++transmission by one microsecond.
++
++---
++
++## 8. Two things to expect after upgrading
++
++**One backwards jump per boot.** Shortly after each boot, once the time daemon has
++converged, the gateway corrects its reference. If the clock was wrong at process start,
++`rxtime` will jump backwards once, by up to a few seconds, roughly 10 to 40 seconds after
++the process starts. Uplinks received before that correction carry the old, wrong timestamp.
++
++This happens once per reboot and it replaces an error that was previously permanent. But an
++LNS that orders or deduplicates on `rxtime` may see it. Tell your integrators before they
++discover it.
++
++**The published UTC is not strictly monotonic.** A gradual correction is a single bounded
++assignment, not a rate: it can move the reference by up to
++`UTCANCHOR_SLEW_PPM * UTCANCHOR_INTV` at once, 2 ms at the defaults. Two timestamps taken
++less than that apart and straddling a correction can come back inverted. Beyond one check
++interval any two samples are strictly ordered, since the accumulated correction then grows
++at `UTCANCHOR_SLEW_PPM`, 0.02 % of the elapsed time. Steps are exempt by construction, which
++is what the confirmation count and the log lines are for.
++
++Making the slew a true rate would turn the UTC reference into a two-term state that all of
++its writers would have to maintain consistently, to remove a discontinuity that only occurs
++while converging out of a step.
+\ No newline at end of file
+diff --git a/src-linux/sys_linux.c b/src-linux/sys_linux.c
+index 2bbb7e5..8895a52 100644
+--- a/src-linux/sys_linux.c
++++ b/src-linux/sys_linux.c
+@@ -37,6 +37,7 @@
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ #include <sys/wait.h>
++#include <sys/timex.h>
+ 
+ #include "argp2.h"
+ #include "s2conf.h"
+@@ -468,6 +469,23 @@ sL_t sys_utc () {
+ }
+ 
+ 
++// adjtimex mode 0 is a privilege-free query of the kernel NTP discipline state.
++int sys_utcTrusted (sL_t* maxerror, sL_t* esterror) {
++    struct timex tx;
++    memset(&tx, 0, sizeof(tx));
++    if( maxerror ) *maxerror = 0;
++    if( esterror ) *esterror = 0;
++    int state = adjtimex(&tx);
++    if( state == -1 ) {
++        LOG(MOD_SYS|DEBUG, "adjtimex(2) failed: %s", strerror(errno));
++        return 0;
++    }
++    if( maxerror ) *maxerror = tx.maxerror;
++    if( esterror ) *esterror = tx.esterror;
++    return state != TIME_ERROR && (tx.status & STA_UNSYNC) == 0;
++}
++
++
+ str_t sys_version () {
+     return readFileAsString("version", ".txt", &versionTxt);
+ }
+@@ -1045,6 +1063,7 @@ static void startupMaster (tmr_t* tmr) {
+     // If there is an update pending - run it
+     sys_runUpdate();
+     ral_ini();
++    ts_startUtcAnchor();
+     atexit(leds_off);
+     // Wait until slaves are up
+     //startupMaster2(tmr);
+diff --git a/src/s2conf.h b/src/s2conf.h
+index 369d73f..8efcc0d 100644
+--- a/src/s2conf.h
++++ b/src/s2conf.h
+@@ -189,6 +189,12 @@ CONF_PARAM(TIMESYNC_LNS_RETRY  , ustime, tspan_s ,            "\"71ms\"", "resen
+ CONF_PARAM(TIMESYNC_LNS_PAUSE  , ustime, tspan_s ,              "\"5s\"", "pause after unsuccessful volley of timesync messages")
+ CONF_PARAM(TIMESYNC_LNS_BURST  , u4    , u4      ,                  "10", "volley of timesync messages before pausing")
+ CONF_PARAM(TIMESYNC_REPORTS    , ustime, tspan_s ,              "\"5m\"", "report interval for current timesync status")
++CONF_PARAM(UTCANCHOR_INTV      , ustime, tspan_s ,            "\"10s\"", "interval to compare the UTC reference against the OS wall clock")
++CONF_PARAM(UTCANCHOR_STEP_THRES, ustime, tspan_ms,          "\"200ms\"", "step the UTC reference instead of slewing above this")
++CONF_PARAM(UTCANCHOR_STEP_CNT  , u4    , u4      ,                  "3", "consecutive checks above the step threshold before stepping")
++CONF_PARAM(UTCANCHOR_SLEW_PPM  , u4    , u4      ,                "200", "max slew rate of the UTC reference in ppm")
++CONF_PARAM(UTCANCHOR_ESTERROR  , ustime, tspan_ms,                  "0", "distrust the OS clock if its reported est error exceeds this - 0: do not check")
++CONF_PARAM(UTCANCHOR_ENABLE    , u4    , u4      ,                  "1", "0: do not anchor the UTC reference to the OS clock and leave it to router_config MuxTime. Restores the behaviour of gateways without this feature, including its drift, if the LNS does not send MuxTime")
+ CONF_PARAM(TX_MIN_GAP          , ustime, tspan_s ,       DFLT_TX_MIN_GAP, "min distance between two frames being TXed")
+ CONF_PARAM(TX_AIM_GAP          , ustime, tspan_s ,       DFLT_TX_AIM_GAP, "aim for this TX lead time, if delayed should not fall under min")
+ CONF_PARAM(TX_MAX_AHEAD        , ustime, tspan_s ,     DFLT_TX_MAX_AHEAD, "maximum time message can be scheduled into the future")
+diff --git a/src/s2e.c b/src/s2e.c
+index 879d3c9..bc4ece4 100644
+--- a/src/s2e.c
++++ b/src/s2e.c
+@@ -1045,8 +1045,12 @@ static int handle_router_config (s2ctx_t* s2ctx, ujdec_t* D) {
+         }
+         case J_MuxTime: {
+             s2e_updateMuxtime(s2ctx, uj_num(D), 0);
+-            rt_utcOffset = s2ctx->muxtime*1e6 - s2ctx->reftime;
+-            rt_utcOffset_ts = s2ctx->reftime;
++            // The anchor is not armed when disabled, so utcAnchored stays 0 and this write
++            // always runs in that case.
++            if( !ts_utcAnchored() ) {
++                rt_utcOffset = s2ctx->muxtime*1e6 - s2ctx->reftime;
++                rt_utcOffset_ts = s2ctx->reftime;
++            }
+             break;
+         }
+         case J_hwspec: {
+diff --git a/src/sys.h b/src/sys.h
+index d4036c7..b4ccb28 100644
+--- a/src/sys.h
++++ b/src/sys.h
+@@ -52,6 +52,10 @@ void  sys_seed (u1_t* seed, int len);       // sys provides high quality seeds t
+ #endif
+ sL_t  sys_time ();
+ sL_t  sys_utc  ();  // native UTC time - return 0 if not avail.
++// Is sys_utc() disciplined and therefore usable as a UTC reference?
++// maxerror/esterror receive the OS error estimate in us, 0 if unavailable.
++// Platforms with no notion of a disciplined clock return 0.
++int   sys_utcTrusted (sL_t* maxerror, sL_t* esterror);
+ uL_t  sys_eui  ();
+ void  sys_usleep(sL_t us);
+ 
+diff --git a/src/timesync.c b/src/timesync.c
+index 98bc7c3..7affae3 100644
+--- a/src/timesync.c
++++ b/src/timesync.c
+@@ -31,6 +31,7 @@
+ #include "s2conf.h"
+ #include "tc.h"
+ #include "timesync.h"
++#include "sys.h"
+ #include "ral.h"
+ 
+ #if defined(CFG_smtcpico)
+@@ -58,6 +59,16 @@
+ #define NO_PPS_ALARM_MAX     3600  // seconds
+ #define XTICKS_DECAY       100000  // max age of xticks from FIFO (us)
+ #define UTC_GPS_EPOCH_US 315964800 // UTC epoch expressed in s since GPS epoch
++// Three orders of magnitude below anything downstream can use: rxtime is already
++// quantised by RX_POLL_INTV.
++#define UTCANCHOR_DEADBAND     rt_millis(1)
++// The startup offset is known to exist and the kernel has just declared the clock
++// usable, so deferring the first step buys nothing. A premature trust bit is the
++// business of UTCANCHOR_ESTERROR, which addresses the cause.
++#define UTCANCHOR_STEP1_CNT               1
++// Log severity policy only: a time daemon that steps its first updates would
++// otherwise raise ERROR on every boot and train operators to ignore the line.
++#define UTCANCHOR_GRACE     rt_seconds(300)
+ 
+ #define ustimeRoundSecs(x) (((x) + PPM/2) / PPM * PPM)
+ #define ustime2xtime(sync, _ustime) ((sync)->xtime + ((_ustime)-(sync)->ustime))
+@@ -95,9 +106,19 @@ static u1_t        wsBufFull;
+ static int         syncQual[N_SYNC_QUAL];
+ static int         syncQual_widx;
+ static int         syncQual_thres;  // current threshold
++static tmr_t       utcAnchorTmr;    // armed once per process from ts_startUtcAnchor()
++static u1_t        utcAnchored;     // OS clock is trusted and drives rt_utcOffset
++static int         utcStepPend;     // consecutive checks beyond the step threshold
++static int         utcStepCnt;      // steps taken within the current hour
++static u1_t        utcStepEver;     // a step has been taken since process start
++static u1_t        utcGraceSet;     // grace window armed - once per process, never re-armed
++static ustime_t    utcGraceEnd;     // end of the startup grace window
++static ustime_t    utcStepWindow;   // start of that hour
++static ustime_t    utcAnchorReport; // last INFO report emitted while slewing
+ 
+ // Fwd decl
+ static void onTimesyncLns (tmr_t* tmr);
++static void onUtcAnchor   (tmr_t* tmr);
+ 
+ 
+ static void timesyncReport (int force) {
+@@ -219,7 +240,7 @@ ustime_t ts_updateTimesync (u1_t txunit, int quality, const timesync_t* curr) {
+         stats->drift_thres = max(MIN_MCU_DRIFT_THRES, min(MAX_MCU_DRIFT_THRES, abs(thres)));
+         double mean_ppm = decodePPM( ((double)sum_mcu_drifts) / N_DRIFTS);
+         LOG(MOD_SYN|INFO, "Mean MCU drift vs SX130X#0: %.1fppm",  mean_ppm);
+-        if( rt_utcOffset_ts != 0 && !ppsSync.pps_xtime) {
++        if( rt_utcOffset_ts != 0 && !ppsSync.pps_xtime && !utcAnchored ) {
+             rt_utcOffset -= (curr->ustime - rt_utcOffset_ts) * mean_ppm/PPM;
+             rt_utcOffset_ts = curr->ustime;
+         }
+@@ -420,6 +441,128 @@ sL_t ts_newXtimeSession (u1_t txunit) {
+ }
+ 
+ 
++// --------------------------------------------------------------------------------
++//
++// UTC anchor - writers of rt_utcOffset
++// Rationale, parameters and field measurements: doc/wifx/utc-anchor.md
++//
++//   before                                after
++//   ------                                -----
++//   rt_ini()                  --.         PPS logic               (wins)
++//   MCU/SX130X drift steering --+         OS wall clock  <- this section
++//   router_config MuxTime     --+-> ?     router_config MuxTime
++//   PPS logic                 --'         MCU/SX130X drift steering
++//                                         rt_ini()                (initial value)
++//
++//   No arbitration: whichever             Each writer stands down while a
++//   ran last owned the value.             higher one is available.
++//
++//
++// --------------------------------------------------------------------------------
++
++// Runs on its own timer because ts_updateTimesync() has several early exits.
++static void onUtcAnchor (tmr_t* tmr) {
++    rt_setTimer(tmr, rt_micros_ahead(UTCANCHOR_INTV));
++
++    if( ppsSync.pps_xtime ) {
++        if( utcAnchored ) {
++            LOG(MOD_SYN|INFO, "UTC anchor: PPS acquired - releasing the UTC reference to the PPS logic");
++            utcAnchored = utcStepPend = 0;
++        }
++        return;
++    }
++    sL_t maxerror = 0, esterror = 0;
++    int trusted = sys_utcTrusted(&maxerror, &esterror);
++    if( trusted && UTCANCHOR_ESTERROR && esterror > UTCANCHOR_ESTERROR )
++        trusted = 0;
++    ustime_t now = rt_getTime();
++    sL_t utc = sys_utc();
++    sL_t err = utc ? utc - (now + rt_utcOffset) : 0;
++    LOG(MOD_SYN|DEBUG, "UTC anchor: trusted=%d anchored=%d err=%ldus maxerror=%ldus esterror=%ldus",
++        trusted, utcAnchored, err, maxerror, esterror);
++    if( !trusted || utc == 0 ) {
++        if( utcAnchored ) {
++            LOG(MOD_SYN|WARNING, "UTC anchor: OS clock no longer trusted (maxerror=%ldus esterror=%ldus) - reverting to MCU/SX130X drift steering", maxerror, esterror);
++            utcAnchored = utcStepPend = 0;
++            rt_utcOffset_ts = now;
++        }
++        return;
++    }
++    if( !utcAnchored ) {
++        utcAnchored = 1;
++        utcAnchorReport = 0;
++        if( !utcGraceSet ) {
++            utcGraceSet = 1;
++            utcGraceEnd = now + UTCANCHOR_GRACE;
++        }
++        LOG(MOD_SYN|INFO, "UTC anchor: OS clock trusted - taking over the UTC reference (error %ldus, maxerror %ldus)", err, maxerror);
++    }
++    rt_utcOffset_ts = now;   // never let the drift steering bill an anchored interval
++    if( err > -UTCANCHOR_DEADBAND && err < UTCANCHOR_DEADBAND ) {
++        utcStepPend = 0;
++        return;
++    }
++    if( err > UTCANCHOR_STEP_THRES || err < -UTCANCHOR_STEP_THRES ) {
++        int stepcnt = utcStepEver ? (int)UTCANCHOR_STEP_CNT : (int)UTCANCHOR_STEP1_CNT;
++        if( ++utcStepPend < stepcnt ) {
++            LOG(MOD_SYN|INFO, "UTC anchor: error %ldus beyond slew range (%d/%d) - deferring",
++                err, utcStepPend, stepcnt);
++            return;
++        }
++        utcStepPend = 0;
++        utcStepEver = 1;
++        if( now - utcStepWindow >= rt_seconds(3600) ) {
++            utcStepWindow = now;
++            utcStepCnt = 0;
++        }
++        if( ++utcStepCnt > 1 ) {
++            if( now < utcGraceEnd ) {
++                LOG(MOD_SYN|WARNING, "UTC anchor: stepping UTC reference by %ldus - step %d in startup grace, time daemon likely trusted before converged (tune UTCANCHOR_ESTERROR or UTCANCHOR_SLEW_PPM)",
++                    err, utcStepCnt);
++            } else {
++                LOG(MOD_SYN|ERROR, "UTC anchor: stepping UTC reference by %ldus - %d steps within the hour, time source flapping or kernel timekeeping faulty",
++                    err, utcStepCnt);
++            }
++        } else {
++            LOG(MOD_SYN|WARNING, "UTC anchor: stepping UTC reference by %ldus - error beyond slew range", err);
++        }
++        // The only unbounded write: err can be seconds, so UTC may jump either way here.
++        rt_utcOffset += err;
++        utcAnchorReport = now;
++        return;
++    }
++    utcStepPend = 0;
++    sL_t maxslew = (sL_t)UTCANCHOR_SLEW_PPM * UTCANCHOR_INTV / 1000000;
++    sL_t adj = err > maxslew ? maxslew : (err < -maxslew ? -maxslew : err);
++    // Bounded per check, not a rate: samples less than maxslew apart may be inverted.
++    rt_utcOffset += adj;
++    if( now - utcAnchorReport >= TIMESYNC_REPORTS ) {
++        utcAnchorReport = now;
++        LOG(MOD_SYN|INFO, "UTC anchor: slewing UTC reference by %ldus (error %ldus, limit %ldus per %ldms)",
++            adj, err, maxslew, (sL_t)UTCANCHOR_INTV/1000);
++    }
++}
++
++
++int ts_utcAnchored () {
++    return utcAnchored;
++}
++
++
++void ts_startUtcAnchor () {
++    if( !UTCANCHOR_ENABLE ) {
++        // Never armed, so utcAnchored stays 0 and every other writer keeps its pre-anchor behaviour.
++        LOG(MOD_SYN|INFO, "UTC anchor: disabled by UTCANCHOR_ENABLE=0 - the UTC reference is left to router_config MuxTime");
++        return;
++    }
++    LOG(MOD_SYN|INFO, "UTC anchor: intv=%ldms deadband=%ldus step=%ldus cnt=%d/%d grace=%ldms slew=%dppm esterror=%ldus",
++        (sL_t)UTCANCHOR_INTV/1000, (sL_t)UTCANCHOR_DEADBAND, (sL_t)UTCANCHOR_STEP_THRES,
++        (int)UTCANCHOR_STEP1_CNT, (int)UTCANCHOR_STEP_CNT, (sL_t)UTCANCHOR_GRACE/1000,
++        (int)UTCANCHOR_SLEW_PPM, (sL_t)UTCANCHOR_ESTERROR);
++    rt_setTimerCb(&utcAnchorTmr, rt_getTime(), onUtcAnchor);
++}
++
++
+ // Initialize timesync module - run every time we start a new session
+ void ts_iniTimesync () {
+     ppsOffset = -1;
+@@ -437,6 +580,7 @@ void ts_iniTimesync () {
+     sum_mcu_drifts = 0;
+     memset(timesyncs, 0, sizeof(timesyncs));
+     rt_clrTimer(&syncLnsTmr);
++    // The UTC anchor state is deliberately untouched: it tracks the OS clock, not the LNS session.
+ }
+ 
+ 
+diff --git a/src/timesync.h b/src/timesync.h
+index 2e5b007..706af1b 100644
+--- a/src/timesync.h
++++ b/src/timesync.h
+@@ -49,6 +49,8 @@ ustime_t ts_updateTimesync (u1_t txunit, int quality, const timesync_t* curr);
+ void     ts_setTimesyncLns (ustime_t xtime, sL_t gpstime);
+ void     ts_processTimesyncLns (ustime_t txtime, ustime_t rxtime, sL_t servertime);
+ void     ts_iniTimesync ();
++void     ts_startUtcAnchor ();   // per process, not per session - must not run in the daemon supervisor
++int      ts_utcAnchored ();   // OS wall clock is trusted and drives rt_utcOffset
+ 
+ // ------------------------------
+ // Used by RAL impl only
+-- 
+2.43.0
+

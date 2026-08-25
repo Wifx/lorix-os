@@ -1,0 +1,146 @@
+From 5b38815c7b1db3f2413a8fc01f31e9273c05545b Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Tue, 25 Aug 2026 14:27:51 +0200
+Subject: [PATCH 3/6] Configure TCP_USER_TIMEOUT on TC sockets for reliable
+ disconnection detection
+
+Signed-off-by: Christian Muller <christian.muller@wifx.net>
+---
+ src/s2conf.h | 68 +++++++++++++++++++++++++++-------------------------
+ src/sys.c    | 31 +++++++++++++++---------
+ 2 files changed, 55 insertions(+), 44 deletions(-)
+
+diff --git a/src/s2conf.h b/src/s2conf.h
+index 4108d4f..369d73f 100644
+--- a/src/s2conf.h
++++ b/src/s2conf.h
+@@ -55,6 +55,7 @@
+ #define DFLT_TCP_KEEPIDLE              "60"   // Connection idle time (in seconds) before sending keepalive probes
+ #define DFLT_TCP_KEEPINTVL             "15"   // The time (in seconds) between individual keepalive probes
+ #define DFLT_TCP_KEEPCNT                "4"   // The maximum number of keepalive probes sent before dropping the connection
++#define DFLT_TCP_USER_TIMEOUT         "120"   // Max time [s] TCP retransmits before giving up (matches keepalive total: idle+cnt*intvl)
+ 
+ #define DFLT_MAX_RMTSH                    2   // The maximum number of keepalive probes sent before dropping the connection
+ #define DFLT_BEACON_INTVL        "\"128s\""   // Time between beacons in microseconds
+@@ -160,39 +161,40 @@ void  s2conf_printAll ();
+ #define CONF_PARAM(name,type,fn,value,info) extern type##_t name;
+ #endif
+ 
+-CONF_PARAM(RADIODEV            , str   , str     ,        DFLT_RADIODEV, "default radio device")
+-CONF_PARAM(LOGFILE_SIZE        , u4    , size_mb ,    DFLT_LOGFILE_SIZE, "default size of a logfile")
+-CONF_PARAM(LOGFILE_ROTATE      , u4    , u4      ,  DFLT_LOGFILE_ROTATE, "besides current log file keep *.1..N (none if 0)")
+-CONF_PARAM(TCP_KEEPALIVE_EN    , u4    , u4      ,   DFLT_TCP_KEEPALIVE, "TCP keepalive enabled")
+-CONF_PARAM(TCP_KEEPALIVE_IDLE  , u4    , u4      ,    DFLT_TCP_KEEPIDLE, "TCP keepalive TCP_KEEPIDLE [s]")
+-CONF_PARAM(TCP_KEEPALIVE_INTVL , u4    , u4      ,   DFLT_TCP_KEEPINTVL, "TCP keepalive TCP_KEEPINTVL [s]")
+-CONF_PARAM(TCP_KEEPALIVE_CNT   , u4    , u4      ,     DFLT_TCP_KEEPCNT, "TCP keepalive TCP_KEEPCNT")
+-CONF_PARAM(MAX_JOINEUI_RANGES  , u4    , u4      ,                 "10", "max ranges to suppress unwanted join requests")
+-CONF_PARAM(CUPS_CONN_TIMEOUT   , ustime, tspan_s ,            "\"60s\"", "connection timeout")
+-CONF_PARAM(CUPS_OKSYNC_INTV    , ustime, tspan_h ,            "\"24h\"", "regular check-in with CUPS for updates")
+-CONF_PARAM(CUPS_RESYNC_INTV    , ustime, tspan_m ,             "\"1m\"", "check-in with CUPS for updates after a failure")
+-CONF_PARAM(CUPS_BUFSZ          , u4    , size_kb ,      DFLT_CUPS_BUFSZ, "read from CUPS in chunks of this size")
+-CONF_PARAM(GPS_REPORT_DELAY    , ustime, tspan_s ,           "\"120s\"", "delay GPS reports and consolidate")
+-CONF_PARAM(GPS_REOPEN_TTY_INTV , ustime, tspan_ms,             "\"1s\"", "recheck TTY open if it failed")
+-CONF_PARAM(GPS_REOPEN_FIFO_INTV, ustime, tspan_ms,             "\"1s\"", "recheck if FIFO writer fake GPS")
+-CONF_PARAM(CMD_REOPEN_FIFO_INTV, ustime, tspan_ms,             "\"1s\"", "recheck if FIFO writer")
+-CONF_PARAM(RX_POLL_INTV        , ustime, tspan_ms,           "\"20ms\"", "interval to poll SX1301 RX FIFO")
+-CONF_PARAM(TC_TIMEOUT          , ustime, tspan_s ,            "\"60s\"", "reconnected to muxs")
+-CONF_PARAM(CLASS_C_BACKOFF_BY  , ustime, tspan_s ,          "\"100ms\"", "retry interval for class C TX attempts")
+-CONF_PARAM(CLASS_C_BACKOFF_MAX , u4    , u4      ,                 "10", "max number of class C TX attempts")
+-CONF_PARAM(RADIO_INIT_WAIT     , ustime, tspan_s , DFLT_RADIO_INIT_WAIT, "max wait for radio init command to finish")
+-CONF_PARAM(PPS_VALID_INTV      , ustime, tspan_ms,            "\"10m\"", "max age of last PPS sync for GPS time conversions")
+-CONF_PARAM(TIMESYNC_RADIO_INTV , ustime, tspan_ms,         "\"2100ms\"", "interval to resync MCU/SX1301")
+-CONF_PARAM(TIMESYNC_LNS_RETRY  , ustime, tspan_s ,           "\"71ms\"", "resend timesync message to server")
+-CONF_PARAM(TIMESYNC_LNS_PAUSE  , ustime, tspan_s ,             "\"5s\"", "pause after unsuccessful volley of timesync messages")
+-CONF_PARAM(TIMESYNC_LNS_BURST  , u4    , u4      ,                 "10", "volley of timesync messages before pausing")
+-CONF_PARAM(TIMESYNC_REPORTS    , ustime, tspan_s ,             "\"5m\"", "report interval for current timesync status")
+-CONF_PARAM(TX_MIN_GAP          , ustime, tspan_s ,      DFLT_TX_MIN_GAP, "min distance between two frames being TXed")
+-CONF_PARAM(TX_AIM_GAP          , ustime, tspan_s ,      DFLT_TX_AIM_GAP, "aim for this TX lead time, if delayed should not fall under min")
+-CONF_PARAM(TX_MAX_AHEAD        , ustime, tspan_s ,    DFLT_TX_MAX_AHEAD, "maximum time message can be scheduled into the future")
+-CONF_PARAM(TXCHECK_FUDGE       , ustime, tspan_s ,   DFLT_TXCHECK_FUDGE, "check radio state this time into ongoing TX")
+-CONF_PARAM(BEACON_INTVL        , ustime, tspan_s ,    DFLT_BEACON_INTVL, "beaconing interval")
+-CONF_PARAM(TLS_SNI             ,     u4,    bool ,               "true", "Set and verify server name of TLS connections")
++CONF_PARAM(RADIODEV            , str   , str     ,         DFLT_RADIODEV, "default radio device")
++CONF_PARAM(LOGFILE_SIZE        , u4    , size_mb ,     DFLT_LOGFILE_SIZE, "default size of a logfile")
++CONF_PARAM(LOGFILE_ROTATE      , u4    , u4      ,   DFLT_LOGFILE_ROTATE, "besides current log file keep *.1..N (none if 0)")
++CONF_PARAM(TCP_KEEPALIVE_EN    , u4    , u4      ,    DFLT_TCP_KEEPALIVE, "TCP keepalive enabled")
++CONF_PARAM(TCP_KEEPALIVE_IDLE  , u4    , u4      ,     DFLT_TCP_KEEPIDLE, "TCP keepalive TCP_KEEPIDLE [s]")
++CONF_PARAM(TCP_KEEPALIVE_INTVL , u4    , u4      ,    DFLT_TCP_KEEPINTVL, "TCP keepalive TCP_KEEPINTVL [s]")
++CONF_PARAM(TCP_KEEPALIVE_CNT   , u4    , u4      ,      DFLT_TCP_KEEPCNT, "TCP keepalive TCP_KEEPCNT")
++CONF_PARAM(TCP_USER_TIMEOUT_S  , u4    , u4      , DFLT_TCP_USER_TIMEOUT, "TCP user timeout [s]")
++CONF_PARAM(MAX_JOINEUI_RANGES  , u4    , u4      ,                  "10", "max ranges to suppress unwanted join requests")
++CONF_PARAM(CUPS_CONN_TIMEOUT   , ustime, tspan_s ,             "\"60s\"", "connection timeout")
++CONF_PARAM(CUPS_OKSYNC_INTV    , ustime, tspan_h ,             "\"24h\"", "regular check-in with CUPS for updates")
++CONF_PARAM(CUPS_RESYNC_INTV    , ustime, tspan_m ,              "\"1m\"", "check-in with CUPS for updates after a failure")
++CONF_PARAM(CUPS_BUFSZ          , u4    , size_kb ,       DFLT_CUPS_BUFSZ, "read from CUPS in chunks of this size")
++CONF_PARAM(GPS_REPORT_DELAY    , ustime, tspan_s ,            "\"120s\"", "delay GPS reports and consolidate")
++CONF_PARAM(GPS_REOPEN_TTY_INTV , ustime, tspan_ms,              "\"1s\"", "recheck TTY open if it failed")
++CONF_PARAM(GPS_REOPEN_FIFO_INTV, ustime, tspan_ms,              "\"1s\"", "recheck if FIFO writer fake GPS")
++CONF_PARAM(CMD_REOPEN_FIFO_INTV, ustime, tspan_ms,              "\"1s\"", "recheck if FIFO writer")
++CONF_PARAM(RX_POLL_INTV        , ustime, tspan_ms,            "\"20ms\"", "interval to poll SX1301 RX FIFO")
++CONF_PARAM(TC_TIMEOUT          , ustime, tspan_s ,             "\"60s\"", "reconnected to muxs")
++CONF_PARAM(CLASS_C_BACKOFF_BY  , ustime, tspan_s ,           "\"100ms\"", "retry interval for class C TX attempts")
++CONF_PARAM(CLASS_C_BACKOFF_MAX , u4    , u4      ,                  "10", "max number of class C TX attempts")
++CONF_PARAM(RADIO_INIT_WAIT     , ustime, tspan_s ,  DFLT_RADIO_INIT_WAIT, "max wait for radio init command to finish")
++CONF_PARAM(PPS_VALID_INTV      , ustime, tspan_ms,             "\"10m\"", "max age of last PPS sync for GPS time conversions")
++CONF_PARAM(TIMESYNC_RADIO_INTV , ustime, tspan_ms,          "\"2100ms\"", "interval to resync MCU/SX1301")
++CONF_PARAM(TIMESYNC_LNS_RETRY  , ustime, tspan_s ,            "\"71ms\"", "resend timesync message to server")
++CONF_PARAM(TIMESYNC_LNS_PAUSE  , ustime, tspan_s ,              "\"5s\"", "pause after unsuccessful volley of timesync messages")
++CONF_PARAM(TIMESYNC_LNS_BURST  , u4    , u4      ,                  "10", "volley of timesync messages before pausing")
++CONF_PARAM(TIMESYNC_REPORTS    , ustime, tspan_s ,              "\"5m\"", "report interval for current timesync status")
++CONF_PARAM(TX_MIN_GAP          , ustime, tspan_s ,       DFLT_TX_MIN_GAP, "min distance between two frames being TXed")
++CONF_PARAM(TX_AIM_GAP          , ustime, tspan_s ,       DFLT_TX_AIM_GAP, "aim for this TX lead time, if delayed should not fall under min")
++CONF_PARAM(TX_MAX_AHEAD        , ustime, tspan_s ,     DFLT_TX_MAX_AHEAD, "maximum time message can be scheduled into the future")
++CONF_PARAM(TXCHECK_FUDGE       , ustime, tspan_s ,    DFLT_TXCHECK_FUDGE, "check radio state this time into ongoing TX")
++CONF_PARAM(BEACON_INTVL        , ustime, tspan_s ,     DFLT_BEACON_INTVL, "beaconing interval")
++CONF_PARAM(TLS_SNI             ,     u4,    bool ,                "true", "Set and verify server name of TLS connections")
+ 
+ #endif // _s2conf_x_
+ 
+diff --git a/src/sys.c b/src/sys.c
+index 9ed2f36..6e0cb86 100644
+--- a/src/sys.c
++++ b/src/sys.c
+@@ -632,20 +632,29 @@ dbuf_t sys_sigKey (int key_id) {
+ }
+ 
+ void sys_keepAlive (int fd) {
+-    str_t tag = "SO_KEEPALIVE";
+     int v = TCP_KEEPALIVE_EN;
+-    if( setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE,  &v, sizeof(v)) == -1 ) goto err;
++    if( setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &v, sizeof(v)) == -1 ) {
++        LOG(MOD_AIO|ERROR, "Failed to set SO_KEEPALIVE=%d: %s", v, strerror(errno));
++        return;
++    }
+     if( v == 0 ) return;
+-    tag = "TCP_KEEPCNT";
++
+     v = TCP_KEEPALIVE_CNT;
+-    if( setsockopt(fd, IPPROTO_TCP, TCP_KEEPCNT, &v, sizeof(v)) == -1 ) goto err;
+-    tag = "TCP_KEEPIDLE";
++    if( setsockopt(fd, IPPROTO_TCP, TCP_KEEPCNT, &v, sizeof(v)) == -1 )
++        LOG(MOD_AIO|ERROR, "Failed to set TCP_KEEPCNT=%d: %s", v, strerror(errno));
++
+     v = TCP_KEEPALIVE_IDLE;
+-    if( setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, &v, sizeof(v)) == -1 ) goto err;
+-    tag = "TCP_KEEPINTVL";
++    if( setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, &v, sizeof(v)) == -1 )
++        LOG(MOD_AIO|ERROR, "Failed to set TCP_KEEPIDLE=%d: %s", v, strerror(errno));
++
+     v = TCP_KEEPALIVE_INTVL;
+-    if( setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, &v, sizeof(v)) == -1 ) goto err;
+-    return;
+- err:
+-    LOG(MOD_AIO|ERROR, "Failed to set %s=%d: %s", tag, v, strerror(errno));
++    if( setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, &v, sizeof(v)) == -1 )
++        LOG(MOD_AIO|ERROR, "Failed to set TCP_KEEPINTVL=%d: %s", v, strerror(errno));
++
++    v = TCP_USER_TIMEOUT_S;
++    if( v ) {
++        v *= 1000;
++        if( setsockopt(fd, IPPROTO_TCP, TCP_USER_TIMEOUT, &v, sizeof(v)) == -1 )
++            LOG(MOD_AIO|ERROR, "Failed to set TCP_USER_TIMEOUT=%d: %s", v, strerror(errno));
++    }
+ }
+-- 
+2.43.0
+
