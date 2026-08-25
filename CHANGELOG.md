@@ -18,11 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-721] Set BasicStation TCP timeout to 2 min
 - [LOR-723] Update ChirpStack Gateway Mesh to 4.1.1
 - [LOR-724] Update ChirpStack MQTT Forwarder to 4.6.1
-- [LOR-730] chirpstack-concentratord-legacy: fix QUEUE_FULL under heavy traffic
-- [LOR-733] BasicStation: Fix wrong UTC time at boot and drifts afterwards
-- [LOR-734] BasicStation: fix time sync locking for multiple minutes on boot
-- [LOR-735] BasicStation: fix drift threshold depends on rejected measurements
-- [LOR-736] chirpstack-concentratord: fix QUEUE_FULL under heavy traffic
 - Update poky to 5.0.19
 - Update meta-openembedded
 
@@ -31,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-717] Infinite WWAN reconnect loop takes all resources
 - [LOR-722] Fix: ChirpStack UDP Packet fowarder pmonitor service config not migrated
 - [LOR-727] Fix : ChirpStack Concentratord v4 region not set properly from legacy
+- [LOR-730] chirpstack-concentratord-legacy: fix QUEUE_FULL under heavy traffic
+- [LOR-733] BasicStation: Fix wrong UTC time at boot and drifts afterwards
+- [LOR-734] BasicStation: fix time sync locking for multiple minutes on boot
+- [LOR-735] BasicStation: fix drift threshold depends on rejected measurements
+- [LOR-736] chirpstack-concentratord: fix QUEUE_FULL under heavy traffic
 
 
 ## [1.8.1] - 2026-04-20
