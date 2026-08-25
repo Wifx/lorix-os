@@ -1,0 +1,91 @@
+From 169db2056653000dc4d02f2971b3e1d9678c39a2 Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Tue, 5 May 2026 10:03:36 +0200
+Subject: [PATCH 3/3] Purge expired JIT items before reporting QueueFull
+
+When the gateway is under heavy load, stale downlink entries can remain
+in the JIT queue long enough to keep it artificially full. This causes
+new downlinks to be rejected with QueueFull even though the oldest items
+are already expired.
+
+Purge expired items in enqueue() before checking queue capacity and add
+a regression test for this scenario.
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ libconcentratord/src/jitqueue.rs | 47 ++++++++++++++++++++++++++++++++
+ 1 file changed, 47 insertions(+)
+
+diff --git a/libconcentratord/src/jitqueue.rs b/libconcentratord/src/jitqueue.rs
+index 930ecd5..5288fa5 100644
+--- a/libconcentratord/src/jitqueue.rs
++++ b/libconcentratord/src/jitqueue.rs
+@@ -165,6 +165,8 @@ impl<T: TxPacket + Copy> Queue<T> {
+     pub fn enqueue(&mut self, concentrator_count: u32, packet: T) -> Result<(), gw::TxAckStatus> {
+         let linear_count = self.get_linear_count(concentrator_count);
+ 
++        self.drop_expired(linear_count);
++
+         match packet.get_tx_mode() {
+             TxMode::Timestamped => {
+                 info!(
+@@ -340,6 +342,17 @@ impl<T: TxPacket + Copy> Queue<T> {
+         self.linear_count_last + Duration::from_micros(diff_us as u64)
+     }
+ 
++    fn drop_expired(&mut self, linear_count: Duration) {
++        while matches!(self.items.first(), Some(item) if item.linear_count < linear_count) {
++            let item = self.items.remove(0);
++            warn!(
++                "Dropping expired queued packet, downlink_id: {}, count_us: {}",
++                item.packet.get_id(),
++                item.packet.get_count_us()
++            );
++        }
++    }
++
+     fn sort(&mut self) {
+         self.items
+             .sort_by(|a, b| a.linear_count.cmp(&b.linear_count))
+@@ -625,4 +638,38 @@ mod tests {
+         let item = q.pop(0_u32.wrapping_sub(100));
+         assert!(item.is_some());
+     }
++
++    #[test]
++    fn test_enqueue_drops_expired_items_before_queue_full() {
++        let mut q: Queue<TxPacketMock> = Queue::new(1, None);
++
++        q.enqueue(
++            100,
++            TxPacketMock {
++                time_on_air: Duration::from_millis(100),
++                tx_mode: TxMode::Timestamped,
++                count_us: 200_000,
++                frequency: 868100000,
++                tx_power: 14,
++            },
++        )
++        .unwrap();
++
++        assert!(q.full());
++
++        let res = q.enqueue(
++            300_000,
++            TxPacketMock {
++                time_on_air: Duration::from_millis(100),
++                tx_mode: TxMode::Timestamped,
++                count_us: 500_000,
++                frequency: 868100000,
++                tx_power: 14,
++            },
++        );
++
++        assert!(res.is_ok(), "expired queue item should be dropped before reporting queue full");
++        assert_eq!(1, q.items.len());
++        assert_eq!(500_000, q.items[0].packet.get_count_us());
++    }
+ }
+-- 
+2.43.0
+

@@ -1,5 +1,19 @@
+From d41b922c84de969229e0cc82710bd41cbfc77603 Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Tue, 5 May 2026 09:20:12 +0200
+Subject: [PATCH 2/3] hal: receive increase RX fifo and polling time
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ Makefile                                              | 8 ++++----
+ chirpstack-concentratord-sx1301/src/handler/uplink.rs | 2 +-
+ chirpstack-concentratord-sx1302/src/handler/uplink.rs | 2 +-
+ libloragw-sx1301/src/hal.rs                           | 2 +-
+ libloragw-sx1302/src/hal.rs                           | 2 +-
+ 5 files changed, 8 insertions(+), 8 deletions(-)
+
 diff --git a/Makefile b/Makefile
-index 932ffe0..dd79055 100644
+index f58cda7..062b2e1 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -7,16 +7,16 @@ build: build-aarch64-unknown-linux-musl \
@@ -73,3 +87,6 @@ index d0e78ac..3fe96b9 100644
  
  /// Set I2C device path.
  pub fn set_i2c_device_path(path: &str) -> Result<()> {
+-- 
+2.43.0
+
