@@ -21,7 +21,5 @@ RRECOMMENDS:${PN} += " \
     bind-utils \
     bridge-utils \
     net-snmp-server \
-    nethogs \
-    iperf3 \
     zabbix \
 "
