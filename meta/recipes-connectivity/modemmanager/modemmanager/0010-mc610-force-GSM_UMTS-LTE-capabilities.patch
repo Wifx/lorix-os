@@ -1,0 +1,80 @@
+From 12bdc2f37e458e8f04d52f6fbbd203dfe99ab45f Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Thu, 3 Sep 2026 11:54:16 +0200
+Subject: [PATCH 10/14] mc610: force GSM_UMTS + LTE capabilities
+
+The generic +GCAP/+WS46=? probing only reports GSM/UMTS on this
+module, so ModemManager never flags it as LTE capable and skips
+all EPS specific setup (+CEREG).
+
+The MC610 is a LTE Cat-1 module with GSM fallback: report
+MM_MODEM_CAPABILITY_GSM_UMTS | MM_MODEM_CAPABILITY_LTE directly
+from load_current_capabilities() instead of relying on the
+generic probing.
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ .../mm-broadband-modem-fibocom-mc610.c        | 40 ++++++++++++++++++-
+ 1 file changed, 39 insertions(+), 1 deletion(-)
+
+diff --git a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+index 496464031..d744faeaa 100644
+--- a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
++++ b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+@@ -434,7 +434,42 @@ modem_3gpp_register_in_network (MMIfaceModem3gpp    *self,
+ }
+ 
+ 
+- /*****************************************************************************/
++/*****************************************************************************/
++/* Load current capabilities (Modem interface) */
++
++static MMModemCapability
++load_current_capabilities_finish (MMIfaceModem  *self,
++                                  GAsyncResult  *res,
++                                  GError       **error)
++{
++    GError *inner_error = NULL;
++    gssize  value;
++
++    value = g_task_propagate_int (G_TASK (res), &inner_error);
++    if (inner_error) {
++        g_propagate_error (error, inner_error);
++        return MM_MODEM_CAPABILITY_NONE;
++    }
++    return (MMModemCapability)value;
++}
++
++static void
++load_current_capabilities (MMIfaceModem        *self,
++                           GAsyncReadyCallback  callback,
++                           gpointer             user_data)
++{
++    GTask *task;
++
++    task = g_task_new (self, NULL, callback, user_data);
++
++    /* The generic +GCAP/+WS46=? probing only reports GSM/UMTS on this module, so
++     * MM never flags it as LTE capable and skips all EPS specific setup (+CEREG).
++     * The MC610 is a LTE Cat-1 module with GSM fallback. */
++    g_task_return_int (task, MM_MODEM_CAPABILITY_GSM_UMTS | MM_MODEM_CAPABILITY_LTE);
++    g_object_unref (task);
++}
++
++/*****************************************************************************/
+ /* Load supported modes (Modem interface) */
+ 
+ static GArray *
+@@ -1621,6 +1656,9 @@ iface_modem_init (MMIfaceModemInterface *iface)
+     iface->modem_power_off = modem_power_off;
+     iface->modem_power_off_finish = modem_common_power_finish;
+ 
++    iface->load_current_capabilities = load_current_capabilities;
++    iface->load_current_capabilities_finish = load_current_capabilities_finish;
++
+     iface->load_supported_modes = load_supported_modes;
+     iface->load_supported_modes_finish = load_supported_modes_finish;
+     iface->load_current_modes = load_current_modes;
+-- 
+2.43.0
+

@@ -1,0 +1,109 @@
+From e7db83fa5f55212a6300178f5922968012b05a4d Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Thu, 3 Sep 2026 11:56:03 +0200
+Subject: [PATCH 14/14] mc610,fibocom: increase AT command and bearer timeouts
+ for reliability
+
+Several timeouts were too tight for the MC610 and triggered
+avoidable failures under normal operating conditions:
+
+- MC610_COPS_TIMEOUT_SECS: 180 -> 185s
+- MC610_GTRNDIS_TIMEOUT_SECS: 30 -> 35s
+- FIBOCOM_GTRNDIS_TIMEOUT_SECS (ECM bearer): 30 -> 35s
+- +GTRNDIS=? support check (fibocom): 6 -> 35s
+- +CPWROFF (fibocom): 3 -> 5s
+- MGAUTH_SET_RETRY_TIMEOUT_SECS: 1 -> 5s
+- MM_BASE_BEARER_DEFAULT_CONNECTION_TIMEOUT: 180 -> 185s
+- MM_BASE_BEARER_DEFAULT_DISCONNECTION_TIMEOUT: 120 -> 125s
+
+All values keep a small margin over the datasheet duration so a
+timeout on our side always leaves the serial stream unsynchronized
+last, rather than racing with the modem's own abort.
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ src/mm-base-bearer.h                                      | 4 ++--
+ src/plugins/fibocom/mm-broadband-bearer-fibocom-ecm.c     | 2 +-
+ src/plugins/fibocom/mm-broadband-modem-fibocom.c          | 4 ++--
+ .../fibocom_mc610/mm-broadband-modem-fibocom-mc610.c      | 8 +++++---
+ 4 files changed, 10 insertions(+), 8 deletions(-)
+
+diff --git a/src/mm-base-bearer.h b/src/mm-base-bearer.h
+index 336b44423..583bf99db 100644
+--- a/src/mm-base-bearer.h
++++ b/src/mm-base-bearer.h
+@@ -70,8 +70,8 @@ guint64                mm_bearer_connect_result_get_downlink_speed (MMBearerConn
+  * really fully care about that, it's a problem to consider in the user side.
+  * In the daemon itself, what we want and require is to be in sync with the
+  * state of the modem. */
+-#define MM_BASE_BEARER_DEFAULT_CONNECTION_TIMEOUT    180
+-#define MM_BASE_BEARER_DEFAULT_DISCONNECTION_TIMEOUT 120
++#define MM_BASE_BEARER_DEFAULT_CONNECTION_TIMEOUT    185
++#define MM_BASE_BEARER_DEFAULT_DISCONNECTION_TIMEOUT 125
+ 
+ /*****************************************************************************/
+ 
+diff --git a/src/plugins/fibocom/mm-broadband-bearer-fibocom-ecm.c b/src/plugins/fibocom/mm-broadband-bearer-fibocom-ecm.c
+index 4def62f9e..2a05a3d50 100644
+--- a/src/plugins/fibocom/mm-broadband-bearer-fibocom-ecm.c
++++ b/src/plugins/fibocom/mm-broadband-bearer-fibocom-ecm.c
+@@ -23,7 +23,7 @@
+ 
+ G_DEFINE_TYPE (MMBroadbandBearerFibocomEcm, mm_broadband_bearer_fibocom_ecm, MM_TYPE_BROADBAND_BEARER)
+ 
+-#define FIBOCOM_GTRNDIS_TIMEOUT_SECS 30
++#define FIBOCOM_GTRNDIS_TIMEOUT_SECS 35
+ 
+ /*****************************************************************************/
+ /* Common helper functions                                                   */
+diff --git a/src/plugins/fibocom/mm-broadband-modem-fibocom.c b/src/plugins/fibocom/mm-broadband-modem-fibocom.c
+index 0789188ef..d7e6e1630 100644
+--- a/src/plugins/fibocom/mm-broadband-modem-fibocom.c
++++ b/src/plugins/fibocom/mm-broadband-modem-fibocom.c
+@@ -163,7 +163,7 @@ modem_create_bearer (MMIfaceModem       *_self,
+     mm_obj_dbg (self, "checking +GTRNDIS support...");
+     mm_base_modem_at_command (MM_BASE_MODEM (self),
+                               "+GTRNDIS=?",
+-                              6, /* timeout [s] */
++                              35, /* timeout [s] */
+                               TRUE, /* allow_cached */
+                               (GAsyncReadyCallback) gtrndis_test_ready,
+                               task);
+@@ -213,7 +213,7 @@ modem_power_off (MMIfaceModem *self,
+ {
+     mm_base_modem_at_command (MM_BASE_MODEM (self),
+                               "+CPWROFF",
+-                              3,
++                              5,
+                               FALSE,
+                               callback,
+                               user_data);
+diff --git a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+index cd85b07df..746697cff 100644
+--- a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
++++ b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+@@ -50,8 +50,10 @@ G_DEFINE_TYPE_EXTENDED (MMBroadbandModemFibocomMc610, mm_broadband_modem_fibocom
+                         G_IMPLEMENT_INTERFACE (MM_TYPE_IFACE_MODEM_3GPP_PROFILE_MANAGER, iface_modem_3gpp_profile_manager_init)
+                         G_IMPLEMENT_INTERFACE (MM_TYPE_IFACE_MODEM_FIRMWARE, iface_modem_firmware_init))
+ 
+-#define MC610_COPS_TIMEOUT_SECS     180
+-#define MC610_GTRNDIS_TIMEOUT_SECS  30
++/* Margin over the datasheet duration so the module always aborts first: a
++ * timeout on our side leaves the serial stream unsynchronized. */
++#define MC610_COPS_TIMEOUT_SECS     185
++#define MC610_GTRNDIS_TIMEOUT_SECS  35
+ #define MC610_GTCCINFO_TIMEOUT_SECS 20
+ 
+ typedef enum {
+@@ -1412,7 +1414,7 @@ modem_3gpp_profile_manager_check_format (MMIfaceModem3gppProfileManager *self,
+ /* Set profile (3GPP profile management interface) */
+ 
+ #define MGAUTH_SET_MAX_ATTEMPTS       3
+-#define MGAUTH_SET_RETRY_TIMEOUT_SECS 1
++#define MGAUTH_SET_RETRY_TIMEOUT_SECS 5
+ 
+ typedef struct {
+     MM3gppProfile       *profile;
+-- 
+2.43.0
+

@@ -1,0 +1,41 @@
+From 027ea57cda0338ad7ea3c8de95042ad8fb2c044c Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Thu, 3 Sep 2026 11:54:23 +0200
+Subject: [PATCH 11/14] mc610: fix GTRAT mode table to report 2G instead of CS
+
+The AcT-to-MMModemMode table used to decode +GTRAT responses
+mapped GSM-only and GSM+LTE combinations to MM_MODEM_MODE_CS.
+
+MM_MODEM_MODE_CS designates the circuit-switched service, not
+a radio access technology, and does not match any bit expected
+by --set-allowed-modes or capability reporting. Use
+MM_MODEM_MODE_2G instead so 2G is correctly announced and
+selectable.
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.c
+index 064cdd648..9dafeced1 100644
+--- a/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.c
++++ b/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.c
+@@ -24,12 +24,12 @@
+ 
+ /* Index of the array is the fibocom MC610 specific value */
+ static const MMModemMode fibocom_mc610_combinations[] = {
+-    (                     MM_MODEM_MODE_CS ),
++    (                     MM_MODEM_MODE_2G ),
+     ( MM_MODEM_MODE_NONE                                                        ),
+     ( MM_MODEM_MODE_NONE                                                        ),
+     (                                                          MM_MODEM_MODE_4G ),
+     ( MM_MODEM_MODE_NONE                                                        ),
+-    (                    MM_MODEM_MODE_CS |                    MM_MODEM_MODE_4G ),
++    (                    MM_MODEM_MODE_2G |                    MM_MODEM_MODE_4G ),
+     ( MM_MODEM_MODE_NONE                                                        ),
+     ( MM_MODEM_MODE_NONE                                                        ),
+     ( MM_MODEM_MODE_NONE                                                        ),
+-- 
+2.43.0
+

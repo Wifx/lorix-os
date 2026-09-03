@@ -12,6 +12,11 @@ SRC_URI += " \
     file://0007-fibocom-mc610-use-180s-timeout-for-all-COPS-operatio.patch \
     file://0008-3gpp-use-30s-timeout-for-CGACT-queries.patch \
     file://0009-fibocom-use-30s-timeout-for-GTRNDIS-queries.patch \
+    file://0010-mc610-force-GSM_UMTS-LTE-capabilities.patch \
+    file://0011-mc610-fix-GTRAT-mode-table-to-report-2G-instead-of-C.patch \
+    file://0012-mc610-add-GTCCINFO-cell-info-parser-wiring-and-tests.patch \
+    file://0013-mc610-run-COPS-and-GTCCINFO-on-the-secondary-AT-port.patch \
+    file://0014-mc610-fibocom-increase-AT-command-and-bearer-timeout.patch \
 "
 
 # Disable MBIM and QMI features

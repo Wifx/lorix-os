@@ -1,0 +1,164 @@
+From 9544e7b604ef92f7972bfcffaef708c6af33b186 Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Thu, 3 Sep 2026 11:55:20 +0200
+Subject: [PATCH 13/14] =?UTF-8?q?mc610:=20run=20+COPS=3D=3F=20and=20+GTCCI?=
+ =?UTF-8?q?NFO=3F=20on=20the=20secondary=20AT=20port?=
+
+Both +COPS=? (network scan) and +GTCCINFO? (cell info) can take
+several seconds up to the full datasheet duration to complete.
+Running them on the primary AT port blocks other commands in
+flight, such as the periodic +GTRNDIS? bearer polling.
+
+Route both commands through the secondary AT port when one is
+available, falling back to the best AT port otherwise.
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ .../mm-broadband-modem-fibocom-mc610.c        | 95 +++++++++++++++++--
+ 1 file changed, 87 insertions(+), 8 deletions(-)
+
+diff --git a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+index 756b4c344..cd85b07df 100644
+--- a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
++++ b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+@@ -28,6 +28,7 @@
+ #include "mm-iface-modem-firmware.h"
+ #include "mm-iface-modem-3gpp.h"
+ #include "mm-iface-modem-3gpp-profile-manager.h"
++#include "mm-modem-helpers.h"
+ #include "mm-log.h"
+ #include "mm-log-helpers.h"
+ #include "mm-shared-fibocom.h"
+@@ -250,6 +251,60 @@ modem_power_off (MMIfaceModem *self,
+                               user_data);
+ }
+ 
++/*****************************************************************************/
++/* Scan networks (3GPP interface)                                            */
++
++/* +COPS=? can take the full datasheet duration to complete. Routing it to
++ * the secondary AT port keeps the primary free for other commands (e.g. the
++ * periodic +GTRNDIS? bearer polling) while the scan is in flight. */
++
++static GList *
++modem_3gpp_scan_networks_finish (MMIfaceModem3gpp  *self,
++                                 GAsyncResult      *res,
++                                 GError           **error)
++{
++    const gchar *result;
++
++    result = mm_base_modem_at_command_full_finish (MM_BASE_MODEM (self), res, error);
++    if (!result)
++        return NULL;
++
++    return mm_3gpp_parse_cops_test_response (result, mm_broadband_modem_get_current_charset (MM_BROADBAND_MODEM (self)), self, error);
++}
++
++static void
++modem_3gpp_scan_networks (MMIfaceModem3gpp    *self,
++                          GAsyncReadyCallback  callback,
++                          gpointer             user_data)
++{
++    MMPortSerialAt *secondary;
++    MMIfacePortAt  *port;
++
++    secondary = mm_base_modem_peek_port_secondary (MM_BASE_MODEM (self));
++    if (secondary)
++        port = MM_IFACE_PORT_AT (secondary);
++    else {
++        GError *error = NULL;
++
++        mm_obj_dbg (self, "no secondary port available, scanning networks on primary");
++        port = mm_base_modem_peek_best_at_port (MM_BASE_MODEM (self), &error);
++        if (!port) {
++            g_task_report_error (self, callback, user_data, modem_3gpp_scan_networks, error);
++            return;
++        }
++    }
++
++    mm_base_modem_at_command_full (MM_BASE_MODEM (self),
++                                   port,
++                                   "+COPS=?",
++                                   MC610_COPS_TIMEOUT_SECS,
++                                   FALSE,
++                                   FALSE,
++                                   NULL,
++                                   callback,
++                                   user_data);
++}
++
+ /*****************************************************************************/
+ /* 3GPP operator loading and registration                                    */
+ 
+@@ -497,7 +552,7 @@ gtccinfo_ready (MMBaseModem  *self,
+     GList       *list;
+     GError      *error = NULL;
+ 
+-    response = mm_base_modem_at_command_finish (self, res, &error);
++    response = mm_base_modem_at_command_full_finish (self, res, &error);
+     if (!response) {
+         g_task_return_error (task, error);
+         g_object_unref (task);
+@@ -512,21 +567,43 @@ gtccinfo_ready (MMBaseModem  *self,
+     g_object_unref (task);
+ }
+ 
++/* Like +COPS=?, +GTCCINFO? may take several seconds to complete, so run it on
++ * the secondary AT port to keep the primary free. */
+ static void
+ modem_get_cell_info (MMIfaceModem        *self,
+                      GAsyncReadyCallback  callback,
+                      gpointer             user_data)
+ {
+-    GTask *task;
++    GTask          *task;
++    MMPortSerialAt *secondary;
++    MMIfacePortAt  *port;
+ 
+     task = g_task_new (self, NULL, callback, user_data);
+ 
+-    mm_base_modem_at_command (MM_BASE_MODEM (self),
+-                              "+GTCCINFO?",
+-                              MC610_GTCCINFO_TIMEOUT_SECS,
+-                              FALSE,
+-                              (GAsyncReadyCallback) gtccinfo_ready,
+-                              task);
++    secondary = mm_base_modem_peek_port_secondary (MM_BASE_MODEM (self));
++    if (secondary)
++        port = MM_IFACE_PORT_AT (secondary);
++    else {
++        GError *error = NULL;
++
++        mm_obj_dbg (self, "no secondary port available, retrieving cell info on primary");
++        port = mm_base_modem_peek_best_at_port (MM_BASE_MODEM (self), &error);
++        if (!port) {
++            g_task_return_error (task, error);
++            g_object_unref (task);
++            return;
++        }
++    }
++
++    mm_base_modem_at_command_full (MM_BASE_MODEM (self),
++                                   port,
++                                   "+GTCCINFO?",
++                                   MC610_GTCCINFO_TIMEOUT_SECS,
++                                   FALSE,
++                                   FALSE,
++                                   NULL,
++                                   (GAsyncReadyCallback) gtccinfo_ready,
++                                   task);
+ }
+ 
+ /*****************************************************************************/
+@@ -1757,6 +1834,8 @@ iface_modem_3gpp_init (MMIfaceModem3gppInterface *iface)
+     iface->load_operator_name_finish = iface_modem_3gpp_parent->load_operator_name_finish;
+     iface->register_in_network = modem_3gpp_register_in_network;
+     iface->register_in_network_finish = modem_3gpp_register_in_network_finish;
++    iface->scan_networks = modem_3gpp_scan_networks;
++    iface->scan_networks_finish = modem_3gpp_scan_networks_finish;
+ }
+ 
+ static void
+-- 
+2.43.0
+

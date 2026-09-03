@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-723] Update ChirpStack Gateway Mesh to 4.1.1
 - [LOR-724] Update ChirpStack MQTT Forwarder to 4.6.1
 - [LOR-729] Update ModemManager to 1.24.2
+- [LOR-748] ModemManager: multiple improvements (timeout, scan, responsiveness during long running AT commands)
 - Update poky to 5.0.19
 - Update meta-openembedded
 

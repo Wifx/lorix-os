@@ -1,0 +1,820 @@
+From 102cacf461f882f3bf71f91974815d597b1b201d Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Thu, 3 Sep 2026 11:55:01 +0200
+Subject: [PATCH 12/14] mc610: add +GTCCINFO? cell info parser, wiring and
+ tests
+
+Implement get_cell_info() for the MC610 by querying +GTCCINFO?
+and parsing its GSM/LTE serving and neighbor cell sections into
+MMCellInfo objects.
+
+- Field layouts follow the Fibocom AT Commands User Manual V3.0,
+  section 9.12; hex vs decimal fields are documented inline.
+- Empty neighbor sections are reported by the module as an
+  all-zeros placeholder entry (<rat> = 0); these are ignored.
+- Add unit tests covering LTE serving/neighbor, GSM, leading
+  zeros, the empty-neighbor placeholder, and malformed input.
+- Split the helpers into a separate meson target so they can be
+  linked into the new test binary.
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ .../mm-broadband-modem-fibocom-mc610.c        |  67 +++-
+ .../mm-modem-helpers-fibocom-mc610.c          | 375 ++++++++++++++++++
+ .../mm-modem-helpers-fibocom-mc610.h          |   7 +
+ .../tests/test-modem-helpers-fibocom-mc610.c  | 260 ++++++++++++
+ src/plugins/meson.build                       |   7 +-
+ 5 files changed, 712 insertions(+), 4 deletions(-)
+ create mode 100644 src/plugins/fibocom_mc610/tests/test-modem-helpers-fibocom-mc610.c
+
+diff --git a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+index d744faeaa..756b4c344 100644
+--- a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
++++ b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+@@ -49,8 +49,9 @@ G_DEFINE_TYPE_EXTENDED (MMBroadbandModemFibocomMc610, mm_broadband_modem_fibocom
+                         G_IMPLEMENT_INTERFACE (MM_TYPE_IFACE_MODEM_3GPP_PROFILE_MANAGER, iface_modem_3gpp_profile_manager_init)
+                         G_IMPLEMENT_INTERFACE (MM_TYPE_IFACE_MODEM_FIRMWARE, iface_modem_firmware_init))
+ 
+-#define MC610_COPS_TIMEOUT_SECS    180
+-#define MC610_GTRNDIS_TIMEOUT_SECS 30
++#define MC610_COPS_TIMEOUT_SECS     180
++#define MC610_GTRNDIS_TIMEOUT_SECS  30
++#define MC610_GTCCINFO_TIMEOUT_SECS 20
+ 
+ typedef enum {
+     FEATURE_SUPPORT_UNKNOWN,
+@@ -465,10 +466,69 @@ load_current_capabilities (MMIfaceModem        *self,
+     /* The generic +GCAP/+WS46=? probing only reports GSM/UMTS on this module, so
+      * MM never flags it as LTE capable and skips all EPS specific setup (+CEREG).
+      * The MC610 is a LTE Cat-1 module with GSM fallback. */
++    mm_obj_dbg (self, "loading current capabilities: forcing gsm-umts + lte (MC610)");
+     g_task_return_int (task, MM_MODEM_CAPABILITY_GSM_UMTS | MM_MODEM_CAPABILITY_LTE);
+     g_object_unref (task);
+ }
+ 
++/*****************************************************************************/
++/* Cell info (Modem interface) */
++
++static GList *
++modem_get_cell_info_finish (MMIfaceModem  *self,
++                            GAsyncResult  *res,
++                            GError       **error)
++{
++    return g_task_propagate_pointer (G_TASK (res), error);
++}
++
++static void
++cell_info_list_free (GList *cell_info_list)
++{
++    g_list_free_full (cell_info_list, g_object_unref);
++}
++
++static void
++gtccinfo_ready (MMBaseModem  *self,
++                GAsyncResult *res,
++                GTask        *task)
++{
++    const gchar *response;
++    GList       *list;
++    GError      *error = NULL;
++
++    response = mm_base_modem_at_command_finish (self, res, &error);
++    if (!response) {
++        g_task_return_error (task, error);
++        g_object_unref (task);
++        return;
++    }
++
++    list = mm_fibocom_mc610_parse_gtccinfo_response (response, self, &error);
++    if (!list)
++        g_task_return_error (task, error);
++    else
++        g_task_return_pointer (task, list, (GDestroyNotify) cell_info_list_free);
++    g_object_unref (task);
++}
++
++static void
++modem_get_cell_info (MMIfaceModem        *self,
++                     GAsyncReadyCallback  callback,
++                     gpointer             user_data)
++{
++    GTask *task;
++
++    task = g_task_new (self, NULL, callback, user_data);
++
++    mm_base_modem_at_command (MM_BASE_MODEM (self),
++                              "+GTCCINFO?",
++                              MC610_GTCCINFO_TIMEOUT_SECS,
++                              FALSE,
++                              (GAsyncReadyCallback) gtccinfo_ready,
++                              task);
++}
++
+ /*****************************************************************************/
+ /* Load supported modes (Modem interface) */
+ 
+@@ -1659,6 +1719,9 @@ iface_modem_init (MMIfaceModemInterface *iface)
+     iface->load_current_capabilities = load_current_capabilities;
+     iface->load_current_capabilities_finish = load_current_capabilities_finish;
+ 
++    iface->get_cell_info = modem_get_cell_info;
++    iface->get_cell_info_finish = modem_get_cell_info_finish;
++
+     iface->load_supported_modes = load_supported_modes;
+     iface->load_supported_modes_finish = load_supported_modes_finish;
+     iface->load_current_modes = load_current_modes;
+diff --git a/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.c
+index 9dafeced1..305ccb7e3 100644
+--- a/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.c
++++ b/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.c
+@@ -288,3 +288,378 @@ gchar *mm_fibocom_mc610_build_gtrat_set_command (MMModemMode allowed,
+ 
+     return g_string_free (command, FALSE);
+ }
++
++/*****************************************************************************/
++/* +GTCCINFO? response parser */
++
++/* Field layouts of the +GTCCINFO? (read command) reply, as documented in the
++ * "Fibocom AT Commands User Manual V3.0", section 9.12.
++ *
++ * All the cell identifiers (lac/tac, cell id, arfcn/earfcn, bsic, physical cell
++ * id) are reported in *hexadecimal*, while mcc, mnc and all the measurement
++ * values are reported in decimal. This is confirmed by a live capture on
++ * firmware 16000.1000.00.98.91.04:
++ *
++ *   1,4,228,02,A546,510E06,1838,198,20,50,58,59,59,20
++ *                          ^tac ^ci  ^earfcn      ^band
++ *
++ * where tac/ci match the ones reported by +CEREG, and 0x1838 = 6200, which is
++ * indeed an E-UTRA band 20 EARFCN (6150..6449), consistent with the decimal
++ * "20" reported in the band field right after the physical cell id.
++ */
++
++/* <IsServiceCell>,<rat>,<mcc>,<mnc>,<lac>,<cell_id>,<arfcn>,<basic>,<band>,
++ * <txpwr>,<dtx_used>,<c1>,<c2>,<access_tech>,<amr_acs>,<maio>,<hsn>,<rxlevsub>,
++ * <rxlevfull>,<rxqualsub>,<rxqualfull>,<rxlev>,<rssi>,<ber_lev> */
++#define GTCCINFO_GSM_SERVING_N_FIELDS   24
++#define GTCCINFO_GSM_SERVING_RXLEV      21
++
++/* <IsServiceCell>,<rat>,<mcc>,<mnc>,<lac>,<cell_id>,<arfcn>,<basic>,<c1>,<c2>,
++ * <c31>,<c32>,<rxlev>,<rssi> */
++#define GTCCINFO_GSM_NEIGHBOR_N_FIELDS  14
++#define GTCCINFO_GSM_NEIGHBOR_RXLEV     12
++
++/* <IsServiceCell>,<rat>,<mcc>,<mnc>,<tac>,<cell_id>,<earfcn>,<physical_cellId>,
++ * <band>,<bandwidth>,<rssnr_value>,<rxlev>,<rsrp>,<rsrq> */
++#define GTCCINFO_LTE_SERVING_N_FIELDS   14
++#define GTCCINFO_LTE_SERVING_RSRP       12
++#define GTCCINFO_LTE_SERVING_RSRQ       13
++
++/* <IsServiceCell>,<rat>,<mcc>,<mnc>,<tac>,<cell_id>,<earfcn>,<physical_cellId>,
++ * <bandwidth>,<rxlev>,<rsrp>,<rsrq> */
++#define GTCCINFO_LTE_NEIGHBOR_N_FIELDS  12
++#define GTCCINFO_LTE_NEIGHBOR_RSRP      10
++#define GTCCINFO_LTE_NEIGHBOR_RSRQ      11
++
++/* Fields common to every layout */
++enum {
++    GTCCINFO_FIELD_IS_SERVICE_CELL = 0,
++    GTCCINFO_FIELD_RAT             = 1,
++    GTCCINFO_FIELD_MCC             = 2,
++    GTCCINFO_FIELD_MNC             = 3,
++    GTCCINFO_FIELD_LAC_TAC         = 4,
++    GTCCINFO_FIELD_CELL_ID         = 5,
++    GTCCINFO_FIELD_ARFCN_EARFCN    = 6,
++    GTCCINFO_FIELD_BSIC_PCI        = 7,
++    GTCCINFO_N_FIELDS_COMMON       = 8,
++};
++
++/* <IsServiceCell> */
++#define GTCCINFO_IS_SERVICE_CELL    1
++
++/* <rat> */
++#define GTCCINFO_RAT_INVALID        0
++#define GTCCINFO_RAT_GSM            1
++#define GTCCINFO_RAT_LTE            4
++
++typedef enum {
++    GTCCINFO_SECTION_UNKNOWN,
++    GTCCINFO_SECTION_GSM_SERVING,
++    GTCCINFO_SECTION_GSM_NEIGHBOR,
++    GTCCINFO_SECTION_LTE_SERVING,
++    GTCCINFO_SECTION_LTE_NEIGHBOR,
++} GtccinfoSection;
++
++/* Neighbor cell entries may leave fields empty, e.g. "2,4,,,,,64,1A1,,32,32,0" */
++static const gchar *
++gtccinfo_field (GStrv split,
++                guint index)
++{
++    const gchar *field;
++
++    if (index >= g_strv_length (split))
++        return NULL;
++    field = split[index];
++    return (field && field[0]) ? field : NULL;
++}
++
++/* The MMCellInfo identifiers are all defined as upper-case hex strings without
++ * leading zeros, which is exactly what the module reports already, but we
++ * normalize anyway to get rid of any leading zero. */
++static gchar *
++gtccinfo_hex_id_to_string (GStrv  split,
++                           guint  index)
++{
++    const gchar *field;
++    guint        value;
++
++    field = gtccinfo_field (split, index);
++    if (!field || !mm_get_uint_from_hex_str (field, &value))
++        return NULL;
++    return g_strdup_printf ("%X", value);
++}
++
++static gboolean
++gtccinfo_hex_uint (GStrv   split,
++                   guint   index,
++                   guint  *out)
++{
++    const gchar *field;
++
++    field = gtccinfo_field (split, index);
++    return field && mm_get_uint_from_hex_str (field, out);
++}
++
++static gboolean
++gtccinfo_dec_uint (GStrv   split,
++                   guint   index,
++                   guint  *out)
++{
++    const gchar *field;
++
++    field = gtccinfo_field (split, index);
++    return field && mm_get_uint_from_str (field, out);
++}
++
++static gchar *
++gtccinfo_operator_id (GStrv split)
++{
++    const gchar *mcc;
++    const gchar *mnc;
++
++    mcc = gtccinfo_field (split, GTCCINFO_FIELD_MCC);
++    mnc = gtccinfo_field (split, GTCCINFO_FIELD_MNC);
++    if (!mcc || !mnc)
++        return NULL;
++    /* Both are decimal and already zero-padded by the module (e.g. "228","02") */
++    return g_strdup_printf ("%s%s", mcc, mnc);
++}
++
++/* <rsrp> and <rxlev>: 0 means "less than -140 dBm or undetectable",
++ * n in [1,97] means -141 + n dBm. */
++static gboolean
++gtccinfo_rsrp_to_dbm (GStrv     split,
++                      guint     index,
++                      gdouble  *out)
++{
++    guint value;
++
++    if (!gtccinfo_dec_uint (split, index, &value) || value == 0 || value > 97)
++        return FALSE;
++    *out = -141.0 + (gdouble) value;
++    return TRUE;
++}
++
++/* <rsrq>: 0 means "less than -19.5 dB", n in [1,34] means -20 + n*0.5 dB. */
++static gboolean
++gtccinfo_rsrq_to_db (GStrv     split,
++                     guint     index,
++                     gdouble  *out)
++{
++    guint value;
++
++    if (!gtccinfo_dec_uint (split, index, &value) || value == 0 || value > 34)
++        return FALSE;
++    *out = -20.0 + ((gdouble) value * 0.5);
++    return TRUE;
++}
++
++static MMCellInfo *
++gtccinfo_parse_lte_cell (GStrv     split,
++                         gboolean  serving,
++                         gpointer  log_object)
++{
++    g_autoptr(MMCellInfoLte)  cell = NULL;
++    g_autofree gchar         *operator_id = NULL;
++    g_autofree gchar         *tac = NULL;
++    g_autofree gchar         *ci = NULL;
++    g_autofree gchar         *pci = NULL;
++    guint                     rsrp_index;
++    guint                     rsrq_index;
++    guint                     value;
++    gdouble                   dvalue;
++
++    cell = MM_CELL_INFO_LTE (mm_cell_info_lte_new_from_dictionary (NULL));
++    mm_cell_info_set_serving (MM_CELL_INFO (cell), serving);
++
++    if ((operator_id = gtccinfo_operator_id (split)))
++        mm_cell_info_lte_set_operator_id (cell, operator_id);
++    if ((tac = gtccinfo_hex_id_to_string (split, GTCCINFO_FIELD_LAC_TAC)))
++        mm_cell_info_lte_set_tac (cell, tac);
++    if ((ci = gtccinfo_hex_id_to_string (split, GTCCINFO_FIELD_CELL_ID)))
++        mm_cell_info_lte_set_ci (cell, ci);
++    if ((pci = gtccinfo_hex_id_to_string (split, GTCCINFO_FIELD_BSIC_PCI)))
++        mm_cell_info_lte_set_physical_ci (cell, pci);
++    if (gtccinfo_hex_uint (split, GTCCINFO_FIELD_ARFCN_EARFCN, &value))
++        mm_cell_info_lte_set_earfcn (cell, value);
++
++    if (serving) {
++        rsrp_index = GTCCINFO_LTE_SERVING_RSRP;
++        rsrq_index = GTCCINFO_LTE_SERVING_RSRQ;
++    } else {
++        rsrp_index = GTCCINFO_LTE_NEIGHBOR_RSRP;
++        rsrq_index = GTCCINFO_LTE_NEIGHBOR_RSRQ;
++    }
++
++    if (gtccinfo_rsrp_to_dbm (split, rsrp_index, &dvalue))
++        mm_cell_info_lte_set_rsrp (cell, dvalue);
++    if (gtccinfo_rsrq_to_db (split, rsrq_index, &dvalue))
++        mm_cell_info_lte_set_rsrq (cell, dvalue);
++
++    /* <band>, <bandwidth> and <rssnr_value> have no matching property in
++     * MMCellInfoLte, so they are dropped. */
++
++    mm_obj_dbg (log_object, "+GTCCINFO: parsed LTE %s cell", serving ? "serving" : "neighbor");
++    return MM_CELL_INFO (g_steal_pointer (&cell));
++}
++
++static MMCellInfo *
++gtccinfo_parse_gsm_cell (GStrv     split,
++                         gboolean  serving,
++                         gpointer  log_object)
++{
++    g_autoptr(MMCellInfoGsm)  cell = NULL;
++    g_autofree gchar         *operator_id = NULL;
++    g_autofree gchar         *lac = NULL;
++    g_autofree gchar         *ci = NULL;
++    g_autofree gchar         *bsic = NULL;
++    guint                     value;
++
++    cell = MM_CELL_INFO_GSM (mm_cell_info_gsm_new_from_dictionary (NULL));
++    mm_cell_info_set_serving (MM_CELL_INFO (cell), serving);
++
++    if ((operator_id = gtccinfo_operator_id (split)))
++        mm_cell_info_gsm_set_operator_id (cell, operator_id);
++    if ((lac = gtccinfo_hex_id_to_string (split, GTCCINFO_FIELD_LAC_TAC)))
++        mm_cell_info_gsm_set_lac (cell, lac);
++    if ((ci = gtccinfo_hex_id_to_string (split, GTCCINFO_FIELD_CELL_ID)))
++        mm_cell_info_gsm_set_ci (cell, ci);
++    if ((bsic = gtccinfo_hex_id_to_string (split, GTCCINFO_FIELD_BSIC_PCI)))
++        mm_cell_info_gsm_set_base_station_id (cell, bsic);
++    if (gtccinfo_hex_uint (split, GTCCINFO_FIELD_ARFCN_EARFCN, &value))
++        mm_cell_info_gsm_set_arfcn (cell, value);
++
++    if (gtccinfo_dec_uint (split,
++                           serving ? GTCCINFO_GSM_SERVING_RXLEV : GTCCINFO_GSM_NEIGHBOR_RXLEV,
++                           &value))
++        mm_cell_info_gsm_set_rx_level (cell, value);
++
++    mm_obj_dbg (log_object, "+GTCCINFO: parsed GSM %s cell", serving ? "serving" : "neighbor");
++    return MM_CELL_INFO (g_steal_pointer (&cell));
++}
++
++static MMCellInfo *
++gtccinfo_parse_cell (const gchar      *line,
++                     GtccinfoSection   section,
++                     gpointer          log_object)
++{
++    g_auto(GStrv) split = NULL;
++    gboolean      serving;
++    guint         n_fields_expected;
++    guint         n_fields;
++    guint         value;
++
++    split = g_strsplit (line, ",", -1);
++    n_fields = g_strv_length (split);
++    if (n_fields < GTCCINFO_N_FIELDS_COMMON) {
++        mm_obj_warn (log_object, "unexpected number of fields in +GTCCINFO entry: %s", line);
++        return NULL;
++    }
++
++    /* An empty section is reported as an all-zeros placeholder entry, e.g.
++     * "0,0,0,0,0,0,0,0,0" */
++    if (!gtccinfo_dec_uint (split, GTCCINFO_FIELD_RAT, &value) || value == GTCCINFO_RAT_INVALID) {
++        mm_obj_dbg (log_object, "ignoring +GTCCINFO entry without a valid access technology: %s", line);
++        return NULL;
++    }
++
++    switch (section) {
++    case GTCCINFO_SECTION_GSM_SERVING:
++        serving = TRUE;
++        n_fields_expected = GTCCINFO_GSM_SERVING_N_FIELDS;
++        break;
++    case GTCCINFO_SECTION_GSM_NEIGHBOR:
++        serving = FALSE;
++        n_fields_expected = GTCCINFO_GSM_NEIGHBOR_N_FIELDS;
++        break;
++    case GTCCINFO_SECTION_LTE_SERVING:
++        serving = TRUE;
++        n_fields_expected = GTCCINFO_LTE_SERVING_N_FIELDS;
++        break;
++    case GTCCINFO_SECTION_LTE_NEIGHBOR:
++        serving = FALSE;
++        n_fields_expected = GTCCINFO_LTE_NEIGHBOR_N_FIELDS;
++        break;
++    case GTCCINFO_SECTION_UNKNOWN:
++    default:
++        g_assert_not_reached ();
++    }
++
++    /* The section header already tells us the layout, but <IsServiceCell> is
++     * authoritative; only warn when they disagree, the header wins since the
++     * field count depends on it. */
++    if (gtccinfo_dec_uint (split, GTCCINFO_FIELD_IS_SERVICE_CELL, &value) &&
++        ((value == GTCCINFO_IS_SERVICE_CELL) != serving))
++        mm_obj_dbg (log_object, "+GTCCINFO: <IsServiceCell> disagrees with section header: %s", line);
++
++    if (n_fields != n_fields_expected)
++        mm_obj_dbg (log_object, "+GTCCINFO: expected %u fields but got %u: %s",
++                    n_fields_expected, n_fields, line);
++
++    if (section == GTCCINFO_SECTION_GSM_SERVING || section == GTCCINFO_SECTION_GSM_NEIGHBOR)
++        return gtccinfo_parse_gsm_cell (split, serving, log_object);
++    return gtccinfo_parse_lte_cell (split, serving, log_object);
++}
++
++GList *
++mm_fibocom_mc610_parse_gtccinfo_response (const gchar  *response,
++                                          gpointer      log_object,
++                                          GError      **error)
++{
++    g_auto(GStrv)    lines = NULL;
++    GList           *list = NULL;
++    GtccinfoSection  section = GTCCINFO_SECTION_UNKNOWN;
++    guint            i;
++
++    /*
++     * E.g. while registered in LTE:
++     *  AT+GTCCINFO?
++     *  +GTCCINFO:
++     *  LTE service cell:
++     *  1,4,228,02,A546,510E06,1838,198,20,50,58,59,59,20
++     *
++     *  LTE neighbor cell:
++     *
++     * and while registered in GSM the sections are "GSM service cell:" and
++     * "GSM neighbor cell:" instead, with a different field layout.
++     */
++    lines = g_strsplit_set (response, "\r\n", -1);
++    for (i = 0; lines[i]; i++) {
++        const gchar *line;
++        MMCellInfo  *cell;
++
++        line = g_strstrip (lines[i]);
++        if (!line[0] || g_str_has_prefix (line, "+GTCCINFO"))
++            continue;
++
++        if (g_strrstr (line, "service cell") || g_strrstr (line, "neighbor cell")) {
++            gboolean is_serving_section;
++
++            is_serving_section = (g_strrstr (line, "service cell") != NULL);
++            if (g_strrstr (line, "LTE"))
++                section = is_serving_section ? GTCCINFO_SECTION_LTE_SERVING : GTCCINFO_SECTION_LTE_NEIGHBOR;
++            else if (g_strrstr (line, "GSM"))
++                section = is_serving_section ? GTCCINFO_SECTION_GSM_SERVING : GTCCINFO_SECTION_GSM_NEIGHBOR;
++            else
++                section = GTCCINFO_SECTION_UNKNOWN;
++            continue;
++        }
++
++        if (section == GTCCINFO_SECTION_UNKNOWN) {
++            mm_obj_dbg (log_object, "ignoring unhandled +GTCCINFO entry: %s", line);
++            continue;
++        }
++
++        cell = gtccinfo_parse_cell (line, section, log_object);
++        if (cell)
++            list = g_list_append (list, cell);
++    }
++
++    if (!list) {
++        g_set_error (error, MM_CORE_ERROR, MM_CORE_ERROR_FAILED,
++                     "No cell info found in +GTCCINFO? response");
++        return NULL;
++    }
++
++    return list;
++}
+diff --git a/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.h b/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.h
+index 95ea9c2fe..f5ffd87dd 100644
+--- a/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.h
++++ b/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.h
+@@ -43,4 +43,11 @@ gchar *mm_fibocom_mc610_build_gtrat_set_command (MMModemMode allowed,
+                                                  MMModemMode preferred,
+                                                  GError **error);
+ 
++/*****************************************************************************/
++/* GTCCINFO? response parser */
++
++GList *mm_fibocom_mc610_parse_gtccinfo_response (const gchar  *response,
++                                                 gpointer      log_object,
++                                                 GError      **error);
++
+ #endif  /* MM_MODEM_HELPER_FIBOCOM_MC610_H */
+diff --git a/src/plugins/fibocom_mc610/tests/test-modem-helpers-fibocom-mc610.c b/src/plugins/fibocom_mc610/tests/test-modem-helpers-fibocom-mc610.c
+new file mode 100644
+index 000000000..30ad5dfb5
+--- /dev/null
++++ b/src/plugins/fibocom_mc610/tests/test-modem-helpers-fibocom-mc610.c
+@@ -0,0 +1,260 @@
++/* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
++/*
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details:
++ *
++ * Copyright (C) 2025 Wifx SA - Yannick Lanz <yannick.lanz@wifx.net>
++ */
++
++#include <glib.h>
++#include <glib-object.h>
++#include <locale.h>
++
++#include <ModemManager.h>
++#define _LIBMM_INSIDE_MM
++#include <libmm-glib.h>
++
++#include "mm-log-test.h"
++#include "mm-modem-helpers.h"
++#include "mm-modem-helpers-fibocom-mc610.h"
++
++/*****************************************************************************/
++/* Test +GTCCINFO? responses */
++
++static void
++test_gtccinfo_lte_serving_only (void)
++{
++    /* As captured on a MC610-EU, firmware 16000.1000.00.98.91.04 */
++    static const gchar *response =
++        "+GTCCINFO:\r\n"
++        "LTE service cell:\r\n"
++        "1,4,228,02,A546,510E06,1838,198,20,50,58,59,59,20\r\n"
++        "\r\n"
++        "LTE neighbor cell:\r\n";
++
++    g_autoptr(GError)  error = NULL;
++    GList             *list;
++    MMCellInfoLte     *cell;
++
++    list = mm_fibocom_mc610_parse_gtccinfo_response (response, NULL, &error);
++    g_assert_no_error (error);
++    g_assert (list);
++    g_assert_cmpuint (g_list_length (list), ==, 1);
++
++    g_assert (MM_IS_CELL_INFO_LTE (list->data));
++    cell = MM_CELL_INFO_LTE (list->data);
++
++    g_assert (mm_cell_info_get_serving (MM_CELL_INFO (cell)));
++    g_assert_cmpstr (mm_cell_info_lte_get_operator_id (cell), ==, "22802");
++    g_assert_cmpstr (mm_cell_info_lte_get_tac (cell), ==, "A546");
++    g_assert_cmpstr (mm_cell_info_lte_get_ci (cell), ==, "510E06");
++    /* 0x1838 = 6200, E-UTRA band 20, consistent with the <band> field */
++    g_assert_cmpuint (mm_cell_info_lte_get_earfcn (cell), ==, 6200);
++    g_assert_cmpstr (mm_cell_info_lte_get_physical_ci (cell), ==, "198");
++    /* <rsrp> 59 -> -141 + 59 = -82 dBm */
++    g_assert_cmpfloat (mm_cell_info_lte_get_rsrp (cell), ==, -82.0);
++    /* <rsrq> 20 -> -20 + 20 * 0.5 = -10 dB */
++    g_assert_cmpfloat (mm_cell_info_lte_get_rsrq (cell), ==, -10.0);
++
++    g_list_free_full (list, g_object_unref);
++}
++
++static void
++test_gtccinfo_lte_serving_and_neighbors (void)
++{
++    /* Example taken from the Fibocom AT Commands User Manual V3.0, section 9.12 */
++    static const gchar *response =
++        "+GTCCINFO:\r\n"
++        "LTE service cell:\r\n"
++        "1,4,460,11,770E,77CF205,64,B9,101,100,-10,35,35,4\r\n"
++        "\r\n"
++        "LTE neighbor cell:\r\n"
++        "2,4,,,,,64,1A1,,32,32,0\r\n"
++        "2,4,,,,,64,1A5,,30,30,2\r\n";
++
++    g_autoptr(GError)  error = NULL;
++    GList             *list;
++    MMCellInfoLte     *cell;
++
++    list = mm_fibocom_mc610_parse_gtccinfo_response (response, NULL, &error);
++    g_assert_no_error (error);
++    g_assert_cmpuint (g_list_length (list), ==, 3);
++
++    cell = MM_CELL_INFO_LTE (g_list_nth_data (list, 0));
++    g_assert (mm_cell_info_get_serving (MM_CELL_INFO (cell)));
++    g_assert_cmpstr (mm_cell_info_lte_get_operator_id (cell), ==, "46011");
++    g_assert_cmpstr (mm_cell_info_lte_get_tac (cell), ==, "770E");
++    g_assert_cmpstr (mm_cell_info_lte_get_ci (cell), ==, "77CF205");
++    g_assert_cmpuint (mm_cell_info_lte_get_earfcn (cell), ==, 100);
++    g_assert_cmpstr (mm_cell_info_lte_get_physical_ci (cell), ==, "B9");
++
++    /* Neighbor cells have most identity fields empty */
++    cell = MM_CELL_INFO_LTE (g_list_nth_data (list, 1));
++    g_assert (!mm_cell_info_get_serving (MM_CELL_INFO (cell)));
++    g_assert (!mm_cell_info_lte_get_operator_id (cell));
++    g_assert (!mm_cell_info_lte_get_tac (cell));
++    g_assert (!mm_cell_info_lte_get_ci (cell));
++    g_assert_cmpuint (mm_cell_info_lte_get_earfcn (cell), ==, 100);
++    g_assert_cmpstr (mm_cell_info_lte_get_physical_ci (cell), ==, "1A1");
++    /* <rsrp> 32 -> -109 dBm, <rsrq> 0 -> unknown */
++    g_assert_cmpfloat (mm_cell_info_lte_get_rsrp (cell), ==, -109.0);
++
++    cell = MM_CELL_INFO_LTE (g_list_nth_data (list, 2));
++    g_assert (!mm_cell_info_get_serving (MM_CELL_INFO (cell)));
++    g_assert_cmpstr (mm_cell_info_lte_get_physical_ci (cell), ==, "1A5");
++    g_assert_cmpfloat (mm_cell_info_lte_get_rsrq (cell), ==, -19.0);
++
++    g_list_free_full (list, g_object_unref);
++}
++
++static void
++test_gtccinfo_gsm (void)
++{
++    /* Synthetic sample built from the field layout documented in the Fibocom AT
++     * Commands User Manual V3.0, section 9.12. Not validated against hardware:
++     * GSM reporting is documented as available only on projects supporting the
++     * GSM standard on the 8910DM platform. */
++    static const gchar *response =
++        "+GTCCINFO:\r\n"
++        "GSM service cell:\r\n"
++        "1,1,228,02,A546,510E,3E8,32,900,5,0,30,30,3,0,0,0,25,25,0,0,26,-84,0\r\n"
++        "\r\n"
++        "GSM neighbor cell:\r\n"
++        "2,1,228,02,A546,510F,3E9,33,28,28,0,0,20,-90\r\n";
++
++    g_autoptr(GError)  error = NULL;
++    GList             *list;
++    MMCellInfoGsm     *cell;
++
++    list = mm_fibocom_mc610_parse_gtccinfo_response (response, NULL, &error);
++    g_assert_no_error (error);
++    g_assert_cmpuint (g_list_length (list), ==, 2);
++
++    g_assert (MM_IS_CELL_INFO_GSM (list->data));
++    cell = MM_CELL_INFO_GSM (g_list_nth_data (list, 0));
++    g_assert (mm_cell_info_get_serving (MM_CELL_INFO (cell)));
++    g_assert_cmpstr (mm_cell_info_gsm_get_operator_id (cell), ==, "22802");
++    g_assert_cmpstr (mm_cell_info_gsm_get_lac (cell), ==, "A546");
++    g_assert_cmpstr (mm_cell_info_gsm_get_ci (cell), ==, "510E");
++    g_assert_cmpuint (mm_cell_info_gsm_get_arfcn (cell), ==, 1000);
++    g_assert_cmpstr (mm_cell_info_gsm_get_base_station_id (cell), ==, "32");
++    g_assert_cmpuint (mm_cell_info_gsm_get_rx_level (cell), ==, 26);
++
++    cell = MM_CELL_INFO_GSM (g_list_nth_data (list, 1));
++    g_assert (!mm_cell_info_get_serving (MM_CELL_INFO (cell)));
++    g_assert_cmpstr (mm_cell_info_gsm_get_ci (cell), ==, "510F");
++    g_assert_cmpuint (mm_cell_info_gsm_get_arfcn (cell), ==, 1001);
++    g_assert_cmpuint (mm_cell_info_gsm_get_rx_level (cell), ==, 20);
++
++    g_list_free_full (list, g_object_unref);
++}
++
++static void
++test_gtccinfo_leading_zeros (void)
++{
++    static const gchar *response =
++        "+GTCCINFO:\r\n"
++        "LTE service cell:\r\n"
++        "1,4,228,02,0A546,00510E06,1838,198,20,50,58,59,59,20\r\n";
++
++    g_autoptr(GError)  error = NULL;
++    GList             *list;
++    MMCellInfoLte     *cell;
++
++    list = mm_fibocom_mc610_parse_gtccinfo_response (response, NULL, &error);
++    g_assert_no_error (error);
++    g_assert_cmpuint (g_list_length (list), ==, 1);
++
++    cell = MM_CELL_INFO_LTE (list->data);
++    g_assert_cmpstr (mm_cell_info_lte_get_tac (cell), ==, "A546");
++    g_assert_cmpstr (mm_cell_info_lte_get_ci (cell), ==, "510E06");
++
++    g_list_free_full (list, g_object_unref);
++}
++
++static void
++test_gtccinfo_no_cell (void)
++{
++    static const gchar *response =
++        "+GTCCINFO:\r\n"
++        "LTE neighbor cell:\r\n";
++
++    g_autoptr(GError)  error = NULL;
++    GList             *list;
++
++    list = mm_fibocom_mc610_parse_gtccinfo_response (response, NULL, &error);
++    g_assert (!list);
++    g_assert_error (error, MM_CORE_ERROR, MM_CORE_ERROR_FAILED);
++}
++
++static void
++test_gtccinfo_empty_neighbor_placeholder (void)
++{
++    /* As returned by a MC610-EU after AT+GTCCINFO="neighbourcell",0 found
++     * nothing: an all-zeros entry with <rat> set to "invalid network" */
++    static const gchar *response =
++        "+GTCCINFO:\r\n"
++        "LTE service cell:\r\n"
++        "1,4,228,02,A546,510E06,1838,198,20,50,59,61,61,20\r\n"
++        "\r\n"
++        "LTE neighbor cell:\r\n"
++        "0,0,0,0,0,0,0,0,0\r\n";
++
++    g_autoptr(GError)  error = NULL;
++    GList             *list;
++    MMCellInfoLte     *cell;
++
++    list = mm_fibocom_mc610_parse_gtccinfo_response (response, NULL, &error);
++    g_assert_no_error (error);
++    g_assert_cmpuint (g_list_length (list), ==, 1);
++
++    cell = MM_CELL_INFO_LTE (list->data);
++    g_assert (mm_cell_info_get_serving (MM_CELL_INFO (cell)));
++    g_assert_cmpstr (mm_cell_info_lte_get_ci (cell), ==, "510E06");
++    /* <rsrp> 61 -> -80 dBm */
++    g_assert_cmpfloat (mm_cell_info_lte_get_rsrp (cell), ==, -80.0);
++
++    g_list_free_full (list, g_object_unref);
++}
++
++static void
++test_gtccinfo_short_line (void)
++{
++    static const gchar *response =
++        "+GTCCINFO:\r\n"
++        "LTE service cell:\r\n"
++        "1,4,228,02\r\n";
++
++    g_autoptr(GError)  error = NULL;
++    GList             *list;
++
++    list = mm_fibocom_mc610_parse_gtccinfo_response (response, NULL, &error);
++    g_assert (!list);
++    g_assert_error (error, MM_CORE_ERROR, MM_CORE_ERROR_FAILED);
++}
++
++/*****************************************************************************/
++
++int main (int argc, char **argv)
++{
++    setlocale (LC_ALL, "");
++
++    g_test_init (&argc, &argv, NULL);
++
++    g_test_add_func ("/MM/fibocom-mc610/gtccinfo/lte-serving-only", test_gtccinfo_lte_serving_only);
++    g_test_add_func ("/MM/fibocom-mc610/gtccinfo/lte-serving-and-neighbors", test_gtccinfo_lte_serving_and_neighbors);
++    g_test_add_func ("/MM/fibocom-mc610/gtccinfo/gsm", test_gtccinfo_gsm);
++    g_test_add_func ("/MM/fibocom-mc610/gtccinfo/leading-zeros", test_gtccinfo_leading_zeros);
++    g_test_add_func ("/MM/fibocom-mc610/gtccinfo/no-cell", test_gtccinfo_no_cell);
++    g_test_add_func ("/MM/fibocom-mc610/gtccinfo/empty-neighbor-placeholder", test_gtccinfo_empty_neighbor_placeholder);
++    g_test_add_func ("/MM/fibocom-mc610/gtccinfo/short-line", test_gtccinfo_short_line);
++
++    return g_test_run ();
++}
+diff --git a/src/plugins/meson.build b/src/plugins/meson.build
+index b856f7761..fe988f924 100644
+--- a/src/plugins/meson.build
++++ b/src/plugins/meson.build
+@@ -473,17 +473,20 @@ if plugins_options['fibocom-mc610']
+ 
+   incs = plugins_incs + [include_directories('fibocom_mc610')] + [include_directories('fibocom')]
+ 
++  common_c_args = test_udev_rules_dir_c_args + ['-DMM_MODULE_NAME="fibocom-mc610"']
++
+   sources = files(
+     'fibocom_mc610/mm-plugin-fibocom-mc610.c',
+     'fibocom_mc610/mm-broadband-modem-fibocom-mc610.c',
+-    'fibocom_mc610/mm-modem-helpers-fibocom-mc610.c',
+     'fibocom/mm-broadband-bearer-fibocom-ecm.c',
+     'fibocom/mm-shared-fibocom.c',
+     'fibocom/mm-shared.c',
+   )
+   plugins += {'plugin-fibocom-mc610': {
+     'plugin': true,
+-    'module': {'sources': sources, 'include_directories': incs, 'c_args': test_udev_rules_dir_c_args + ['-DMM_MODULE_NAME="fibocom-mc610"']},
++    'helper': {'sources': files('fibocom_mc610/mm-modem-helpers-fibocom-mc610.c'), 'include_directories': incs, 'c_args': common_c_args},
++    'module': {'sources': sources, 'include_directories': incs, 'c_args': common_c_args},
++    'test': {'sources': files('fibocom_mc610/tests/test-modem-helpers-fibocom-mc610.c'), 'include_directories': include_directories('fibocom_mc610'), 'dependencies': libhelpers_dep},
+   }}
+ 
+   plugins_udev_rules += files('fibocom/77-mm-fibocom-port-types.rules')
+-- 
+2.43.0
+
