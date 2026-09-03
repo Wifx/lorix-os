@@ -1,7 +1,7 @@
-From 940127b5c462027edb5a5caf3e43c552ebfa8c85 Mon Sep 17 00:00:00 2001
+From 468ec43976aa2de7c3d2103c585edca9b9e8aeaa Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Thu, 22 May 2025 14:33:43 +0200
-Subject: [PATCH 3/9] fibocom-mc610: reset PDP context 0 during modem init
+Subject: [PATCH 03/14] fibocom-mc610: reset PDP context 0 during modem init
 
 Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
 ---
@@ -9,7 +9,7 @@ Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
  1 file changed, 3 insertions(+)
 
 diff --git a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
-index 9363d5e9..5e43d05d 100644
+index 9363d5e93..5e43d05de 100644
 --- a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
 +++ b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
 @@ -1291,6 +1291,9 @@ static const gchar *primary_init_sequence[] = {

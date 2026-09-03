@@ -1,7 +1,7 @@
-From 66482623feb29dc3df417f59e9181c33e6af6a21 Mon Sep 17 00:00:00 2001
+From cf53f5630eb73e53eea3b960a9c66936b1a7d05e Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Mon, 14 Apr 2025 23:41:52 +0200
-Subject: [PATCH 1/9] fibocom-mc610: add support for Fibocom MC610 specific
+Subject: [PATCH 01/14] fibocom-mc610: add support for Fibocom MC610 specific
  plugin
 
 Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
@@ -30,7 +30,7 @@ Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
  create mode 100644 src/plugins/fibocom_mc610/mm-plugin-fibocom-mc610.c
 
 diff --git a/libmm-glib/mm-bearer-properties.c b/libmm-glib/mm-bearer-properties.c
-index e5e7e3d2..d61ac0da 100644
+index e5e7e3d21..d61ac0dae 100644
 --- a/libmm-glib/mm-bearer-properties.c
 +++ b/libmm-glib/mm-bearer-properties.c
 @@ -969,7 +969,8 @@ mm_bearer_properties_cmp (MMBearerProperties         *a,
@@ -44,7 +44,7 @@ index e5e7e3d2..d61ac0da 100644
      if (!(flags & MM_BEARER_PROPERTIES_CMP_FLAGS_NO_PASSWORD) &&
          !cmp_str (mm_3gpp_profile_get_password (a->priv->profile), mm_3gpp_profile_get_password (b->priv->profile), flags))
 diff --git a/libmm-glib/mm-bearer-properties.h b/libmm-glib/mm-bearer-properties.h
-index fad85e15..ddaa3feb 100644
+index fad85e159..ddaa3feb5 100644
 --- a/libmm-glib/mm-bearer-properties.h
 +++ b/libmm-glib/mm-bearer-properties.h
 @@ -150,6 +150,7 @@ typedef enum {
@@ -56,7 +56,7 @@ index fad85e15..ddaa3feb 100644
  
  gboolean mm_bearer_properties_cmp (MMBearerProperties         *a,
 diff --git a/meson.build b/meson.build
-index 4cccc00a..3e6ba5d5 100644
+index d815ec379..e3075a7e5 100644
 --- a/meson.build
 +++ b/meson.build
 @@ -333,6 +333,7 @@ plugins_options_reqs = {
@@ -68,7 +68,7 @@ index 4cccc00a..3e6ba5d5 100644
    'generic': {'available': true, 'shared': []},
    'gosuncn': {'available': true, 'shared': []},
 diff --git a/meson_options.txt b/meson_options.txt
-index c0609fe8..b653b491 100644
+index c0609fe84..b653b491e 100644
 --- a/meson_options.txt
 +++ b/meson_options.txt
 @@ -35,6 +35,7 @@ option('plugin_cinterion', type: 'feature', value: 'auto', description: 'enable
@@ -80,10 +80,10 @@ index c0609fe8..b653b491 100644
  option('plugin_gosuncn', type: 'feature', value: 'auto', description: 'enable gosuncn plugin support')
  option('plugin_haier', type: 'feature', value: 'auto', description: 'enable haier plugin support')
 diff --git a/src/mm-broadband-modem.c b/src/mm-broadband-modem.c
-index 5e026449..222f0101 100644
+index c14bce3f3..adbdad461 100644
 --- a/src/mm-broadband-modem.c
 +++ b/src/mm-broadband-modem.c
-@@ -523,6 +523,12 @@ mm_broadband_modem_sim_hot_swap_ports_context_init (MMBroadbandModem  *self,
+@@ -530,6 +530,12 @@ mm_broadband_modem_sim_hot_swap_ports_context_init (MMBroadbandModem  *self,
      return TRUE;
  }
  
@@ -96,7 +96,7 @@ index 5e026449..222f0101 100644
  void
  mm_broadband_modem_sim_hot_swap_ports_context_reset (MMBroadbandModem *self)
  {
-@@ -11172,6 +11178,7 @@ modem_3gpp_profile_manager_check_format_finish (MMIfaceModem3gppProfileManager
+@@ -11201,6 +11207,7 @@ modem_3gpp_profile_manager_check_format_finish (MMIfaceModem3gppProfileManager
                                                  gint                            *max_profile_id,
                                                  GEqualFunc                      *apn_cmp,
                                                  MM3gppProfileCmpFlags           *profile_cmp_flags,
@@ -104,7 +104,7 @@ index 5e026449..222f0101 100644
                                                  GError                         **error)
  {
      CheckFormatContext *ctx;
-@@ -11194,6 +11201,8 @@ modem_3gpp_profile_manager_check_format_finish (MMIfaceModem3gppProfileManager
+@@ -11223,6 +11230,8 @@ modem_3gpp_profile_manager_check_format_finish (MMIfaceModem3gppProfileManager
                                MM_3GPP_PROFILE_CMP_FLAGS_NO_ACCESS_TYPE_PREFERENCE |
                                MM_3GPP_PROFILE_CMP_FLAGS_NO_ROAMING_ALLOWANCE |
                                MM_3GPP_PROFILE_CMP_FLAGS_NO_PROFILE_SOURCE);
@@ -114,7 +114,7 @@ index 5e026449..222f0101 100644
  }
  
 diff --git a/src/mm-broadband-modem.h b/src/mm-broadband-modem.h
-index f820e045..91e1ffaa 100644
+index 4930d4dec..9afee2123 100644
 --- a/src/mm-broadband-modem.h
 +++ b/src/mm-broadband-modem.h
 @@ -141,6 +141,7 @@ void     mm_broadband_modem_unlock_sms_storages      (MMBroadbandModem *self,
@@ -124,9 +124,9 @@ index f820e045..91e1ffaa 100644
 +gboolean mm_broadband_modem_sim_hot_swap_ports_context_is_init (MMBroadbandModem *self);
  void     mm_broadband_modem_sim_hot_swap_ports_context_reset (MMBroadbandModem  *self);
  
- /* Helper to manage multiplexed bearers */
+ /* Helper to manage initial EPS bearer */
 diff --git a/src/mm-iface-modem-3gpp-profile-manager.c b/src/mm-iface-modem-3gpp-profile-manager.c
-index d76202b7..622b1b79 100644
+index d76202b78..622b1b790 100644
 --- a/src/mm-iface-modem-3gpp-profile-manager.c
 +++ b/src/mm-iface-modem-3gpp-profile-manager.c
 @@ -228,6 +228,7 @@ typedef struct {
@@ -160,7 +160,7 @@ index d76202b7..622b1b79 100644
          ctx->min_profile_id = 1;
          ctx->max_profile_id = G_MAXINT-1;
 diff --git a/src/mm-iface-modem-3gpp-profile-manager.h b/src/mm-iface-modem-3gpp-profile-manager.h
-index 7dfdc816..48f605c5 100644
+index 7dfdc8166..48f605c53 100644
 --- a/src/mm-iface-modem-3gpp-profile-manager.h
 +++ b/src/mm-iface-modem-3gpp-profile-manager.h
 @@ -132,6 +132,7 @@ struct _MMIfaceModem3gppProfileManagerInterface {
@@ -172,7 +172,7 @@ index 7dfdc816..48f605c5 100644
  
      /* Check activated profile (substep of 'set profiles')
 diff --git a/src/mm-iface-modem-3gpp.c b/src/mm-iface-modem-3gpp.c
-index c103fd13..57e68386 100644
+index faaa4dfda..8bc9b7511 100644
 --- a/src/mm-iface-modem-3gpp.c
 +++ b/src/mm-iface-modem-3gpp.c
 @@ -52,7 +52,8 @@
@@ -227,7 +227,7 @@ index c103fd13..57e68386 100644
      handle_set_initial_eps_bearer_settings_step (ctx);
 diff --git a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
 new file mode 100644
-index 00000000..8e5c1227
+index 000000000..8e5c12278
 --- /dev/null
 +++ b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
 @@ -0,0 +1,1489 @@
@@ -1722,7 +1722,7 @@ index 00000000..8e5c1227
 +}
 diff --git a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.h b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.h
 new file mode 100644
-index 00000000..994870c7
+index 000000000..994870c77
 --- /dev/null
 +++ b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.h
 @@ -0,0 +1,52 @@
@@ -1780,7 +1780,7 @@ index 00000000..994870c7
 +#endif /* MM_BROADBAND_MODEM_FIBOCOM_MC610_H */
 diff --git a/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.c
 new file mode 100644
-index 00000000..064cdd64
+index 000000000..064cdd648
 --- /dev/null
 +++ b/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.c
 @@ -0,0 +1,290 @@
@@ -2076,7 +2076,7 @@ index 00000000..064cdd64
 +}
 diff --git a/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.h b/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.h
 new file mode 100644
-index 00000000..95ea9c2f
+index 000000000..95ea9c2fe
 --- /dev/null
 +++ b/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.h
 @@ -0,0 +1,46 @@
@@ -2128,7 +2128,7 @@ index 00000000..95ea9c2f
 +#endif  /* MM_MODEM_HELPER_FIBOCOM_MC610_H */
 diff --git a/src/plugins/fibocom_mc610/mm-plugin-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-plugin-fibocom-mc610.c
 new file mode 100644
-index 00000000..9f838168
+index 000000000..9f8381689
 --- /dev/null
 +++ b/src/plugins/fibocom_mc610/mm-plugin-fibocom-mc610.c
 @@ -0,0 +1,88 @@
@@ -2221,7 +2221,7 @@ index 00000000..9f838168
 +    plugin_class->create_modem = create_modem;
 +}
 diff --git a/src/plugins/icera/mm-broadband-modem-icera.c b/src/plugins/icera/mm-broadband-modem-icera.c
-index f8532b78..baf12739 100644
+index f8532b784..baf127393 100644
 --- a/src/plugins/icera/mm-broadband-modem-icera.c
 +++ b/src/plugins/icera/mm-broadband-modem-icera.c
 @@ -1808,6 +1808,7 @@ modem_3gpp_profile_manager_check_format_finish (MMIfaceModem3gppProfileManager
@@ -2241,7 +2241,7 @@ index f8532b78..baf12739 100644
          g_task_return_error (task, error);
      } else {
 diff --git a/src/plugins/meson.build b/src/plugins/meson.build
-index b21b5e36..b856f776 100644
+index b21b5e360..b856f7761 100644
 --- a/src/plugins/meson.build
 +++ b/src/plugins/meson.build
 @@ -466,6 +466,29 @@ if plugins_options['fibocom']

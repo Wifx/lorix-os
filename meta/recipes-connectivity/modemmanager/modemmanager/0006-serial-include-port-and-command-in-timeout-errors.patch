@@ -1,7 +1,7 @@
-From e5f9b53c782f6208cf5f27669571f458c7f850fa Mon Sep 17 00:00:00 2001
+From f92659c35de41985c65e67633b7ff2cff3f6a610 Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Tue, 24 Mar 2026 07:46:33 +0100
-Subject: [PATCH 6/9] serial: include port and command in timeout errors
+Subject: [PATCH 06/14] serial: include port and command in timeout errors
 
 Improve serial timeout reporting by including the port name and,
 when available, the AT command that timed out.
@@ -16,7 +16,7 @@ Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
  1 file changed, 62 insertions(+), 9 deletions(-)
 
 diff --git a/src/mm-port-serial.c b/src/mm-port-serial.c
-index 0ea7a06e..5c38c82f 100644
+index bb0d2170d..7ce22b21c 100644
 --- a/src/mm-port-serial.c
 +++ b/src/mm-port-serial.c
 @@ -46,6 +46,8 @@ static void     port_serial_set_cached_reply       (MMPortSerial *self,

@@ -1,7 +1,7 @@
-From 92d6c367fa08d0f9da5fe26ebb7043ccc2772b2c Mon Sep 17 00:00:00 2001
+From 7d9cc8aa5328fcda5006aa0e142b4d4d74196608 Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Mon, 23 Mar 2026 22:10:38 +0100
-Subject: [PATCH 9/9] fibocom: use 30s timeout for GTRNDIS queries
+Subject: [PATCH 09/14] fibocom: use 30s timeout for GTRNDIS queries
 
 Increase the timeout used for GTRNDIS support detection and
 state queries from 3-6s to 30s in the Fibocom ECM bearer and
@@ -18,7 +18,7 @@ Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
  2 files changed, 8 insertions(+), 5 deletions(-)
 
 diff --git a/src/plugins/fibocom/mm-broadband-bearer-fibocom-ecm.c b/src/plugins/fibocom/mm-broadband-bearer-fibocom-ecm.c
-index 06f28b8a..4def62f9 100644
+index 06f28b8a3..4def62f9e 100644
 --- a/src/plugins/fibocom/mm-broadband-bearer-fibocom-ecm.c
 +++ b/src/plugins/fibocom/mm-broadband-bearer-fibocom-ecm.c
 @@ -23,6 +23,8 @@
@@ -58,7 +58,7 @@ index 06f28b8a..4def62f9 100644
                                (GAsyncReadyCallback) gtrndis_verify_ready,
                                task);
 diff --git a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
-index 50ec035f..49646403 100644
+index 50ec035f7..496464031 100644
 --- a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
 +++ b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
 @@ -49,7 +49,8 @@ G_DEFINE_TYPE_EXTENDED (MMBroadbandModemFibocomMc610, mm_broadband_modem_fibocom

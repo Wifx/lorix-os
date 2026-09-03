@@ -1,8 +1,8 @@
-From 4db209e2ba0770bf51b30fb455510aa315ba05e5 Mon Sep 17 00:00:00 2001
+From efb7babe8db5b723e7aa57c55b058b13bcfe3a5f Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Tue, 24 Mar 2026 07:44:55 +0100
-Subject: [PATCH 5/9] fibocom-mc610: enhance timeout handling for Fibocom MC610
- to allow recovery during degraded registration cycles
+Subject: [PATCH 05/14] fibocom-mc610: enhance timeout handling for Fibocom
+ MC610 to allow recovery during degraded registration cycles
 
 Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
 ---
@@ -10,7 +10,7 @@ Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
  1 file changed, 5 insertions(+)
 
 diff --git a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
-index 5e43d05d..fc75621c 100644
+index 5e43d05de..fc75621c5 100644
 --- a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
 +++ b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
 @@ -1380,6 +1380,11 @@ mm_broadband_modem_fibocom_mc610_new (const gchar  *device,

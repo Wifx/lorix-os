@@ -1,7 +1,7 @@
-From f927a674cf391a02757e543ebc473186f322c6cd Mon Sep 17 00:00:00 2001
+From d060b6267b549cfe17eeb5618dd21c9d82f776eb Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Thu, 17 Apr 2025 22:00:20 +0200
-Subject: [PATCH 2/9] fibocom-mc610: fix SIM hot swap handling following 1.24
+Subject: [PATCH 02/14] fibocom-mc610: fix SIM hot swap handling following 1.24
  upgrade
 
 Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
@@ -10,7 +10,7 @@ Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
  1 file changed, 12 insertions(+), 4 deletions(-)
 
 diff --git a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
-index 8e5c1227..9363d5e9 100644
+index 8e5c12278..9363d5e93 100644
 --- a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
 +++ b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
 @@ -60,6 +60,7 @@ struct _MMBroadbandModemFibocomMc610Private {

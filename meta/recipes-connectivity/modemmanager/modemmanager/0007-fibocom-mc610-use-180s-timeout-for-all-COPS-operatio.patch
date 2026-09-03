@@ -1,7 +1,7 @@
-From d1dafa14bcb3db150644511be226beeacd8df696 Mon Sep 17 00:00:00 2001
+From cfae198eb1ccab7f800b77c3891e2427c5bfb24f Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Mon, 23 Mar 2026 17:56:25 +0100
-Subject: [PATCH 7/9] fibocom-mc610: use 180s timeout for all COPS operations
+Subject: [PATCH 07/14] fibocom-mc610: use 180s timeout for all COPS operations
 
 Override the generic 3GPP COPS timeouts in the MC610 plugin.
 
@@ -21,7 +21,7 @@ Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
  1 file changed, 202 insertions(+)
 
 diff --git a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
-index fc75621c..50ec035f 100644
+index fc75621c5..50ec035f7 100644
 --- a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
 +++ b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
 @@ -33,19 +33,24 @@
