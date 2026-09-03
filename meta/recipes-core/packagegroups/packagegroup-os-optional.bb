@@ -17,7 +17,18 @@ do_build[recrdeptask] += "do_package_write_ipk"
 
 # recrdeptask does not follow RRECOMMENDS, only use RDEPENDS here.
 RDEPENDS:${PN} = " \
-    tcpdump \
-    nethogs \
+    arptables \
+    curl \
+    ebtables \
+    iftop \
     iperf3 \
+    netcat \
+    nethogs \
+    tcpdump \
+    traceroute \
+    tunctl \
+    \
+    memtester \
+    net-tools \
+    i2c-tools \
 "
