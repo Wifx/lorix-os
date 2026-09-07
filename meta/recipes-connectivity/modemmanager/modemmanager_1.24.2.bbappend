@@ -18,6 +18,9 @@ SRC_URI += " \
     file://0013-mc610-run-COPS-and-GTCCINFO-on-the-secondary-AT-port.patch \
     file://0014-mc610-fibocom-increase-AT-command-and-bearer-timeout.patch \
     file://0015-mc610-retry-SIM-readiness-probing-after-hot-swap-ins.patch \
+    file://0016-libmm-glib-mc610-treat-compatible-auth-methods-as-eq.patch \
+    file://0017-3gpp-rewrite-matching-profile-in-place-don-t-skip-bl.patch \
+    file://0018-mc610-fix-profile-0-cache-lifecycle-across-configure.patch \
 "
 
 # Disable MBIM and QMI features

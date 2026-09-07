@@ -1,0 +1,65 @@
+From 6bcf8b3a9c554e0b6ac32834b7f37aef512c4c0d Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Mon, 7 Sep 2026 22:03:20 +0200
+Subject: [PATCH 18/18] mc610: fix profile 0 cache lifecycle across
+ configured/runtime views
+
+The plugin caches the profile 0 (initial EPS bearer) reported by
++CGDCONT? locally, since some of its state cannot be reconstructed
+from the modem alone. Two bugs affected that cache:
+
+- The modem reports two different views of context 0: the configured
+  one, alone, while the radio is off, and a runtime one, listed next
+  to the other contexts once attached, carrying the negotiated
+  address and PDP type instead of what was actually stored. The
+  runtime view was overwriting the cache, discarding the real
+  configuration.
+- Deleting any other profile also cleared the cached profile 0,
+  instead of only doing so when profile 0 itself was the one deleted.
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ .../mm-broadband-modem-fibocom-mc610.c        | 20 ++++++++++++-------
+ 1 file changed, 13 insertions(+), 7 deletions(-)
+
+diff --git a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+index 8715e9bf2..126c173ea 100644
+--- a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
++++ b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+@@ -1206,12 +1206,18 @@ profile_manager_parent_list_profiles_ready (MMIfaceModem3gppProfileManager *self
+     }
+ 
+     if (found) {
+-        // profile 0 found in modem, update local storage
+-        mm_obj_dbg (self, "profile 0 fetched from modem");
+-        if (fibocom->priv->profile0) {
+-            g_object_unref (fibocom->priv->profile0);
+-        }
+-        fibocom->priv->profile0 = g_object_ref (found);
++        /* The modem exposes two different views of context 0: the configured one,
++         * reported alone while the radio is off, and the runtime one, reported next
++         * to the other contexts once attached and carrying the negotiated address
++         * and PDP type. Only the former describes what was actually stored. */
++        if (!ctx->profiles->next) {
++            mm_obj_dbg (self, "profile 0 fetched from modem");
++            if (fibocom->priv->profile0) {
++                g_object_unref (fibocom->priv->profile0);
++            }
++            fibocom->priv->profile0 = g_object_ref (found);
++        } else
++            mm_obj_dbg (self, "profile 0 reported by modem at runtime, keeping stored settings");
+     } else {
+         // profil 0 doesn't exist in modem, check if we have it locally
+         if (fibocom->priv->profile0) {
+@@ -1280,7 +1286,7 @@ profile_manager_cgdcont_reset_ready (MMBaseModem  *self,
+     } else {
+         mm_obj_dbg (self, "reseted context with profile id '%d'", profile_id);
+ 
+-        if (fibocom->priv->profile0) {
++        if (profile_id == 0 && fibocom->priv->profile0) {
+             mm_obj_dbg (self, "deleting local storage for profile 0");
+             g_object_unref (fibocom->priv->profile0);
+             fibocom->priv->profile0 = NULL;
+-- 
+2.43.0
+

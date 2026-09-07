@@ -1,0 +1,160 @@
+From 83ce3aeaf6a8ae34a6d04d1cbfb25d6670d0a2a9 Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Mon, 7 Sep 2026 21:58:05 +0200
+Subject: [PATCH 17/18] 3gpp: rewrite matching profile in place, don't skip
+ blank slots by type
+
+mm_3gpp_profile_list_find_best() had two issues that caused PDP
+context slots to accumulate instead of being reused:
+
+- A context already describing the same connection (APN + PDP type)
+  but with different credentials was never detected as such, so a
+  new slot was allocated for every credential change instead of
+  rewriting the existing one.
+- Blank slots (no APN set) were only considered if their reported PDP
+  type matched the request. Some modems report every undefined
+  context with the same placeholder type regardless of the range it
+  was defined in, which made all blank slots invisible to requests of
+  another type and forced the fallback path to the last profile.
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ src/mm-modem-helpers.c         | 42 +++++++++++++++++++++++++++++++---
+ src/tests/test-modem-helpers.c | 34 +++++++++++++++++++++++++++
+ 2 files changed, 73 insertions(+), 3 deletions(-)
+
+diff --git a/src/mm-modem-helpers.c b/src/mm-modem-helpers.c
+index 574ec7fc1..d91382176 100644
+--- a/src/mm-modem-helpers.c
++++ b/src/mm-modem-helpers.c
+@@ -1635,6 +1635,18 @@ mm_3gpp_profile_list_find_empty (GList   *profile_list,
+     return profile_id;
+ }
+ 
++/* The APN comparison method may treat both arguments differently, so it must be
++ * run in both directions, exactly as mm_3gpp_profile_cmp() does. */
++static gboolean
++profile_apn_cmp_equal (GEqualFunc   cmp_apn,
++                       const gchar *apn_a,
++                       const gchar *apn_b)
++{
++    if (cmp_apn)
++        return (cmp_apn (apn_a, apn_b) || cmp_apn (apn_b, apn_a));
++    return (g_strcmp0 (apn_a, apn_b) == 0);
++}
++
+ gint
+ mm_3gpp_profile_list_find_best (GList                  *profile_list,
+                                 MM3gppProfile          *requested,
+@@ -1648,16 +1660,21 @@ mm_3gpp_profile_list_find_best (GList                  *profile_list,
+ {
+     GList            *l;
+     MMBearerIpFamily  requested_ip_type;
++    MMBearerApnType   requested_apn_type;
++    const gchar      *requested_apn;
+     gint              prev_profile_id = 0;
+     gint              unused_profile_id = 0;
+     gint              max_found_profile_id = 0;
+     gint              max_allowed_profile_id = 0;
+     gint              blank_profile_id = 0;
++    gint              same_connection_profile_id = 0;
+ 
+     g_assert (out_reused);
+     g_assert (out_overwritten);
+ 
+-    requested_ip_type = mm_3gpp_profile_get_ip_type (requested);
++    requested_ip_type  = mm_3gpp_profile_get_ip_type  (requested);
++    requested_apn_type = mm_3gpp_profile_get_apn_type (requested);
++    requested_apn      = mm_3gpp_profile_get_apn      (requested);
+ 
+     /* When looking for exact profile matches we should not compare
+      * the profile id, as the requested profile won't have one set */
+@@ -1685,12 +1702,23 @@ mm_3gpp_profile_list_find_best (GList                  *profile_list,
+             return iter_profile_id;
+         }
+ 
+-        /* Same PDP type but with no APN set? we may use that one if no exact match found */
++        /* A context with no APN set can be redefined with any PDP type, so the type it
++         * currently reports is not a selection criterion; the allowed CID range for the
++         * requested type has already been applied. */
+         iter_ip_type = mm_3gpp_profile_get_ip_type (iter_profile);
+         iter_apn     = mm_3gpp_profile_get_apn     (iter_profile);
+-        if ((iter_ip_type == requested_ip_type) && (!iter_apn || !iter_apn[0]) && !blank_profile_id)
++        if ((!iter_apn || !iter_apn[0]) && !blank_profile_id)
+             blank_profile_id = iter_profile_id;
+ 
++        /* Same connection (APN, PDP type and APN type) with some other setting changed,
++         * e.g. credentials? Rewrite it in place rather than leaving a stale duplicate
++         * behind in another slot. */
++        if (!same_connection_profile_id &&
++            (iter_ip_type == requested_ip_type) &&
++            (mm_3gpp_profile_get_apn_type (iter_profile) == requested_apn_type) &&
++            profile_apn_cmp_equal (cmp_apn, iter_apn, requested_apn))
++            same_connection_profile_id = iter_profile_id;
++
+         /* If an unused CID was not found yet and the previous CID is not (CID - 1),
+          * this means that (previous CID + 1) is an unused CID that can be used.
+          * This logic will allow us using unused CIDs that are available in the gaps
+@@ -1710,6 +1738,14 @@ mm_3gpp_profile_list_find_best (GList                  *profile_list,
+             max_found_profile_id = iter_profile_id;
+     }
+ 
++    /* Rewrite the context already describing this same connection, if any */
++    if (same_connection_profile_id) {
++        mm_obj_dbg (log_object, "rewriting profile %d with same APN and PDP type", same_connection_profile_id);
++        *out_reused = NULL;
++        *out_overwritten = TRUE;
++        return same_connection_profile_id;
++    }
++
+     /* Try to use an unused CID detected in between the already defined contexts */
+     if (unused_profile_id) {
+         mm_obj_dbg (log_object, "found unused profile %d", unused_profile_id);
+diff --git a/src/tests/test-modem-helpers.c b/src/tests/test-modem-helpers.c
+index 30515b0b5..6ab80b6c0 100644
+--- a/src/tests/test-modem-helpers.c
++++ b/src/tests/test-modem-helpers.c
+@@ -2929,6 +2929,40 @@ static const ProfileSelectionTest profile_selection_tests[] = {
+         .expected_profile_id_reused      = FALSE,
+         .expected_profile_id_overwritten = TRUE
+     },
++    /* Test: modems listing every CID report undefined contexts as "IP"; a non-IPv4
++     * request must still take the first empty slot instead of the last context */
++    {
++        .apn           = "em",
++        .ip_family     = MM_BEARER_IP_FAMILY_IPV4V6,
++        .cgdcont_test  = "+CGDCONT: (1-7),\"IP\",,,(0,1),(0,1)\r\n"
++                         "+CGDCONT: (1-7),\"IPV6\",,,(0,1),(0,1)\r\n"
++                         "+CGDCONT: (1-7),\"IPV4V6\",,,(0,1),(0,1)\r\n",
++        .cgdcont_query = "+CGDCONT: 1,\"IP\",\"em\",\"\",0,0\r\n"
++                         "+CGDCONT: 2,\"IP\",\"\",\"\",0,0\r\n"
++                         "+CGDCONT: 3,\"IP\",\"\",\"\",0,0\r\n"
++                         "+CGDCONT: 4,\"IP\",\"\",\"\",0,0\r\n"
++                         "+CGDCONT: 5,\"IP\",\"\",\"\",0,0\r\n"
++                         "+CGDCONT: 6,\"IP\",\"\",\"\",0,0\r\n"
++                         "+CGDCONT: 7,\"IP\",\"\",\"\",0,0\r\n",
++        .expected_profile_id             = 2,
++        .expected_profile_id_reused      = FALSE,
++        .expected_profile_id_overwritten = TRUE
++    },
++    /* Test: same APN and PDP type with different credentials is rewritten in place,
++     * instead of leaving a stale duplicate behind in another slot */
++    {
++        .apn           = "em",
++        .ip_family     = MM_BEARER_IP_FAMILY_IPV4,
++        .user          = "user",
++        .cgdcont_test  = "+CGDCONT: (1-7),\"IP\",,,(0,1),(0,1)\r\n"
++                         "+CGDCONT: (1-7),\"IPV6\",,,(0,1),(0,1)\r\n"
++                         "+CGDCONT: (1-7),\"IPV4V6\",,,(0,1),(0,1)\r\n",
++        .cgdcont_query = "+CGDCONT: 1,\"IP\",\"em\",\"\",0,0\r\n"
++                         "+CGDCONT: 2,\"IP\",\"\",\"\",0,0\r\n",
++        .expected_profile_id             = 1,
++        .expected_profile_id_reused      = FALSE,
++        .expected_profile_id_overwritten = TRUE
++    },
+     /* Test: a device storing a single authentication method still matches a request
+      * that left the method unspecified, as long as the credentials are the same */
+     {
+-- 
+2.43.0
+

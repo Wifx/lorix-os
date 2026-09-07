@@ -1,0 +1,189 @@
+From c92360b18833e8da1f68c501bd63faa063c9eef6 Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Mon, 7 Sep 2026 21:57:11 +0200
+Subject: [PATCH 16/18] libmm-glib,mc610: treat compatible auth methods as
+ equal in profile cmp
+
+mm_3gpp_profile_cmp() required the stored and requested allowed_auth
+masks to be strictly identical. A device only ever stores a single
+method while a request can carry a whole accepted set, and an
+unspecified request means no constraint at all; strict equality made
+a profile read back from the device never match the request that
+created it, causing it to be rewritten on every bearer connection.
+
+Compare the two masks for compatibility (either side unspecified, or
+their intersection non-empty) instead of equality. The MC610 plugin
+also stopped masking authentication out of the comparison entirely,
+since +CGAUTH? never reports context 0 and its stored credentials
+must still be discriminated for the other contexts.
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ libmm-glib/mm-3gpp-profile.c                  | 16 ++++-
+ .../mm-broadband-modem-fibocom-mc610.c        |  9 ++-
+ src/tests/test-modem-helpers.c                | 58 +++++++++++++++----
+ 3 files changed, 70 insertions(+), 13 deletions(-)
+
+diff --git a/libmm-glib/mm-3gpp-profile.c b/libmm-glib/mm-3gpp-profile.c
+index 063f2bb56..95411b416 100644
+--- a/libmm-glib/mm-3gpp-profile.c
++++ b/libmm-glib/mm-3gpp-profile.c
+@@ -86,6 +86,20 @@ cmp_str (const gchar *a,
+     return FALSE;
+ }
+ 
++/* A device stores a single authentication method, while a request carries the
++ * whole set of methods the caller accepts, and an unspecified method means no
++ * constraint at all. A stored method is therefore acceptable as long as it
++ * belongs to the requested set, and requiring strict equality would make a
++ * profile read back from the device never match the request that created it. */
++static gboolean
++cmp_allowed_auth_compatible (MMBearerAllowedAuth a,
++                             MMBearerAllowedAuth b)
++{
++    if ((a == MM_BEARER_ALLOWED_AUTH_UNKNOWN) || (b == MM_BEARER_ALLOWED_AUTH_UNKNOWN))
++        return TRUE;
++    return (a & b) != 0;
++}
++
+ /**
+  * mm_3gpp_profile_cmp: (skip)
+  */
+@@ -109,7 +123,7 @@ mm_3gpp_profile_cmp (MM3gppProfile         *a,
+         (a->priv->profile_id != b->priv->profile_id))
+         return FALSE;
+     if (!(flags & MM_3GPP_PROFILE_CMP_FLAGS_NO_AUTH) &&
+-        ((a->priv->allowed_auth != b->priv->allowed_auth) ||
++        (!cmp_allowed_auth_compatible (a->priv->allowed_auth, b->priv->allowed_auth) ||
+          (!cmp_str (a->priv->user, b->priv->user)) ||
+          (!cmp_str (a->priv->password, b->priv->password))))
+         return FALSE;
+diff --git a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+index 17e51b65a..8715e9bf2 100644
+--- a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
++++ b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+@@ -1393,6 +1393,8 @@ modem_3gpp_profile_manager_check_format_finish (MMIfaceModem3gppProfileManager
+         *apn_cmp = ctx->apn_cmp;
+     if (profile_cmp_flags)
+         *profile_cmp_flags = ctx->profile_cmp_flags;
++    /* +CGAUTH? never reports context 0, so its stored credentials cannot be compared;
++     * always rewrite it rather than risk leaving stale ones behind. */
+     if (force_overwrite)
+         *force_overwrite = TRUE;
+ 
+@@ -1420,8 +1422,11 @@ profile_manager_parent_check_format_ready (MMIfaceModem3gppProfileManager *self,
+                                                                        &error)) {
+         g_task_return_error (task, error);
+     } else {
+-        // we want a 100% match on comparing APN so no loose comparison flags
+-        ctx->profile_cmp_flags = MM_3GPP_PROFILE_CMP_FLAGS_NONE;
++        /* Credentials must be discriminated, otherwise a profile whose only change
++         * is the username/password is reused as-is and never rewritten. The other
++         * fields masked by the parent are not reported by +CGDCONT? and must stay
++         * out of the comparison. */
++        ctx->profile_cmp_flags &= ~MM_3GPP_PROFILE_CMP_FLAGS_NO_AUTH;
+         g_task_return_boolean (task, TRUE);
+     }
+     g_object_unref (task);
+diff --git a/src/tests/test-modem-helpers.c b/src/tests/test-modem-helpers.c
+index 6836bbdd0..30515b0b5 100644
+--- a/src/tests/test-modem-helpers.c
++++ b/src/tests/test-modem-helpers.c
+@@ -2795,13 +2795,19 @@ test_cgact_read_response_multiple (void)
+ /* CID selection logic */
+ 
+ typedef struct {
+-    const gchar      *apn;
+-    MMBearerIpFamily  ip_family;
+-    const gchar      *cgdcont_test;
+-    const gchar      *cgdcont_query;
+-    gint              expected_profile_id;
+-    gboolean          expected_profile_id_reused;
+-    gboolean          expected_profile_id_overwritten;
++    const gchar         *apn;
++    MMBearerIpFamily     ip_family;
++    const gchar         *user;  /* when set, authentication is part of the comparison */
++    const gchar         *cgdcont_test;
++    const gchar         *cgdcont_query;
++    /* Authentication reported separately by the device (e.g. +CGAUTH?) and merged
++     * into the listed profile with the given id; 0 means no authentication info. */
++    gint                 listed_auth_profile_id;
++    MMBearerAllowedAuth  listed_allowed_auth;
++    const gchar         *listed_user;
++    gint                 expected_profile_id;
++    gboolean             expected_profile_id_reused;
++    gboolean             expected_profile_id_overwritten;
+ } ProfileSelectionTest;
+ 
+ static const ProfileSelectionTest profile_selection_tests[] = {
+@@ -2923,6 +2929,23 @@ static const ProfileSelectionTest profile_selection_tests[] = {
+         .expected_profile_id_reused      = FALSE,
+         .expected_profile_id_overwritten = TRUE
+     },
++    /* Test: a device storing a single authentication method still matches a request
++     * that left the method unspecified, as long as the credentials are the same */
++    {
++        .apn           = "em",
++        .ip_family     = MM_BEARER_IP_FAMILY_IPV4,
++        .user          = "user",
++        .cgdcont_test  = "+CGDCONT: (1-7),\"IP\",,,(0,1),(0,1)\r\n"
++                         "+CGDCONT: (1-7),\"IPV6\",,,(0,1),(0,1)\r\n"
++                         "+CGDCONT: (1-7),\"IPV4V6\",,,(0,1),(0,1)\r\n",
++        .cgdcont_query = "+CGDCONT: 1,\"IP\",\"em\",\"\",0,0\r\n",
++        .listed_auth_profile_id          = 1,
++        .listed_allowed_auth             = MM_BEARER_ALLOWED_AUTH_PAP,
++        .listed_user                     = "user",
++        .expected_profile_id             = 1,
++        .expected_profile_id_reused      = TRUE,
++        .expected_profile_id_overwritten = FALSE
++    },
+ };
+ 
+ static void
+@@ -2941,6 +2964,7 @@ test_profile_selection (void)
+         g_autoptr(MM3gppProfile)    requested = NULL;
+         g_autoptr(MM3gppProfile)    reused = NULL;
+         gboolean                    profile_id_overwritten;
++        MM3gppProfileCmpFlags       cmp_flags;
+ 
+         test = &profile_selection_tests[i];
+ 
+@@ -2948,18 +2972,32 @@ test_profile_selection (void)
+         mm_3gpp_profile_set_apn (requested, test->apn);
+         mm_3gpp_profile_set_ip_type (requested, test->ip_family);
+ 
++        cmp_flags = (MM_3GPP_PROFILE_CMP_FLAGS_NO_PROFILE_ID |
++                     MM_3GPP_PROFILE_CMP_FLAGS_NO_APN_TYPE);
++        if (test->user)
++            mm_3gpp_profile_set_user (requested, test->user);
++        else
++            cmp_flags |= MM_3GPP_PROFILE_CMP_FLAGS_NO_AUTH;
++
+         context_format_list = test->cgdcont_test ? mm_3gpp_parse_cgdcont_test_response (test->cgdcont_test, NULL, NULL) : NULL;
+         mm_3gpp_pdp_context_format_list_find_range (context_format_list, test->ip_family, &min_allowed_cid, &max_allowed_cid);
+ 
+         context_list = test->cgdcont_query ? mm_3gpp_parse_cgdcont_read_response (test->cgdcont_query, NULL) : NULL;
+         profile_list = mm_3gpp_profile_list_new_from_pdp_context_list (context_list);
+ 
++        if (test->listed_auth_profile_id) {
++            MM3gppProfile *listed;
++
++            listed = mm_3gpp_profile_list_find_by_profile_id (profile_list, test->listed_auth_profile_id, NULL);
++            g_assert (listed);
++            mm_3gpp_profile_set_allowed_auth (listed, test->listed_allowed_auth);
++            mm_3gpp_profile_set_user (listed, test->listed_user);
++        }
++
+         profile_id = mm_3gpp_profile_list_find_best  (profile_list,
+                                                       requested,
+                                                       (GEqualFunc)mm_3gpp_cmp_apn_name,
+-                                                      (MM_3GPP_PROFILE_CMP_FLAGS_NO_PROFILE_ID |
+-                                                       MM_3GPP_PROFILE_CMP_FLAGS_NO_AUTH |
+-                                                       MM_3GPP_PROFILE_CMP_FLAGS_NO_APN_TYPE),
++                                                      cmp_flags,
+                                                       min_allowed_cid,
+                                                       max_allowed_cid,
+                                                       NULL, /* log_object */
+-- 
+2.43.0
+
