@@ -17,6 +17,7 @@ SRC_URI += " \
     file://0012-mc610-add-GTCCINFO-cell-info-parser-wiring-and-tests.patch \
     file://0013-mc610-run-COPS-and-GTCCINFO-on-the-secondary-AT-port.patch \
     file://0014-mc610-fibocom-increase-AT-command-and-bearer-timeout.patch \
+    file://0015-mc610-retry-SIM-readiness-probing-after-hot-swap-ins.patch \
 "
 
 # Disable MBIM and QMI features

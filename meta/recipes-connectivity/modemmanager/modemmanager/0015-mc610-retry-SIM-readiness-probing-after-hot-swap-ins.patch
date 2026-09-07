@@ -1,0 +1,145 @@
+From 4e38674973c7158fdd5a449a671256fb10ec0d8f Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Mon, 7 Sep 2026 18:41:19 +0200
+Subject: [PATCH 15/18] mc610: retry SIM readiness probing after hot-swap
+ insertion
+
+The +CPIN? probe issued 1s after a "+SIM: Inserted" event only ran
+once with a 30s timeout, and any failure - including the firmware's
+catch-all "+CME ERROR: 53" returned while the card is still coming
+up - was treated as a removal. Observed insertion-to-ready delays of
+up to ~10s made the single-shot probe unreliable, leaving the modem
+stuck until the SIM was physically reseated.
+
+Retry the probe up to 10 times, 2s apart, with a 10s AT timeout per
+attempt. Only abort definitively on
+MM_MOBILE_EQUIPMENT_ERROR_SIM_NOT_INSERTED, which is the only error
+that reliably means the card is actually absent.
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ .../mm-broadband-modem-fibocom-mc610.c        | 77 ++++++++++++++-----
+ 1 file changed, 57 insertions(+), 20 deletions(-)
+
+diff --git a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+index 746697cff..17e51b65a 100644
+--- a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
++++ b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+@@ -789,44 +789,81 @@ modem_load_unlock_retries (MMIfaceModem *self,
+ /*****************************************************************************/
+ /* SIM hot swap setup (Modem interface) */
+ 
++#define SIM_READY_MAX_ATTEMPTS 10
++#define SIM_READY_RETRY_SECS    1
++
++typedef struct {
++    MMBroadbandModemFibocomMc610 *self;
++    guint                         attempts;
++} SimWaitReadyContext;
++
+ static void
+-fibocom_sim_test_ready (MMBaseModem *_self,
+-                        GAsyncResult *res,
+-                        gpointer _data)
++sim_wait_ready_context_free (SimWaitReadyContext *ctx)
+ {
+-    MMBroadbandModemFibocomMc610 *self = MM_BROADBAND_MODEM_FIBOCOM_MC610 (_self);
+-    GError *error = NULL;
+-    const gchar *response;
++    g_object_unref (ctx->self);
++    g_slice_free (SimWaitReadyContext, ctx);
++}
++
++static gboolean fibocom_sim_wait_ready (SimWaitReadyContext *ctx);
++
++static void
++fibocom_sim_test_ready (MMBaseModem         *_self,
++                        GAsyncResult        *res,
++                        SimWaitReadyContext *ctx)
++{
++    MMBroadbandModemFibocomMc610 *self = ctx->self;
++    g_autoptr(GError)             error = NULL;
++    const gchar                  *response;
+ 
+     response = mm_base_modem_at_command_finish (_self, res, &error);
+     if (!response) {
+-        mm_obj_warn (self, "SIM has been removed during processing, abort");
+-        g_object_unref (_self);
++        /* The card needs several seconds to come up and answers with assorted
++         * transient errors meanwhile; only a reported absence is conclusive. */
++        if (g_error_matches (error, MM_MOBILE_EQUIPMENT_ERROR, MM_MOBILE_EQUIPMENT_ERROR_SIM_NOT_INSERTED)) {
++            mm_obj_warn (self, "SIM has been removed during processing, abort");
++            sim_wait_ready_context_free (ctx);
++            return;
++        }
++        if (ctx->attempts >= SIM_READY_MAX_ATTEMPTS) {
++            mm_obj_warn (self, "SIM not ready after %u attempts, abort: %s", ctx->attempts, error->message);
++            sim_wait_ready_context_free (ctx);
++            return;
++        }
++        mm_obj_dbg (self, "SIM not ready yet (%s), retrying in %us", error->message, SIM_READY_RETRY_SECS);
++        g_timeout_add_seconds (SIM_READY_RETRY_SECS, (GSourceFunc) fibocom_sim_wait_ready, ctx);
+         return;
+     }
+ 
+     // if no error, SIM is present
+     if (self->priv->sim_hot_swap_processing) {
+         mm_obj_warn (self, "SIM hot swap processing is already on-going, abort");
+-        g_object_unref (_self);
++        sim_wait_ready_context_free (ctx);
+         return;
+     }
+ 
+     mm_obj_info (self, "SIM presence confirmed, triggering SIM card processing");
+     self->priv->sim_hot_swap_processing = TRUE;
+     mm_iface_modem_process_sim_event (MM_IFACE_MODEM (self));
+-    g_object_unref (_self);
++    sim_wait_ready_context_free (ctx);
+ }
+ 
+ static gboolean
+-fibocom_sim_wait_ready (MMBaseModem *self)
++fibocom_sim_wait_ready (SimWaitReadyContext *ctx)
+ {
+-    mm_base_modem_at_command (self,
++    /* A removal reported while waiting supersedes this probe */
++    if (ctx->self->priv->sim_hot_swap_processing) {
++        mm_obj_dbg (ctx->self, "SIM hot swap processing is already on-going, abort");
++        sim_wait_ready_context_free (ctx);
++        return G_SOURCE_REMOVE;
++    }
++
++    ctx->attempts++;
++    mm_base_modem_at_command (MM_BASE_MODEM (ctx->self),
+                               "+CPIN?",
+-                              30,
++                              10,
+                               FALSE,
+                               (GAsyncReadyCallback) fibocom_sim_test_ready,
+-                              NULL);
++                              ctx);
+     return G_SOURCE_REMOVE;
+ }
+ 
+@@ -851,12 +888,12 @@ mc610_sim_unsolicited_handler (MMPortSerialAt *port,
+         self->priv->sim_hot_swap_processing = TRUE;
+         mm_iface_modem_process_sim_event (MM_IFACE_MODEM (self));
+     } else if (g_ascii_strcasecmp (sim_status, "Inserted") == 0) {
+-        mm_obj_info (self, "SIM card has been inserted, check status in 1s");
+-        // in case of insertion, we want to wait a bit before checking again
+-        // if SIM is still present
+-        g_timeout_add_seconds(1,
+-                              (GSourceFunc) fibocom_sim_wait_ready,
+-                              g_object_ref(MM_BASE_MODEM(self)));
++        SimWaitReadyContext *ctx;
++
++        mm_obj_info (self, "SIM card has been inserted, waiting for it to become ready");
++        ctx = g_slice_new0 (SimWaitReadyContext);
++        ctx->self = g_object_ref (self);
++        g_timeout_add_seconds (1, (GSourceFunc) fibocom_sim_wait_ready, ctx);
+     } else {
+         mm_obj_warn (self, "(%s) MSMPD: unable to determine SIM insert status: %s",
+                      mm_port_get_device (MM_PORT (port)),
+-- 
+2.43.0
+
