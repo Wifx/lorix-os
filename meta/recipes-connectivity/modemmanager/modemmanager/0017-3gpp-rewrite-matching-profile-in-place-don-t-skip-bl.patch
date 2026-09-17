@@ -1,7 +1,7 @@
-From 83ce3aeaf6a8ae34a6d04d1cbfb25d6670d0a2a9 Mon Sep 17 00:00:00 2001
+From 71d203f6ee5f3110af625dc8dbab7d749bd95cc7 Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Mon, 7 Sep 2026 21:58:05 +0200
-Subject: [PATCH 17/18] 3gpp: rewrite matching profile in place, don't skip
+Subject: [PATCH 17/20] 3gpp: rewrite matching profile in place, don't skip
  blank slots by type
 
 mm_3gpp_profile_list_find_best() had two issues that caused PDP

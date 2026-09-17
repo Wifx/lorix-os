@@ -1,7 +1,7 @@
-From c92360b18833e8da1f68c501bd63faa063c9eef6 Mon Sep 17 00:00:00 2001
+From 16b9c0473af6aac3e154d92cb68336d0941c290c Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Mon, 7 Sep 2026 21:57:11 +0200
-Subject: [PATCH 16/18] libmm-glib,mc610: treat compatible auth methods as
+Subject: [PATCH 16/20] libmm-glib,mc610: treat compatible auth methods as
  equal in profile cmp
 
 mm_3gpp_profile_cmp() required the stored and requested allowed_auth

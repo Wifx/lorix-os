@@ -1,7 +1,7 @@
-From e7db83fa5f55212a6300178f5922968012b05a4d Mon Sep 17 00:00:00 2001
+From 7e8120703bb3e8b786d00e0a95ac65de43bc2e6d Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Thu, 3 Sep 2026 11:56:03 +0200
-Subject: [PATCH 14/14] mc610,fibocom: increase AT command and bearer timeouts
+Subject: [PATCH 14/20] mc610,fibocom: increase AT command and bearer timeouts
  for reliability
 
 Several timeouts were too tight for the MC610 and triggered

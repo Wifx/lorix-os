@@ -1,7 +1,7 @@
-From 4e38674973c7158fdd5a449a671256fb10ec0d8f Mon Sep 17 00:00:00 2001
+From 158227c6394334cc1bfbe6e4ba80b8c235d3ef6c Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Mon, 7 Sep 2026 18:41:19 +0200
-Subject: [PATCH 15/18] mc610: retry SIM readiness probing after hot-swap
+Subject: [PATCH 15/20] mc610: retry SIM readiness probing after hot-swap
  insertion
 
 The +CPIN? probe issued 1s after a "+SIM: Inserted" event only ran

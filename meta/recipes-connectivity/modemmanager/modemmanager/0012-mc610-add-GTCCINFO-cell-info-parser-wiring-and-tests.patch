@@ -1,7 +1,7 @@
-From 102cacf461f882f3bf71f91974815d597b1b201d Mon Sep 17 00:00:00 2001
+From 5b95cc9d9d76a067417d2f8ac7c83233337294e2 Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Thu, 3 Sep 2026 11:55:01 +0200
-Subject: [PATCH 12/14] mc610: add +GTCCINFO? cell info parser, wiring and
+Subject: [PATCH 12/20] mc610: add +GTCCINFO? cell info parser, wiring and
  tests
 
 Implement get_cell_info() for the MC610 by querying +GTCCINFO?
@@ -20,11 +20,11 @@ MMCellInfo objects.
 Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
 ---
  .../mm-broadband-modem-fibocom-mc610.c        |  67 +++-
- .../mm-modem-helpers-fibocom-mc610.c          | 375 ++++++++++++++++++
+ .../mm-modem-helpers-fibocom-mc610.c          | 376 ++++++++++++++++++
  .../mm-modem-helpers-fibocom-mc610.h          |   7 +
- .../tests/test-modem-helpers-fibocom-mc610.c  | 260 ++++++++++++
+ .../tests/test-modem-helpers-fibocom-mc610.c  | 264 ++++++++++++
  src/plugins/meson.build                       |   7 +-
- 5 files changed, 712 insertions(+), 4 deletions(-)
+ 5 files changed, 717 insertions(+), 4 deletions(-)
  create mode 100644 src/plugins/fibocom_mc610/tests/test-modem-helpers-fibocom-mc610.c
 
 diff --git a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
@@ -124,10 +124,10 @@ index d744faeaa..756b4c344 100644
      iface->load_supported_modes_finish = load_supported_modes_finish;
      iface->load_current_modes = load_current_modes;
 diff --git a/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.c
-index 9dafeced1..305ccb7e3 100644
+index 9dafeced1..35ae84d7b 100644
 --- a/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.c
 +++ b/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.c
-@@ -288,3 +288,378 @@ gchar *mm_fibocom_mc610_build_gtrat_set_command (MMModemMode allowed,
+@@ -288,3 +288,379 @@ gchar *mm_fibocom_mc610_build_gtrat_set_command (MMModemMode allowed,
  
      return g_string_free (command, FALSE);
  }
@@ -140,13 +140,14 @@ index 9dafeced1..305ccb7e3 100644
 + *
 + * All the cell identifiers (lac/tac, cell id, arfcn/earfcn, bsic, physical cell
 + * id) are reported in *hexadecimal*, while mcc, mnc and all the measurement
-+ * values are reported in decimal. This is confirmed by a live capture on
-+ * firmware 16000.1000.00.98.91.04:
++ * values are reported in decimal. This was confirmed by a live capture on
++ * firmware 16000.1000.00.98.91.04; the identifiers below are anonymized, the
++ * layout and the measurement values are the captured ones:
 + *
-+ *   1,4,228,02,A546,510E06,1838,198,20,50,58,59,59,20
-+ *                          ^tac ^ci  ^earfcn      ^band
++ *   1,4,001,01,1A2B,1234501,1838,C8,20,50,58,59,59,20
++ *              ^tac ^ci     ^earfcn ^band
 + *
-+ * where tac/ci match the ones reported by +CEREG, and 0x1838 = 6200, which is
++ * where tac/ci matched the ones reported by +CEREG, and 0x1838 = 6200, which is
 + * indeed an E-UTRA band 20 EARFCN (6150..6449), consistent with the decimal
 + * "20" reported in the band field right after the physical cell id.
 + */
@@ -455,11 +456,11 @@ index 9dafeced1..305ccb7e3 100644
 +    guint            i;
 +
 +    /*
-+     * E.g. while registered in LTE:
++     * E.g. while registered in LTE, with anonymized identifiers:
 +     *  AT+GTCCINFO?
 +     *  +GTCCINFO:
 +     *  LTE service cell:
-+     *  1,4,228,02,A546,510E06,1838,198,20,50,58,59,59,20
++     *  1,4,001,01,1A2B,1234501,1838,C8,20,50,58,59,59,20
 +     *
 +     *  LTE neighbor cell:
 +     *
@@ -524,10 +525,10 @@ index 95ea9c2fe..f5ffd87dd 100644
  #endif  /* MM_MODEM_HELPER_FIBOCOM_MC610_H */
 diff --git a/src/plugins/fibocom_mc610/tests/test-modem-helpers-fibocom-mc610.c b/src/plugins/fibocom_mc610/tests/test-modem-helpers-fibocom-mc610.c
 new file mode 100644
-index 000000000..30ad5dfb5
+index 000000000..523de4e7e
 --- /dev/null
 +++ b/src/plugins/fibocom_mc610/tests/test-modem-helpers-fibocom-mc610.c
-@@ -0,0 +1,260 @@
+@@ -0,0 +1,264 @@
 +/* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 +/*
 + * This program is free software; you can redistribute it and/or modify
@@ -556,7 +557,11 @@ index 000000000..30ad5dfb5
 +#include "mm-modem-helpers-fibocom-mc610.h"
 +
 +/*****************************************************************************/
-+/* Test +GTCCINFO? responses */
++/* Test +GTCCINFO? responses
++ *
++ * The captured samples below keep the layout and the measurement values of the
++ * real responses, but their identifiers are replaced with the 001/01 test PLMN
++ * of 3GPP TS 34.108 and with fake tac/cell id/physical cell id. */
 +
 +static void
 +test_gtccinfo_lte_serving_only (void)
@@ -565,7 +570,7 @@ index 000000000..30ad5dfb5
 +    static const gchar *response =
 +        "+GTCCINFO:\r\n"
 +        "LTE service cell:\r\n"
-+        "1,4,228,02,A546,510E06,1838,198,20,50,58,59,59,20\r\n"
++        "1,4,001,01,1A2B,1234501,1838,C8,20,50,58,59,59,20\r\n"
 +        "\r\n"
 +        "LTE neighbor cell:\r\n";
 +
@@ -582,12 +587,12 @@ index 000000000..30ad5dfb5
 +    cell = MM_CELL_INFO_LTE (list->data);
 +
 +    g_assert (mm_cell_info_get_serving (MM_CELL_INFO (cell)));
-+    g_assert_cmpstr (mm_cell_info_lte_get_operator_id (cell), ==, "22802");
-+    g_assert_cmpstr (mm_cell_info_lte_get_tac (cell), ==, "A546");
-+    g_assert_cmpstr (mm_cell_info_lte_get_ci (cell), ==, "510E06");
++    g_assert_cmpstr (mm_cell_info_lte_get_operator_id (cell), ==, "00101");
++    g_assert_cmpstr (mm_cell_info_lte_get_tac (cell), ==, "1A2B");
++    g_assert_cmpstr (mm_cell_info_lte_get_ci (cell), ==, "1234501");
 +    /* 0x1838 = 6200, E-UTRA band 20, consistent with the <band> field */
 +    g_assert_cmpuint (mm_cell_info_lte_get_earfcn (cell), ==, 6200);
-+    g_assert_cmpstr (mm_cell_info_lte_get_physical_ci (cell), ==, "198");
++    g_assert_cmpstr (mm_cell_info_lte_get_physical_ci (cell), ==, "C8");
 +    /* <rsrp> 59 -> -141 + 59 = -82 dBm */
 +    g_assert_cmpfloat (mm_cell_info_lte_get_rsrp (cell), ==, -82.0);
 +    /* <rsrq> 20 -> -20 + 20 * 0.5 = -10 dB */
@@ -654,10 +659,10 @@ index 000000000..30ad5dfb5
 +    static const gchar *response =
 +        "+GTCCINFO:\r\n"
 +        "GSM service cell:\r\n"
-+        "1,1,228,02,A546,510E,3E8,32,900,5,0,30,30,3,0,0,0,25,25,0,0,26,-84,0\r\n"
++        "1,1,001,01,1A2B,5678,3E8,32,900,5,0,30,30,3,0,0,0,25,25,0,0,26,-84,0\r\n"
 +        "\r\n"
 +        "GSM neighbor cell:\r\n"
-+        "2,1,228,02,A546,510F,3E9,33,28,28,0,0,20,-90\r\n";
++        "2,1,001,01,1A2B,5679,3E9,33,28,28,0,0,20,-90\r\n";
 +
 +    g_autoptr(GError)  error = NULL;
 +    GList             *list;
@@ -670,16 +675,16 @@ index 000000000..30ad5dfb5
 +    g_assert (MM_IS_CELL_INFO_GSM (list->data));
 +    cell = MM_CELL_INFO_GSM (g_list_nth_data (list, 0));
 +    g_assert (mm_cell_info_get_serving (MM_CELL_INFO (cell)));
-+    g_assert_cmpstr (mm_cell_info_gsm_get_operator_id (cell), ==, "22802");
-+    g_assert_cmpstr (mm_cell_info_gsm_get_lac (cell), ==, "A546");
-+    g_assert_cmpstr (mm_cell_info_gsm_get_ci (cell), ==, "510E");
++    g_assert_cmpstr (mm_cell_info_gsm_get_operator_id (cell), ==, "00101");
++    g_assert_cmpstr (mm_cell_info_gsm_get_lac (cell), ==, "1A2B");
++    g_assert_cmpstr (mm_cell_info_gsm_get_ci (cell), ==, "5678");
 +    g_assert_cmpuint (mm_cell_info_gsm_get_arfcn (cell), ==, 1000);
 +    g_assert_cmpstr (mm_cell_info_gsm_get_base_station_id (cell), ==, "32");
 +    g_assert_cmpuint (mm_cell_info_gsm_get_rx_level (cell), ==, 26);
 +
 +    cell = MM_CELL_INFO_GSM (g_list_nth_data (list, 1));
 +    g_assert (!mm_cell_info_get_serving (MM_CELL_INFO (cell)));
-+    g_assert_cmpstr (mm_cell_info_gsm_get_ci (cell), ==, "510F");
++    g_assert_cmpstr (mm_cell_info_gsm_get_ci (cell), ==, "5679");
 +    g_assert_cmpuint (mm_cell_info_gsm_get_arfcn (cell), ==, 1001);
 +    g_assert_cmpuint (mm_cell_info_gsm_get_rx_level (cell), ==, 20);
 +
@@ -692,7 +697,7 @@ index 000000000..30ad5dfb5
 +    static const gchar *response =
 +        "+GTCCINFO:\r\n"
 +        "LTE service cell:\r\n"
-+        "1,4,228,02,0A546,00510E06,1838,198,20,50,58,59,59,20\r\n";
++        "1,4,001,01,01A2B,001234501,1838,C8,20,50,58,59,59,20\r\n";
 +
 +    g_autoptr(GError)  error = NULL;
 +    GList             *list;
@@ -703,8 +708,8 @@ index 000000000..30ad5dfb5
 +    g_assert_cmpuint (g_list_length (list), ==, 1);
 +
 +    cell = MM_CELL_INFO_LTE (list->data);
-+    g_assert_cmpstr (mm_cell_info_lte_get_tac (cell), ==, "A546");
-+    g_assert_cmpstr (mm_cell_info_lte_get_ci (cell), ==, "510E06");
++    g_assert_cmpstr (mm_cell_info_lte_get_tac (cell), ==, "1A2B");
++    g_assert_cmpstr (mm_cell_info_lte_get_ci (cell), ==, "1234501");
 +
 +    g_list_free_full (list, g_object_unref);
 +}
@@ -732,7 +737,7 @@ index 000000000..30ad5dfb5
 +    static const gchar *response =
 +        "+GTCCINFO:\r\n"
 +        "LTE service cell:\r\n"
-+        "1,4,228,02,A546,510E06,1838,198,20,50,59,61,61,20\r\n"
++        "1,4,001,01,1A2B,1234501,1838,C8,20,50,59,61,61,20\r\n"
 +        "\r\n"
 +        "LTE neighbor cell:\r\n"
 +        "0,0,0,0,0,0,0,0,0\r\n";
@@ -747,7 +752,7 @@ index 000000000..30ad5dfb5
 +
 +    cell = MM_CELL_INFO_LTE (list->data);
 +    g_assert (mm_cell_info_get_serving (MM_CELL_INFO (cell)));
-+    g_assert_cmpstr (mm_cell_info_lte_get_ci (cell), ==, "510E06");
++    g_assert_cmpstr (mm_cell_info_lte_get_ci (cell), ==, "1234501");
 +    /* <rsrp> 61 -> -80 dBm */
 +    g_assert_cmpfloat (mm_cell_info_lte_get_rsrp (cell), ==, -80.0);
 +
@@ -760,7 +765,7 @@ index 000000000..30ad5dfb5
 +    static const gchar *response =
 +        "+GTCCINFO:\r\n"
 +        "LTE service cell:\r\n"
-+        "1,4,228,02\r\n";
++        "1,4,001,01\r\n";
 +
 +    g_autoptr(GError)  error = NULL;
 +    GList             *list;

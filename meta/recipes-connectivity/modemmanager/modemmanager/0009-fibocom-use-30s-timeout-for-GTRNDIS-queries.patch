@@ -1,7 +1,7 @@
 From 7d9cc8aa5328fcda5006aa0e142b4d4d74196608 Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Mon, 23 Mar 2026 22:10:38 +0100
-Subject: [PATCH 09/14] fibocom: use 30s timeout for GTRNDIS queries
+Subject: [PATCH 09/20] fibocom: use 30s timeout for GTRNDIS queries
 
 Increase the timeout used for GTRNDIS support detection and
 state queries from 3-6s to 30s in the Fibocom ECM bearer and

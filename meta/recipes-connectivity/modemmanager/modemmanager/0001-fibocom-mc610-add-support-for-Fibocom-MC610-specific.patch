@@ -1,7 +1,7 @@
 From cf53f5630eb73e53eea3b960a9c66936b1a7d05e Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Mon, 14 Apr 2025 23:41:52 +0200
-Subject: [PATCH 01/14] fibocom-mc610: add support for Fibocom MC610 specific
+Subject: [PATCH 01/20] fibocom-mc610: add support for Fibocom MC610 specific
  plugin
 
 Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>

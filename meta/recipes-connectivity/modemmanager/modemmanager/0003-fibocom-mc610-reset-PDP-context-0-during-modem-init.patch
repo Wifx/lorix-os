@@ -1,7 +1,7 @@
 From 468ec43976aa2de7c3d2103c585edca9b9e8aeaa Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Thu, 22 May 2025 14:33:43 +0200
-Subject: [PATCH 03/14] fibocom-mc610: reset PDP context 0 during modem init
+Subject: [PATCH 03/20] fibocom-mc610: reset PDP context 0 during modem init
 
 Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
 ---

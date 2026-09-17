@@ -1,7 +1,7 @@
-From 6bcf8b3a9c554e0b6ac32834b7f37aef512c4c0d Mon Sep 17 00:00:00 2001
+From 2f74533c44e03662f35a21f926207a2070345e1f Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Mon, 7 Sep 2026 22:03:20 +0200
-Subject: [PATCH 18/18] mc610: fix profile 0 cache lifecycle across
+Subject: [PATCH 18/20] mc610: fix profile 0 cache lifecycle across
  configured/runtime views
 
 The plugin caches the profile 0 (initial EPS bearer) reported by

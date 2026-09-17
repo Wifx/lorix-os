@@ -1,7 +1,7 @@
 From 027ea57cda0338ad7ea3c8de95042ad8fb2c044c Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Thu, 3 Sep 2026 11:54:23 +0200
-Subject: [PATCH 11/14] mc610: fix GTRAT mode table to report 2G instead of CS
+Subject: [PATCH 11/20] mc610: fix GTRAT mode table to report 2G instead of CS
 
 The AcT-to-MMModemMode table used to decode +GTRAT responses
 mapped GSM-only and GSM+LTE combinations to MM_MODEM_MODE_CS.

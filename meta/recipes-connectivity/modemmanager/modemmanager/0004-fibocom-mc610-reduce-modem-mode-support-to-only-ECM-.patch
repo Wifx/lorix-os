@@ -1,7 +1,7 @@
 From cbdceef874f7e43c47c00ad24e79c9d6f41f57ce Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Mon, 2 Jun 2025 09:27:32 +0200
-Subject: [PATCH 04/14] fibocom-mc610: reduce modem mode support to only ECM to
+Subject: [PATCH 04/20] fibocom-mc610: reduce modem mode support to only ECM to
  avoid modem detection before switch to ECM
 
 Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>

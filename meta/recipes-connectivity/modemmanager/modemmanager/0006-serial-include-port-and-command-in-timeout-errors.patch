@@ -1,7 +1,7 @@
 From f92659c35de41985c65e67633b7ff2cff3f6a610 Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Tue, 24 Mar 2026 07:46:33 +0100
-Subject: [PATCH 06/14] serial: include port and command in timeout errors
+Subject: [PATCH 06/20] serial: include port and command in timeout errors
 
 Improve serial timeout reporting by including the port name and,
 when available, the AT command that timed out.

@@ -1,7 +1,7 @@
 From 12bdc2f37e458e8f04d52f6fbbd203dfe99ab45f Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Thu, 3 Sep 2026 11:54:16 +0200
-Subject: [PATCH 10/14] mc610: force GSM_UMTS + LTE capabilities
+Subject: [PATCH 10/20] mc610: force GSM_UMTS + LTE capabilities
 
 The generic +GCAP/+WS46=? probing only reports GSM/UMTS on this
 module, so ModemManager never flags it as LTE capable and skips

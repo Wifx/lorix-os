@@ -1,7 +1,7 @@
 From d060b6267b549cfe17eeb5618dd21c9d82f776eb Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Thu, 17 Apr 2025 22:00:20 +0200
-Subject: [PATCH 02/14] fibocom-mc610: fix SIM hot swap handling following 1.24
+Subject: [PATCH 02/20] fibocom-mc610: fix SIM hot swap handling following 1.24
  upgrade
 
 Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>

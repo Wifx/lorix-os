@@ -1,7 +1,7 @@
-From 9544e7b604ef92f7972bfcffaef708c6af33b186 Mon Sep 17 00:00:00 2001
+From 1607df4becfa523080a68fb242b96c2d63719910 Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Thu, 3 Sep 2026 11:55:20 +0200
-Subject: [PATCH 13/14] =?UTF-8?q?mc610:=20run=20+COPS=3D=3F=20and=20+GTCCI?=
+Subject: [PATCH 13/20] =?UTF-8?q?mc610:=20run=20+COPS=3D=3F=20and=20+GTCCI?=
  =?UTF-8?q?NFO=3F=20on=20the=20secondary=20AT=20port?=
 
 Both +COPS=? (network scan) and +GTCCINFO? (cell info) can take

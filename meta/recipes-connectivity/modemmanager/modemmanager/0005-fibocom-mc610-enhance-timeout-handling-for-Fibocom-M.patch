@@ -1,7 +1,7 @@
 From efb7babe8db5b723e7aa57c55b058b13bcfe3a5f Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Tue, 24 Mar 2026 07:44:55 +0100
-Subject: [PATCH 05/14] fibocom-mc610: enhance timeout handling for Fibocom
+Subject: [PATCH 05/20] fibocom-mc610: enhance timeout handling for Fibocom
  MC610 to allow recovery during degraded registration cycles
 
 Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>

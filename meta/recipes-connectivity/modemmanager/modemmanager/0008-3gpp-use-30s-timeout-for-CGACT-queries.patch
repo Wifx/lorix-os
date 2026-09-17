@@ -1,7 +1,7 @@
 From 424dd2fc2941f503023ccc9d8523e4cdcc50315d Mon Sep 17 00:00:00 2001
 From: Yannick Serafini <yannick.serafini@wifx.net>
 Date: Mon, 23 Mar 2026 22:09:33 +0100
-Subject: [PATCH 08/14] 3gpp: use 30s timeout for CGACT queries
+Subject: [PATCH 08/20] 3gpp: use 30s timeout for CGACT queries
 
 Increase the timeout used for +CGACT? queries from 3s to 30s in
 the generic bearer connection status polling and in the 3GPP
