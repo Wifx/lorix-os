@@ -21,6 +21,8 @@ SRC_URI += " \
     file://0016-libmm-glib-mc610-treat-compatible-auth-methods-as-eq.patch \
     file://0017-3gpp-rewrite-matching-profile-in-place-don-t-skip-bl.patch \
     file://0018-mc610-fix-profile-0-cache-lifecycle-across-configure.patch \
+    file://0019-fibocom-mc610-don-t-report-a-serving-cell-when-out-o.patch \
+    file://0020-fibocom-mc610-quirk-treat-CGREG-lac-as-TAC-when-AcT-.patch \
 "
 
 # Disable MBIM and QMI features

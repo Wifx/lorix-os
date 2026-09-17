@@ -1,0 +1,310 @@
+From e8a96434148e4aa612d28c67ee2dab2df2b1a3db Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Mon, 14 Sep 2026 11:23:42 +0200
+Subject: [PATCH 19/20] fibocom-mc610: don't report a serving cell when out of
+ service
+
+Without radio service the MC610 keeps answering +GTCCINFO? with a
+serving cell line, in two forms seen in that order. The first repeats
+the last known serving cell verbatim, valid PLMN, TAC, cell id and even
+the RSRP and RSRQ indices measured while service was still up, with only
+the EARFCN invalidated (identifiers anonymized here and below):
+
+  1,4,001,01,2B3C,2345601,FFFFFFFF,D0,3,100,50,46,46,19
+
+Some tens of seconds later it degrades to a line whose layout is intact
+but whose content is zeroed:
+
+  1,4,000,000,0,0,FFFFFFFF,0,0,NULL,0,0,0,0
+
+<IsServiceCell> only tells the serving line from the neighbor ones, so
+there is no field saying "no service" and both forms used to be reported
+as a cell. GetCellInfo() then claimed a serving cell, entirely credible
+in the first form, while the modem was unregistered.
+
+Drop a serving entry whose PLMN is zero, MCC 000 being unassigned, and
+one whose EARFCN is missing or set to the FFFFFFFF sentinel, a camped
+cell always having a carrier frequency. Neither test touches neighbor
+cells, which legitimately report an empty PLMN. Note that the invalid
+EARFCN never reached the bus even before: it decodes to G_MAXUINT, which
+is what MMCellInfo uses for "not available", so only the entry taken as
+a whole tells it apart from a real cell.
+
+Dropping those entries makes a total outage produce no cell at all, so
+stop turning an empty result into an error: only a response in which no
+section header could be recognized is now reported as a failure, and an
+empty list is a valid result meaning "no cell to report", as the QMI and
+MBIM implementations already do. The caller has to key off the GError
+rather than off the returned list, otherwise an empty list would end up
+in g_task_return_error() with a NULL error and the D-Bus call would
+never be completed.
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ .../mm-broadband-modem-fibocom-mc610.c        |   3 +-
+ .../mm-modem-helpers-fibocom-mc610.c          |  41 +++++-
+ .../tests/test-modem-helpers-fibocom-mc610.c  | 123 +++++++++++++++++-
+ 3 files changed, 163 insertions(+), 4 deletions(-)
+
+diff --git a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+index 126c173ea..bd7993e56 100644
+--- a/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
++++ b/src/plugins/fibocom_mc610/mm-broadband-modem-fibocom-mc610.c
+@@ -561,8 +561,9 @@ gtccinfo_ready (MMBaseModem  *self,
+         return;
+     }
+ 
++    /* An empty list is a valid result, so the error is what tells failure apart */
+     list = mm_fibocom_mc610_parse_gtccinfo_response (response, self, &error);
+-    if (!list)
++    if (error)
+         g_task_return_error (task, error);
+     else
+         g_task_return_pointer (task, list, (GDestroyNotify) cell_info_list_free);
+diff --git a/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.c b/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.c
+index 35ae84d7b..d9f679a6c 100644
+--- a/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.c
++++ b/src/plugins/fibocom_mc610/mm-modem-helpers-fibocom-mc610.c
+@@ -586,6 +586,35 @@ gtccinfo_parse_cell (const gchar      *line,
+         g_assert_not_reached ();
+     }
+ 
++    /* Out of service, the module still emits a serving cell line with the layout
++     * intact but the content zeroed, e.g. on a MC610-EU stable over ten minutes
++     * without coverage:
++     *   1,4,000,000,0,0,FFFFFFFF,0,0,NULL,0,0,0,0
++     * There is no field saying "no service": <IsServiceCell> only tells serving
++     * from neighbor. A variant keeps the cell id of the last cell actually
++     * served, so the unassigned MCC 000 is the only reliable discriminator.
++     * Neighbor cells legitimately report an empty PLMN, hence the serving check. */
++    if (serving && (!gtccinfo_dec_uint (split, GTCCINFO_FIELD_MCC, &value) || value == 0)) {
++        mm_obj_dbg (log_object, "ignoring +GTCCINFO serving cell entry without a valid PLMN: %s", line);
++        return NULL;
++    }
++
++    /* Right after service is lost the module first repeats the last known serving
++     * cell verbatim, valid PLMN, TAC, cell id and even the previous RSRP and RSRQ
++     * indices, with only the EARFCN invalidated; it degrades to the all-zeros form
++     * above some tens of seconds later. Measured on a MC610-EU in an isolation
++     * chamber:
++     *   1,4,001,01,2B3C,2345601,FFFFFFFF,D0,3,100,50,46,46,19
++     * A camped cell always has a carrier frequency, so a serving entry without a
++     * usable one is not a cell that can be reported. Nothing else in the entry
++     * gives it away, and the sentinel does not even reach the bus: it decodes to
++     * G_MAXUINT, which is what MMCellInfo uses for "not available". */
++    if (serving && (!gtccinfo_hex_uint (split, GTCCINFO_FIELD_ARFCN_EARFCN, &value) ||
++                    value == G_MAXUINT32)) {
++        mm_obj_dbg (log_object, "ignoring +GTCCINFO serving cell entry without a valid EARFCN: %s", line);
++        return NULL;
++    }
++
+     /* The section header already tells us the layout, but <IsServiceCell> is
+      * authoritative; only warn when they disagree, the header wins since the
+      * field count depends on it. */
+@@ -610,6 +639,7 @@ mm_fibocom_mc610_parse_gtccinfo_response (const gchar  *response,
+     g_auto(GStrv)    lines = NULL;
+     GList           *list = NULL;
+     GtccinfoSection  section = GTCCINFO_SECTION_UNKNOWN;
++    gboolean         section_found = FALSE;
+     guint            i;
+ 
+     /*
+@@ -620,6 +650,7 @@ mm_fibocom_mc610_parse_gtccinfo_response (const gchar  *response,
+      *  1,4,001,01,1A2B,1234501,1838,C8,20,50,58,59,59,20
+      *
+      *  LTE neighbor cell:
++     *  2,4,001,01,1A2B,1234502,1838,C9,50,42,42,12
+      *
+      * and while registered in GSM the sections are "GSM service cell:" and
+      * "GSM neighbor cell:" instead, with a different field layout.
+@@ -643,6 +674,8 @@ mm_fibocom_mc610_parse_gtccinfo_response (const gchar  *response,
+                 section = is_serving_section ? GTCCINFO_SECTION_GSM_SERVING : GTCCINFO_SECTION_GSM_NEIGHBOR;
+             else
+                 section = GTCCINFO_SECTION_UNKNOWN;
++            if (section != GTCCINFO_SECTION_UNKNOWN)
++                section_found = TRUE;
+             continue;
+         }
+ 
+@@ -656,9 +689,13 @@ mm_fibocom_mc610_parse_gtccinfo_response (const gchar  *response,
+             list = g_list_append (list, cell);
+     }
+ 
+-    if (!list) {
++    /* Only an unreadable response is an error. Once a section header has been
++     * recognized the response was understood, and an empty list is a valid
++     * result meaning "no cell to report", as done by the QMI and MBIM
++     * implementations. */
++    if (!section_found) {
+         g_set_error (error, MM_CORE_ERROR, MM_CORE_ERROR_FAILED,
+-                     "No cell info found in +GTCCINFO? response");
++                     "No cell info section found in +GTCCINFO? response");
+         return NULL;
+     }
+ 
+diff --git a/src/plugins/fibocom_mc610/tests/test-modem-helpers-fibocom-mc610.c b/src/plugins/fibocom_mc610/tests/test-modem-helpers-fibocom-mc610.c
+index 523de4e7e..b902212f8 100644
+--- a/src/plugins/fibocom_mc610/tests/test-modem-helpers-fibocom-mc610.c
++++ b/src/plugins/fibocom_mc610/tests/test-modem-helpers-fibocom-mc610.c
+@@ -118,6 +118,58 @@ test_gtccinfo_lte_serving_and_neighbors (void)
+     g_list_free_full (list, g_object_unref);
+ }
+ 
++static void
++test_gtccinfo_lte_registered_with_neighbors (void)
++{
++    /* As captured on a MC610-EU while registered, checked against the D-Bus
++     * output of GetCellInfo() taken at the same instant */
++    static const gchar *response =
++        "+GTCCINFO:\r\n"
++        "LTE service cell:\r\n"
++        "1,4,001,01,2B3C,2345601,73A,D0,3,100,50,44,44,15\r\n"
++        "\r\n"
++        "LTE neighbor cell:\r\n"
++        "2,4,001,01,2B3C,2345602,73A,D1,100,42,42,12\r\n"
++        "2,4,001,01,2B3C,2345603,73A,D2,100,40,40,8\r\n";
++
++    g_autoptr(GError)  error = NULL;
++    GList             *list;
++    MMCellInfoLte     *cell;
++
++    list = mm_fibocom_mc610_parse_gtccinfo_response (response, NULL, &error);
++    g_assert_no_error (error);
++    g_assert_cmpuint (g_list_length (list), ==, 3);
++
++    cell = MM_CELL_INFO_LTE (g_list_nth_data (list, 0));
++    g_assert (mm_cell_info_get_serving (MM_CELL_INFO (cell)));
++    g_assert_cmpstr (mm_cell_info_lte_get_operator_id (cell), ==, "00101");
++    g_assert_cmpstr (mm_cell_info_lte_get_tac (cell), ==, "2B3C");
++    g_assert_cmpstr (mm_cell_info_lte_get_ci (cell), ==, "2345601");
++    /* 0x73A = 1850, E-UTRA band 3, consistent with the <band> field */
++    g_assert_cmpuint (mm_cell_info_lte_get_earfcn (cell), ==, 1850);
++    g_assert_cmpstr (mm_cell_info_lte_get_physical_ci (cell), ==, "D0");
++    /* <rsrp> 44 -> -97 dBm, <rsrq> 15 -> -12.5 dB */
++    g_assert_cmpfloat (mm_cell_info_lte_get_rsrp (cell), ==, -97.0);
++    g_assert_cmpfloat (mm_cell_info_lte_get_rsrq (cell), ==, -12.5);
++
++    cell = MM_CELL_INFO_LTE (g_list_nth_data (list, 1));
++    g_assert (!mm_cell_info_get_serving (MM_CELL_INFO (cell)));
++    g_assert_cmpstr (mm_cell_info_lte_get_ci (cell), ==, "2345602");
++    g_assert_cmpstr (mm_cell_info_lte_get_physical_ci (cell), ==, "D1");
++    g_assert_cmpuint (mm_cell_info_lte_get_earfcn (cell), ==, 1850);
++    g_assert_cmpfloat (mm_cell_info_lte_get_rsrp (cell), ==, -99.0);
++    g_assert_cmpfloat (mm_cell_info_lte_get_rsrq (cell), ==, -14.0);
++
++    cell = MM_CELL_INFO_LTE (g_list_nth_data (list, 2));
++    g_assert (!mm_cell_info_get_serving (MM_CELL_INFO (cell)));
++    g_assert_cmpstr (mm_cell_info_lte_get_ci (cell), ==, "2345603");
++    g_assert_cmpstr (mm_cell_info_lte_get_physical_ci (cell), ==, "D2");
++    g_assert_cmpfloat (mm_cell_info_lte_get_rsrp (cell), ==, -101.0);
++    g_assert_cmpfloat (mm_cell_info_lte_get_rsrq (cell), ==, -16.0);
++
++    g_list_free_full (list, g_object_unref);
++}
++
+ static void
+ test_gtccinfo_gsm (void)
+ {
+@@ -193,9 +245,73 @@ test_gtccinfo_no_cell (void)
+     g_autoptr(GError)  error = NULL;
+     GList             *list;
+ 
++    /* The response was understood, there is just no cell to report */
++    list = mm_fibocom_mc610_parse_gtccinfo_response (response, NULL, &error);
++    g_assert_no_error (error);
++    g_assert (!list);
++}
++
++static void
++test_gtccinfo_no_service (void)
++{
++    /* As captured on a MC610-EU without radio service, modem unregistered.
++     * Stable across more than ten minutes without coverage: the serving cell
++     * line keeps its layout but the content is zeroed. */
++    static const gchar *response =
++        "+GTCCINFO:\r\n"
++        "LTE service cell:\r\n"
++        "1,4,000,000,0,0,FFFFFFFF,0,0,NULL,0,0,0,0\r\n"
++        "\r\n"
++        "LTE neighbor cell:\r\n";
++
++    g_autoptr(GError)  error = NULL;
++    GList             *list;
++
++    /* Reporting that entry would make GetCellInfo() claim a serving cell while
++     * the modem is unregistered */
++    list = mm_fibocom_mc610_parse_gtccinfo_response (response, NULL, &error);
++    g_assert_no_error (error);
++    g_assert (!list);
++}
++
++static void
++test_gtccinfo_no_service_stale_frame (void)
++{
++    /* As captured on a MC610-EU in an isolation chamber: right after service was
++     * lost the module repeated the last known serving cell, down to the RSRP and
++     * RSRQ indices measured two minutes earlier with the chamber open, with only
++     * the EARFCN invalidated. It degraded to the all-zeros form 42 s later. */
++    static const gchar *response =
++        "+GTCCINFO:\r\n"
++        "LTE service cell:\r\n"
++        "1,4,001,01,2B3C,2345601,FFFFFFFF,D0,3,100,50,46,46,19\r\n"
++        "\r\n"
++        "LTE neighbor cell:\r\n";
++
++    g_autoptr(GError)  error = NULL;
++    GList             *list;
++
++    /* Every other field is plausible, so this entry would be reported as a fully
++     * credible serving cell while there is no service at all */
+     list = mm_fibocom_mc610_parse_gtccinfo_response (response, NULL, &error);
++    g_assert_no_error (error);
+     g_assert (!list);
++}
++
++static void
++test_gtccinfo_unreadable (void)
++{
++    static const gchar *response =
++        "+GTCCINFO:\r\n"
++        "1,4,001,01,1A2B,1234501,1838,C8,20,50,58,59,59,20\r\n";
++
++    g_autoptr(GError)  error = NULL;
++    GList             *list;
++
++    /* Without a section header the layout of the entries is unknown */
++    list = mm_fibocom_mc610_parse_gtccinfo_response (response, NULL, &error);
+     g_assert_error (error, MM_CORE_ERROR, MM_CORE_ERROR_FAILED);
++    g_assert (!list);
+ }
+ 
+ static void
+@@ -239,9 +355,10 @@ test_gtccinfo_short_line (void)
+     g_autoptr(GError)  error = NULL;
+     GList             *list;
+ 
++    /* The entry is dropped, but the response itself was readable */
+     list = mm_fibocom_mc610_parse_gtccinfo_response (response, NULL, &error);
++    g_assert_no_error (error);
+     g_assert (!list);
+-    g_assert_error (error, MM_CORE_ERROR, MM_CORE_ERROR_FAILED);
+ }
+ 
+ /*****************************************************************************/
+@@ -254,9 +371,13 @@ int main (int argc, char **argv)
+ 
+     g_test_add_func ("/MM/fibocom-mc610/gtccinfo/lte-serving-only", test_gtccinfo_lte_serving_only);
+     g_test_add_func ("/MM/fibocom-mc610/gtccinfo/lte-serving-and-neighbors", test_gtccinfo_lte_serving_and_neighbors);
++    g_test_add_func ("/MM/fibocom-mc610/gtccinfo/lte-registered-with-neighbors", test_gtccinfo_lte_registered_with_neighbors);
+     g_test_add_func ("/MM/fibocom-mc610/gtccinfo/gsm", test_gtccinfo_gsm);
+     g_test_add_func ("/MM/fibocom-mc610/gtccinfo/leading-zeros", test_gtccinfo_leading_zeros);
+     g_test_add_func ("/MM/fibocom-mc610/gtccinfo/no-cell", test_gtccinfo_no_cell);
++    g_test_add_func ("/MM/fibocom-mc610/gtccinfo/no-service", test_gtccinfo_no_service);
++    g_test_add_func ("/MM/fibocom-mc610/gtccinfo/no-service-stale-frame", test_gtccinfo_no_service_stale_frame);
++    g_test_add_func ("/MM/fibocom-mc610/gtccinfo/unreadable", test_gtccinfo_unreadable);
+     g_test_add_func ("/MM/fibocom-mc610/gtccinfo/empty-neighbor-placeholder", test_gtccinfo_empty_neighbor_placeholder);
+     g_test_add_func ("/MM/fibocom-mc610/gtccinfo/short-line", test_gtccinfo_short_line);
+ 
+-- 
+2.43.0
+

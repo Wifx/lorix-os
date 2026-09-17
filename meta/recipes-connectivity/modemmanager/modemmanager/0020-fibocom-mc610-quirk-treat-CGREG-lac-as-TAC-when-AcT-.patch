@@ -1,0 +1,77 @@
+From 80884245b623dad55ed5ad643a932f72f1f00b82 Mon Sep 17 00:00:00 2001
+From: Yannick Serafini <yannick.serafini@wifx.net>
+Date: Thu, 17 Sep 2026 10:41:21 +0200
+Subject: [PATCH 20/20] fibocom-mc610 quirk: treat CGREG <lac> as TAC when
+ <AcT> is E-UTRAN
+
+The MC610 answers +CGREG with an access technology the specification does
+not define for that command:
+
+  +CGREG: 2,1,"2B3C","02345601",7
+
+TS 27.007 V15.8.0 defines no tracking area code for +CGREG and marks
+<AcT> value 7 (E-UTRAN) as "not applicable" there: on E-UTRAN the packet
+domain registration is reported by +CEREG. The generic code is correct,
+the modem deviates.
+
+E-UTRAN has no location area code, so that field cannot hold one. On this
+hardware it holds the TAC, verified against +CEREG for the same cell.
+Stored as a LAC it clears the TAC, which the next +CEREG restores while
+clearing the LAC: the Location property then oscillates on every
+registration check, emitting a spurious update with a null TAC. Both the
+unsolicited and the solicited paths are affected, so both are fixed.
+
+Not upstreamed: this works around a firmware deviation and so belongs in
+a plugin, but no extension point lets a plugin normalize registration
+data on the solicited path. Reported upstream as an issue instead.
+
+Signed-off-by: Yannick Serafini <yannick.serafini@wifx.net>
+---
+ src/mm-broadband-modem.c | 20 ++++++++++++++++++--
+ 1 file changed, 18 insertions(+), 2 deletions(-)
+
+diff --git a/src/mm-broadband-modem.c b/src/mm-broadband-modem.c
+index 8c8bc6f24..e6201a352 100644
+--- a/src/mm-broadband-modem.c
++++ b/src/mm-broadband-modem.c
+@@ -5265,10 +5265,18 @@ registration_state_changed (MMPortSerialAt *port,
+      * According to 3GPP TS 27.007:
+      *  - If CREG reports <AcT> 7 (LTE) then the <lac> field contains TAC
+      *  - CEREG/C5GREG always reports TAC
++     *  - CGREG has no TAC and <AcT> 7 is "not applicable" for it
+      */
+-    if (cgreg)
++    if (cgreg) {
++        /* Fibocom MC610 quirk: reports <AcT> 7 in +CGREG and puts the TAC in
++         * <lac>, a field E-UTRAN has no value for. Storing it as a LAC would
++         * clear the TAC that +CEREG reports for the same cell. */
++        if (act == MM_MODEM_ACCESS_TECHNOLOGY_LTE) {
++            tac = lac;
++            lac = 0;
++        }
+         mm_iface_modem_3gpp_update_ps_registration_state (MM_IFACE_MODEM_3GPP (self), state, FALSE);
+-    else if (cereg) {
++    } else if (cereg) {
+         tac = lac;
+         lac = 0;
+         mm_iface_modem_3gpp_update_eps_registration_state (MM_IFACE_MODEM_3GPP (self), state, FALSE);
+@@ -5723,8 +5731,16 @@ registration_status_check_ready (MMBroadbandModem *self,
+      * According to 3GPP TS 27.007:
+      *  - If CREG reports <AcT> 7 (LTE) then the <lac> field contains TAC
+      *  - CEREG always reports TAC
++     *  - CGREG has no TAC and <AcT> 7 is "not applicable" for it
+      */
+     if (cgreg) {
++        /* Fibocom MC610 quirk: reports <AcT> 7 in +CGREG and puts the TAC in
++         * <lac>, a field E-UTRAN has no value for. Storing it as a LAC would
++         * clear the TAC that +CEREG reports for the same cell. */
++        if (act == MM_MODEM_ACCESS_TECHNOLOGY_LTE) {
++            tac = lac;
++            lac = 0;
++        }
+         if (ctx->running_cs)
+             mm_obj_dbg (self, "got PS registration state when checking CS registration state");
+         else if (ctx->running_eps)
+-- 
+2.43.0
+
