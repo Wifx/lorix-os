@@ -5,24 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.8.2] - Unreleased
+## [1.8.2] - 2026-09-24
 
 ### Added
 
 - [LOR-732] Add memory availability check during wifx delta updates
+- Add ChirpStack Concentratord v4 setup migration
+- Add `packagegroup-os-optional` package group for OPKG-only packages
+- Add State-record mender state script and clean up the upgrade process
 
 ### Changed
 
 - [LOR-719] Update ChirpStack MQTT Forwarder to 4.6
-- [LOR-720] Update pmonitord to 1.1
+- [LOR-720] Update pmonitord to 1.1.1
 - [LOR-721] Set BasicStation TCP timeout to 2 min
 - [LOR-723] Update ChirpStack Gateway Mesh to 4.1.1
 - [LOR-724] Update ChirpStack MQTT Forwarder to 4.6.1
+- [LOR-725] Update Manager to v1.0.2
+- [LOR-726] Update Manager GUI to v1.0.3
 - [LOR-729] Update ModemManager to 1.24.2
 - [LOR-748] ModemManager: multiple improvements (timeout, scan, responsiveness during long running AT commands)
-- [LOR-750] ModemManager: fix SIM hot-swap detection aborting when the SIM isn't ready yet
+- ChirpStack UDP Packet Forwarder: leave the server list empty by default
+- Update login configuration for faster password verification on embedded hardware
 - Update poky to 5.0.19
 - Update meta-openembedded
+- Update meta-arm
+- Update meta-clang
 
 ### Fixed
 
@@ -34,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [LOR-734] BasicStation: fix time sync locking for multiple minutes on boot
 - [LOR-735] BasicStation: fix drift threshold depends on rejected measurements
 - [LOR-736] chirpstack-concentratord: fix QUEUE_FULL under heavy traffic
+- [LOR-750] ModemManager: fix SIM hot-swap detection aborting when the SIM isn't ready yet
 
 
 ## [1.8.1] - 2026-04-20
