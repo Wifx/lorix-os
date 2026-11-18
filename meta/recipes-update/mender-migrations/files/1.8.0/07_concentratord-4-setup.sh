@@ -81,6 +81,8 @@ if [[ ! -f "$GATEWAY_TEMPLATE" ]]; then
     exit 1
 fi
 
+# The config dir may not exist: 01_concentratord-legacy moved it to the legacy dir
+mkdir -p "$(dirname "$GATEWAY_CONFIG")"
 cp "$GATEWAY_TEMPLATE" "$GATEWAY_CONFIG"
 chmod 0644 "$GATEWAY_CONFIG"
 log $PREFIX "Gateway config initialized from template"

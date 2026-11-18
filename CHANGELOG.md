@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update meta-openembedded
 - Update meta-mender to scarthgap-v2026.10.02
 
+### Fixed
+
+- [LOR-755] Fix: ChirpStack Concentratord v4 setup migration fails when no legacy channels symlink exists
+
 ## [1.8.2] - 2026-09-24
 
 ### Added
