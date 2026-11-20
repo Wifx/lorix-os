@@ -19,3 +19,6 @@ EOF
         fi
     fi
 }
+
+# CVE exclusions, exported to the CycloneDX VEX by meta-cyclonedx.
+CVE_STATUS[CVE-2026-123158] = "not-applicable-platform: only affects sshd built against musl libc without PAM; LORIX OS uses glibc and sshd runs with UsePAM yes (see sshd_config in this layer)"

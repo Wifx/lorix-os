@@ -33,3 +33,22 @@ CVE_STATUS_CURL_NO_COOKIES[status] = "not-applicable-config: syslog-ng never ena
 # proxy comes from environment variables). syslog-ng reuses one curl handle per http()
 # worker and, without proxy(), libcurl honours http_proxy/https_proxy, so it can apply
 # when a user configures an http() destination behind a proxy.
+
+# Not built into libcurl
+CVE_STATUS_GROUPS += "CVE_STATUS_CURL_NO_SSH"
+CVE_STATUS_CURL_NO_SSH = "CVE-2026-9547"
+CVE_STATUS_CURL_NO_SSH[status] = "not-applicable-config: SCP/SFTP require SSH support, and libcurl is built without libssh/libssh2"
+
+# Only in the curl command-line tool
+CVE_STATUS_GROUPS += "CVE_STATUS_CURL_NO_CLI"
+CVE_STATUS_CURL_NO_CLI = "CVE-2026-12064"
+CVE_STATUS_CURL_NO_CLI[status] = "not-applicable-config: affects the curl command-line tool only, which is not installed on the image"
+
+# Options syslog-ng never sets
+CVE_STATUS_GROUPS += "CVE_STATUS_CURL_NO_PINNING"
+CVE_STATUS_CURL_NO_PINNING = "CVE-2026-80230"
+CVE_STATUS_CURL_NO_PINNING[status] = "not-applicable-config: syslog-ng never sets CURLOPT_PINNEDPUBLICKEY, whatever the http() configuration"
+
+CVE_STATUS_GROUPS += "CVE_STATUS_CURL_FIXED_TLS_OPTIONS"
+CVE_STATUS_CURL_FIXED_TLS_OPTIONS = "CVE-2026-8286 CVE-2026-8932 CVE-2026-80231"
+CVE_STATUS_CURL_FIXED_TLS_OPTIONS[status] = "not-applicable-config: needs TLS options changed between transfers on a handle with pooled connections; syslog-ng sets them once per http() worker handle and never changes them, and never sets CURLSSLOPT_NATIVE_CA"
