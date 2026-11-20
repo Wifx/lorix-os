@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - [LOR-755] Fix: ChirpStack Concentratord v4 setup migration fails when no legacy channels symlink exists
+- glibc: fix CVE-2026-5450 (heap overflow in scanf %mc) and CVE-2026-5928 (ungetwc out-of-bounds read)
 
 ## [1.8.2] - 2026-09-24
 
