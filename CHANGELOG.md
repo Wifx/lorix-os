@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update poky to 5.0.21
 - Update meta-openembedded
 - Update meta-mender to scarthgap-v2026.10.02
+- Update OpenVPN to 2.6.23 (fixes CVE-2026-12932 and CVE-2026-11771)
 
 ### Fixed
 
